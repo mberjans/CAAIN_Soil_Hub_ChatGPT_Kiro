@@ -11,6 +11,7 @@ This document establishes API design standards for the Autonomous Farm Advisory 
 - **Seasonal Context**: Consider timing and seasonality in all agricultural endpoints
 - **Regional Awareness**: Support location-specific recommendations and data
 - **Conservative Responses**: When uncertain, provide conservative recommendations with clear confidence levels
+- **FastAPI Consistency**: All services use FastAPI for automatic documentation and validation
 
 ### RESTful Standards with Agricultural Context
 ```

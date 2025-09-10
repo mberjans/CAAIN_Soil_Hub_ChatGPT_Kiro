@@ -15,17 +15,17 @@
 - Create basic project structure
 
 **Deliverables:**
-- [ ] Development environment setup (Docker, Kubernetes)
+- [-] Native development environment setup (local services)
 - [ ] CI/CD pipeline configuration
-- [ ] Basic microservices skeleton
-- [ ] Database schema design and setup
-- [ ] API gateway configuration
-- [ ] Monitoring and logging infrastructure
+- [ ] Basic microservices skeleton (all Python/FastAPI)
+- [ ] Database schema design and setup (PostgreSQL, MongoDB, Redis)
+- [ ] Monitoring and logging infrastructure (local setup)
+- [ ] Frontend development setup (FastAPI+Jinja2 or Streamlit options)
 
 **Team Allocation:**
-- DevOps Engineer (2 weeks)
-- Backend Lead (2 weeks)
+- Python Backend Lead (2 weeks)
 - Database Architect (1 week)
+- DevOps Engineer (1 week)
 
 ### Sprint 1.2: Data Integration Foundation (Weeks 3-4)
 **Objectives:**
@@ -52,15 +52,15 @@
 - Develop rule-based decision logic
 
 **Deliverables:**
-- [ ] Question intent classification service
-- [ ] Basic recommendation engine architecture
-- [ ] Rule engine implementation
-- [ ] Knowledge base structure
-- [ ] API endpoints for question processing
+- [ ] Question intent classification service (Python/FastAPI with spaCy/NLTK)
+- [ ] Basic recommendation engine architecture (Python/FastAPI)
+- [ ] Rule engine implementation (Python with scikit-learn)
+- [ ] Knowledge base structure (PostgreSQL + MongoDB)
+- [ ] API endpoints for question processing (FastAPI)
 
 **Team Allocation:**
-- Backend Lead (2 weeks)
-- ML Engineer (2 weeks)
+- Python Backend Lead (2 weeks)
+- Python ML Engineer (2 weeks)
 - Agricultural Expert Consultant (1 week)
 
 ### Sprint 1.4: First 5 Questions Implementation (Weeks 7-12)
@@ -85,8 +85,8 @@
 - [ ] Expert validation reports
 
 **Team Allocation:**
-- Backend Developers (2 developers × 6 weeks)
-- ML Engineer (6 weeks)
+- Python Backend Developers (2 developers × 6 weeks)
+- Python ML Engineer (6 weeks)
 - Agricultural Expert (3 weeks)
 - QA Engineer (4 weeks)
 
@@ -99,16 +99,17 @@
 - Develop context-aware response generation
 
 **Deliverables:**
-- [ ] LLM integration (GPT-4/Claude)
-- [ ] Context management system
-- [ ] Conversation flow handling
-- [ ] Response personalization engine
-- [ ] Vector database for knowledge retrieval
+- [ ] OpenRouter LLM integration (GPT-4, Claude, Llama via unified API) - Python
+- [ ] Context management system (Python/FastAPI)
+- [ ] Conversation flow handling (Python with LangChain)
+- [ ] Response personalization engine (Python)
+- [ ] Vector database for knowledge retrieval (Python with Pinecone/Weaviate)
+- [ ] Environment-based API key configuration
 
 **Team Allocation:**
-- AI/ML Engineer (4 weeks)
-- Backend Developer (4 weeks)
-- NLP Specialist (3 weeks)
+- Python AI/ML Engineer (4 weeks)
+- Python Backend Developer (4 weeks)
+- Python NLP Specialist (3 weeks)
 
 ### Sprint 2.2: Questions 6-10 Implementation (Weeks 17-20)
 **Objectives:**
@@ -131,8 +132,8 @@
 - [ ] Advanced testing and validation
 
 **Team Allocation:**
-- Backend Developers (2 developers × 4 weeks)
-- ML Engineer (4 weeks)
+- Python Backend Developers (2 developers × 4 weeks)
+- Python ML Engineer (4 weeks)
 - Agricultural Expert (2 weeks)
 - QA Engineer (3 weeks)
 
@@ -157,8 +158,8 @@
 - [ ] Tillage practice recommendations
 
 **Team Allocation:**
-- Backend Developers (2 developers × 4 weeks)
-- Computer Vision Engineer (4 weeks)
+- Python Backend Developers (2 developers × 4 weeks)
+- Python Computer Vision Engineer (4 weeks)
 - Agricultural Expert (2 weeks)
 - QA Engineer (3 weeks)
 
@@ -171,16 +172,16 @@
 - Create image upload and processing pipeline
 
 **Deliverables:**
-- [ ] CNN models for nutrient deficiency detection
-- [ ] Image preprocessing pipeline
-- [ ] Real-time image analysis API
-- [ ] Confidence scoring system
+- [ ] CNN models for nutrient deficiency detection (Python/TensorFlow/PyTorch)
+- [ ] Image preprocessing pipeline (Python/OpenCV)
+- [ ] Real-time image analysis API (Python/FastAPI)
+- [ ] Confidence scoring system (Python)
 - [ ] Mobile image capture integration
 
 **Team Allocation:**
-- Computer Vision Engineer (4 weeks)
-- ML Engineer (4 weeks)
-- Backend Developer (3 weeks)
+- Python Computer Vision Engineer (4 weeks)
+- Python ML Engineer (4 weeks)
+- Python Backend Developer (3 weeks)
 
 ### Sprint 3.2: Questions 16-20 Implementation (Weeks 29-32)
 **Objectives:**
@@ -203,8 +204,8 @@
 - [ ] Policy impact assessment tools
 
 **Team Allocation:**
-- Backend Developers (2 developers × 4 weeks)
-- Data Engineer (4 weeks)
+- Python Backend Developers (2 developers × 4 weeks)
+- Python Data Engineer (4 weeks)
 - Policy Research Specialist (2 weeks)
 - QA Engineer (4 weeks)
 
@@ -215,17 +216,17 @@
 - Implement interactive visualization components
 
 **Deliverables:**
-- [ ] React-based web dashboard
-- [ ] Interactive maps and data visualization
-- [ ] Mobile-responsive design
+- [ ] Python web dashboard (FastAPI + Jinja2 or Streamlit)
+- [ ] Interactive maps and data visualization (Plotly/Matplotlib)
+- [ ] Mobile-responsive design (Bootstrap or Streamlit responsive)
 - [ ] User onboarding flow
 - [ ] Recommendation history and tracking
 - [ ] Farm profile management interface
 
 **Team Allocation:**
-- Frontend Developers (3 developers × 4 weeks)
+- Python Frontend Developers (2 developers × 4 weeks)
 - UI/UX Designer (4 weeks)
-- Frontend Lead (4 weeks)
+- Python Frontend Lead (4 weeks)
 
 ## Phase 4: Optimization & Launch Preparation (Months 10-12)
 
@@ -289,16 +290,16 @@
 
 ### Team Structure
 ```
-Core Team (8-12 people):
+Core Team (8-10 people):
 ├── Technical Leadership
-│   ├── Technical Lead/Architect (1)
+│   ├── Python Technical Lead/Architect (1)
 │   └── Product Manager (1)
 ├── Backend Development
-│   ├── Senior Backend Developers (2-3)
-│   ├── ML/AI Engineers (2)
-│   └── Data Engineer (1)
+│   ├── Senior Python Backend Developers (2-3)
+│   ├── Python ML/AI Engineers (2)
+│   └── Python Data Engineer (1)
 ├── Frontend Development
-│   ├── Frontend Developers (2)
+│   ├── Python Frontend Developers (1-2)
 │   └── UI/UX Designer (1)
 ├── Quality & Operations
 │   ├── QA Engineer (1)

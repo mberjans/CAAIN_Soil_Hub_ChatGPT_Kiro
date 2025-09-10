@@ -40,8 +40,9 @@ The Autonomous Farm Advisory System provides personalized, location-specific rec
 ## 🚀 Getting Started
 
 ### Prerequisites
+- Python 3.11+ development environment
 - Agricultural domain expertise for validation
-- Development team familiar with agricultural systems
+- Development team familiar with Python and agricultural systems
 - Access to agricultural databases and APIs
 
 ### Development Phases
@@ -75,11 +76,11 @@ The Autonomous Farm Advisory System provides personalized, location-specific rec
 
 ## 🏗️ Technical Architecture
 
-- **Microservices Architecture**: Scalable, maintainable system design
-- **Dual AI Approach**: Rule-based recommendations + LLM explanations
+- **All-Python Microservices**: FastAPI-based scalable, maintainable system design
+- **Dual AI Approach**: Rule-based recommendations + LLM explanations via OpenRouter
 - **Data Integration**: Weather APIs, soil databases, crop information
 - **Security First**: Agricultural data protection and privacy
-- **Mobile Ready**: Field-accessible interface for farmers
+- **Python Frontend Options**: FastAPI+Jinja2 or Streamlit for rapid development
 
 ## 📊 Success Metrics
 
@@ -92,9 +93,9 @@ The Autonomous Farm Advisory System provides personalized, location-specific rec
 
 This project requires collaboration between:
 - **Agricultural Experts**: For recommendation validation
-- **Software Developers**: For system implementation
-- **UX Designers**: For farmer-friendly interfaces
-- **Data Scientists**: For ML model development
+- **Python Developers**: For system implementation (FastAPI, ML libraries)
+- **UX Designers**: For farmer-friendly interfaces (Streamlit/FastAPI+Jinja2)
+- **Data Scientists**: For ML model development (scikit-learn, TensorFlow, PyTorch)
 
 ## 📄 Documentation
 

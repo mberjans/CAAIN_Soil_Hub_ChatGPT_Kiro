@@ -54,7 +54,7 @@ The Autonomous Farm Advisory System follows a modular, microservices-based archi
 - Response formatting
 
 **Technology Stack:**
-- Node.js/Express or Python/FastAPI
+- Python/FastAPI
 - Natural Language Processing (spaCy/NLTK)
 - Redis for session management
 
@@ -77,16 +77,17 @@ The Autonomous Farm Advisory System follows a modular, microservices-based archi
 **Purpose:** Natural language explanation and conversational interface
 
 **Components:**
-- **LLM Integration:** GPT-4/Claude for explanation generation
+- **LLM Integration:** Multiple LLM providers via OpenRouter (GPT-4, Claude, Llama, etc.)
 - **Context Management:** Conversation history and farm profile
 - **Response Personalization:** Farmer-specific communication style
 - **Follow-up Handler:** Additional question processing
 
 **Technology Stack:**
 - Python with LangChain/LlamaIndex
-- OpenAI/Anthropic APIs
+- OpenRouter API for unified LLM access
 - Vector database for context retrieval
 - Redis for conversation state
+- Environment-based configuration (no global API keys)
 
 ### 4. Data Integration Layer
 **Purpose:** Aggregates and normalizes data from multiple sources
@@ -240,46 +241,37 @@ POST /api/v1/recommendations/{rec_id}/feedback
 
 ## Deployment Architecture
 
-### Container Orchestration
-```yaml
-# Kubernetes deployment structure
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: recommendation-engine
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      app: recommendation-engine
-  template:
-    spec:
-      containers:
-      - name: recommendation-engine
-        image: afas/recommendation-engine:latest
-        ports:
-        - containerPort: 8000
-        env:
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: db-secret
-              key: url
+### Native Development Setup
+```bash
+# Local development environment structure
+afas/
+├── services/
+│   ├── question-router/     # Python/FastAPI service on port 8000
+│   ├── recommendation-engine/ # Python/FastAPI service on port 8001
+│   ├── ai-agent/           # Python/FastAPI service on port 8002
+│   ├── data-integration/   # Python/FastAPI service on port 8003
+│   ├── image-analysis/     # Python/FastAPI service on port 8004
+│   ├── user-management/    # Python/FastAPI service on port 8005
+│   └── frontend/           # Python (FastAPI+Jinja2 or Streamlit) on port 3000
+├── databases/
+│   ├── postgresql/         # Local PostgreSQL instance
+│   ├── mongodb/           # Local MongoDB instance
+│   └── redis/             # Local Redis instance
+└── tests/                 # Test suites for all services
 ```
 
 ### Infrastructure Components
-- **Load Balancer:** NGINX or AWS ALB
-- **Container Orchestration:** Kubernetes
-- **Service Mesh:** Istio for microservice communication
-- **Monitoring:** Prometheus + Grafana
-- **Logging:** ELK Stack (Elasticsearch, Logstash, Kibana)
-- **CI/CD:** GitLab CI or GitHub Actions
+- **Process Management:** Native Python processes with uvicorn for all services
+- **Monitoring:** Local Prometheus + Grafana setup
+- **Logging:** File-based logging with log rotation
+- **Development Tools:** Local database instances, hot reloading with uvicorn --reload
+- **API Gateway:** Frontend development server proxy (no NGINX needed for local dev)
 
 ### Scaling Strategy
-- **Horizontal Pod Autoscaling** based on CPU/memory usage
-- **Database read replicas** for query performance
-- **CDN integration** for static assets and images
-- **Caching layers** at multiple levels
+- **Multi-worker setup** for Python services using Gunicorn/uvicorn workers
+- **Process-based scaling** using uvicorn with multiple workers
+- **Database connection pooling** for performance
+- **Local caching** with Redis for development
 
 ## Performance Optimization
 
@@ -345,24 +337,26 @@ farm-advisory-system/
 ## Technology Stack Summary
 
 ### Backend Services
-- **Languages:** Python (ML/AI), Node.js (APIs), Go (performance-critical)
-- **Frameworks:** FastAPI, Express.js, Gin
+- **Languages:** Python (all services)
+- **Frameworks:** FastAPI (all backend services)
 - **Databases:** PostgreSQL, MongoDB, Redis, Pinecone/Weaviate
-- **Message Queues:** Apache Kafka, RabbitMQ
-- **ML/AI:** TensorFlow, PyTorch, scikit-learn, LangChain
+- **Message Queues:** Apache Kafka, RabbitMQ (if needed)
+- **ML/AI:** TensorFlow, PyTorch, scikit-learn, LangChain, spaCy, NLTK
+- **LLM Integration:** OpenRouter (unified access to GPT-4, Claude, Llama, etc.)
 
 ### Frontend
-- **Framework:** React.js with TypeScript
-- **State Management:** Redux Toolkit
-- **UI Components:** Material-UI or Ant Design
-- **Maps:** Leaflet or Google Maps API
-- **Charts:** D3.js or Chart.js
+- **Framework Options:** 
+  - FastAPI + Jinja2 Templates (traditional web app)
+  - Streamlit (rapid prototyping and data visualization)
+- **UI Components:** Bootstrap (FastAPI) or Streamlit native components
+- **Maps:** Leaflet or Plotly maps
+- **Charts:** Plotly, Matplotlib, or Streamlit native charts
 
 ### Infrastructure
-- **Cloud Platform:** AWS, GCP, or Azure
-- **Containers:** Docker + Kubernetes
-- **CI/CD:** GitHub Actions or GitLab CI
-- **Monitoring:** Prometheus, Grafana, ELK Stack
-- **Security:** HashiCorp Vault, cert-manager
+- **Development Platform:** Local development environment (native Python)
+- **Process Management:** uvicorn with auto-reload for development
+- **CI/CD:** GitHub Actions for testing and deployment
+- **Monitoring:** Local Prometheus, Grafana, file-based logging
+- **Security:** Environment variables, local SSL certificates
 
 This technical architecture provides a solid foundation for building a scalable, maintainable, and feature-rich Autonomous Farm Advisory System that can effectively serve farmers' needs while maintaining high performance and reliability standards.

@@ -11,21 +11,23 @@ This document establishes development standards, coding conventions, and best pr
 - **Explainable Decisions** - All recommendation logic must be traceable and explainable
 - **Data-Driven** - Base recommendations on actual data, not assumptions
 - **Regional Awareness** - Consider geographic and climatic variations in all logic
+- **Python-First Development** - All services use Python/FastAPI for consistency and agricultural library access
 
 ### Code Organization
 ```
 services/
-├── question-router/           # Routes questions to appropriate handlers
-├── recommendation-engine/     # Core agricultural logic
-├── ai-agent/                 # Natural language processing
-├── data-integration/         # External data source management
-├── image-analysis/           # Computer vision for crop analysis
-├── user-management/          # User profiles and authentication
+├── question-router/           # Python/FastAPI - Routes questions to appropriate handlers
+├── recommendation-engine/     # Python/FastAPI - Core agricultural logic
+├── ai-agent/                 # Python/FastAPI - Natural language processing
+├── data-integration/         # Python/FastAPI - External data source management
+├── image-analysis/           # Python/FastAPI - Computer vision for crop analysis
+├── user-management/          # Python/FastAPI - User profiles and authentication
+├── frontend/                 # Python (FastAPI+Jinja2 or Streamlit) - Web interface
 └── shared/
-    ├── models/               # Shared data models
-    ├── utils/                # Common utilities
-    ├── agricultural/         # Agricultural calculation libraries
-    └── validation/           # Data validation utilities
+    ├── models/               # Shared Pydantic data models
+    ├── utils/                # Common Python utilities
+    ├── agricultural/         # Agricultural calculation libraries (NumPy/SciPy)
+    └── validation/           # Data validation utilities (Pydantic)
 ```
 
 ### Naming Conventions
@@ -508,4 +510,31 @@ jobs:
           python -m pytest tests/integration/ -v --farm-data-samples=100
 ```
 
-This development standards document ensures that all code maintains agricultural accuracy while meeting technical excellence standards. Regular updates should incorporate new agricultural research and farmer feedback.
+## Python Technology Stack Standards
+
+### Core Technologies
+- **Backend Framework**: FastAPI for all services (consistent async/await patterns)
+- **Data Validation**: Pydantic models for all API requests/responses
+- **Database ORM**: SQLAlchemy for PostgreSQL, Motor for MongoDB
+- **Testing**: pytest with pytest-asyncio for async testing
+- **Documentation**: FastAPI automatic OpenAPI generation
+
+### Agricultural Python Libraries
+- **Scientific Computing**: NumPy, SciPy, Pandas for data processing
+- **Machine Learning**: scikit-learn, TensorFlow/PyTorch for ML models
+- **NLP**: spaCy, NLTK for natural language processing
+- **Optimization**: OR-Tools for agricultural optimization problems
+- **Visualization**: Matplotlib, Plotly for data visualization
+
+### Frontend Options
+- **Traditional Web**: FastAPI + Jinja2 templates + Bootstrap
+- **Data Dashboard**: Streamlit for rapid agricultural dashboard development
+- **API Documentation**: FastAPI automatic Swagger/ReDoc generation
+
+### Development Tools
+- **Process Management**: uvicorn with --reload for development
+- **Code Quality**: black (formatting), flake8 (linting), mypy (type checking)
+- **Dependency Management**: pip with requirements.txt per service
+- **Environment Management**: Python venv for service isolation
+
+This development standards document ensures that all code maintains agricultural accuracy while meeting technical excellence standards using a consistent Python technology stack. Regular updates should incorporate new agricultural research and farmer feedback.
