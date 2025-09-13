@@ -1,0 +1,265 @@
+name: AFAS Deployment Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  # Pre-deployment validation
+  pre-deployment-checks:
+    runs-on: ubuntu-latest
+    outputs:
+      deploy-environment: ${{ steps.determine-env.outputs.environment }}
+      
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Determine deployment environment
+        id: determine-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/tags/v"* ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          else
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Run deployment readiness checks
+        run: |
+          python -m pip install --upgrade pip
+          pip install pydantic requests
+          python scripts/deployment_readiness_check.py
+          
+      - name: Validate configuration files
+        run: |
+          python scripts/validate_deployment_config.py --env=${{ steps.determine-env.outputs.environment }}
+          
+      - name: Check agricultural expert approvals
+        if: steps.determine-env.outputs.environment == 'production'
+        run: |
+          echo "Checking for required agricultural expert approvals..."
+          python scripts/check_expert_approvals.py
+
+  # Build and package services
+  build-services:
+    runs-on: ubuntu-latest
+    needs: [pre-deployment-checks]
+    strategy:
+      matrix:
+        service: 
+          - question-router
+          - recommendation-engine
+          - ai-agent
+          - data-integration
+          - image-analysis
+          - user-management
+          - frontend
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Build service package
+        run: |
+          cd services/${{ matrix.service }}
+          python -m pip install --upgrade pip build
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          python -m build
+          
+      - name: Create deployment package
+        run: |
+          mkdir -p deployment-packages/${{ matrix.service }}
+          cp -r services/${{ matrix.service }}/* deployment-packages/${{ matrix.service }}/
+          # Create service-specific deployment script
+          cat > deployment-packages/${{ matrix.service }}/deploy.sh << 'EOF'
+          #!/bin/bash
+          set -e
+          echo "Deploying ${{ matrix.service }} service..."
+          pip install -r requirements.txt
+          uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WORKERS:-1}
+          EOF
+          chmod +x deployment-packages/${{ matrix.service }}/deploy.sh
+          
+      - name: Upload service package
+        uses: actions/upload-artifact@v3
+        with:
+          name: service-${{ matrix.service }}
+          path: deployment-packages/${{ matrix.service }}/
+
+  # Deploy to staging
+  deploy-staging:
+    runs-on: ubuntu-latest
+    needs: [build-services]
+    if: needs.pre-deployment-checks.outputs.deploy-environment == 'staging'
+    environment: staging
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all service packages
+        uses: actions/download-artifact@v3
+        with:
+          path: deployment-packages/
+          
+      - name: Deploy to staging environment
+        run: |
+          echo "Deploying to staging environment..."
+          # This would typically involve:
+          # 1. Uploading packages to staging servers
+          # 2. Running database migrations
+          # 3. Starting/restarting services
+          # 4. Running health checks
+          
+          # For now, simulate deployment
+          echo "Services deployed to staging:"
+          ls -la deployment-packages/
+          
+      - name: Run post-deployment tests
+        run: |
+          python -m pip install --upgrade pip requests pytest
+          python -m pytest tests/deployment/staging/ -v
+          
+      - name: Validate agricultural accuracy in staging
+        run: |
+          python scripts/validate_staging_accuracy.py
+          
+      - name: Run smoke tests
+        run: |
+          python scripts/staging_smoke_tests.py
+
+  # Deploy to production
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: [build-services]
+    if: needs.pre-deployment-checks.outputs.deploy-environment == 'production'
+    environment: production
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Download all service packages
+        uses: actions/download-artifact@v3
+        with:
+          path: deployment-packages/
+          
+      - name: Final agricultural validation
+        run: |
+          echo "Running final agricultural validation before production deployment..."
+          python scripts/final_agricultural_validation.py
+          
+      - name: Deploy to production environment
+        run: |
+          echo "Deploying to production environment..."
+          # Production deployment steps would include:
+          # 1. Blue-green deployment strategy
+          # 2. Database migrations with rollback capability
+          # 3. Gradual traffic shifting
+          # 4. Comprehensive health checks
+          # 5. Agricultural accuracy monitoring
+          
+          # For now, simulate deployment
+          echo "Services deployed to production:"
+          ls -la deployment-packages/
+          
+      - name: Run production health checks
+        run: |
+          python scripts/production_health_checks.py
+          
+      - name: Validate agricultural recommendations
+        run: |
+          python scripts/validate_production_accuracy.py
+          
+      - name: Monitor initial performance
+        run: |
+          python scripts/monitor_production_performance.py --duration=300  # 5 minutes
+          
+      - name: Send deployment notification
+        run: |
+          echo "Production deployment completed successfully"
+          echo "::notice title=Production Deployment::AFAS has been successfully deployed to production"
+
+  # Post-deployment monitoring
+  post-deployment-monitoring:
+    runs-on: ubuntu-latest
+    needs: [deploy-staging, deploy-production]
+    if: always() && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up monitoring
+        run: |
+          python -m pip install --upgrade pip requests
+          
+      - name: Monitor system health
+        run: |
+          python scripts/monitor_system_health.py --duration=600  # 10 minutes
+          
+      - name: Check agricultural accuracy metrics
+        run: |
+          python scripts/monitor_agricultural_accuracy.py
+          
+      - name: Validate response times
+        run: |
+          python scripts/monitor_response_times.py --max-time=3.0
+          
+      - name: Generate deployment report
+        run: |
+          python scripts/generate_deployment_report.py
+          
+      - name: Upload monitoring results
+        uses: actions/upload-artifact@v3
+        with:
+          name: post-deployment-monitoring
+          path: |
+            deployment-report.html
+            monitoring-metrics.json
+
+  # Rollback capability
+  rollback:
+    runs-on: ubuntu-latest
+    if: failure() && (needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure')
+    needs: [deploy-staging, deploy-production]
+    environment: ${{ needs.pre-deployment-checks.outputs.deploy-environment }}
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Initiate rollback
+        run: |
+          echo "Deployment failed. Initiating rollback..."
+          python scripts/rollback_deployment.py --env=${{ needs.pre-deployment-checks.outputs.deploy-environment }}
+          
+      - name: Verify rollback success
+        run: |
+          python scripts/verify_rollback.py
+          
+      - name: Send rollback notification
+        run: |
+          echo "::error title=Deployment Rollback::Deployment failed and has been rolled back to previous version"

@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - AFAS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .agricultural-card {
+            border-left: 4px solid #28a745;
+            transition: transform 0.2s;
+        }
+        .agricultural-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .soil-health-meter {
+            width: 100%;
+            height: 20px;
+            background: linear-gradient(to right, #dc3545, #ffc107, #28a745);
+            border-radius: 10px;
+            position: relative;
+            margin: 10px 0;
+        }
+        .soil-health-indicator {
+            position: absolute;
+            top: -5px;
+            width: 30px;
+            height: 30px;
+            background: white;
+            border: 3px solid #333;
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+        .practice-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #f8f9fa;
+        }
+        .priority-high { border-left: 4px solid #dc3545; }
+        .priority-medium { border-left: 4px solid #ffc107; }
+        .priority-low { border-left: 4px solid #28a745; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i> AFAS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/crop-selection">Crop Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/soil-fertility">Soil Fertility</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/fertilizer-strategy">Fertilizer Strategy</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-mountain"></i> Soil Fertility Management</h1>
+                <p class="lead">Improve soil health and manage nutrient deficiencies effectively</p>
+            </div>
+        </div>
+        
+        <!-- Soil Health Assessment -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-clipboard-check"></i> Soil Health Assessment</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="soilAssessmentForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Soil pH</label>
+                                    <input type="number" class="form-control" name="ph" 
+                                        placeholder="6.5" min="3" max="10" step="0.1" required>
+                                    <small class="form-text text-muted">Optimal range: 6.0-7.0</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Organic Matter (%)</label>
+                                    <input type="number" class="form-control" name="organic_matter" 
+                                        placeholder="3.5" min="0" max="15" step="0.1" required>
+                                    <small class="form-text text-muted">Target: >3%</small>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Phosphorus (ppm)</label>
+                                    <input type="number" class="form-control" name="phosphorus" 
+                                        placeholder="25" min="0" max="200" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Potassium (ppm)</label>
+                                    <input type="number" class="form-control" name="potassium" 
+                                        placeholder="180" min="0" max="800" required>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">CEC (meq/100g)</label>
+                                    <input type="number" class="form-control" name="cec" 
+                                        placeholder="18" min="0" max="50" step="0.1">
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Soil Texture</label>
+                                    <select class="form-control" name="soil_texture">
+                                        <option value="">Select texture</option>
+                                        <option value="sand">Sand</option>
+                                        <option value="loamy_sand">Loamy Sand</option>
+                                        <option value="sandy_loam">Sandy Loam</option>
+                                        <option value="loam">Loam</option>
+                                        <option value="silt_loam">Silt Loam</option>
+                                        <option value="clay_loam">Clay Loam</option>
+                                        <option value="clay">Clay</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Drainage Class</label>
+                                    <select class="form-control" name="drainage">
+                                        <option value="">Select drainage</option>
+                                        <option value="well_drained">Well Drained</option>
+                                        <option value="moderately_well_drained">Moderately Well Drained</option>
+                                        <option value="somewhat_poorly_drained">Somewhat Poorly Drained</option>
+                                        <option value="poorly_drained">Poorly Drained</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-search"></i> Assess Soil Health
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-info-circle"></i> Soil Health Tips</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="mb-2"><i class="fas fa-check text-success"></i> Test soil every 2-3 years</li>
+                            <li class="mb-2"><i class="fas fa-check text-success"></i> Maintain 3%+ organic matter</li>
+                            <li class="mb-2"><i class="fas fa-check text-success"></i> Use cover crops</li>
+                            <li class="mb-2"><i class="fas fa-check text-success"></i> Minimize tillage</li>
+                            <li class="mb-2"><i class="fas fa-check text-success"></i> Rotate crops regularly</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="assessmentResults" class="row" style="display: none;">
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-tachometer-alt"></i> Soil Health Score</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="healthScore" class="display-4 text-primary">7.2</div>
+                        <p class="text-muted">out of 10</p>
+                        <div class="soil-health-meter">
+                            <div id="healthIndicator" class="soil-health-indicator" style="left: 72%"></div>
+                        </div>
+                        <p class="mt-2"><strong id="healthStatus">Good</strong></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5><i class="fas fa-exclamation-triangle"></i> Limiting Factors</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="limitingFactors">
+                            <!-- Dynamic content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommendations Section -->
+        <div id="recommendationSection" class="row mt-4" style="display: none;">
+            <div class="col-12">
+                <h3><i class="fas fa-lightbulb"></i> Improvement Recommendations</h3>
+                <div id="practiceRecommendations">
+                    <!-- Dynamic content will be inserted here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Educational Content -->
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-leaf fa-3x text-success mb-3"></i>
+                        <h5>Organic Matter</h5>
+                        <p class="text-muted">Improves soil structure, water retention, and nutrient cycling. Target 3-5% for most crops.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-balance-scale fa-3x text-info mb-3"></i>
+                        <h5>pH Balance</h5>
+                        <p class="text-muted">Controls nutrient availability. Most crops prefer 6.0-7.0 pH range for optimal growth.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-microscope fa-3x text-warning mb-3"></i>
+                        <h5>Soil Biology</h5>
+                        <p class="text-muted">Healthy soil contains billions of beneficial microorganisms that support plant growth.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('soilAssessmentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Calculate soil health score (simplified algorithm)
+            let score = 5.0; // Base score
+            
+            // pH scoring
+            const ph = parseFloat(data.ph);
+            if (ph >= 6.0 && ph <= 7.0) score += 1.5;
+            else if (ph >= 5.5 && ph <= 7.5) score += 1.0;
+            else if (ph >= 5.0 && ph <= 8.0) score += 0.5;
+            
+            // Organic matter scoring
+            const om = parseFloat(data.organic_matter);
+            if (om >= 4.0) score += 1.5;
+            else if (om >= 3.0) score += 1.0;
+            else if (om >= 2.0) score += 0.5;
+            
+            // Phosphorus scoring
+            const p = parseInt(data.phosphorus);
+            if (p >= 20 && p <= 40) score += 1.0;
+            else if (p >= 15 && p <= 50) score += 0.5;
+            
+            // Potassium scoring
+            const k = parseInt(data.potassium);
+            if (k >= 150 && k <= 250) score += 1.0;
+            else if (k >= 100 && k <= 300) score += 0.5;
+            
+            score = Math.min(score, 10.0); // Cap at 10
+            
+            displayAssessmentResults(score, data);
+        });
+        
+        function displayAssessmentResults(score, data) {
+            const resultsSection = document.getElementById('assessmentResults');
+            const recommendationSection = document.getElementById('recommendationSection');
+            
+            // Update health score display
+            document.getElementById('healthScore').textContent = score.toFixed(1);
+            document.getElementById('healthIndicator').style.left = (score * 10) + '%';
+            
+            let status = 'Poor';
+            if (score >= 8) status = 'Excellent';
+            else if (score >= 7) status = 'Good';
+            else if (score >= 6) status = 'Fair';
+            
+            document.getElementById('healthStatus').textContent = status;
+            
+            // Display limiting factors
+            const limitingFactors = [];
+            const ph = parseFloat(data.ph);
+            const om = parseFloat(data.organic_matter);
+            const p = parseInt(data.phosphorus);
+            const k = parseInt(data.potassium);
+            
+            if (ph < 6.0) limitingFactors.push('Acidic soil (pH too low)');
+            if (ph > 7.5) limitingFactors.push('Alkaline soil (pH too high)');
+            if (om < 3.0) limitingFactors.push('Low organic matter');
+            if (p < 15) limitingFactors.push('Low phosphorus levels');
+            if (k < 100) limitingFactors.push('Low potassium levels');
+            
+            document.getElementById('limitingFactors').innerHTML = limitingFactors.length > 0 
+                ? limitingFactors.map(factor => `<span class="badge bg-warning me-2 mb-2">${factor}</span>`).join('')
+                : '<span class="badge bg-success">No major limiting factors identified</span>';
+            
+            // Generate recommendations
+            generateRecommendations(data, limitingFactors);
+            
+            // Show results
+            resultsSection.style.display = 'block';
+            recommendationSection.style.display = 'block';
+        }
+        
+        function generateRecommendations(data, limitingFactors) {
+            const recommendations = [];
+            const ph = parseFloat(data.ph);
+            const om = parseFloat(data.organic_matter);
+            const p = parseInt(data.phosphorus);
+            const k = parseInt(data.potassium);
+            
+            if (ph < 6.0) {
+                recommendations.push({
+                    practice: 'Lime Application',
+                    priority: 'high',
+                    description: 'Apply agricultural limestone to raise soil pH to 6.5-7.0 range.',
+                    rate: `${Math.round((6.5 - ph) * 2)} tons/acre`,
+                    timing: 'Fall application preferred',
+                    cost: '$45-65/acre'
+                });
+            }
+            
+            if (om < 3.0) {
+                recommendations.push({
+                    practice: 'Organic Matter Enhancement',
+                    priority: 'high',
+                    description: 'Increase organic matter through cover crops, compost, or manure application.',
+                    rate: 'Cover crops or 10-15 tons compost/acre',
+                    timing: 'Fall seeding for cover crops',
+                    cost: '$25-50/acre'
+                });
+            }
+            
+            if (p < 15) {
+                recommendations.push({
+                    practice: 'Phosphorus Application',
+                    priority: 'medium',
+                    description: 'Apply phosphorus fertilizer to build soil P levels.',
+                    rate: '40-60 lbs P2O5/acre',
+                    timing: 'Fall or spring application',
+                    cost: '$30-45/acre'
+                });
+            }
+            
+            if (k < 100) {
+                recommendations.push({
+                    practice: 'Potassium Application',
+                    priority: 'medium',
+                    description: 'Apply potassium fertilizer to improve soil K levels.',
+                    rate: '60-100 lbs K2O/acre',
+                    timing: 'Fall application preferred',
+                    cost: '$35-55/acre'
+                });
+            }
+            
+            // Always recommend soil testing
+            recommendations.push({
+                practice: 'Regular Soil Testing',
+                priority: 'low',
+                description: 'Test soil every 2-3 years to monitor nutrient levels and pH.',
+                rate: 'Complete soil test panel',
+                timing: 'Every 2-3 years',
+                cost: '$15-25/sample'
+            });
+            
+            const practiceHtml = recommendations.map(rec => `
+                <div class="practice-card priority-${rec.priority}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6><i class="fas fa-tools"></i> ${rec.practice}</h6>
+                            <p class="mb-2">${rec.description}</p>
+                            <small class="text-muted">
+                                <strong>Rate:</strong> ${rec.rate} | 
+                                <strong>Timing:</strong> ${rec.timing}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-${rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'success'} mb-2">
+                                ${rec.priority.toUpperCase()} PRIORITY
+                            </span><br>
+                            <strong>${rec.cost}</strong>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('practiceRecommendations').innerHTML = practiceHtml;
+        }
+    </script>
+</body>
+</html>

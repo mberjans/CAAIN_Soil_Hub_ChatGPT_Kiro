@@ -1,0 +1,261 @@
+/* AFAS Agricultural Theme CSS */
+
+:root {
+    --primary-green: #28a745;
+    --secondary-green: #20c997;
+    --light-green: #d4edda;
+    --dark-green: #155724;
+    --soil-brown: #8b4513;
+    --sky-blue: #87ceeb;
+    --warning-yellow: #ffc107;
+    --danger-red: #dc3545;
+}
+
+/* Agricultural Cards */
+.agricultural-card {
+    border-left: 4px solid var(--primary-green);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.agricultural-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+/* Soil Health Indicators */
+.soil-ph-indicator {
+    background: linear-gradient(to right, 
+        #dc3545 0%, 
+        #ffc107 50%, 
+        #28a745 100%);
+    height: 20px;
+    border-radius: 10px;
+    position: relative;
+}
+
+.ph-marker {
+    position: absolute;
+    top: -5px;
+    width: 30px;
+    height: 30px;
+    background: white;
+    border: 3px solid #333;
+    border-radius: 50%;
+    transform: translateX(-50%);
+}
+
+/* Nutrient Level Bars */
+.nutrient-bar {
+    height: 15px;
+    background-color: #e9ecef;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 5px 0;
+}
+
+.nutrient-fill {
+    height: 100%;
+    transition: width 0.8s ease;
+    border-radius: 8px;
+}
+
+.nutrient-low { background-color: var(--danger-red); }
+.nutrient-medium { background-color: var(--warning-yellow); }
+.nutrient-high { background-color: var(--primary-green); }
+
+/* Confidence Indicators */
+.confidence-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.confidence-high { 
+    background-color: var(--light-green); 
+    color: var(--dark-green); 
+}
+
+.confidence-medium { 
+    background-color: #fff3cd; 
+    color: #856404; 
+}
+
+.confidence-low { 
+    background-color: #f8d7da; 
+    color: #721c24; 
+}
+
+/* Question Category Cards */
+.question-category {
+    background: linear-gradient(135deg, var(--primary-green), var(--secondary-green));
+    color: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: block;
+}
+
+.question-category:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
+    color: white;
+    text-decoration: none;
+}
+
+.question-category h5 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.question-category p {
+    margin-bottom: 0;
+    opacity: 0.9;
+}
+
+/* Recommendation Cards */
+.recommendation-card {
+    border: 1px solid #dee2e6;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    transition: all 0.3s ease;
+}
+
+.recommendation-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.recommendation-card.top-recommendation {
+    border-left: 4px solid var(--primary-green);
+    background: linear-gradient(135deg, var(--light-green), #ffffff);
+}
+
+/* Soil Input Fields */
+.soil-input {
+    background-color: #f8f9fa;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.soil-input:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    background-color: white;
+}
+
+/* Loading States */
+.loading-spinner {
+    display: none;
+}
+
+.loading .loading-spinner {
+    display: inline-block;
+}
+
+/* Agricultural Icons */
+.ag-icon {
+    color: var(--primary-green);
+    margin-right: 0.5rem;
+}
+
+.ag-icon-large {
+    font-size: 3rem;
+    color: var(--primary-green);
+    margin-bottom: 1rem;
+}
+
+/* Progress Bars for Recommendations */
+.progress-agricultural {
+    height: 8px;
+    border-radius: 4px;
+    background-color: #e9ecef;
+    overflow: hidden;
+}
+
+.progress-bar-agricultural {
+    height: 100%;
+    transition: width 0.8s ease;
+    border-radius: 4px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .question-category {
+        padding: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    .recommendation-card {
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .agricultural-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Print Styles for Reports */
+@media print {
+    .agricultural-card {
+        border: 1px solid #ccc;
+        box-shadow: none;
+        page-break-inside: avoid;
+    }
+    
+    .question-category {
+        background: #f8f9fa !important;
+        color: #333 !important;
+    }
+    
+    .btn {
+        display: none;
+    }
+}
+
+/* Accessibility Improvements */
+.agricultural-card:focus-within {
+    outline: 2px solid var(--primary-green);
+    outline-offset: 2px;
+}
+
+.question-category:focus {
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
+/* Animation for Loading States */
+@keyframes pulse-green {
+    0% { background-color: var(--primary-green); }
+    50% { background-color: var(--secondary-green); }
+    100% { background-color: var(--primary-green); }
+}
+
+.pulse-agricultural {
+    animation: pulse-green 2s infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--primary-green);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--dark-green);
+}

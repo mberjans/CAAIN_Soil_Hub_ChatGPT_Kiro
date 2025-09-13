@@ -1,0 +1,113 @@
+# Prometheus Configuration for AFAS Local Development
+# Monitors all Python/FastAPI services and system metrics
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "rules/*.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # AFAS Services
+  - job_name: 'question-router'
+    static_configs:
+      - targets: ['localhost:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  - job_name: 'recommendation-engine'
+    static_configs:
+      - targets: ['localhost:8001']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  - job_name: 'ai-agent'
+    static_configs:
+      - targets: ['localhost:8002']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  - job_name: 'data-integration'
+    static_configs:
+      - targets: ['localhost:8003']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  - job_name: 'image-analysis'
+    static_configs:
+      - targets: ['localhost:8004']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
+
+  - job_name: 'user-management'
+    static_configs:
+      - targets: ['localhost:8005']
+    metrics_path: '/metrics'
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  - job_name: 'frontend'
+    static_configs:
+      - targets: ['localhost:3000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 5s
+
+  # Database monitoring
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['localhost:9187']  # postgres_exporter
+    scrape_interval: 30s
+
+  - job_name: 'mongodb'
+    static_configs:
+      - targets: ['localhost:9216']  # mongodb_exporter
+    scrape_interval: 30s
+
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['localhost:9121']  # redis_exporter
+    scrape_interval: 30s
+
+  # System monitoring
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets: ['localhost:9100']
+    scrape_interval: 30s
+
+# Agricultural-specific recording rules
+recording_rules:
+  - name: afas_agricultural_metrics
+    rules:
+      # Average response time for agricultural recommendations
+      - record: afas:recommendation_response_time_avg
+        expr: avg(rate(http_request_duration_seconds_sum{job=~"recommendation-engine|ai-agent"}[5m])) / avg(rate(http_request_duration_seconds_count{job=~"recommendation-engine|ai-agent"}[5m]))
+
+      # Question classification accuracy rate
+      - record: afas:question_classification_accuracy
+        expr: rate(afas_question_classification_correct_total[5m]) / rate(afas_question_classification_total[5m])
+
+      # Agricultural data freshness
+      - record: afas:data_freshness_score
+        expr: avg(afas_external_data_age_hours{source=~"weather|soil|crop"})
+
+      # Recommendation confidence average
+      - record: afas:recommendation_confidence_avg
+        expr: avg(afas_recommendation_confidence_score)

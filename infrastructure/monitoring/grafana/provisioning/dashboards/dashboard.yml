@@ -1,0 +1,23 @@
+# Grafana dashboard provisioning for AFAS
+apiVersion: 1
+
+providers:
+  - name: 'AFAS Dashboards'
+    orgId: 1
+    folder: 'AFAS'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards
+
+  - name: 'Agricultural Metrics'
+    orgId: 1
+    folder: 'Agricultural'
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 60
+    allowUiUpdates: true
+    options:
+      path: /etc/grafana/provisioning/dashboards/agricultural

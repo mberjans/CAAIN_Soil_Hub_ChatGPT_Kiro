@@ -1,0 +1,254 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AFAS - Agricultural System Overview",
+    "tags": ["afas", "agricultural", "overview"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "System Health Overview",
+        "type": "stat",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "up{job=~\"question-router|recommendation-engine|ai-agent\"}",
+            "legendFormat": "{{job}} Status",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {"mode": "thresholds"},
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "green", "value": 1}
+              ]
+            },
+            "mappings": [
+              {"options": {"0": {"text": "DOWN"}}, "type": "value"},
+              {"options": {"1": {"text": "UP"}}, "type": "value"}
+            ]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Agricultural Recommendation Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "afas:recommendation_response_time_avg",
+            "legendFormat": "Avg Response Time",
+            "refId": "A"
+          },
+          {
+            "expr": "3",
+            "legendFormat": "Target (3s)",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Seconds",
+            "min": 0,
+            "max": 5
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {"params": [3], "type": "gt"},
+              "operator": {"type": "and"},
+              "query": {"params": ["A", "5m", "now"]},
+              "reducer": {"params": [], "type": "avg"},
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "for": "2m",
+          "frequency": "10s",
+          "handler": 1,
+          "name": "Slow Agricultural Recommendations",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 3,
+        "title": "Question Classification Accuracy",
+        "type": "singlestat",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "afas:question_classification_accuracy",
+            "legendFormat": "Classification Accuracy",
+            "refId": "A"
+          }
+        ],
+        "valueName": "current",
+        "format": "percentunit",
+        "thresholds": "0.7,0.85",
+        "colorBackground": true,
+        "colors": ["red", "yellow", "green"]
+      },
+      {
+        "id": 4,
+        "title": "Agricultural Data Freshness",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "afas_external_data_age_hours{source=\"weather\"}",
+            "legendFormat": "Weather Data Age",
+            "refId": "A"
+          },
+          {
+            "expr": "afas_external_data_age_hours{source=\"soil\"}",
+            "legendFormat": "Soil Data Age",
+            "refId": "B"
+          },
+          {
+            "expr": "afas_external_data_age_hours{source=\"crop\"}",
+            "legendFormat": "Crop Data Age",
+            "refId": "C"
+          },
+          {
+            "expr": "24",
+            "legendFormat": "Stale Threshold (24h)",
+            "refId": "D"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Hours",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Recommendation Confidence Distribution",
+        "type": "histogram",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, afas_recommendation_confidence_score_bucket)",
+            "legendFormat": "95th Percentile",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.50, afas_recommendation_confidence_score_bucket)",
+            "legendFormat": "Median",
+            "refId": "B"
+          },
+          {
+            "expr": "histogram_quantile(0.05, afas_recommendation_confidence_score_bucket)",
+            "legendFormat": "5th Percentile",
+            "refId": "C"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Questions Asked by Type (Last Hour)",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "increase(afas_questions_asked_total[1h])",
+            "legendFormat": "{{question_type}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Agricultural Service Errors",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(afas_errors_total{severity=\"critical\"}[5m])",
+            "legendFormat": "Critical Errors",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(afas_errors_total{severity=\"warning\"}[5m])",
+            "legendFormat": "Warning Errors",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Errors per second",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Database Performance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "rate(afas_database_query_duration_seconds_sum[5m]) / rate(afas_database_query_duration_seconds_count[5m])",
+            "legendFormat": "{{database}} Avg Query Time",
+            "refId": "A"
+          },
+          {
+            "expr": "afas_database_connections_active",
+            "legendFormat": "{{database}} Active Connections",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Query Time (s) / Connections",
+            "min": 0
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "service",
+          "type": "query",
+          "query": "label_values(up{job=~\".*afas.*\"}, job)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true
+        },
+        {
+          "name": "question_type",
+          "type": "query",
+          "query": "label_values(afas_questions_asked_total, question_type)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true
+        }
+      ]
+    },
+    "annotations": {
+      "list": [
+        {
+          "name": "Agricultural Alerts",
+          "datasource": "Prometheus",
+          "expr": "ALERTS{alertname=~\".*Agricultural.*|.*Recommendation.*\"}",
+          "titleFormat": "{{alertname}}",
+          "textFormat": "{{description}}"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,176 @@
+# Alertmanager configuration for AFAS
+# Handles alert routing and notifications for agricultural system issues
+
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'afas-alerts@localhost'
+  smtp_auth_username: 'afas-alerts@localhost'
+  smtp_auth_password: 'alert_password'
+
+# Templates for agricultural-specific alert formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route alerts based on agricultural context and severity
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-receiver'
+  
+  routes:
+    # Critical agricultural alerts - immediate notification
+    - match:
+        severity: critical
+        impact: agricultural_accuracy
+      receiver: 'agricultural-critical'
+      group_wait: 0s
+      repeat_interval: 15m
+    
+    # Data quality issues affecting recommendations
+    - match:
+        component: data-integration
+        severity: warning
+      receiver: 'data-quality-team'
+      group_interval: 5m
+      repeat_interval: 30m
+    
+    # Performance issues during critical agricultural periods
+    - match_re:
+        alertname: 'Slow.*Response|.*Down.*'
+      receiver: 'performance-team'
+      group_interval: 2m
+      repeat_interval: 10m
+    
+    # Business metrics alerts
+    - match:
+        impact: user_adoption
+      receiver: 'business-team'
+      group_interval: 30m
+      repeat_interval: 4h
+
+# Notification receivers
+receivers:
+  - name: 'default-receiver'
+    email_configs:
+      - to: 'afas-dev-team@localhost'
+        subject: 'AFAS Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          
+          Agricultural Impact: {{ .Annotations.agricultural_impact }}
+          Action Required: {{ .Annotations.action_required }}
+          
+          Labels:
+          {{ range .Labels.SortedPairs }}  {{ .Name }}: {{ .Value }}
+          {{ end }}
+          {{ end }}
+
+  - name: 'agricultural-critical'
+    email_configs:
+      - to: 'agricultural-experts@localhost,dev-team@localhost'
+        subject: 'CRITICAL AFAS Agricultural Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 CRITICAL AGRICULTURAL SYSTEM ALERT 🚨
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          
+          🌾 Agricultural Impact: {{ .Annotations.agricultural_impact }}
+          ⚡ Immediate Action Required: {{ .Annotations.action_required }}
+          
+          Severity: {{ .Labels.severity }}
+          Component: {{ .Labels.component }}
+          Time: {{ .StartsAt.Format "2006-01-02 15:04:05" }}
+          {{ end }}
+          
+          This alert affects the accuracy of agricultural recommendations.
+          Farmers may receive incorrect guidance that could impact their operations.
+    
+    # Slack notification for critical alerts (if configured)
+    slack_configs:
+      - api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+        channel: '#afas-critical-alerts'
+        title: 'Critical AFAS Agricultural Alert'
+        text: |
+          {{ range .Alerts }}
+          🚨 *{{ .Annotations.summary }}*
+          
+          *Agricultural Impact:* {{ .Annotations.agricultural_impact }}
+          *Action Required:* {{ .Annotations.action_required }}
+          
+          *Component:* {{ .Labels.component }}
+          *Severity:* {{ .Labels.severity }}
+          {{ end }}
+
+  - name: 'data-quality-team'
+    email_configs:
+      - to: 'data-team@localhost'
+        subject: 'AFAS Data Quality Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          📊 Data Quality Issue Detected
+          
+          {{ range .Alerts }}
+          Issue: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          
+          Data Source: {{ .Labels.data_source }}
+          Impact on Recommendations: {{ .Annotations.agricultural_impact }}
+          
+          Recommended Actions:
+          {{ .Annotations.action_required }}
+          {{ end }}
+
+  - name: 'performance-team'
+    email_configs:
+      - to: 'performance-team@localhost'
+        subject: 'AFAS Performance Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          ⚡ Performance Issue Detected
+          
+          {{ range .Alerts }}
+          Issue: {{ .Annotations.summary }}
+          Service: {{ .Labels.component }}
+          
+          Current Performance: {{ .Annotations.description }}
+          Impact: {{ .Annotations.agricultural_impact }}
+          
+          Action Required: {{ .Annotations.action_required }}
+          {{ end }}
+
+  - name: 'business-team'
+    email_configs:
+      - to: 'business-team@localhost,product-manager@localhost'
+        subject: 'AFAS Business Metrics Alert: {{ .GroupLabels.alertname }}'
+        body: |
+          📈 Business Metrics Alert
+          
+          {{ range .Alerts }}
+          Metric: {{ .Annotations.summary }}
+          Current Value: {{ .Annotations.description }}
+          
+          Business Impact: {{ .Annotations.agricultural_impact }}
+          Suggested Actions: {{ .Annotations.action_required }}
+          
+          This may indicate issues with user adoption or system value.
+          {{ end }}
+
+# Inhibition rules to prevent alert spam
+inhibit_rules:
+  # If a service is down, don't alert on slow response times
+  - source_match:
+      alertname: 'SystemDownDuringCriticalSeason'
+    target_match:
+      alertname: 'SlowRecommendationResponse'
+    equal: ['service']
+  
+  # If external APIs are failing, don't alert on stale data
+  - source_match:
+      alertname: 'ExternalAPIFailureHigh'
+    target_match:
+      alertname: 'StaleAgriculturalData'
+    equal: ['api_name']

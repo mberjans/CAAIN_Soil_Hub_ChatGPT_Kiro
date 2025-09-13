@@ -1,0 +1,341 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "AFAS - Agricultural Metrics & Business Intelligence",
+    "tags": ["afas", "agricultural", "business", "metrics"],
+    "style": "dark",
+    "timezone": "browser",
+    "refresh": "1m",
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "title": "Farmer Engagement Metrics",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 0},
+        "collapsed": false
+      },
+      {
+        "id": 2,
+        "title": "Questions Asked per Hour",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 1},
+        "targets": [
+          {
+            "expr": "rate(afas_questions_asked_total[1h]) * 3600",
+            "legendFormat": "{{question_type}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Questions/Hour",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Active Farmers (Last 24h)",
+        "type": "singlestat",
+        "gridPos": {"h": 8, "w": 4, "x": 8, "y": 1},
+        "targets": [
+          {
+            "expr": "count(increase(afas_questions_asked_total[24h]) > 0) by (user_id)",
+            "refId": "A"
+          }
+        ],
+        "valueName": "current",
+        "format": "short"
+      },
+      {
+        "id": 4,
+        "title": "Recommendation Acceptance Rate",
+        "type": "singlestat",
+        "gridPos": {"h": 8, "w": 4, "x": 12, "y": 1},
+        "targets": [
+          {
+            "expr": "rate(afas_recommendations_accepted_total[1h]) / rate(afas_recommendations_generated_total[1h])",
+            "refId": "A"
+          }
+        ],
+        "valueName": "current",
+        "format": "percentunit",
+        "thresholds": "0.4,0.6",
+        "colorBackground": true,
+        "colors": ["red", "yellow", "green"]
+      },
+      {
+        "id": 5,
+        "title": "Average Session Duration",
+        "type": "singlestat",
+        "gridPos": {"h": 8, "w": 4, "x": 16, "y": 1},
+        "targets": [
+          {
+            "expr": "avg(afas_user_session_duration_seconds)",
+            "refId": "A"
+          }
+        ],
+        "valueName": "current",
+        "format": "s"
+      },
+      {
+        "id": 6,
+        "title": "Return User Rate",
+        "type": "singlestat",
+        "gridPos": {"h": 8, "w": 4, "x": 20, "y": 1},
+        "targets": [
+          {
+            "expr": "rate(afas_returning_users_total[24h]) / rate(afas_total_users_total[24h])",
+            "refId": "A"
+          }
+        ],
+        "valueName": "current",
+        "format": "percentunit"
+      },
+      {
+        "id": 7,
+        "title": "Agricultural Accuracy Metrics",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 9},
+        "collapsed": false
+      },
+      {
+        "id": 8,
+        "title": "Recommendation Confidence by Question Type",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 10},
+        "targets": [
+          {
+            "expr": "avg(afas_recommendation_confidence_score) by (question_type)",
+            "legendFormat": "{{question_type}}",
+            "refId": "A"
+          },
+          {
+            "expr": "0.7",
+            "legendFormat": "Minimum Threshold",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Confidence Score",
+            "min": 0,
+            "max": 1
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Expert Validation Success Rate",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 10},
+        "targets": [
+          {
+            "expr": "rate(afas_expert_validation_passed_total[1h]) / rate(afas_expert_validation_total[1h])",
+            "legendFormat": "{{validation_type}}",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate",
+            "min": 0,
+            "max": 1
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Crop Recommendation Accuracy by Region",
+        "type": "heatmap",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 18},
+        "targets": [
+          {
+            "expr": "avg(afas_crop_recommendation_accuracy) by (region, crop_type)",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "Fertilizer Recommendation Variance",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 18},
+        "targets": [
+          {
+            "expr": "stddev(afas_fertilizer_rate_recommended) by (nutrient_type)",
+            "legendFormat": "{{nutrient_type}} Std Dev",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Rate Variance (lbs/acre)",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "title": "Data Quality & Freshness",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 26},
+        "collapsed": false
+      },
+      {
+        "id": 13,
+        "title": "External Data Source Reliability",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 0, "y": 27},
+        "targets": [
+          {
+            "expr": "rate(afas_external_api_success_total[5m]) / rate(afas_external_api_requests_total[5m])",
+            "legendFormat": "{{source}} Success Rate",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Success Rate",
+            "min": 0.8,
+            "max": 1
+          }
+        ]
+      },
+      {
+        "id": 14,
+        "title": "Soil Test Data Completeness",
+        "type": "piechart",
+        "gridPos": {"h": 8, "w": 8, "x": 8, "y": 27},
+        "targets": [
+          {
+            "expr": "sum(afas_soil_tests_complete_total) by (completeness_level)",
+            "legendFormat": "{{completeness_level}}",
+            "refId": "A"
+          }
+        ]
+      },
+      {
+        "id": 15,
+        "title": "Weather Data Latency",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 8, "x": 16, "y": 27},
+        "targets": [
+          {
+            "expr": "afas_weather_data_latency_minutes",
+            "legendFormat": "{{weather_source}}",
+            "refId": "A"
+          },
+          {
+            "expr": "60",
+            "legendFormat": "Target (1 hour)",
+            "refId": "B"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Minutes",
+            "min": 0
+          }
+        ]
+      },
+      {
+        "id": 16,
+        "title": "Business Impact Metrics",
+        "type": "row",
+        "gridPos": {"h": 1, "w": 24, "x": 0, "y": 35},
+        "collapsed": false
+      },
+      {
+        "id": 17,
+        "title": "Estimated Cost Savings for Farmers",
+        "type": "singlestat",
+        "gridPos": {"h": 8, "w": 6, "x": 0, "y": 36},
+        "targets": [
+          {
+            "expr": "sum(afas_estimated_cost_savings_dollars)",
+            "refId": "A"
+          }
+        ],
+        "valueName": "current",
+        "format": "currencyUSD",
+        "prefix": "$"
+      },
+      {
+        "id": 18,
+        "title": "Fertilizer Optimization Impact",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 9, "x": 6, "y": 36},
+        "targets": [
+          {
+            "expr": "avg(afas_fertilizer_reduction_percent) by (nutrient_type)",
+            "legendFormat": "{{nutrient_type}} Reduction",
+            "refId": "A"
+          }
+        ],
+        "yAxes": [
+          {
+            "label": "Reduction Percentage",
+            "min": 0,
+            "max": 50
+          }
+        ]
+      },
+      {
+        "id": 19,
+        "title": "Environmental Impact Score",
+        "type": "gauge",
+        "gridPos": {"h": 8, "w": 9, "x": 15, "y": 36},
+        "targets": [
+          {
+            "expr": "avg(afas_environmental_impact_score)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 50},
+                {"color": "green", "value": 80}
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "templating": {
+      "list": [
+        {
+          "name": "region",
+          "type": "query",
+          "query": "label_values(afas_questions_asked_total, region)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true
+        },
+        {
+          "name": "crop_type",
+          "type": "query",
+          "query": "label_values(afas_crop_recommendation_accuracy, crop_type)",
+          "refresh": 1,
+          "includeAll": true,
+          "multi": true
+        },
+        {
+          "name": "time_range",
+          "type": "interval",
+          "options": ["1h", "6h", "24h", "7d", "30d"],
+          "current": {"text": "6h", "value": "6h"}
+        }
+      ]
+    }
+  }
+}

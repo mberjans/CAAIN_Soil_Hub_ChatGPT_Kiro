@@ -78,6 +78,9 @@ EOF
     
     # Create main.py
     if [ ! -f src/main.py ]; then
+        # Convert service name to uppercase for environment variable
+        service_env_name=$(echo "$service_name" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+        
         cat > src/main.py << EOF
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -115,7 +118,7 @@ async def root():
     return {"message": "AFAS $service_name is running"}
 
 if __name__ == "__main__":
-    port = int(os.getenv("${service_name^^}_PORT", $service_port))
+    port = int(os.getenv("${service_env_name}_PORT", $service_port))
     uvicorn.run(app, host="0.0.0.0", port=port, reload=True)
 EOF
     fi

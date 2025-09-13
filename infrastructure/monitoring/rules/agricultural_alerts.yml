@@ -1,0 +1,137 @@
+# Agricultural-specific alerting rules for AFAS
+# Focuses on agricultural accuracy and farmer-critical issues
+
+groups:
+  - name: agricultural_accuracy
+    rules:
+      # Alert when recommendation confidence drops below acceptable threshold
+      - alert: LowRecommendationConfidence
+        expr: afas:recommendation_confidence_avg < 0.7
+        for: 5m
+        labels:
+          severity: warning
+          component: recommendation-engine
+          impact: agricultural_accuracy
+        annotations:
+          summary: "Agricultural recommendation confidence is low"
+          description: "Average recommendation confidence ({{ $value }}) is below 0.7 threshold. This may indicate data quality issues or model degradation."
+          agricultural_impact: "Farmers may receive unreliable recommendations"
+          action_required: "Review data sources and model performance"
+
+      # Alert when question classification accuracy drops
+      - alert: QuestionClassificationAccuracyLow
+        expr: afas:question_classification_accuracy < 0.85
+        for: 3m
+        labels:
+          severity: warning
+          component: question-router
+          impact: user_experience
+        annotations:
+          summary: "Question classification accuracy is degraded"
+          description: "Question classification accuracy ({{ $value }}) is below 85% threshold"
+          agricultural_impact: "Farmers may get routed to wrong recommendation engines"
+          action_required: "Review NLP models and training data"
+
+      # Alert when agricultural data becomes stale
+      - alert: StaleAgriculturalData
+        expr: afas:data_freshness_score > 24
+        for: 10m
+        labels:
+          severity: critical
+          component: data-integration
+          impact: recommendation_accuracy
+        annotations:
+          summary: "Agricultural data is becoming stale"
+          description: "Average data age ({{ $value }} hours) exceeds 24 hours"
+          agricultural_impact: "Recommendations may be based on outdated weather, soil, or crop data"
+          action_required: "Check external API connections and data ingestion pipelines"
+
+  - name: performance_critical
+    rules:
+      # Alert when recommendation response time exceeds agricultural tolerance
+      - alert: SlowRecommendationResponse
+        expr: afas:recommendation_response_time_avg > 3
+        for: 2m
+        labels:
+          severity: warning
+          component: recommendation-engine
+          impact: user_experience
+        annotations:
+          summary: "Agricultural recommendations are responding slowly"
+          description: "Average response time ({{ $value }}s) exceeds 3-second target"
+          agricultural_impact: "Farmers may experience delays during critical decision periods"
+          action_required: "Check database performance and optimize queries"
+
+      # Alert during critical agricultural periods (planting/harvest seasons)
+      - alert: SystemDownDuringCriticalSeason
+        expr: up{job=~"recommendation-engine|question-router"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          component: core_services
+          impact: business_critical
+        annotations:
+          summary: "Core AFAS services are down"
+          description: "Critical services are unavailable: {{ $labels.job }}"
+          agricultural_impact: "Farmers cannot access recommendations during critical periods"
+          action_required: "Immediate service restoration required"
+
+  - name: data_quality
+    rules:
+      # Alert when external API failure rate is high
+      - alert: ExternalAPIFailureHigh
+        expr: rate(afas_external_api_errors_total[5m]) / rate(afas_external_api_requests_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: data-integration
+          impact: data_quality
+        annotations:
+          summary: "High failure rate for external agricultural APIs"
+          description: "External API failure rate ({{ $value | humanizePercentage }}) is above 10%"
+          agricultural_impact: "Recommendations may lack current weather, soil, or market data"
+          action_required: "Check API credentials and service status"
+
+      # Alert when database connections are failing
+      - alert: DatabaseConnectionIssues
+        expr: rate(afas_database_connection_errors_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          component: database
+          impact: system_availability
+        annotations:
+          summary: "Database connection errors detected"
+          description: "Database connection errors occurring at {{ $value }} per second"
+          agricultural_impact: "System cannot access farm profiles and historical data"
+          action_required: "Check database connectivity and connection pool settings"
+
+  - name: business_metrics
+    rules:
+      # Alert when user engagement drops significantly
+      - alert: LowUserEngagement
+        expr: rate(afas_questions_asked_total[1h]) < 10
+        for: 30m
+        labels:
+          severity: info
+          component: business_metrics
+          impact: user_adoption
+        annotations:
+          summary: "User engagement is lower than expected"
+          description: "Question rate ({{ $value }} per hour) is below normal levels"
+          agricultural_impact: "Farmers may not be finding the system useful"
+          action_required: "Review user feedback and system usability"
+
+      # Alert when recommendation acceptance rate drops
+      - alert: LowRecommendationAcceptance
+        expr: rate(afas_recommendations_accepted_total[1h]) / rate(afas_recommendations_generated_total[1h]) < 0.6
+        for: 1h
+        labels:
+          severity: warning
+          component: recommendation-engine
+          impact: agricultural_value
+        annotations:
+          summary: "Farmers are not accepting recommendations"
+          description: "Recommendation acceptance rate ({{ $value | humanizePercentage }}) is below 60%"
+          agricultural_impact: "Recommendations may not be meeting farmer needs"
+          action_required: "Review recommendation quality and farmer feedback"

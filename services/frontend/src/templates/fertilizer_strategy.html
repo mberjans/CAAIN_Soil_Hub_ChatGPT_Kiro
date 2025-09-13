@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - AFAS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .agricultural-card {
+            border-left: 4px solid #28a745;
+            transition: transform 0.2s;
+        }
+        .agricultural-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .cost-breakdown {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .roi-indicator {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+        .nutrient-bar {
+            height: 20px;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 5px 0;
+        }
+        .nutrient-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        .strategy-comparison {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #f8f9fa;
+        }
+        .recommended { border-left: 4px solid #28a745; background: #d4edda; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i> AFAS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/crop-selection">Crop Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/soil-fertility">Soil Fertility</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/fertilizer-strategy">Fertilizer Strategy</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-flask"></i> Fertilizer Strategy Optimizer</h1>
+                <p class="lead">Optimize fertilizer application for maximum return on investment</p>
+            </div>
+        </div>
+        
+        <!-- Input Form -->
+        <div class="row">
+            <div class="col-lg-6">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-seedling"></i> Crop & Field Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="fertilizerStrategyForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Primary Crop</label>
+                                    <select class="form-control" name="crop" required>
+                                        <option value="">Select crop</option>
+                                        <option value="corn">Corn</option>
+                                        <option value="soybean">Soybean</option>
+                                        <option value="wheat">Wheat</option>
+                                        <option value="cotton">Cotton</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Yield Goal (bu/acre)</label>
+                                    <input type="number" class="form-control" name="yield_goal" 
+                                        placeholder="180" min="50" max="300" required>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Planted Acres</label>
+                                    <input type="number" class="form-control" name="acres" 
+                                        placeholder="250" min="1" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Previous Crop</label>
+                                    <select class="form-control" name="previous_crop">
+                                        <option value="">Select previous crop</option>
+                                        <option value="corn">Corn</option>
+                                        <option value="soybean">Soybean</option>
+                                        <option value="wheat">Wheat</option>
+                                        <option value="fallow">Fallow</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <div class="card agricultural-card mt-3">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-mountain"></i> Soil Test Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Organic Matter (%)</label>
+                                <input type="number" class="form-control" name="organic_matter" 
+                                    placeholder="3.2" min="0" max="15" step="0.1" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Nitrate-N (ppm)</label>
+                                <input type="number" class="form-control" name="nitrate_n" 
+                                    placeholder="8" min="0" max="50" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Phosphorus (ppm)</label>
+                                <input type="number" class="form-control" name="phosphorus" 
+                                    placeholder="22" min="0" max="200" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Potassium (ppm)</label>
+                                <input type="number" class="form-control" name="potassium" 
+                                    placeholder="140" min="0" max="800" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-6">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5><i class="fas fa-dollar-sign"></i> Economic Parameters</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Total Fertilizer Budget ($)</label>
+                            <input type="number" class="form-control" name="budget" 
+                                placeholder="18000" min="1000" required>
+                        </div>
+                        
+                        <h6>Current Fertilizer Prices ($/ton)</h6>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Urea (46-0-0)</label>
+                                <input type="number" class="form-control" name="urea_price" 
+                                    placeholder="420" min="200" max="800" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">DAP (18-46-0)</label>
+                                <input type="number" class="form-control" name="dap_price" 
+                                    placeholder="580" min="300" max="1000" required>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Potash (0-0-60)</label>
+                                <input type="number" class="form-control" name="potash_price" 
+                                    placeholder="380" min="200" max="600" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Corn Price ($/bu)</label>
+                                <input type="number" class="form-control" name="corn_price" 
+                                    placeholder="4.25" min="2" max="8" step="0.01" required>
+                            </div>
+                        </div>
+                        
+                        <button type="submit" form="fertilizerStrategyForm" class="btn btn-success w-100">
+                            <i class="fas fa-calculator"></i> Calculate Optimal Strategy
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="strategyResults" class="row mt-4" style="display: none;">
+            <div class="col-lg-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-chart-line"></i> ROI Analysis</h5>
+                    </div>
+                    <div class="card-body text-center">
+                        <div id="roiValue" class="roi-indicator text-primary">285%</div>
+                        <p class="text-muted">Return on Investment</p>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong id="totalCost">$16,250</strong><br>
+                                <small class="text-muted">Total Cost</small>
+                            </div>
+                            <div class="col-6">
+                                <strong id="expectedReturn">$46,313</strong><br>
+                                <small class="text-muted">Expected Return</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-flask"></i> Recommended Fertilizer Program</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="fertilizerProgram">
+                            <!-- Dynamic content will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Strategy Comparison -->
+        <div id="strategyComparison" class="row mt-4" style="display: none;">
+            <div class="col-12">
+                <h3><i class="fas fa-balance-scale"></i> Strategy Comparison</h3>
+                <div id="comparisonCards">
+                    <!-- Dynamic content will be inserted here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Educational Content -->
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-bullseye fa-3x text-success mb-3"></i>
+                        <h5>4R Principles</h5>
+                        <p class="text-muted">Right source, Right rate, Right time, Right place for optimal nutrient management.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-chart-line fa-3x text-info mb-3"></i>
+                        <h5>Economic Optimization</h5>
+                        <p class="text-muted">Maximize return on investment while maintaining soil health and environmental stewardship.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-leaf fa-3x text-warning mb-3"></i>
+                        <h5>Environmental Impact</h5>
+                        <p class="text-muted">Minimize nutrient losses while optimizing crop uptake and soil health.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('fertilizerStrategyForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData);
+            
+            // Calculate fertilizer strategy (simplified algorithm)
+            calculateFertilizerStrategy(data);
+        });
+        
+        function calculateFertilizerStrategy(data) {
+            const crop = data.crop;
+            const yieldGoal = parseInt(data.yield_goal);
+            const acres = parseInt(data.acres);
+            const organicMatter = parseFloat(data.organic_matter);
+            const nitrateN = parseInt(data.nitrate_n);
+            const phosphorus = parseInt(data.phosphorus);
+            const potassium = parseInt(data.potassium);
+            const previousCrop = data.previous_crop;
+            
+            // Nitrogen calculation for corn
+            let nRate = 0;
+            let legumeCreditN = 0;
+            let soilTestCreditN = nitrateN * 2; // Rough conversion
+            
+            if (crop === 'corn') {
+                nRate = yieldGoal * 0.9; // Base N rate
+                if (previousCrop === 'soybean') {
+                    legumeCreditN = 40; // Legume credit
+                }
+                nRate = Math.max(nRate - legumeCreditN - soilTestCreditN, 80);
+            }
+            
+            // Phosphorus calculation
+            let pRate = 0;
+            if (phosphorus < 15) {
+                pRate = 50; // Build-up rate
+            } else if (phosphorus < 25) {
+                pRate = 30; // Maintenance rate
+            } else {
+                pRate = 20; // Low maintenance
+            }
+            
+            // Potassium calculation
+            let kRate = 0;
+            if (potassium < 100) {
+                kRate = 80; // Build-up rate
+            } else if (potassium < 150) {
+                kRate = 50; // Maintenance rate
+            } else {
+                kRate = 30; // Low maintenance
+            }
+            
+            // Cost calculations
+            const ureaPrice = parseFloat(data.urea_price);
+            const dapPrice = parseFloat(data.dap_price);
+            const potashPrice = parseFloat(data.potash_price);
+            const cornPrice = parseFloat(data.corn_price);
+            
+            const nCost = (nRate * acres * ureaPrice) / (2000 * 0.46); // Urea is 46% N
+            const pCost = (pRate * acres * dapPrice) / (2000 * 0.46); // DAP is 46% P2O5
+            const kCost = (kRate * acres * potashPrice) / (2000 * 0.60); // Potash is 60% K2O
+            
+            const totalCost = nCost + pCost + kCost;
+            const expectedYield = yieldGoal * acres;
+            const grossRevenue = expectedYield * cornPrice;
+            const roi = ((grossRevenue - totalCost) / totalCost) * 100;
+            
+            displayResults({
+                nRate, pRate, kRate,
+                legumeCreditN, soilTestCreditN,
+                totalCost, grossRevenue, roi,
+                acres, yieldGoal
+            });
+        }
+        
+        function displayResults(results) {
+            // Update ROI display
+            document.getElementById('roiValue').textContent = Math.round(results.roi) + '%';
+            document.getElementById('totalCost').textContent = '$' + results.totalCost.toLocaleString();
+            document.getElementById('expectedReturn').textContent = '$' + results.grossRevenue.toLocaleString();
+            
+            // Display fertilizer program
+            const programHtml = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-leaf text-success"></i> Nitrogen Program</h6>
+                        <div class="cost-breakdown">
+                            <div class="d-flex justify-content-between">
+                                <span>Total N Rate:</span>
+                                <strong>${results.nRate} lbs/acre</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Legume Credit:</span>
+                                <span>-${results.legumeCreditN} lbs/acre</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Soil Test Credit:</span>
+                                <span>-${results.soilTestCreditN} lbs/acre</span>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <span>Fertilizer N Needed:</span>
+                                <strong>${results.nRate} lbs/acre</strong>
+                            </div>
+                            <small class="text-muted">Source: Urea (46-0-0)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-mountain text-info"></i> Phosphorus Program</h6>
+                        <div class="cost-breakdown">
+                            <div class="d-flex justify-content-between">
+                                <span>P2O5 Rate:</span>
+                                <strong>${results.pRate} lbs/acre</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Application:</span>
+                                <span>At planting</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Strategy:</span>
+                                <span>${results.pRate > 40 ? 'Build-up' : 'Maintenance'}</span>
+                            </div>
+                            <hr>
+                            <small class="text-muted">Source: DAP (18-46-0)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <h6><i class="fas fa-flask text-warning"></i> Potassium Program</h6>
+                        <div class="cost-breakdown">
+                            <div class="d-flex justify-content-between">
+                                <span>K2O Rate:</span>
+                                <strong>${results.kRate} lbs/acre</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Application:</span>
+                                <span>Fall preferred</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Strategy:</span>
+                                <span>${results.kRate > 60 ? 'Build-up' : 'Maintenance'}</span>
+                            </div>
+                            <hr>
+                            <small class="text-muted">Source: Muriate of Potash</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('fertilizerProgram').innerHTML = programHtml;
+            
+            // Display strategy comparison
+            displayStrategyComparison(results);
+            
+            // Show results
+            document.getElementById('strategyResults').style.display = 'block';
+            document.getElementById('strategyComparison').style.display = 'block';
+        }
+        
+        function displayStrategyComparison(baseResults) {
+            const strategies = [
+                {
+                    name: 'Recommended Strategy',
+                    cost: baseResults.totalCost,
+                    yield: baseResults.yieldGoal,
+                    roi: baseResults.roi,
+                    recommended: true,
+                    description: 'Optimized for maximum ROI while maintaining soil health'
+                },
+                {
+                    name: 'High Input Strategy',
+                    cost: baseResults.totalCost * 1.3,
+                    yield: baseResults.yieldGoal * 1.02,
+                    roi: baseResults.roi * 0.85,
+                    recommended: false,
+                    description: 'Higher fertilizer rates for maximum yield potential'
+                },
+                {
+                    name: 'Low Input Strategy',
+                    cost: baseResults.totalCost * 0.7,
+                    yield: baseResults.yieldGoal * 0.93,
+                    roi: baseResults.roi * 0.92,
+                    recommended: false,
+                    description: 'Reduced fertilizer rates to minimize input costs'
+                }
+            ];
+            
+            const comparisonHtml = strategies.map(strategy => `
+                <div class="strategy-comparison ${strategy.recommended ? 'recommended' : ''}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6>${strategy.name} ${strategy.recommended ? '<span class="badge bg-success">RECOMMENDED</span>' : ''}</h6>
+                            <p class="mb-2">${strategy.description}</p>
+                            <div class="row">
+                                <div class="col-sm-4">
+                                    <small class="text-muted">Total Cost:</small><br>
+                                    <strong>$${Math.round(strategy.cost).toLocaleString()}</strong>
+                                </div>
+                                <div class="col-sm-4">
+                                    <small class="text-muted">Expected Yield:</small><br>
+                                    <strong>${Math.round(strategy.yield)} bu/acre</strong>
+                                </div>
+                                <div class="col-sm-4">
+                                    <small class="text-muted">ROI:</small><br>
+                                    <strong>${Math.round(strategy.roi)}%</strong>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="roi-indicator" style="font-size: 1.5rem; color: ${strategy.recommended ? '#28a745' : '#6c757d'}">
+                                ${Math.round(strategy.roi)}%
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('comparisonCards').innerHTML = comparisonHtml;
+        }
+    </script>
+</body>
+</html>

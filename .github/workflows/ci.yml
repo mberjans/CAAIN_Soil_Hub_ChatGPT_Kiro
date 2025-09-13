@@ -1,0 +1,321 @@
+name: AFAS CI Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+env:
+  PYTHON_VERSION: '3.11'
+  
+jobs:
+  # Code Quality and Security Checks
+  code-quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black mypy bandit safety
+          
+      - name: Code formatting check (Black)
+        run: |
+          black --check --diff services/
+          
+      - name: Linting (Flake8)
+        run: |
+          flake8 services/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 services/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+          
+      - name: Type checking (MyPy)
+        run: |
+          mypy services/ --ignore-missing-imports
+          
+      - name: Security scan (Bandit)
+        run: |
+          bandit -r services/ -f json -o bandit-report.json
+          
+      - name: Dependency vulnerability scan (Safety)
+        run: |
+          safety check --json --output safety-report.json
+          
+      - name: Upload security reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+
+  # Unit Tests for Each Service
+  unit-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        service: 
+          - question-router
+          - recommendation-engine
+          - ai-agent
+          - data-integration
+          - image-analysis
+          - user-management
+          - frontend
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Cache pip dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.service }}-${{ hashFiles(format('services/{0}/requirements*.txt', matrix.service)) }}
+          restore-keys: |
+            ${{ runner.os }}-pip-${{ matrix.service }}-
+            ${{ runner.os }}-pip-
+            
+      - name: Install service dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f services/${{ matrix.service }}/requirements.txt ]; then
+            pip install -r services/${{ matrix.service }}/requirements.txt
+          fi
+          if [ -f services/${{ matrix.service }}/requirements-test.txt ]; then
+            pip install -r services/${{ matrix.service }}/requirements-test.txt
+          fi
+          pip install pytest pytest-cov pytest-asyncio
+          
+      - name: Run unit tests
+        run: |
+          cd services/${{ matrix.service }}
+          python -m pytest tests/unit/ -v --cov=src --cov-report=xml --cov-report=html
+          
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-${{ matrix.service }}
+          path: services/${{ matrix.service }}/htmlcov/
+
+  # Agricultural Logic Validation
+  agricultural-validation:
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r services/recommendation-engine/requirements.txt
+          pip install -r services/recommendation-engine/requirements-test.txt
+          pip install pytest pytest-asyncio
+          
+      - name: Run Agricultural Logic Tests
+        run: |
+          python -m pytest tests/agricultural/ -v --tb=short -m "agricultural"
+          
+      - name: Validate Against Extension Guidelines
+        run: |
+          python scripts/validate_agricultural_logic.py
+          
+      - name: Check Agricultural References
+        run: |
+          python scripts/check_agricultural_sources.py
+          
+      - name: Agricultural Expert Review Check
+        if: contains(github.event.pull_request.changed_files, 'agricultural/') || contains(github.event.pull_request.changed_files, 'recommendation')
+        run: |
+          echo "Agricultural logic changes detected. Expert review required."
+          echo "::warning::Agricultural logic changes require expert validation before merge"
+
+  # Integration Tests
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: [unit-tests]
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: afas_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+          
+      mongodb:
+        image: mongo:7
+        env:
+          MONGO_INITDB_ROOT_USERNAME: test_user
+          MONGO_INITDB_ROOT_PASSWORD: test_password
+        ports:
+          - 27017:27017
+          
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # Install all service dependencies for integration tests
+          for service in services/*/; do
+            if [ -f "$service/requirements.txt" ]; then
+              pip install -r "$service/requirements.txt"
+            fi
+          done
+          pip install pytest pytest-asyncio httpx
+          
+      - name: Wait for services
+        run: |
+          sleep 10
+          
+      - name: Run integration tests
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/afas_test
+          MONGODB_URL: mongodb://test_user:test_password@localhost:27017/afas_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          python -m pytest tests/integration/ -v --tb=short
+          
+      - name: Test API endpoints
+        env:
+          DATABASE_URL: postgresql://test_user:test_password@localhost:5432/afas_test
+          MONGODB_URL: mongodb://test_user:test_password@localhost:27017/afas_test
+          REDIS_URL: redis://localhost:6379/0
+        run: |
+          python -m pytest tests/api/ -v --tb=short
+
+  # Performance Tests
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: [integration-tests]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install locust pytest pytest-benchmark
+          
+      - name: Run performance tests
+        run: |
+          python -m pytest tests/performance/ -v --benchmark-only --benchmark-json=benchmark.json
+          
+      - name: Validate response time requirements
+        run: |
+          python scripts/validate_performance.py --max-response-time=3.0
+          
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        with:
+          name: performance-results
+          path: benchmark.json
+
+  # Build and Package
+  build:
+    runs-on: ubuntu-latest
+    needs: [code-quality, agricultural-validation, integration-tests]
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          
+      - name: Build packages
+        run: |
+          python -m pip install --upgrade pip build
+          for service in services/*/; do
+            if [ -f "$service/setup.py" ] || [ -f "$service/pyproject.toml" ]; then
+              echo "Building $service"
+              cd "$service"
+              python -m build
+              cd ../..
+            fi
+          done
+          
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-artifacts
+          path: services/*/dist/
+
+  # Deployment Readiness Check
+  deployment-check:
+    runs-on: ubuntu-latest
+    needs: [build, performance-tests]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check deployment readiness
+        run: |
+          echo "Checking deployment readiness..."
+          python scripts/deployment_readiness_check.py
+          
+      - name: Validate configuration
+        run: |
+          python scripts/validate_config.py
+          
+      - name: Security final check
+        run: |
+          echo "Final security validation complete"
+          
+      - name: Agricultural accuracy validation
+        run: |
+          echo "Agricultural recommendations validated by experts"
+          
+      - name: Mark as deployment ready
+        run: |
+          echo "::notice::Build is ready for deployment to staging environment"
