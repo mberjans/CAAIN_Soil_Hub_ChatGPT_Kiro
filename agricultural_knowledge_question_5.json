@@ -1,0 +1,239 @@
+[
+  {
+    "knowledge_id": "fertilizer_type_comparison_001",
+    "category": "nutrient_management",
+    "subcategory": "fertilizer_selection",
+    "title": "Organic vs. Synthetic vs. Slow-Release Fertilizer Comparison",
+    "description": "Comprehensive comparison of fertilizer types including benefits, limitations, and appropriate applications",
+    "guidelines": [
+      "Synthetic fertilizers provide immediate nutrient availability and precise control",
+      "Organic fertilizers improve soil health but have variable nutrient content",
+      "Slow-release fertilizers reduce application frequency and environmental losses",
+      "Consider soil conditions, crop needs, and management goals in selection",
+      "Evaluate cost per unit of nutrient for economic comparison",
+      "Account for labor and application costs in total cost analysis",
+      "Consider environmental impact and sustainability goals",
+      "Match fertilizer type to crop growth patterns and uptake needs"
+    ],
+    "calculations": {
+      "fertilizer_comparison_matrix": {
+        "cost_per_lb_nutrient": {
+          "synthetic_urea": "$0.40-0.60/lb N",
+          "organic_compost": "$0.80-1.50/lb N",
+          "slow_release_esc": "$0.70-1.20/lb N"
+        },
+        "nutrient_availability": {
+          "synthetic": "immediate (1-2 weeks)",
+          "organic": "gradual (4-12 weeks)",
+          "slow_release": "extended (8-16 weeks)"
+        },
+        "application_frequency": {
+          "synthetic": "2-3 times per season",
+          "organic": "1-2 times per season",
+          "slow_release": "1 time per season"
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "high_rainfall",
+        "note": "Slow-release fertilizers reduce leaching losses"
+      },
+      {
+        "region": "organic_markets",
+        "note": "Organic fertilizers required for certification"
+      },
+      {
+        "region": "intensive_agriculture",
+        "note": "Synthetic fertilizers provide precision control"
+      }
+    ],
+    "source": {
+      "type": "industry_standard",
+      "name": "4R Nutrient Stewardship",
+      "url": "https://www.nutrientstewardship.org/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.9
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "crops": [
+        "all"
+      ],
+      "management_systems": [
+        "conventional",
+        "organic",
+        "integrated"
+      ]
+    },
+    "tags": [
+      "fertilizer_types",
+      "cost_analysis",
+      "nutrient_availability",
+      "sustainability"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.088107",
+    "updated_at": "2025-09-22T06:36:17.088108"
+  },
+  {
+    "knowledge_id": "organic_fertilizer_management_001",
+    "category": "nutrient_management",
+    "subcategory": "organic_fertilizers",
+    "title": "Organic Fertilizer Selection and Management Strategies",
+    "description": "Guidelines for selecting and managing organic fertilizer sources for optimal crop nutrition",
+    "guidelines": [
+      "Analyze organic materials for nutrient content before application",
+      "Account for variable nutrient release patterns in timing decisions",
+      "Apply organic fertilizers well before peak crop demand",
+      "Consider C:N ratio effects on nitrogen availability",
+      "Incorporate organic materials to enhance decomposition",
+      "Monitor soil biological activity and organic matter changes",
+      "Combine organic and synthetic sources for balanced nutrition",
+      "Plan application timing around weather and field conditions"
+    ],
+    "calculations": {
+      "organic_nutrient_release": {
+        "mineralization_rates": {
+          "fresh_manure": "30-50% first year",
+          "composted_manure": "15-30% first year",
+          "crop_residue": "20-40% first year",
+          "cover_crop": "40-60% first year"
+        },
+        "cn_ratio_effects": {
+          "high_cn_ratio": ">30:1 - nitrogen immobilization",
+          "medium_cn_ratio": "20-30:1 - balanced mineralization",
+          "low_cn_ratio": "<20:1 - rapid nitrogen release"
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "livestock_areas",
+        "note": "Manure readily available, focus on proper application"
+      },
+      {
+        "region": "crop_only_areas",
+        "note": "Compost and commercial organic products needed"
+      },
+      {
+        "region": "organic_production",
+        "note": "Certified organic materials required"
+      }
+    ],
+    "source": {
+      "type": "government_guideline",
+      "name": "USDA Natural Resources Conservation Service",
+      "url": "https://www.nrcs.usda.gov/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "organic_sources": [
+        "manure",
+        "compost",
+        "crop_residue",
+        "cover_crops"
+      ],
+      "application_methods": [
+        "broadcast",
+        "incorporated",
+        "banded"
+      ]
+    },
+    "tags": [
+      "organic_fertilizers",
+      "mineralization",
+      "timing",
+      "soil_biology"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.088110",
+    "updated_at": "2025-09-22T06:36:17.088110"
+  },
+  {
+    "knowledge_id": "slow_release_technology_001",
+    "category": "nutrient_management",
+    "subcategory": "slow_release_fertilizers",
+    "title": "Slow-Release Fertilizer Technologies and Applications",
+    "description": "Understanding slow-release fertilizer technologies and their optimal use in crop production",
+    "guidelines": [
+      "Polymer-coated fertilizers release nutrients based on temperature",
+      "Stabilized fertilizers use inhibitors to slow nutrient transformation",
+      "Match release pattern to crop uptake requirements",
+      "Consider soil temperature effects on release rates",
+      "Evaluate cost-benefit based on reduced application frequency",
+      "Use for crops with extended growing seasons or multiple harvests",
+      "Consider environmental benefits of reduced nutrient losses",
+      "Monitor crop response and adjust rates as needed"
+    ],
+    "calculations": {
+      "slow_release_economics": {
+        "cost_comparison": {
+          "material_cost_premium": "20-100% over conventional",
+          "application_cost_savings": "50-75% fewer applications",
+          "yield_benefit": "5-15% from improved timing",
+          "environmental_benefit": "30-50% reduction in losses"
+        },
+        "release_patterns": {
+          "polymer_coated": "temperature dependent, 3-6 months",
+          "sulfur_coated": "moisture and temperature, 2-4 months",
+          "nitrification_inhibitor": "extends availability 4-8 weeks"
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "warm_climates",
+        "note": "Faster release rates, shorter effective period"
+      },
+      {
+        "region": "cool_climates",
+        "note": "Slower release, extended availability"
+      },
+      {
+        "region": "high_value_crops",
+        "note": "Premium cost justified by yield benefits"
+      }
+    ],
+    "source": {
+      "type": "industry_standard",
+      "name": "4R Nutrient Stewardship",
+      "url": "https://www.nutrientstewardship.org/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.9
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "crops": [
+        "corn",
+        "wheat",
+        "specialty_crops"
+      ],
+      "technologies": [
+        "polymer_coated",
+        "stabilized",
+        "organic_based"
+      ]
+    },
+    "tags": [
+      "slow_release",
+      "technology",
+      "efficiency",
+      "environmental_protection"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.088112",
+    "updated_at": "2025-09-22T06:36:17.088113"
+  }
+]

@@ -1,0 +1,261 @@
+[
+  {
+    "knowledge_id": "crop_rotation_principles_001",
+    "category": "crop_management",
+    "subcategory": "rotation_planning",
+    "title": "Crop Rotation Principles and Benefits",
+    "description": "Fundamental principles of crop rotation for sustainable agriculture and soil health",
+    "guidelines": [
+      "Rotate between different crop families to break pest and disease cycles",
+      "Include nitrogen-fixing legumes to reduce fertilizer requirements",
+      "Alternate between deep and shallow-rooted crops for soil structure",
+      "Consider different growth habits (C3 vs C4 plants) for diversity",
+      "Plan rotations to optimize soil nutrient cycling",
+      "Include cover crops in rotation to protect and improve soil",
+      "Balance economic returns with long-term soil health benefits",
+      "Adapt rotation length to local conditions and management goals"
+    ],
+    "calculations": {
+      "rotation_benefit_score": {
+        "formula": "total_score = pest_control_benefit + nutrient_benefit + soil_health_benefit + economic_benefit",
+        "benefit_weights": {
+          "pest_control": 0.3,
+          "nutrient_cycling": 0.25,
+          "soil_health": 0.25,
+          "economic_return": 0.2
+        },
+        "rotation_factors": {
+          "corn_soybean": {
+            "pest": 0.7,
+            "nutrient": 0.8,
+            "soil": 0.6,
+            "economic": 0.9
+          },
+          "corn_soybean_wheat": {
+            "pest": 0.8,
+            "nutrient": 0.9,
+            "soil": 0.8,
+            "economic": 0.7
+          },
+          "continuous_corn": {
+            "pest": 0.3,
+            "nutrient": 0.4,
+            "soil": 0.4,
+            "economic": 0.8
+          }
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "corn_belt",
+        "note": "Corn-soybean rotation most common, consider adding small grains"
+      },
+      {
+        "region": "great_plains",
+        "note": "Wheat-based rotations with summer fallow or cover crops"
+      },
+      {
+        "region": "southeast",
+        "note": "Include cotton, peanuts, and winter cover crops"
+      }
+    ],
+    "source": {
+      "type": "extension_service",
+      "name": "Iowa State University Extension",
+      "url": "https://extension.iastate.edu/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "crops": [
+        "corn",
+        "soybean",
+        "wheat",
+        "cotton",
+        "cover_crops"
+      ],
+      "rotation_lengths": [
+        "2_year",
+        "3_year",
+        "4_year"
+      ]
+    },
+    "tags": [
+      "crop_rotation",
+      "sustainability",
+      "pest_management",
+      "soil_health"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.087379",
+    "updated_at": "2025-09-22T06:36:17.087380"
+  },
+  {
+    "knowledge_id": "nitrogen_fixation_legumes_001",
+    "category": "nutrient_management",
+    "subcategory": "nitrogen_fixation",
+    "title": "Nitrogen Fixation and Legume Integration in Rotations",
+    "description": "Optimizing nitrogen fixation through legume crops and cover crops in rotation systems",
+    "guidelines": [
+      "Soybeans can fix 40-60 lbs N/acre, providing credit to following crops",
+      "Alfalfa can fix 150-300 lbs N/acre annually when well-established",
+      "Red clover and crimson clover provide 50-100 lbs N/acre as cover crops",
+      "Inoculate legume seeds with appropriate rhizobia bacteria",
+      "Maintain soil pH 6.0-7.0 for optimal nitrogen fixation",
+      "Avoid excessive nitrogen fertilizer that inhibits fixation",
+      "Terminate legume cover crops at proper timing to maximize N release",
+      "Account for legume N credit in fertilizer planning for following crops"
+    ],
+    "calculations": {
+      "nitrogen_credit": {
+        "formula": "n_credit = base_fixation * soil_conditions_factor * management_factor",
+        "base_fixation_lbs_per_acre": {
+          "soybean": 50,
+          "alfalfa": 200,
+          "red_clover": 75,
+          "crimson_clover": 60,
+          "winter_peas": 80
+        },
+        "condition_factors": {
+          "optimal_ph": 1.0,
+          "low_ph": 0.7,
+          "high_ph": 0.8,
+          "good_drainage": 1.0,
+          "poor_drainage": 0.6
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "northern_regions",
+        "note": "Red clover and winter-hardy legumes preferred"
+      },
+      {
+        "region": "southern_regions",
+        "note": "Crimson clover and warm-season legumes work well"
+      },
+      {
+        "region": "arid_regions",
+        "note": "Drought-tolerant legumes and careful water management"
+      }
+    ],
+    "source": {
+      "type": "government_guideline",
+      "name": "USDA Natural Resources Conservation Service",
+      "url": "https://www.nrcs.usda.gov/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "crops": [
+        "soybean",
+        "alfalfa",
+        "clover",
+        "peas",
+        "beans"
+      ],
+      "rotation_positions": [
+        "main_crop",
+        "cover_crop",
+        "forage"
+      ]
+    },
+    "tags": [
+      "nitrogen_fixation",
+      "legumes",
+      "cover_crops",
+      "soil_fertility"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.087382",
+    "updated_at": "2025-09-22T06:36:17.087382"
+  },
+  {
+    "knowledge_id": "rotation_economic_optimization_001",
+    "category": "economic_analysis",
+    "subcategory": "rotation_economics",
+    "title": "Economic Optimization of Crop Rotations",
+    "description": "Balancing short-term profitability with long-term economic benefits in crop rotation planning",
+    "guidelines": [
+      "Calculate total rotation profitability, not just individual crop returns",
+      "Include yield benefits from rotation in economic analysis",
+      "Account for reduced input costs from rotation effects",
+      "Consider risk reduction benefits of diversified rotations",
+      "Factor in soil health improvements and long-term sustainability",
+      "Evaluate market opportunities for rotation crops",
+      "Include government program benefits and compliance requirements",
+      "Assess equipment and labor efficiency across rotation"
+    ],
+    "calculations": {
+      "rotation_economics": {
+        "formula": "net_return = gross_income - variable_costs - fixed_costs + rotation_benefits",
+        "rotation_benefits": {
+          "yield_increase": "5-15% for corn following soybean",
+          "nitrogen_savings": "40-60 lbs N/acre credit from legumes",
+          "pest_control_savings": "10-20% reduction in pesticide costs",
+          "soil_health_premium": "long-term yield stability"
+        },
+        "risk_factors": {
+          "price_volatility": "diversification reduces risk by 15-25%",
+          "weather_risk": "different crops respond differently to weather",
+          "market_risk": "multiple crops provide marketing flexibility"
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "high_land_costs",
+        "note": "Focus on maximizing returns per acre"
+      },
+      {
+        "region": "extensive_agriculture",
+        "note": "Emphasize labor and equipment efficiency"
+      },
+      {
+        "region": "specialty_markets",
+        "note": "Consider niche crops and premium markets"
+      }
+    ],
+    "source": {
+      "type": "extension_service",
+      "name": "University of Illinois Extension",
+      "url": "https://extension.illinois.edu/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "farm_sizes": [
+        "small",
+        "medium",
+        "large"
+      ],
+      "market_conditions": [
+        "commodity",
+        "specialty",
+        "organic"
+      ]
+    },
+    "tags": [
+      "economics",
+      "profitability",
+      "risk_management",
+      "sustainability"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.087384",
+    "updated_at": "2025-09-22T06:36:17.087385"
+  }
+]

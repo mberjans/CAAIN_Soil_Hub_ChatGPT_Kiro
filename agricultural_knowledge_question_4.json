@@ -1,0 +1,260 @@
+[
+  {
+    "knowledge_id": "soil_testing_interpretation_001",
+    "category": "soil_health",
+    "subcategory": "soil_testing",
+    "title": "Soil Testing Methods and Nutrient Deficiency Interpretation",
+    "description": "Comprehensive guide to soil testing procedures and interpreting results for nutrient deficiencies",
+    "guidelines": [
+      "Test soil every 2-3 years or when changing management practices",
+      "Sample at consistent depth (0-6 inches for most nutrients)",
+      "Take 15-20 subsamples per field to get representative sample",
+      "Use certified laboratory with appropriate extraction methods",
+      "Test for pH, organic matter, P, K, and micronutrients as needed",
+      "Compare results to established sufficiency ranges for your region",
+      "Consider soil texture and organic matter when interpreting results",
+      "Retest problem areas or unusual results for confirmation"
+    ],
+    "calculations": {
+      "nutrient_sufficiency_levels": {
+        "phosphorus_ppm": {
+          "very_low": "0-7",
+          "low": "8-15",
+          "medium": "16-25",
+          "high": "26-40",
+          "very_high": ">40"
+        },
+        "potassium_ppm": {
+          "very_low": "0-90",
+          "low": "91-130",
+          "medium": "131-170",
+          "high": "171-200",
+          "very_high": ">200"
+        },
+        "organic_matter_percent": {
+          "low": "<2.0",
+          "medium": "2.0-3.0",
+          "good": "3.0-5.0",
+          "high": ">5.0"
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "midwest",
+        "note": "Mehlich-3 extraction common, established interpretation guides"
+      },
+      {
+        "region": "western_states",
+        "note": "Olsen P test preferred for alkaline soils"
+      },
+      {
+        "region": "southeastern_states",
+        "note": "Mehlich-1 or Mehlich-3, consider aluminum levels"
+      }
+    ],
+    "source": {
+      "type": "extension_service",
+      "name": "Iowa State University Extension",
+      "url": "https://extension.iastate.edu/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "soil_types": [
+        "all"
+      ],
+      "extraction_methods": [
+        "mehlich_3",
+        "olsen",
+        "bray_p1"
+      ]
+    },
+    "tags": [
+      "soil_testing",
+      "nutrient_deficiency",
+      "interpretation",
+      "sampling"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.087749",
+    "updated_at": "2025-09-22T06:36:17.087751"
+  },
+  {
+    "knowledge_id": "visual_deficiency_symptoms_001",
+    "category": "nutrient_management",
+    "subcategory": "deficiency_diagnosis",
+    "title": "Visual Nutrient Deficiency Symptoms in Crops",
+    "description": "Field identification of nutrient deficiency symptoms in major crops",
+    "guidelines": [
+      "Nitrogen deficiency: yellowing of older leaves first, stunted growth",
+      "Phosphorus deficiency: purpling of leaves, delayed maturity, poor root development",
+      "Potassium deficiency: yellowing and browning of leaf edges, weak stalks",
+      "Sulfur deficiency: yellowing of younger leaves, similar to nitrogen but different pattern",
+      "Iron deficiency: yellowing between leaf veins (interveinal chlorosis)",
+      "Zinc deficiency: white or yellow stripes between veins, shortened internodes",
+      "Manganese deficiency: interveinal chlorosis on younger leaves",
+      "Confirm visual diagnosis with soil and tissue testing"
+    ],
+    "calculations": {
+      "symptom_severity_scoring": {
+        "scale": "1-5 where 1=no symptoms, 5=severe symptoms",
+        "economic_thresholds": {
+          "nitrogen": "yield loss >5% at severity 3+",
+          "phosphorus": "yield loss >10% at severity 4+",
+          "potassium": "yield loss >8% at severity 3+",
+          "micronutrients": "yield loss >5% at severity 2+"
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "high_ph_soils",
+        "note": "Iron and zinc deficiencies more common"
+      },
+      {
+        "region": "sandy_soils",
+        "note": "Potassium and magnesium deficiencies frequent"
+      },
+      {
+        "region": "organic_soils",
+        "note": "Copper and manganese deficiencies possible"
+      }
+    ],
+    "source": {
+      "type": "extension_service",
+      "name": "Purdue University Extension",
+      "url": "https://extension.purdue.edu/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "crops": [
+        "corn",
+        "soybean",
+        "wheat",
+        "cotton"
+      ],
+      "growth_stages": [
+        "vegetative",
+        "reproductive"
+      ]
+    },
+    "tags": [
+      "visual_symptoms",
+      "deficiency_diagnosis",
+      "field_scouting",
+      "crop_monitoring"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.087754",
+    "updated_at": "2025-09-22T06:36:17.087754"
+  },
+  {
+    "knowledge_id": "tissue_testing_analysis_001",
+    "category": "nutrient_management",
+    "subcategory": "tissue_testing",
+    "title": "Plant Tissue Testing for Nutrient Status Assessment",
+    "description": "Using plant tissue analysis to diagnose nutrient deficiencies and guide fertilizer decisions",
+    "guidelines": [
+      "Sample at specific growth stages for accurate interpretation",
+      "Collect recently matured leaves from representative plants",
+      "Sample 20-30 plants per field for composite sample",
+      "Avoid sampling stressed, diseased, or damaged plants",
+      "Submit samples quickly to laboratory to maintain quality",
+      "Compare results to established sufficiency ranges",
+      "Use tissue testing to confirm soil test recommendations",
+      "Consider environmental factors affecting nutrient uptake"
+    ],
+    "calculations": {
+      "tissue_sufficiency_ranges": {
+        "corn_v6_stage": {
+          "nitrogen_percent": {
+            "sufficient": "2.8-3.5",
+            "deficient": "<2.8"
+          },
+          "phosphorus_percent": {
+            "sufficient": "0.25-0.50",
+            "deficient": "<0.25"
+          },
+          "potassium_percent": {
+            "sufficient": "1.7-2.5",
+            "deficient": "<1.7"
+          },
+          "sulfur_percent": {
+            "sufficient": "0.15-0.30",
+            "deficient": "<0.15"
+          }
+        },
+        "soybean_r1_stage": {
+          "nitrogen_percent": {
+            "sufficient": "4.5-5.5",
+            "deficient": "<4.5"
+          },
+          "phosphorus_percent": {
+            "sufficient": "0.26-0.50",
+            "deficient": "<0.26"
+          },
+          "potassium_percent": {
+            "sufficient": "1.7-2.5",
+            "deficient": "<1.7"
+          }
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "irrigated_areas",
+        "note": "Higher nutrient concentrations expected"
+      },
+      {
+        "region": "dryland_areas",
+        "note": "Drought stress may affect nutrient uptake"
+      },
+      {
+        "region": "high_yield_environments",
+        "note": "Higher sufficiency levels may be needed"
+      }
+    ],
+    "source": {
+      "type": "extension_service",
+      "name": "University of Illinois Extension",
+      "url": "https://extension.illinois.edu/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "crops": [
+        "corn",
+        "soybean",
+        "wheat"
+      ],
+      "sampling_stages": [
+        "v6",
+        "r1",
+        "boot_stage"
+      ]
+    },
+    "tags": [
+      "tissue_testing",
+      "plant_analysis",
+      "nutrient_monitoring",
+      "precision_agriculture"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.087756",
+    "updated_at": "2025-09-22T06:36:17.087757"
+  }
+]

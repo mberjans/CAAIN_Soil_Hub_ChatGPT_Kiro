@@ -1,0 +1,264 @@
+[
+  {
+    "knowledge_id": "crop_soil_ph_compatibility_001",
+    "category": "crop_management",
+    "subcategory": "crop_selection",
+    "title": "Crop pH Requirements and Soil Compatibility",
+    "description": "Optimal soil pH ranges for major field crops and their tolerance to pH variations",
+    "guidelines": [
+      "Corn performs best in pH 6.0-6.8, with reduced yield below 5.8 or above 7.5",
+      "Soybeans prefer pH 6.0-7.0, with good tolerance to slightly alkaline conditions",
+      "Wheat adapts to pH 6.0-7.0, with better alkaline tolerance than corn",
+      "Cotton tolerates wider pH range (5.8-8.0) but prefers 6.0-7.5",
+      "Alfalfa requires pH 6.5-7.5 for optimal nitrogen fixation",
+      "pH below 5.5 may cause aluminum toxicity in sensitive crops",
+      "pH above 8.0 may cause micronutrient deficiencies"
+    ],
+    "calculations": {
+      "ph_suitability_score": {
+        "formula": "max(0, 1 - abs(soil_ph - optimal_ph) / tolerance_range)",
+        "crop_parameters": {
+          "corn": {
+            "optimal_ph": 6.4,
+            "tolerance_range": 1.0
+          },
+          "soybean": {
+            "optimal_ph": 6.5,
+            "tolerance_range": 1.2
+          },
+          "wheat": {
+            "optimal_ph": 6.5,
+            "tolerance_range": 1.3
+          },
+          "cotton": {
+            "optimal_ph": 6.8,
+            "tolerance_range": 1.5
+          }
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "midwest",
+        "note": "Naturally acidic soils common, lime applications frequent"
+      },
+      {
+        "region": "great_plains",
+        "note": "Alkaline soils common, sulfur amendments may be needed"
+      },
+      {
+        "region": "southeast",
+        "note": "Highly acidic soils, regular lime applications essential"
+      }
+    ],
+    "source": {
+      "type": "extension_service",
+      "name": "Iowa State University Extension",
+      "url": "https://extension.iastate.edu/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "midwest",
+        "great_plains",
+        "southeast"
+      ],
+      "crops": [
+        "corn",
+        "soybean",
+        "wheat",
+        "cotton",
+        "alfalfa"
+      ],
+      "soil_types": [
+        "all"
+      ]
+    },
+    "tags": [
+      "crop_selection",
+      "soil_ph",
+      "compatibility",
+      "yield_optimization"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.086660",
+    "updated_at": "2025-09-22T06:36:17.086662"
+  },
+  {
+    "knowledge_id": "crop_climate_adaptation_001",
+    "category": "crop_management",
+    "subcategory": "climate_adaptation",
+    "title": "Crop Climate Requirements and Regional Adaptation",
+    "description": "Climate requirements for major crops including temperature, precipitation, and growing season needs",
+    "guidelines": [
+      "Corn requires 2400-3000 growing degree days (GDD) base 50°F for full-season varieties",
+      "Soybeans need 2200-3200 GDD depending on maturity group (MG 0-4)",
+      "Winter wheat requires vernalization period (32-50°F for 30-60 days)",
+      "Cotton needs long, warm growing season (180+ frost-free days)",
+      "Match crop maturity to local growing season length",
+      "Consider heat and drought tolerance for climate resilience",
+      "Account for precipitation patterns and irrigation availability"
+    ],
+    "calculations": {
+      "gdd_calculation": {
+        "formula": "sum((daily_max_temp + daily_min_temp) / 2 - base_temp) for temp > base_temp",
+        "base_temperatures": {
+          "corn": 50,
+          "soybean": 50,
+          "cotton": 60,
+          "wheat": 32
+        }
+      },
+      "maturity_matching": {
+        "formula": "crop_maturity_days <= (last_frost_date - first_frost_date) - safety_margin",
+        "safety_margin_days": 14
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "northern_midwest",
+        "note": "Shorter season varieties required, early maturity critical"
+      },
+      {
+        "region": "southern_midwest",
+        "note": "Full-season varieties possible, heat tolerance important"
+      },
+      {
+        "region": "great_plains",
+        "note": "Drought tolerance essential, wind protection beneficial"
+      }
+    ],
+    "source": {
+      "type": "government_guideline",
+      "name": "USDA Natural Resources Conservation Service",
+      "url": "https://www.nrcs.usda.gov/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "crops": [
+        "corn",
+        "soybean",
+        "wheat",
+        "cotton"
+      ],
+      "climate_zones": [
+        "3a",
+        "3b",
+        "4a",
+        "4b",
+        "5a",
+        "5b",
+        "6a",
+        "6b",
+        "7a",
+        "7b"
+      ]
+    },
+    "tags": [
+      "climate",
+      "adaptation",
+      "maturity",
+      "growing_degree_days",
+      "frost_dates"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.086664",
+    "updated_at": "2025-09-22T06:36:17.086665"
+  },
+  {
+    "knowledge_id": "crop_variety_selection_001",
+    "category": "crop_management",
+    "subcategory": "variety_selection",
+    "title": "Crop Variety Selection Criteria and Performance Factors",
+    "description": "Key factors for selecting specific crop varieties based on local conditions and management goals",
+    "guidelines": [
+      "Select varieties with proven performance in local university trials",
+      "Match maturity group to local growing season and management system",
+      "Consider disease resistance packages for local pest pressure",
+      "Evaluate herbicide tolerance traits for weed management compatibility",
+      "Assess standability and harvestability characteristics",
+      "Consider specialty traits (high oil, food grade, etc.) for market premiums",
+      "Diversify varieties to spread risk and optimize performance"
+    ],
+    "calculations": {
+      "variety_score": {
+        "formula": "weighted_sum(yield_potential * 0.4 + disease_resistance * 0.3 + standability * 0.2 + maturity_fit * 0.1)",
+        "scoring_ranges": {
+          "yield_potential": {
+            "min": 0,
+            "max": 1,
+            "weight": 0.4
+          },
+          "disease_resistance": {
+            "min": 0,
+            "max": 1,
+            "weight": 0.3
+          },
+          "standability": {
+            "min": 0,
+            "max": 1,
+            "weight": 0.2
+          },
+          "maturity_fit": {
+            "min": 0,
+            "max": 1,
+            "weight": 0.1
+          }
+        }
+      }
+    },
+    "regional_variations": [
+      {
+        "region": "corn_belt",
+        "note": "Focus on yield potential and standability"
+      },
+      {
+        "region": "southern_regions",
+        "note": "Heat tolerance and disease resistance critical"
+      },
+      {
+        "region": "northern_regions",
+        "note": "Early maturity and cold tolerance essential"
+      }
+    ],
+    "source": {
+      "type": "extension_service",
+      "name": "University of Illinois Extension",
+      "url": "https://extension.illinois.edu/",
+      "publication_date": "2024-01-01",
+      "credibility_score": 0.95
+    },
+    "applicability": {
+      "regions": [
+        "all"
+      ],
+      "crops": [
+        "corn",
+        "soybean",
+        "wheat"
+      ],
+      "management_systems": [
+        "conventional",
+        "organic",
+        "no_till"
+      ]
+    },
+    "tags": [
+      "variety_selection",
+      "performance",
+      "traits",
+      "local_adaptation"
+    ],
+    "expert_validated": true,
+    "validation_date": "2024-01-15",
+    "created_at": "2025-09-22T06:36:17.086667",
+    "updated_at": "2025-09-22T06:36:17.086667"
+  }
+]

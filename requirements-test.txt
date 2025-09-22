@@ -1,0 +1,43 @@
+# Testing Dependencies for AFAS
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+pytest-xdist==3.5.0
+pytest-html==4.1.1
+pytest-benchmark==4.0.0
+
+# HTTP Testing
+httpx==0.25.2
+aioresponses==0.7.6
+responses==0.24.1
+
+# Database Testing
+pytest-postgresql==5.0.0
+pytest-mongodb==2.4.2
+pytest-redis==3.0.2
+fakeredis==2.20.1
+
+# Mock and Fixtures
+factory-boy==3.3.0
+freezegun==1.2.2
+Faker==20.1.0
+
+# Performance Testing
+locust==2.17.0
+memory-profiler==0.61.0
+
+# Security Testing
+bandit==1.7.5
+safety==2.3.5
+
+# Agricultural Testing Utilities
+numpy==1.24.3
+pandas==2.1.4
+scipy==1.11.4
+
+# Code Quality
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+isort==5.12.0

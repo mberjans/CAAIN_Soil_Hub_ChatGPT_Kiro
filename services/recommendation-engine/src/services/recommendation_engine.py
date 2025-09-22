@@ -22,6 +22,7 @@ try:
     from .nutrient_deficiency_service import NutrientDeficiencyService
     from .crop_rotation_service import CropRotationService
     from .rule_engine import AgriculturalRuleEngine, RuleType
+    from .ai_explanation_service import AIExplanationService
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
@@ -35,6 +36,7 @@ except ImportError:
     from services.nutrient_deficiency_service import NutrientDeficiencyService
     from services.crop_rotation_service import CropRotationService
     from services.rule_engine import AgriculturalRuleEngine, RuleType
+    from services.ai_explanation_service import AIExplanationService
 
 logger = logging.getLogger(__name__)
 
@@ -57,6 +59,9 @@ class RecommendationEngine:
         
         # Initialize the centralized rule engine
         self.rule_engine = AgriculturalRuleEngine()
+        
+        # Initialize AI explanation service
+        self.ai_explanation_service = AIExplanationService()
         
         # Question type mapping to service methods
         self.question_handlers = {
@@ -101,6 +106,9 @@ class RecommendationEngine:
             
             # Build confidence factors
             confidence_factors = self._build_confidence_factors(request)
+            
+            # Enhance recommendations with AI explanations
+            recommendations = self._enhance_with_ai_explanations(recommendations, request)
             
             # Generate warnings and next steps
             warnings = self._generate_warnings(request, recommendations)
@@ -654,3 +662,74 @@ class RecommendationEngine:
                 adjusted_recommendations.append(rec)
         
         return adjusted_recommendations
+    
+    def _enhance_with_ai_explanations(
+        self, 
+        recommendations: List[RecommendationItem], 
+        request: RecommendationRequest
+    ) -> List[RecommendationItem]:
+        """
+        Enhance recommendations with AI-generated explanations.
+        
+        Args:
+            recommendations: List of recommendation items to enhance
+            request: Original recommendation request for context
+            
+        Returns:
+            Enhanced recommendations with AI explanations
+        """
+        try:
+            enhanced_recommendations = []
+            
+            # Prepare context for AI explanation generation
+            context = {
+                'soil_data': request.soil_data.dict() if request.soil_data else {},
+                'farm_profile': request.farm_profile.dict() if request.farm_profile else {},
+                'location': request.location.dict() if request.location else {}
+            }
+            
+            for rec in recommendations:
+                enhanced_rec = rec.copy()
+                
+                # Generate AI explanation for the recommendation
+                ai_explanation = self.ai_explanation_service.generate_explanation(
+                    recommendation_type=request.question_type,
+                    recommendation_data=rec.dict(),
+                    context=context
+                )
+                
+                # Enhance the description with AI explanation
+                if ai_explanation and ai_explanation != enhanced_rec.description:
+                    enhanced_rec.description = f"{enhanced_rec.description} {ai_explanation}"
+                
+                # Generate implementation steps using AI service
+                ai_steps = self.ai_explanation_service.generate_implementation_steps(
+                    recommendation_type=request.question_type,
+                    recommendation_data=rec.dict()
+                )
+                
+                # Merge AI-generated steps with existing steps
+                if ai_steps:
+                    existing_steps = enhanced_rec.implementation_steps or []
+                    # Combine and deduplicate steps
+                    all_steps = existing_steps + ai_steps
+                    unique_steps = []
+                    seen_steps = set()
+                    
+                    for step in all_steps:
+                        step_lower = step.lower()
+                        if step_lower not in seen_steps:
+                            unique_steps.append(step)
+                            seen_steps.add(step_lower)
+                    
+                    enhanced_rec.implementation_steps = unique_steps[:10]  # Limit to 10 steps
+                
+                enhanced_recommendations.append(enhanced_rec)
+            
+            logger.info(f"Enhanced {len(recommendations)} recommendations with AI explanations")
+            return enhanced_recommendations
+            
+        except Exception as e:
+            logger.error(f"Error enhancing recommendations with AI explanations: {e}")
+            # Return original recommendations if AI enhancement fails
+            return recommendations
