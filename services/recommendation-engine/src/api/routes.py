@@ -6,6 +6,7 @@ FastAPI routes for agricultural recommendations and calculations.
 
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
+import logging
 
 try:
     from ..models.agricultural_models import (
@@ -14,7 +15,7 @@ try:
         RecommendationItem,
         ConfidenceFactors
     )
-    from ..services.crop_recommendation_service import CropRecommendationService
+    from ..services.recommendation_engine import RecommendationEngine
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
@@ -22,12 +23,13 @@ except ImportError:
         RecommendationItem,
         ConfidenceFactors
     )
-    from services.crop_recommendation_service import CropRecommendationService
+    from services.recommendation_engine import RecommendationEngine
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["recommendation-engine"])
 
-# Service dependencies
-crop_service = CropRecommendationService()
+# Central recommendation engine
+recommendation_engine = RecommendationEngine()
 
 
 @router.post("/recommendations/crop-selection", response_model=RecommendationResponse)
@@ -44,44 +46,12 @@ async def get_crop_recommendations(request: RecommendationRequest):
     - Ranks varieties by suitability score and yield potential
     """
     try:
-        # Get crop recommendations
-        recommendations = await crop_service.get_crop_recommendations(request)
-        
-        # Calculate overall confidence
-        if recommendations:
-            overall_confidence = sum(rec.confidence_score for rec in recommendations) / len(recommendations)
-        else:
-            overall_confidence = 0.0
-        
-        # Build confidence factors
-        confidence_factors = ConfidenceFactors(
-            soil_data_quality=0.9 if request.soil_data else 0.3,
-            regional_data_availability=0.8,  # Would be calculated based on location
-            seasonal_appropriateness=0.9,    # Would be calculated based on timing
-            expert_validation=0.85           # Based on validation level of algorithms
-        )
-        
-        return RecommendationResponse(
-            request_id=request.request_id,
-            question_type=request.question_type,
-            overall_confidence=overall_confidence,
-            confidence_factors=confidence_factors,
-            recommendations=recommendations,
-            warnings=_generate_warnings(request),
-            next_steps=[
-                "Consider soil testing for micronutrients",
-                "Review crop insurance options", 
-                "Plan nitrogen application strategy",
-                "Consult local extension service for variety trials"
-            ],
-            follow_up_questions=[
-                "What fertilizer strategy should I use for this crop?",
-                "When is the optimal planting time?",
-                "What are the expected input costs?"
-            ]
-        )
+        logger.info(f"Processing crop selection request: {request.request_id}")
+        request.question_type = "crop_selection"
+        return await recommendation_engine.generate_recommendations(request)
         
     except Exception as e:
+        logger.error(f"Error generating crop recommendations: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error generating crop recommendations: {str(e)}"
@@ -99,60 +69,12 @@ async def get_fertilizer_recommendations(request: RecommendationRequest):
     - Question 16: What is the most cost-effective fertilizer strategy?
     """
     try:
-        # Placeholder implementation - would integrate with fertilizer service
-        recommendations = [
-            RecommendationItem(
-                recommendation_type="fertilizer_strategy",
-                title="Balanced NPK Approach",
-                description="Based on your soil test results, a balanced approach with split nitrogen applications is recommended.",
-                priority=1,
-                confidence_score=0.85,
-                implementation_steps=[
-                    "Apply phosphorus and potassium at planting",
-                    "Split nitrogen application: 60% pre-plant, 40% side-dress",
-                    "Consider slow-release nitrogen for sandy soils",
-                    "Monitor crop response and adjust rates"
-                ],
-                expected_outcomes=[
-                    "Improved nutrient use efficiency",
-                    "Reduced environmental impact",
-                    "Optimized crop yields",
-                    "Cost-effective fertilizer use"
-                ],
-                cost_estimate=85.50,  # per acre
-                roi_estimate=250.0,   # percentage
-                timing="Apply 2-3 weeks before planting",
-                agricultural_sources=[
-                    "Iowa State University Extension PM 1688",
-                    "4R Nutrient Stewardship Guidelines",
-                    "Regional Fertilizer Recommendations"
-                ]
-            )
-        ]
-        
-        confidence_factors = ConfidenceFactors(
-            soil_data_quality=0.9 if request.soil_data else 0.3,
-            regional_data_availability=0.8,
-            seasonal_appropriateness=0.9,
-            expert_validation=0.85
-        )
-        
-        return RecommendationResponse(
-            request_id=request.request_id,
-            question_type=request.question_type,
-            overall_confidence=0.85,
-            confidence_factors=confidence_factors,
-            recommendations=recommendations,
-            warnings=_generate_fertilizer_warnings(request),
-            next_steps=[
-                "Obtain current fertilizer prices",
-                "Schedule soil testing for next year",
-                "Consider precision application equipment",
-                "Plan application timing with weather"
-            ]
-        )
+        logger.info(f"Processing fertilizer strategy request: {request.request_id}")
+        request.question_type = "fertilizer_strategy"
+        return await recommendation_engine.generate_recommendations(request)
         
     except Exception as e:
+        logger.error(f"Error generating fertilizer recommendations: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error generating fertilizer recommendations: {str(e)}"
@@ -170,106 +92,115 @@ async def get_soil_management_recommendations(request: RecommendationRequest):
     - Question 15: Should I adopt no-till or reduced-till practices?
     """
     try:
-        # Placeholder implementation - would integrate with soil management service
-        recommendations = []
-        
-        # pH management recommendation
-        if request.soil_data and request.soil_data.ph:
-            if request.soil_data.ph < 6.0:
-                recommendations.append(
-                    RecommendationItem(
-                        recommendation_type="soil_ph_management",
-                        title="Lime Application Needed",
-                        description=f"Your soil pH of {request.soil_data.ph} is below optimal range. Lime application will improve nutrient availability.",
-                        priority=1,
-                        confidence_score=0.9,
-                        implementation_steps=[
-                            "Apply agricultural limestone at 2-3 tons per acre",
-                            "Incorporate lime 6 months before planting",
-                            "Retest soil pH after 12 months",
-                            "Consider annual maintenance applications"
-                        ],
-                        expected_outcomes=[
-                            "Improved phosphorus availability",
-                            "Enhanced microbial activity",
-                            "Better crop nutrient uptake",
-                            "Increased yield potential"
-                        ],
-                        cost_estimate=45.00,
-                        timing="Fall application preferred",
-                        agricultural_sources=[
-                            "USDA Soil pH Management Guidelines",
-                            "State Extension Lime Recommendations"
-                        ]
-                    )
-                )
-        
-        confidence_factors = ConfidenceFactors(
-            soil_data_quality=0.9 if request.soil_data else 0.3,
-            regional_data_availability=0.8,
-            seasonal_appropriateness=0.9,
-            expert_validation=0.85
-        )
-        
-        return RecommendationResponse(
-            request_id=request.request_id,
-            question_type=request.question_type,
-            overall_confidence=0.8,
-            confidence_factors=confidence_factors,
-            recommendations=recommendations,
-            warnings=_generate_soil_warnings(request),
-            next_steps=[
-                "Schedule comprehensive soil testing",
-                "Develop long-term soil health plan",
-                "Consider cover crop integration",
-                "Evaluate tillage practices"
-            ]
-        )
+        logger.info(f"Processing soil management request: {request.request_id}")
+        request.question_type = "soil_management"
+        return await recommendation_engine.generate_recommendations(request)
         
     except Exception as e:
+        logger.error(f"Error generating soil management recommendations: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=f"Error generating soil management recommendations: {str(e)}"
         )
 
 
-def _generate_warnings(request: RecommendationRequest) -> List[str]:
-    """Generate warnings based on request data."""
-    warnings = []
+# Add endpoints for the specific 5 questions
+
+@router.post("/recommendations/soil-fertility", response_model=RecommendationResponse)
+async def get_soil_fertility_recommendations(request: RecommendationRequest):
+    """
+    Get soil fertility improvement recommendations (Question 2).
     
-    if not request.soil_data:
-        warnings.append("Recommendations are based on general conditions. Soil testing is strongly recommended for accurate advice.")
-    
-    if request.soil_data and request.soil_data.ph:
-        if request.soil_data.ph < 5.0:
-            warnings.append("Extremely acidic soil may limit crop options and require significant lime application.")
-        elif request.soil_data.ph > 8.5:
-            warnings.append("Very alkaline soil may cause micronutrient deficiencies.")
-    
-    return warnings
+    "How can I improve soil fertility without over-applying fertilizer?"
+    """
+    try:
+        logger.info(f"Processing soil fertility request: {request.request_id}")
+        request.question_type = "soil_fertility"
+        return await recommendation_engine.generate_recommendations(request)
+        
+    except Exception as e:
+        logger.error(f"Error generating soil fertility recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating soil fertility recommendations: {str(e)}"
+        )
 
 
-def _generate_fertilizer_warnings(request: RecommendationRequest) -> List[str]:
-    """Generate fertilizer-specific warnings."""
-    warnings = []
+@router.post("/recommendations/crop-rotation", response_model=RecommendationResponse)
+async def get_crop_rotation_recommendations(request: RecommendationRequest):
+    """
+    Get crop rotation recommendations (Question 3).
     
-    warnings.append("Always follow label instructions and local regulations for fertilizer application.")
-    warnings.append("Consider environmental conditions and weather forecasts before application.")
-    
-    if request.location and request.location.latitude > 45:
-        warnings.append("Northern locations may have shorter application windows due to weather.")
-    
-    return warnings
+    "What is the optimal crop rotation plan for my land?"
+    """
+    try:
+        logger.info(f"Processing crop rotation request: {request.request_id}")
+        request.question_type = "crop_rotation"
+        return await recommendation_engine.generate_recommendations(request)
+        
+    except Exception as e:
+        logger.error(f"Error generating crop rotation recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating crop rotation recommendations: {str(e)}"
+        )
 
 
-def _generate_soil_warnings(request: RecommendationRequest) -> List[str]:
-    """Generate soil management warnings."""
-    warnings = []
+@router.post("/recommendations/nutrient-deficiency", response_model=RecommendationResponse)
+async def get_nutrient_deficiency_recommendations(request: RecommendationRequest):
+    """
+    Get nutrient deficiency detection recommendations (Question 4).
     
-    warnings.append("Soil management changes take time to show results. Plan for multi-year improvements.")
+    "How do I know if my soil is deficient in key nutrients?"
+    """
+    try:
+        logger.info(f"Processing nutrient deficiency request: {request.request_id}")
+        request.question_type = "nutrient_deficiency"
+        return await recommendation_engine.generate_recommendations(request)
+        
+    except Exception as e:
+        logger.error(f"Error generating nutrient deficiency recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating nutrient deficiency recommendations: {str(e)}"
+        )
+
+
+@router.post("/recommendations/fertilizer-selection", response_model=RecommendationResponse)
+async def get_fertilizer_selection_recommendations(request: RecommendationRequest):
+    """
+    Get fertilizer type selection recommendations (Question 5).
     
-    if request.soil_data and request.soil_data.organic_matter_percent:
-        if request.soil_data.organic_matter_percent < 2.0:
-            warnings.append("Low organic matter may require significant management changes and time to improve.")
+    "Should I invest in organic, synthetic, or slow-release fertilizers?"
+    """
+    try:
+        logger.info(f"Processing fertilizer selection request: {request.request_id}")
+        request.question_type = "fertilizer_selection"
+        return await recommendation_engine.generate_recommendations(request)
+        
+    except Exception as e:
+        logger.error(f"Error generating fertilizer selection recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating fertilizer selection recommendations: {str(e)}"
+        )
+
+
+@router.post("/recommendations/generate", response_model=RecommendationResponse)
+async def generate_recommendations(request: RecommendationRequest):
+    """
+    Generate recommendations for any question type.
     
-    return warnings
+    This is the main endpoint that can handle all agricultural questions
+    based on the question_type field in the request.
+    """
+    try:
+        logger.info(f"Processing general recommendation request: {request.request_id}, type: {request.question_type}")
+        return await recommendation_engine.generate_recommendations(request)
+        
+    except Exception as e:
+        logger.error(f"Error generating recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating recommendations: {str(e)}"
+        )
