@@ -1,0 +1,12 @@
+{
+  "passed": [
+    "Nutrient calculations validated",
+    "Soil pH logic validated",
+    "Crop suitability logic validated",
+    "Safety limits validated",
+    "Regional adaptations validated"
+  ],
+  "warnings": [],
+  "errors": [],
+  "total_checks": 5
+}

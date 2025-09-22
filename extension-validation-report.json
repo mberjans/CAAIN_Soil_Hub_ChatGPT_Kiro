@@ -1,0 +1,53 @@
+{
+  "validation_date": "2025-09-22T02:47:33.960705",
+  "extension_sources": [
+    "Iowa State University Extension PM 1688",
+    "Tri-State Fertilizer Recommendations",
+    "USDA Plant Hardiness Zone Map",
+    "NRCS Soil Health Assessment"
+  ],
+  "results": {
+    "nitrogen_validation": {
+      "passed": [
+        "Scenario 1: Expected 96.0 lbs N/acre (within 90-110)",
+        "Scenario 2: Expected 124.0 lbs N/acre (within 120-140)",
+        "Scenario 3: Expected 50.0 lbs N/acre (within 40-60)"
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "phosphorus_validation": {
+      "passed": [
+        "Scenario 1: buildup recommendation validated",
+        "Scenario 2: maintenance recommendation validated",
+        "Scenario 3: maintenance recommendation validated"
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "crop_selection_validation": {
+      "passed": [
+        "Scenario 1: corn suitability correctly assessed as high",
+        "Scenario 2: corn suitability correctly assessed as marginal",
+        "Scenario 3: soybean suitability correctly assessed as high"
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "soil_health_validation": {
+      "passed": [
+        "Scenario 1: Soil health score 8.7 within expected range",
+        "Scenario 2: Soil health score 4.7 within expected range",
+        "Scenario 3: Soil health score 6.0 within expected range"
+      ],
+      "failed": [],
+      "warnings": []
+    },
+    "summary": {
+      "total_tests": 4,
+      "passed_tests": 4,
+      "failed_tests": 0,
+      "warnings": 0
+    }
+  }
+}

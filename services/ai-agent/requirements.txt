@@ -21,3 +21,8 @@ langchain==0.0.350
 langchain-openai==0.0.2
 tiktoken==0.5.2
 pinecone-client==2.2.4
+
+# OpenRouter integration
+httpx==0.25.2
+tenacity==8.2.3
+pydantic-settings==2.1.0
