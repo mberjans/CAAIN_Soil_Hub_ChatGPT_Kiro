@@ -157,6 +157,44 @@
                         </form>
                     </div>
                 </div>
+                
+                <!-- File Upload Section -->
+                <div class="card agricultural-card mt-4">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-upload"></i> Upload Soil Test Report</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="soilTestUploadForm" enctype="multipart/form-data">
+                            <div class="mb-3">
+                                <label class="form-label">Soil Test Report File</label>
+                                <input type="file" class="form-control" name="file" accept=".pdf,.txt,.csv" required>
+                                <small class="form-text text-muted">
+                                    Supported formats: PDF, TXT, CSV. Maximum file size: 10MB
+                                </small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Field ID (Optional)</label>
+                                <input type="text" class="form-control" name="field_id" 
+                                    placeholder="e.g., North Field, Field 1">
+                                <small class="form-text text-muted">
+                                    Associate this test with a specific field
+                                </small>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-info">
+                                <i class="fas fa-upload"></i> Upload and Process Report
+                            </button>
+                        </form>
+                        
+                        <div id="uploadResults" class="mt-3" style="display: none;">
+                            <div class="alert alert-success">
+                                <h6><i class="fas fa-check-circle"></i> File Processed Successfully</h6>
+                                <div id="extractedData"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             
             <div class="col-lg-4">
@@ -253,13 +291,49 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('soilAssessmentForm').addEventListener('submit', function(e) {
+        document.getElementById('soilAssessmentForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const formData = new FormData(this);
-            const data = Object.fromEntries(formData);
             
-            // Calculate soil health score (simplified algorithm)
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.disabled = true;
+            
+            try {
+                // Submit to backend for professional interpretation
+                const response = await fetch('/api/soil-test/interpret', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                displayProfessionalResults(result);
+                
+            } catch (error) {
+                console.error('Error processing soil test:', error);
+                // Fallback to client-side calculation
+                const data = Object.fromEntries(formData);
+                const score = calculateSimpleScore(data);
+                displayAssessmentResults(score, data);
+                
+                // Show error message
+                alert('Unable to connect to soil analysis service. Showing simplified results.');
+            } finally {
+                // Restore button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
+        });
+        
+        function calculateSimpleScore(data) {
+            // Fallback client-side calculation
             let score = 5.0; // Base score
             
             // pH scoring
@@ -284,10 +358,162 @@
             if (k >= 150 && k <= 250) score += 1.0;
             else if (k >= 100 && k <= 300) score += 0.5;
             
-            score = Math.min(score, 10.0); // Cap at 10
+            return Math.min(score, 10.0); // Cap at 10
+        }
+        
+        function displayProfessionalResults(result) {
+            const resultsSection = document.getElementById('assessmentResults');
+            const recommendationSection = document.getElementById('recommendationSection');
             
-            displayAssessmentResults(score, data);
+            // Convert rating to score
+            const ratingToScore = {
+                'excellent': 9.0,
+                'good': 7.5,
+                'fair': 5.5,
+                'poor': 3.0
+            };
+            
+            const score = ratingToScore[result.overall_rating] || 5.0;
+            
+            // Update health score display
+            document.getElementById('healthScore').textContent = score.toFixed(1);
+            document.getElementById('healthIndicator').style.left = (score * 10) + '%';
+            document.getElementById('healthStatus').textContent = result.overall_rating.charAt(0).toUpperCase() + result.overall_rating.slice(1);
+            
+            // Display limiting factors
+            const limitingFactorsHtml = result.limiting_factors.length > 0 
+                ? result.limiting_factors.map(factor => `<span class="badge bg-warning me-2 mb-2">${factor}</span>`).join('')
+                : '<span class="badge bg-success">No major limiting factors identified</span>';
+            
+            document.getElementById('limitingFactors').innerHTML = limitingFactorsHtml;
+            
+            // Display professional recommendations
+            const practiceHtml = result.recommendations.map(rec => `
+                <div class="practice-card priority-${rec.priority}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6><i class="fas fa-tools"></i> ${rec.practice}</h6>
+                            <p class="mb-2">${rec.description}</p>
+                            <small class="text-muted">
+                                <strong>Timing:</strong> ${rec.timing} | 
+                                <strong>Expected Benefit:</strong> ${rec.expected_benefit}
+                            </small>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge bg-${rec.priority === 'high' ? 'danger' : rec.priority === 'medium' ? 'warning' : 'success'} mb-2">
+                                ${rec.priority.toUpperCase()} PRIORITY
+                            </span><br>
+                            <strong>${rec.cost_per_acre}</strong>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('practiceRecommendations').innerHTML = practiceHtml;
+            
+            // Show results
+            resultsSection.style.display = 'block';
+            recommendationSection.style.display = 'block';
+            
+            // Add confidence score display
+            if (result.confidence_score) {
+                const confidenceHtml = `
+                    <div class="alert alert-info mt-3">
+                        <strong>Confidence Score:</strong> ${(result.confidence_score * 100).toFixed(0)}%
+                        <br><small>Based on data completeness and agricultural standards</small>
+                    </div>
+                `;
+                recommendationSection.insertAdjacentHTML('beforeend', confidenceHtml);
+            }
+        }
+        
+        // File upload handling
+        document.getElementById('soilTestUploadForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const fileInput = this.querySelector('input[type="file"]');
+            
+            if (!fileInput.files[0]) {
+                alert('Please select a file to upload');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing File...';
+            submitBtn.disabled = true;
+            
+            try {
+                const response = await fetch('/api/soil-test/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || `HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                displayUploadResults(result);
+                
+            } catch (error) {
+                console.error('Error uploading file:', error);
+                alert(`Error processing file: ${error.message}`);
+            } finally {
+                // Restore button
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }
         });
+        
+        function displayUploadResults(result) {
+            const uploadResults = document.getElementById('uploadResults');
+            const extractedData = document.getElementById('extractedData');
+            
+            if (result.extraction_success && result.extracted_data) {
+                let dataHtml = '<h6>Extracted Data:</h6><ul>';
+                
+                const data = result.extracted_data;
+                if (data.ph) dataHtml += `<li><strong>pH:</strong> ${data.ph}</li>`;
+                if (data.organic_matter_percent) dataHtml += `<li><strong>Organic Matter:</strong> ${data.organic_matter_percent}%</li>`;
+                if (data.phosphorus_ppm) dataHtml += `<li><strong>Phosphorus:</strong> ${data.phosphorus_ppm} ppm</li>`;
+                if (data.potassium_ppm) dataHtml += `<li><strong>Potassium:</strong> ${data.potassium_ppm} ppm</li>`;
+                if (data.test_date) dataHtml += `<li><strong>Test Date:</strong> ${data.test_date}</li>`;
+                if (data.lab_name) dataHtml += `<li><strong>Laboratory:</strong> ${data.lab_name}</li>`;
+                
+                dataHtml += '</ul>';
+                
+                if (result.recommendations && result.recommendations.length > 0) {
+                    dataHtml += '<h6>Recommendations:</h6><ul>';
+                    result.recommendations.forEach(rec => {
+                        dataHtml += `<li>${rec}</li>`;
+                    });
+                    dataHtml += '</ul>';
+                }
+                
+                if (result.confidence_score) {
+                    dataHtml += `<p><strong>Confidence Score:</strong> ${(result.confidence_score * 100).toFixed(0)}%</p>`;
+                }
+                
+                extractedData.innerHTML = dataHtml;
+                uploadResults.style.display = 'block';
+                
+                // Auto-populate the manual form with extracted data
+                if (data.ph) document.querySelector('input[name="ph"]').value = data.ph;
+                if (data.organic_matter_percent) document.querySelector('input[name="organic_matter"]').value = data.organic_matter_percent;
+                if (data.phosphorus_ppm) document.querySelector('input[name="phosphorus"]').value = data.phosphorus_ppm;
+                if (data.potassium_ppm) document.querySelector('input[name="potassium"]').value = data.potassium_ppm;
+                if (data.cec_meq_per_100g) document.querySelector('input[name="cec"]').value = data.cec_meq_per_100g;
+                if (data.soil_texture) document.querySelector('select[name="soil_texture"]').value = data.soil_texture;
+                
+            } else {
+                extractedData.innerHTML = '<p class="text-warning">Could not extract soil test data from the uploaded file. Please check the file format and try again, or enter data manually.</p>';
+                uploadResults.style.display = 'block';
+            }
+        }
         
         function displayAssessmentResults(score, data) {
             const resultsSection = document.getElementById('assessmentResults');

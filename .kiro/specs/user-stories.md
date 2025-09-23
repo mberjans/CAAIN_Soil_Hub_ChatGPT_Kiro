@@ -8,8 +8,8 @@
 **So that** I can maximize my yield potential and reduce crop failure risk
 
 **Acceptance Criteria:**
-- [ ] I can input my farm location (GPS, address, or map selection)
-- [ ] I can upload or manually enter soil test results (pH, NPK, texture)
+- [x] I can input my farm location (GPS, address, or map selection)
+- [x] I can upload or manually enter soil test results (pH, NPK, texture)
 - [ ] I can specify my climate zone or have it auto-detected
 - [ ] I receive a ranked list of suitable crop varieties with explanations
 - [ ] Each recommendation includes yield potential, disease resistance, and planting dates

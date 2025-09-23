@@ -370,6 +370,183 @@ class AgriculturalDataValidator(DataValidator):
             warnings=warnings,
             quality_score=quality_score
         )
+    
+    def validate_soil_test_data(self, soil_data: Dict[str, Any]) -> ValidationResult:
+        """
+        Validate soil test data for manual entry.
+        
+        Validates soil test parameters against agricultural standards and
+        provides warnings for unusual values.
+        
+        Args:
+            soil_data: Dictionary containing soil test parameters
+            
+        Returns:
+            ValidationResult with validation status and warnings
+        """
+        errors = []
+        warnings = []
+        quality_score = 1.0
+        
+        # Required field validation
+        if not soil_data.get("ph"):
+            errors.append("pH is required for soil test interpretation")
+        
+        # pH validation
+        ph = soil_data.get("ph")
+        if ph is not None:
+            if not isinstance(ph, (int, float)):
+                errors.append("pH must be a numeric value")
+            elif ph < 3.0 or ph > 10.0:
+                errors.append("pH must be between 3.0 and 10.0")
+            elif ph < 4.5:
+                warnings.append("Extremely acidic soil (pH < 4.5) - lime application strongly recommended")
+                quality_score -= 0.1
+            elif ph > 8.5:
+                warnings.append("Very alkaline soil (pH > 8.5) - may limit nutrient availability")
+                quality_score -= 0.1
+        
+        # Organic matter validation
+        om = soil_data.get("organic_matter_percent")
+        if om is not None:
+            if not isinstance(om, (int, float)):
+                errors.append("Organic matter must be a numeric value")
+            elif om < 0 or om > 15:
+                errors.append("Organic matter must be between 0 and 15%")
+            elif om > 10:
+                warnings.append("Very high organic matter (>10%) - may indicate wetland or organic soils")
+                quality_score -= 0.05
+            elif om < 1.0:
+                warnings.append("Very low organic matter (<1%) - soil health improvement needed")
+                quality_score -= 0.1
+        
+        # Phosphorus validation
+        p = soil_data.get("phosphorus_ppm")
+        if p is not None:
+            if not isinstance(p, (int, float)):
+                errors.append("Phosphorus must be a numeric value")
+            elif p < 0 or p > 200:
+                errors.append("Phosphorus must be between 0 and 200 ppm")
+            elif p > 100:
+                warnings.append("Very high phosphorus (>100 ppm) - may indicate over-fertilization")
+                quality_score -= 0.05
+        
+        # Potassium validation
+        k = soil_data.get("potassium_ppm")
+        if k is not None:
+            if not isinstance(k, (int, float)):
+                errors.append("Potassium must be a numeric value")
+            elif k < 0 or k > 800:
+                errors.append("Potassium must be between 0 and 800 ppm")
+            elif k > 400:
+                warnings.append("Very high potassium (>400 ppm) - may indicate over-fertilization")
+                quality_score -= 0.05
+        
+        # Nitrogen validation
+        n = soil_data.get("nitrogen_ppm")
+        if n is not None:
+            if not isinstance(n, (int, float)):
+                errors.append("Nitrogen must be a numeric value")
+            elif n < 0 or n > 100:
+                errors.append("Nitrogen must be between 0 and 100 ppm")
+        
+        # CEC validation
+        cec = soil_data.get("cec_meq_per_100g")
+        if cec is not None:
+            if not isinstance(cec, (int, float)):
+                errors.append("CEC must be a numeric value")
+            elif cec < 0 or cec > 50:
+                errors.append("CEC must be between 0 and 50 meq/100g")
+        
+        # Soil texture validation
+        soil_texture = soil_data.get("soil_texture")
+        if soil_texture is not None:
+            valid_textures = [
+                "sand", "loamy_sand", "sandy_loam", "loam", "silt_loam", 
+                "clay_loam", "clay", "silty_clay", "sandy_clay"
+            ]
+            if soil_texture not in valid_textures:
+                errors.append(f"Invalid soil texture. Must be one of: {', '.join(valid_textures)}")
+        
+        # Texture percentage validation
+        sand = soil_data.get("sand_percent")
+        silt = soil_data.get("silt_percent")
+        clay = soil_data.get("clay_percent")
+        
+        if all(x is not None for x in [sand, silt, clay]):
+            if not all(isinstance(x, (int, float)) and 0 <= x <= 100 for x in [sand, silt, clay]):
+                errors.append("Sand, silt, and clay percentages must be between 0 and 100")
+            else:
+                total = sand + silt + clay
+                if not 95 <= total <= 105:  # Allow 5% tolerance
+                    errors.append("Sand, silt, and clay percentages must sum to approximately 100%")
+        
+        # Bulk density validation
+        bulk_density = soil_data.get("bulk_density")
+        if bulk_density is not None:
+            if not isinstance(bulk_density, (int, float)):
+                errors.append("Bulk density must be a numeric value")
+            elif bulk_density < 0.5 or bulk_density > 2.5:
+                errors.append("Bulk density must be between 0.5 and 2.5 g/cm³")
+            elif bulk_density > 1.6:
+                warnings.append("High bulk density (>1.6 g/cm³) - may indicate soil compaction")
+                quality_score -= 0.1
+        
+        # Test date validation
+        test_date = soil_data.get("test_date")
+        if test_date is not None:
+            try:
+                from datetime import datetime, date
+                if isinstance(test_date, str):
+                    test_date = datetime.fromisoformat(test_date).date()
+                
+                if test_date > date.today():
+                    errors.append("Test date cannot be in the future")
+                
+                # Check if test is old
+                days_old = (date.today() - test_date).days
+                if days_old > 1095:  # More than 3 years
+                    warnings.append("Soil test is older than 3 years - recent test recommended")
+                    quality_score -= 0.1
+                elif days_old > 730:  # More than 2 years
+                    warnings.append("Soil test is older than 2 years - consider retesting")
+                    quality_score -= 0.05
+            except (ValueError, TypeError):
+                errors.append("Invalid test date format")
+        
+        # Micronutrient validation (if provided)
+        micronutrients = ["iron_ppm", "manganese_ppm", "zinc_ppm", "copper_ppm", "boron_ppm", "molybdenum_ppm"]
+        for nutrient in micronutrients:
+            value = soil_data.get(nutrient)
+            if value is not None:
+                if not isinstance(value, (int, float)):
+                    errors.append(f"{nutrient.replace('_', ' ').title()} must be a numeric value")
+                elif value < 0:
+                    errors.append(f"{nutrient.replace('_', ' ').title()} cannot be negative")
+        
+        # Calculate final quality score
+        if errors:
+            quality_score = 0.0
+        else:
+            # Reduce quality score based on missing important parameters
+            if not soil_data.get("organic_matter_percent"):
+                quality_score -= 0.1
+            if not soil_data.get("phosphorus_ppm"):
+                quality_score -= 0.1
+            if not soil_data.get("potassium_ppm"):
+                quality_score -= 0.1
+            if not soil_data.get("soil_texture"):
+                quality_score -= 0.05
+        
+        quality_score = max(quality_score, 0.0)
+        
+        return ValidationResult(
+            is_valid=len(errors) == 0,
+            errors=errors,
+            warnings=warnings,
+            quality_score=quality_score,
+            normalized_data=soil_data
+        )
 
 
 class CacheManager:

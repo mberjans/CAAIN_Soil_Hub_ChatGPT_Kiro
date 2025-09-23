@@ -5,11 +5,14 @@ FastAPI routes for external agricultural data integration using the
 unified data ingestion framework.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File
 from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field
-from datetime import datetime
+from pydantic import BaseModel, Field, validator
+from datetime import datetime, date
 import structlog
+import json
+import io
+import PyPDF2
 
 from ..services.ingestion_service import get_ingestion_service, DataIngestionService
 from ..services.data_ingestion_framework import IngestionResult
@@ -726,12 +729,432 @@ async def refresh_cache(
         )
 
 
+class SoilTestRequest(BaseModel):
+    """Request model for manual soil test data entry."""
+    field_id: Optional[str] = Field(None, description="Field ID if associated with a specific field")
+    test_date: date = Field(..., description="Date when soil test was conducted")
+    lab_name: Optional[str] = Field(None, description="Name of testing laboratory")
+    lab_id: Optional[str] = Field(None, description="Laboratory sample ID")
+    sampling_depth_inches: int = Field(6, description="Sampling depth in inches")
+    sample_count: int = Field(1, description="Number of samples composited")
+    
+    # Primary nutrients (required)
+    ph: float = Field(..., ge=3.0, le=10.0, description="Soil pH (3.0-10.0)")
+    organic_matter_percent: Optional[float] = Field(None, ge=0, le=15, description="Organic matter percentage")
+    phosphorus_ppm: Optional[float] = Field(None, ge=0, le=200, description="Phosphorus in ppm (Mehlich-3)")
+    potassium_ppm: Optional[float] = Field(None, ge=0, le=800, description="Potassium in ppm (Mehlich-3)")
+    nitrogen_ppm: Optional[float] = Field(None, ge=0, le=100, description="Nitrogen in ppm")
+    
+    # Secondary nutrients (optional)
+    calcium_ppm: Optional[float] = Field(None, ge=0, description="Calcium in ppm")
+    magnesium_ppm: Optional[float] = Field(None, ge=0, description="Magnesium in ppm")
+    sulfur_ppm: Optional[float] = Field(None, ge=0, description="Sulfur in ppm")
+    
+    # Micronutrients (optional)
+    iron_ppm: Optional[float] = Field(None, ge=0, description="Iron in ppm")
+    manganese_ppm: Optional[float] = Field(None, ge=0, description="Manganese in ppm")
+    zinc_ppm: Optional[float] = Field(None, ge=0, description="Zinc in ppm")
+    copper_ppm: Optional[float] = Field(None, ge=0, description="Copper in ppm")
+    boron_ppm: Optional[float] = Field(None, ge=0, description="Boron in ppm")
+    molybdenum_ppm: Optional[float] = Field(None, ge=0, description="Molybdenum in ppm")
+    
+    # Soil properties (optional)
+    cec_meq_per_100g: Optional[float] = Field(None, ge=0, le=50, description="Cation Exchange Capacity")
+    base_saturation_percent: Optional[float] = Field(None, ge=0, le=100, description="Base saturation percentage")
+    soil_texture: Optional[str] = Field(None, description="Soil texture class")
+    sand_percent: Optional[float] = Field(None, ge=0, le=100, description="Sand percentage")
+    silt_percent: Optional[float] = Field(None, ge=0, le=100, description="Silt percentage")
+    clay_percent: Optional[float] = Field(None, ge=0, le=100, description="Clay percentage")
+    bulk_density: Optional[float] = Field(None, ge=0.5, le=2.5, description="Bulk density g/cm³")
+    
+    # Test method information
+    extraction_method: str = Field("Mehlich-3", description="Extraction method used")
+    test_notes: Optional[str] = Field(None, description="Additional notes about the test")
+    
+    @validator('test_date')
+    def validate_test_date(cls, v):
+        """Ensure soil test is not too old or in the future."""
+        if v > date.today():
+            raise ValueError("Test date cannot be in the future")
+        
+        # Warn if test is older than 3 years
+        max_age = date.today().replace(year=date.today().year - 3)
+        if v < max_age:
+            import warnings
+            warnings.warn(f"Soil test date {v} is older than 3 years. Recent test recommended for accurate recommendations.")
+        
+        return v
+    
+    @validator('sand_percent', 'silt_percent', 'clay_percent')
+    def validate_texture_percentages(cls, v, values):
+        """Validate that texture percentages add up to 100% if all are provided."""
+        if v is not None:
+            sand = values.get('sand_percent', 0) or 0
+            silt = values.get('silt_percent', 0) or 0
+            clay = values.get('clay_percent', 0) or 0
+            
+            # Only validate if all three are provided
+            if all(x is not None for x in [sand, silt, clay]):
+                total = sand + silt + clay
+                if not 95 <= total <= 105:  # Allow 5% tolerance for rounding
+                    raise ValueError("Sand, silt, and clay percentages must sum to approximately 100%")
+        
+        return v
+
+
+class SoilTestResponse(BaseModel):
+    """Response model for soil test data."""
+    test_id: str
+    field_id: Optional[str]
+    test_date: date
+    lab_name: Optional[str]
+    
+    # Nutrient levels
+    ph: float
+    organic_matter_percent: Optional[float]
+    phosphorus_ppm: Optional[float]
+    potassium_ppm: Optional[float]
+    nitrogen_ppm: Optional[float]
+    
+    # Soil properties
+    soil_texture: Optional[str]
+    cec_meq_per_100g: Optional[float]
+    
+    # Interpretation
+    interpretation: Dict[str, Any]
+    recommendations: List[str]
+    confidence_score: float
+    
+    created_at: datetime
+
+
+class SoilTestInterpretationResponse(BaseModel):
+    """Response model for soil test interpretation."""
+    overall_rating: str  # excellent, good, fair, poor
+    limiting_factors: List[str]
+    nutrient_status: Dict[str, str]  # nutrient -> status (deficient, low, adequate, high, excessive)
+    recommendations: List[Dict[str, Any]]
+    confidence_score: float
+    agricultural_sources: List[str]
+
+
 class BatchIngestionRequest(BaseModel):
     """Request model for batch data ingestion."""
     requests: List[Dict[str, Any]] = Field(
         ..., 
         description="List of ingestion requests with source_name, operation, and params"
     )
+
+
+@router.post("/soil-tests/manual", response_model=SoilTestResponse)
+async def submit_manual_soil_test(
+    soil_test: SoilTestRequest,
+    ingestion_service: DataIngestionService = Depends(get_ingestion_service)
+):
+    """
+    Submit manual soil test data entry.
+    
+    Accepts manually entered soil test results, validates them against
+    agricultural standards, and provides interpretation and recommendations.
+    
+    Args:
+        soil_test: Soil test data including pH, NPK, texture, and other parameters
+        
+    Returns:
+        Processed soil test with interpretation and recommendations
+    """
+    try:
+        logger.info("Processing manual soil test submission", 
+                   ph=soil_test.ph, test_date=soil_test.test_date)
+        
+        # Convert soil test data to dictionary for processing
+        soil_test_data = soil_test.dict()
+        
+        # Process through ingestion framework for validation and interpretation
+        result = await ingestion_service.process_soil_test_data(soil_test_data)
+        
+        if not result.success:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Soil test processing failed: {result.error_message}"
+            )
+        
+        processed_data = result.data
+        
+        return SoilTestResponse(
+            test_id=processed_data["test_id"],
+            field_id=soil_test.field_id,
+            test_date=soil_test.test_date,
+            lab_name=soil_test.lab_name,
+            ph=soil_test.ph,
+            organic_matter_percent=soil_test.organic_matter_percent,
+            phosphorus_ppm=soil_test.phosphorus_ppm,
+            potassium_ppm=soil_test.potassium_ppm,
+            nitrogen_ppm=soil_test.nitrogen_ppm,
+            soil_texture=soil_test.soil_texture,
+            cec_meq_per_100g=soil_test.cec_meq_per_100g,
+            interpretation=processed_data["interpretation"],
+            recommendations=processed_data["recommendations"],
+            confidence_score=processed_data["confidence_score"],
+            created_at=datetime.utcnow()
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error processing manual soil test", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing soil test: {str(e)}"
+        )
+
+
+@router.post("/soil-tests/upload")
+async def upload_soil_test_report(
+    file: UploadFile = File(...),
+    field_id: Optional[str] = None,
+    ingestion_service: DataIngestionService = Depends(get_ingestion_service)
+):
+    """
+    Upload and parse soil test report (PDF or text file).
+    
+    Accepts soil test reports in PDF or text format, extracts the data
+    using OCR and text parsing, and returns structured soil test data.
+    
+    Args:
+        file: Uploaded soil test report file (PDF, TXT)
+        field_id: Optional field ID to associate with the test
+        
+    Returns:
+        Extracted and processed soil test data
+    """
+    try:
+        logger.info("Processing uploaded soil test report", 
+                   filename=file.filename, content_type=file.content_type)
+        
+        # Validate file type
+        allowed_types = ["application/pdf", "text/plain", "text/csv"]
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unsupported file type. Allowed types: {', '.join(allowed_types)}"
+            )
+        
+        # Read file content
+        file_content = await file.read()
+        
+        # Extract text based on file type
+        extracted_text = ""
+        if file.content_type == "application/pdf":
+            try:
+                pdf_reader = PyPDF2.PdfReader(io.BytesIO(file_content))
+                extracted_text = ""
+                for page in pdf_reader.pages:
+                    extracted_text += page.extract_text() + "\n"
+            except Exception as e:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Error reading PDF file: {str(e)}"
+                )
+        else:
+            # Text or CSV file
+            extracted_text = file_content.decode('utf-8')
+        
+        if not extracted_text.strip():
+            raise HTTPException(
+                status_code=422,
+                detail="No text could be extracted from the uploaded file"
+            )
+        
+        # Process through ingestion framework for parsing and interpretation
+        result = await ingestion_service.parse_soil_test_report(
+            extracted_text, 
+            filename=file.filename,
+            field_id=field_id
+        )
+        
+        if not result.success:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Soil test report parsing failed: {result.error_message}"
+            )
+        
+        return {
+            "filename": file.filename,
+            "extraction_success": True,
+            "extracted_data": result.data,
+            "confidence_score": result.quality_score,
+            "parsing_notes": result.data.get("parsing_notes", []),
+            "recommendations": result.data.get("recommendations", [])
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error processing uploaded soil test report", 
+                    filename=file.filename, error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing uploaded file: {str(e)}"
+        )
+
+
+@router.post("/soil-tests/interpret", response_model=SoilTestInterpretationResponse)
+async def interpret_soil_test(
+    ph: float = Field(..., ge=3.0, le=10.0),
+    organic_matter_percent: Optional[float] = Field(None, ge=0, le=15),
+    phosphorus_ppm: Optional[float] = Field(None, ge=0, le=200),
+    potassium_ppm: Optional[float] = Field(None, ge=0, le=800),
+    nitrogen_ppm: Optional[float] = Field(None, ge=0, le=100),
+    soil_texture: Optional[str] = None,
+    cec_meq_per_100g: Optional[float] = Field(None, ge=0, le=50),
+    crop_type: Optional[str] = None,
+    ingestion_service: DataIngestionService = Depends(get_ingestion_service)
+):
+    """
+    Interpret soil test results and provide recommendations.
+    
+    Takes individual soil test parameters and provides agricultural
+    interpretation, nutrient status assessment, and management recommendations.
+    
+    Args:
+        ph: Soil pH (required)
+        organic_matter_percent: Organic matter percentage
+        phosphorus_ppm: Phosphorus level in ppm
+        potassium_ppm: Potassium level in ppm
+        nitrogen_ppm: Nitrogen level in ppm
+        soil_texture: Soil texture class
+        cec_meq_per_100g: Cation exchange capacity
+        crop_type: Target crop for recommendations
+        
+    Returns:
+        Comprehensive soil test interpretation and recommendations
+    """
+    try:
+        logger.info("Interpreting soil test results", 
+                   ph=ph, crop_type=crop_type)
+        
+        # Compile soil test data
+        soil_data = {
+            "ph": ph,
+            "organic_matter_percent": organic_matter_percent,
+            "phosphorus_ppm": phosphorus_ppm,
+            "potassium_ppm": potassium_ppm,
+            "nitrogen_ppm": nitrogen_ppm,
+            "soil_texture": soil_texture,
+            "cec_meq_per_100g": cec_meq_per_100g,
+            "crop_type": crop_type
+        }
+        
+        # Remove None values
+        soil_data = {k: v for k, v in soil_data.items() if v is not None}
+        
+        # Process through ingestion framework for interpretation
+        result = await ingestion_service.interpret_soil_test(soil_data)
+        
+        if not result.success:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Soil test interpretation failed: {result.error_message}"
+            )
+        
+        interpretation_data = result.data
+        
+        return SoilTestInterpretationResponse(
+            overall_rating=interpretation_data["overall_rating"],
+            limiting_factors=interpretation_data["limiting_factors"],
+            nutrient_status=interpretation_data["nutrient_status"],
+            recommendations=interpretation_data["recommendations"],
+            confidence_score=interpretation_data["confidence_score"],
+            agricultural_sources=interpretation_data["agricultural_sources"]
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Error interpreting soil test", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error interpreting soil test: {str(e)}"
+        )
+
+
+@router.get("/soil-tests/validation-ranges")
+async def get_soil_test_validation_ranges():
+    """
+    Get validation ranges for soil test parameters.
+    
+    Returns acceptable ranges for soil test parameters to help with
+    data validation and user guidance during manual entry.
+    
+    Returns:
+        Dictionary of parameter ranges and validation rules
+    """
+    try:
+        return {
+            "ph": {
+                "min": 3.0,
+                "max": 10.0,
+                "optimal_range": {"min": 6.0, "max": 7.0},
+                "units": "pH units",
+                "description": "Soil acidity/alkalinity"
+            },
+            "organic_matter_percent": {
+                "min": 0.0,
+                "max": 15.0,
+                "optimal_range": {"min": 3.0, "max": 5.0},
+                "units": "%",
+                "description": "Organic matter content"
+            },
+            "phosphorus_ppm": {
+                "min": 0.0,
+                "max": 200.0,
+                "optimal_range": {"min": 20.0, "max": 40.0},
+                "units": "ppm (Mehlich-3)",
+                "description": "Available phosphorus"
+            },
+            "potassium_ppm": {
+                "min": 0.0,
+                "max": 800.0,
+                "optimal_range": {"min": 150.0, "max": 250.0},
+                "units": "ppm (Mehlich-3)",
+                "description": "Available potassium"
+            },
+            "nitrogen_ppm": {
+                "min": 0.0,
+                "max": 100.0,
+                "optimal_range": {"min": 10.0, "max": 25.0},
+                "units": "ppm (nitrate-N)",
+                "description": "Available nitrogen"
+            },
+            "cec_meq_per_100g": {
+                "min": 0.0,
+                "max": 50.0,
+                "optimal_range": {"min": 15.0, "max": 25.0},
+                "units": "meq/100g",
+                "description": "Cation exchange capacity"
+            },
+            "soil_texture_options": [
+                "sand", "loamy_sand", "sandy_loam", "loam", 
+                "silt_loam", "clay_loam", "clay", "silty_clay", "sandy_clay"
+            ],
+            "extraction_methods": [
+                "Mehlich-3", "Mehlich-1", "Bray-P1", "Olsen", "Other"
+            ],
+            "validation_notes": [
+                "pH values outside 4.0-9.0 range should be double-checked",
+                "Organic matter >10% may indicate wetland or organic soils",
+                "Very high P or K levels (>100 ppm P, >400 ppm K) may indicate over-fertilization",
+                "Soil tests older than 3 years may not reflect current conditions"
+            ]
+        }
+        
+    except Exception as e:
+        logger.error("Error getting validation ranges", error=str(e))
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error getting validation ranges: {str(e)}"
+        )
 
 
 @router.post("/ingestion/batch")

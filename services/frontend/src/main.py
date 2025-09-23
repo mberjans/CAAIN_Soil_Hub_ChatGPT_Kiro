@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, HTTPException
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -9,6 +9,7 @@ import httpx
 import logging
 from pathlib import Path
 from typing import Optional
+from datetime import datetime
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -162,6 +163,156 @@ async def get_crop_recommendation(
             else:
                 logger.error(f"Recommendation engine error: {response.status_code}")
                 raise HTTPException(status_code=500, detail="Failed to get recommendations")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/soil-test/manual")
+async def submit_manual_soil_test(
+    ph: float = Form(...),
+    organic_matter: Optional[float] = Form(None),
+    phosphorus: Optional[float] = Form(None),
+    potassium: Optional[float] = Form(None),
+    nitrogen: Optional[float] = Form(None),
+    soil_texture: Optional[str] = Form(None),
+    cec: Optional[float] = Form(None),
+    test_date: Optional[str] = Form(None),
+    lab_name: Optional[str] = Form(None),
+    test_notes: Optional[str] = Form(None)
+):
+    """Submit manual soil test data"""
+    try:
+        # Prepare soil test data
+        soil_test_data = {
+            "ph": ph,
+            "test_date": test_date or datetime.now().date().isoformat()
+        }
+        
+        # Add optional parameters if provided
+        if organic_matter is not None:
+            soil_test_data["organic_matter_percent"] = organic_matter
+        if phosphorus is not None:
+            soil_test_data["phosphorus_ppm"] = phosphorus
+        if potassium is not None:
+            soil_test_data["potassium_ppm"] = potassium
+        if nitrogen is not None:
+            soil_test_data["nitrogen_ppm"] = nitrogen
+        if soil_texture:
+            soil_test_data["soil_texture"] = soil_texture
+        if cec is not None:
+            soil_test_data["cec_meq_per_100g"] = cec
+        if lab_name:
+            soil_test_data["lab_name"] = lab_name
+        if test_notes:
+            soil_test_data["test_notes"] = test_notes
+        
+        # Submit to data integration service
+        DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{DATA_INTEGRATION_URL}/api/v1/soil-tests/manual",
+                json=soil_test_data,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Data integration error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to process soil test")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/soil-test/upload")
+async def upload_soil_test_report(
+    file: UploadFile = File(...),
+    field_id: Optional[str] = Form(None)
+):
+    """Upload soil test report file"""
+    try:
+        # Validate file type
+        allowed_types = ["application/pdf", "text/plain", "text/csv"]
+        if file.content_type not in allowed_types:
+            raise HTTPException(
+                status_code=422,
+                detail=f"Unsupported file type. Allowed: PDF, TXT, CSV"
+            )
+        
+        # Submit to data integration service
+        DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003")
+        
+        async with httpx.AsyncClient() as client:
+            files = {"file": (file.filename, await file.read(), file.content_type)}
+            data = {}
+            if field_id:
+                data["field_id"] = field_id
+            
+            response = await client.post(
+                f"{DATA_INTEGRATION_URL}/api/v1/soil-tests/upload",
+                files=files,
+                data=data,
+                timeout=60.0  # Longer timeout for file processing
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Data integration error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to process uploaded file")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/soil-test/interpret")
+async def interpret_soil_test(
+    ph: float = Form(...),
+    organic_matter: Optional[float] = Form(None),
+    phosphorus: Optional[float] = Form(None),
+    potassium: Optional[float] = Form(None),
+    nitrogen: Optional[float] = Form(None),
+    soil_texture: Optional[str] = Form(None),
+    cec: Optional[float] = Form(None),
+    crop_type: Optional[str] = Form(None)
+):
+    """Get soil test interpretation and recommendations"""
+    try:
+        # Prepare parameters
+        params = {"ph": ph}
+        if organic_matter is not None:
+            params["organic_matter_percent"] = organic_matter
+        if phosphorus is not None:
+            params["phosphorus_ppm"] = phosphorus
+        if potassium is not None:
+            params["potassium_ppm"] = potassium
+        if nitrogen is not None:
+            params["nitrogen_ppm"] = nitrogen
+        if soil_texture:
+            params["soil_texture"] = soil_texture
+        if cec is not None:
+            params["cec_meq_per_100g"] = cec
+        if crop_type:
+            params["crop_type"] = crop_type
+        
+        # Submit to data integration service
+        DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003")
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{DATA_INTEGRATION_URL}/api/v1/soil-tests/interpret",
+                params=params,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Data integration error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to interpret soil test")
                 
     except httpx.RequestError as e:
         logger.error(f"Request error: {e}")

@@ -3,9 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import os
 import logging
+import asyncio
+from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
 from .api.routes import router
+from .services.context_manager import initialize_context_manager, shutdown_context_manager
 
 load_dotenv()
 
@@ -15,12 +18,40 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
+logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager for startup and shutdown tasks."""
+    # Startup
+    logger.info("Starting AFAS AI Agent Service with context management...")
+    
+    try:
+        # Initialize context manager
+        await initialize_context_manager(
+            max_contexts_per_user=1000,
+            cleanup_interval_hours=6,
+            enable_persistence=True
+        )
+        logger.info("Context management system initialized")
+        
+        yield
+        
+    finally:
+        # Shutdown
+        logger.info("Shutting down AFAS AI Agent Service...")
+        await shutdown_context_manager()
+        logger.info("Context management system shutdown complete")
+
+
 app = FastAPI(
     title="AFAS AI Agent Service",
-    description="Natural language processing and AI explanation service with OpenRouter LLM integration",
+    description="Natural language processing and AI explanation service with OpenRouter LLM integration and context management",
     version="1.0.0",
     docs_url="/docs",
-    redoc_url="/redoc"
+    redoc_url="/redoc",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -47,7 +78,10 @@ async def health_check():
             "conversational_ai",
             "agricultural_explanations",
             "streaming_responses",
-            "openrouter_integration"
+            "openrouter_integration",
+            "context_management",
+            "conversation_continuity",
+            "agricultural_context_awareness"
         ]
     }
 

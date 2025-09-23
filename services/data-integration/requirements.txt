@@ -24,3 +24,7 @@ lxml==4.9.3
 redis[hiredis]==5.0.1
 apscheduler==3.10.4
 croniter==2.0.1
+
+# Soil test processing dependencies
+PyPDF2==3.0.1
+python-multipart==0.0.6
