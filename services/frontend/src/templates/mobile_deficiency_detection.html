@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AFAS - Mobile Deficiency Detection</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .mobile-container {
+            max-width: 100%;
+            padding: 10px;
+        }
+        
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .camera-preview {
+            width: 100%;
+            height: 300px;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .captured-image {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        
+        .symptom-card {
+            background: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .severity-badge {
+            font-size: 0.8em;
+            padding: 4px 8px;
+            border-radius: 12px;
+        }
+        
+        .severity-mild { background-color: #d4edda; color: #155724; }
+        .severity-moderate { background-color: #fff3cd; color: #856404; }
+        .severity-severe { background-color: #f8d7da; color: #721c24; }
+        
+        .confidence-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+            transition: width 0.3s ease;
+        }
+        
+        .action-button {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+        }
+        
+        .btn-camera {
+            background: #007bff;
+            color: white;
+        }
+        
+        .btn-analyze {
+            background: #28a745;
+            color: white;
+        }
+        
+        .btn-retake {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .results-container {
+            display: none;
+        }
+        
+        .gps-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+        }
+        
+        .offline-indicator {
+            background: #ffecb3;
+            color: #f57f17;
+            padding: 8px;
+            text-align: center;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .treatment-recommendation {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        @media (max-width: 576px) {
+            .mobile-container {
+                padding: 5px;
+            }
+            
+            .camera-preview {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Header -->
+        <div class="d-flex align-items-center mb-3">
+            <button class="btn btn-link p-0 me-3" onclick="history.back()">
+                <i class="fas fa-arrow-left fa-lg"></i>
+            </button>
+            <h4 class="mb-0">Deficiency Detection</h4>
+        </div>
+        
+        <!-- Offline Indicator -->
+        <div id="offlineIndicator" class="offline-indicator">
+            <i class="fas fa-wifi-slash me-2"></i>
+            Working offline - data will sync when connected
+        </div>
+        
+        <!-- GPS Info -->
+        <div id="gpsInfo" class="gps-info">
+            <i class="fas fa-map-marker-alt me-2"></i>
+            <span id="locationText">Getting location...</span>
+        </div>
+        
+        <!-- Camera Section -->
+        <div class="camera-container mb-4">
+            <div id="cameraPreview" class="camera-preview">
+                <i class="fas fa-camera fa-3x text-muted mb-2"></i>
+                <p class="text-muted mb-0">Tap to capture crop photo</p>
+            </div>
+            
+            <video id="videoElement" style="display: none;" autoplay playsinline></video>
+            <canvas id="canvasElement" style="display: none;"></canvas>
+            
+            <div class="mt-3">
+                <button id="captureBtn" class="action-button btn-camera">
+                    <i class="fas fa-camera me-2"></i>Capture Photo
+                </button>
+                
+                <button id="retakeBtn" class="action-button btn-retake" style="display: none;">
+                    <i class="fas fa-redo me-2"></i>Retake Photo
+                </button>
+                
+                <button id="analyzeBtn" class="action-button btn-analyze" style="display: none;">
+                    <i class="fas fa-search me-2"></i>Analyze for Deficiencies
+                </button>
+            </div>
+        </div>
+        
+        <!-- Crop Type Selection -->
+        <div class="mb-4">
+            <label for="cropType" class="form-label">Crop Type</label>
+            <select id="cropType" class="form-select">
+                <option value="corn">Corn</option>
+                <option value="soybean">Soybean</option>
+                <option value="wheat">Wheat</option>
+                <option value="cotton">Cotton</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        
+        <!-- Growth Stage -->
+        <div class="mb-4">
+            <label for="growthStage" class="form-label">Growth Stage (Optional)</label>
+            <select id="growthStage" class="form-select">
+                <option value="">Select growth stage</option>
+                <option value="seedling">Seedling</option>
+                <option value="vegetative">Vegetative</option>
+                <option value="reproductive">Reproductive</option>
+                <option value="maturity">Maturity</option>
+            </select>
+        </div>
+        
+        <!-- Symptom Description -->
+        <div class="mb-4">
+            <label for="symptomDescription" class="form-label">Describe Symptoms (Optional)</label>
+            <textarea id="symptomDescription" class="form-control" rows="3" 
+                placeholder="Describe what you're seeing (e.g., yellowing leaves, stunted growth, etc.)"></textarea>
+        </div>
+        
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Analyzing...</span>
+            </div>
+            <p class="mt-2">Analyzing crop image...</p>
+        </div>
+        
+        <!-- Results Container -->
+        <div id="resultsContainer" class="results-container">
+            <h5 class="mb-3">
+                <i class="fas fa-microscope me-2"></i>Analysis Results
+            </h5>
+            
+            <div id="imageQuality" class="mb-3">
+                <small class="text-muted">Image Quality: </small>
+                <span id="qualityScore" class="badge bg-success">Good</span>
+            </div>
+            
+            <div id="detectedSymptoms">
+                <!-- Symptoms will be populated here -->
+            </div>
+            
+            <div id="deficiencyPredictions">
+                <!-- Deficiency predictions will be populated here -->
+            </div>
+            
+            <div id="treatmentRecommendations">
+                <!-- Treatment recommendations will be populated here -->
+            </div>
+            
+            <div class="mt-4">
+                <button class="action-button btn-primary" onclick="saveResults()">
+                    <i class="fas fa-save me-2"></i>Save Results
+                </button>
+                
+                <button class="action-button btn-outline-primary" onclick="shareResults()">
+                    <i class="fas fa-share me-2"></i>Share with Advisor
+                </button>
+                
+                <button class="action-button btn-outline-secondary" onclick="startNewAnalysis()">
+                    <i class="fas fa-plus me-2"></i>Analyze Another Photo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentStream = null;
+        let capturedImageData = null;
+        let currentLocation = null;
+        let analysisResults = null;
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            checkOnlineStatus();
+            getCurrentLocation();
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            document.getElementById('captureBtn').addEventListener('click', startCamera);
+            document.getElementById('retakeBtn').addEventListener('click', retakePhoto);
+            document.getElementById('analyzeBtn').addEventListener('click', analyzeImage);
+            
+            // Online/offline status
+            window.addEventListener('online', () => {
+                document.getElementById('offlineIndicator').style.display = 'none';
+            });
+            
+            window.addEventListener('offline', () => {
+                document.getElementById('offlineIndicator').style.display = 'block';
+            });
+        }
+        
+        function checkOnlineStatus() {
+            if (!navigator.onLine) {
+                document.getElementById('offlineIndicator').style.display = 'block';
+            }
+        }
+        
+        function getCurrentLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        currentLocation = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        };
+                        
+                        document.getElementById('locationText').textContent = 
+                            `Location: ${currentLocation.latitude.toFixed(4)}, ${currentLocation.longitude.toFixed(4)}`;
+                    },
+                    function(error) {
+                        document.getElementById('locationText').textContent = 'Location unavailable';
+                        console.error('Geolocation error:', error);
+                    }
+                );
+            } else {
+                document.getElementById('locationText').textContent = 'Geolocation not supported';
+            }
+        }
+        
+        async function startCamera() {
+            try {
+                const constraints = {
+                    video: {
+                        facingMode: 'environment', // Use back camera
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                };
+                
+                currentStream = await navigator.mediaDevices.getUserMedia(constraints);
+                const videoElement = document.getElementById('videoElement');
+                
+                videoElement.srcObject = currentStream;
+                videoElement.style.display = 'block';
+                
+                document.getElementById('cameraPreview').style.display = 'none';
+                document.getElementById('captureBtn').textContent = 'Take Photo';
+                document.getElementById('captureBtn').onclick = capturePhoto;
+                
+            } catch (error) {
+                console.error('Camera access error:', error);
+                alert('Unable to access camera. Please check permissions.');
+            }
+        }
+        
+        function capturePhoto() {
+            const video = document.getElementById('videoElement');
+            const canvas = document.getElementById('canvasElement');
+            const context = canvas.getContext('2d');
+            
+            // Set canvas dimensions to match video
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Draw video frame to canvas
+            context.drawImage(video, 0, 0);
+            
+            // Convert to base64
+            capturedImageData = canvas.toDataURL('image/jpeg', 0.8);
+            
+            // Display captured image
+            const preview = document.getElementById('cameraPreview');
+            preview.innerHTML = `<img src="${capturedImageData}" class="captured-image" alt="Captured crop photo">`;
+            preview.style.display = 'block';
+            
+            // Hide video and stop stream
+            video.style.display = 'none';
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            
+            // Update buttons
+            document.getElementById('captureBtn').style.display = 'none';
+            document.getElementById('retakeBtn').style.display = 'block';
+            document.getElementById('analyzeBtn').style.display = 'block';
+        }
+        
+        function retakePhoto() {
+            // Reset to initial state
+            const preview = document.getElementById('cameraPreview');
+            preview.innerHTML = `
+                <i class="fas fa-camera fa-3x text-muted mb-2"></i>
+                <p class="text-muted mb-0">Tap to capture crop photo</p>
+            `;
+            
+            capturedImageData = null;
+            
+            // Reset buttons
+            document.getElementById('captureBtn').style.display = 'block';
+            document.getElementById('captureBtn').textContent = 'Capture Photo';
+            document.getElementById('captureBtn').onclick = startCamera;
+            document.getElementById('retakeBtn').style.display = 'none';
+            document.getElementById('analyzeBtn').style.display = 'none';
+            
+            // Hide results
+            document.getElementById('resultsContainer').style.display = 'none';
+        }
+        
+        async function analyzeImage() {
+            if (!capturedImageData) {
+                alert('Please capture a photo first');
+                return;
+            }
+            
+            // Show loading spinner
+            document.getElementById('loadingSpinner').style.display = 'block';
+            document.getElementById('analyzeBtn').disabled = true;
+            
+            try {
+                // Prepare analysis data
+                const analysisData = {
+                    image_data: capturedImageData.split(',')[1], // Remove data:image/jpeg;base64, prefix
+                    crop_type: document.getElementById('cropType').value,
+                    growth_stage: document.getElementById('growthStage').value,
+                    symptom_description: document.getElementById('symptomDescription').value,
+                    location: currentLocation,
+                    timestamp: new Date().toISOString()
+                };
+                
+                // Call analysis API
+                const response = await fetch('/api/v1/deficiency/image-analysis', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(analysisData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Analysis failed: ${response.statusText}`);
+                }
+                
+                analysisResults = await response.json();
+                displayResults(analysisResults);
+                
+            } catch (error) {
+                console.error('Analysis error:', error);
+                
+                if (!navigator.onLine) {
+                    // Store for offline processing
+                    storeOfflineAnalysis(analysisData);
+                    alert('Stored for analysis when connection is restored');
+                } else {
+                    alert('Analysis failed. Please try again.');
+                }
+            } finally {
+                // Hide loading spinner
+                document.getElementById('loadingSpinner').style.display = 'none';
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+        
+        function displayResults(results) {
+            // Show image quality
+            const qualityScore = results.image_quality_score;
+            const qualityBadge = document.getElementById('qualityScore');
+            
+            if (qualityScore >= 0.8) {
+                qualityBadge.textContent = 'Excellent';
+                qualityBadge.className = 'badge bg-success';
+            } else if (qualityScore >= 0.6) {
+                qualityBadge.textContent = 'Good';
+                qualityBadge.className = 'badge bg-primary';
+            } else if (qualityScore >= 0.4) {
+                qualityBadge.textContent = 'Fair';
+                qualityBadge.className = 'badge bg-warning';
+            } else {
+                qualityBadge.textContent = 'Poor';
+                qualityBadge.className = 'badge bg-danger';
+            }
+            
+            // Display detected symptoms
+            const symptomsContainer = document.getElementById('detectedSymptoms');
+            if (results.detected_symptoms && results.detected_symptoms.length > 0) {
+                let symptomsHtml = '<h6><i class="fas fa-eye me-2"></i>Detected Symptoms</h6>';
+                
+                results.detected_symptoms.forEach(symptom => {
+                    symptomsHtml += `
+                        <div class="symptom-card">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <strong>${symptom.description}</strong>
+                                <span class="severity-badge severity-${symptom.severity}">${symptom.severity}</span>
+                            </div>
+                            <div class="mb-2">
+                                <small class="text-muted">Confidence: ${Math.round(symptom.confidence_score * 100)}%</small>
+                                <div class="confidence-bar">
+                                    <div class="confidence-fill" style="width: ${symptom.confidence_score * 100}%"></div>
+                                </div>
+                            </div>
+                            <div class="small text-muted">
+                                <i class="fas fa-leaf me-1"></i>Affected: ${symptom.plant_part}
+                                <br>
+                                <i class="fas fa-palette me-1"></i>${symptom.color_description}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                symptomsContainer.innerHTML = symptomsHtml;
+            } else {
+                symptomsContainer.innerHTML = '<p class="text-muted">No clear symptoms detected</p>';
+            }
+            
+            // Display deficiency predictions
+            const predictionsContainer = document.getElementById('deficiencyPredictions');
+            if (results.deficiency_predictions && results.deficiency_predictions.length > 0) {
+                let predictionsHtml = '<h6><i class="fas fa-flask me-2"></i>Nutrient Deficiency Predictions</h6>';
+                
+                results.deficiency_predictions.forEach((prediction, index) => {
+                    const probability = Math.round(prediction.probability * 100);
+                    const confidence = Math.round(prediction.confidence * 100);
+                    
+                    let priorityClass = 'border-success';
+                    if (index === 0 && probability > 70) priorityClass = 'border-danger';
+                    else if (index === 0 && probability > 50) priorityClass = 'border-warning';
+                    
+                    predictionsHtml += `
+                        <div class="card mb-2 ${priorityClass}">
+                            <div class="card-body p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0">${prediction.nutrient.charAt(0).toUpperCase() + prediction.nutrient.slice(1)} Deficiency</h6>
+                                    <span class="badge bg-primary">${probability}% likely</span>
+                                </div>
+                                <div class="mb-2">
+                                    <small class="text-muted">Confidence: ${confidence}%</small>
+                                    <div class="confidence-bar">
+                                        <div class="confidence-fill" style="width: ${confidence}%"></div>
+                                    </div>
+                                </div>
+                                ${prediction.severity_estimate ? `<small class="text-muted">Estimated severity: ${prediction.severity_estimate}</small>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                predictionsContainer.innerHTML = predictionsHtml;
+            } else {
+                predictionsContainer.innerHTML = '<p class="text-muted">No nutrient deficiencies detected</p>';
+            }
+            
+            // Display treatment recommendations
+            const treatmentContainer = document.getElementById('treatmentRecommendations');
+            if (results.recommendations && results.recommendations.length > 0) {
+                let treatmentHtml = '<div class="treatment-recommendation">';
+                treatmentHtml += '<h6><i class="fas fa-prescription-bottle me-2"></i>Recommendations</h6>';
+                treatmentHtml += '<ul class="mb-0">';
+                
+                results.recommendations.forEach(recommendation => {
+                    treatmentHtml += `<li>${recommendation}</li>`;
+                });
+                
+                treatmentHtml += '</ul></div>';
+                treatmentContainer.innerHTML = treatmentHtml;
+            }
+            
+            // Show results container
+            document.getElementById('resultsContainer').style.display = 'block';
+        }
+        
+        function storeOfflineAnalysis(analysisData) {
+            // Store analysis data for offline processing
+            const offlineData = JSON.parse(localStorage.getItem('offlineAnalyses') || '[]');
+            offlineData.push({
+                id: Date.now(),
+                data: analysisData,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('offlineAnalyses', JSON.stringify(offlineData));
+        }
+        
+        function saveResults() {
+            if (!analysisResults) {
+                alert('No results to save');
+                return;
+            }
+            
+            // Save to local storage
+            const savedAnalyses = JSON.parse(localStorage.getItem('savedAnalyses') || '[]');
+            savedAnalyses.push({
+                id: Date.now(),
+                results: analysisResults,
+                image: capturedImageData,
+                timestamp: new Date().toISOString(),
+                location: currentLocation
+            });
+            localStorage.setItem('savedAnalyses', JSON.stringify(savedAnalyses));
+            
+            alert('Results saved successfully!');
+        }
+        
+        function shareResults() {
+            if (!analysisResults) {
+                alert('No results to share');
+                return;
+            }
+            
+            // Create shareable summary
+            const summary = `AFAS Deficiency Analysis Results\n\n` +
+                `Crop: ${document.getElementById('cropType').value}\n` +
+                `Date: ${new Date().toLocaleDateString()}\n` +
+                `Image Quality: ${document.getElementById('qualityScore').textContent}\n\n` +
+                `Top Predictions:\n` +
+                analysisResults.deficiency_predictions.slice(0, 3).map(p => 
+                    `- ${p.nutrient}: ${Math.round(p.probability * 100)}% likely`
+                ).join('\n');
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'AFAS Deficiency Analysis',
+                    text: summary
+                });
+            } else {
+                // Fallback for browsers without Web Share API
+                navigator.clipboard.writeText(summary).then(() => {
+                    alert('Results copied to clipboard');
+                });
+            }
+        }
+        
+        function startNewAnalysis() {
+            retakePhoto();
+            document.getElementById('symptomDescription').value = '';
+            document.getElementById('resultsContainer').style.display = 'none';
+            analysisResults = null;
+        }
+        
+        // Process offline analyses when back online
+        window.addEventListener('online', function() {
+            const offlineData = JSON.parse(localStorage.getItem('offlineAnalyses') || '[]');
+            if (offlineData.length > 0) {
+                // Process offline analyses
+                offlineData.forEach(async (item) => {
+                    try {
+                        const response = await fetch('/api/v1/deficiency/image-analysis', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(item.data)
+                        });
+                        
+                        if (response.ok) {
+                            // Remove processed item
+                            const updatedOfflineData = offlineData.filter(d => d.id !== item.id);
+                            localStorage.setItem('offlineAnalyses', JSON.stringify(updatedOfflineData));
+                        }
+                    } catch (error) {
+                        console.error('Error processing offline analysis:', error);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
