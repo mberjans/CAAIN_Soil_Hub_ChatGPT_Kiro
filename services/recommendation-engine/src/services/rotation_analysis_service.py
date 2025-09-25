@@ -2,6 +2,7 @@
 Rotation Analysis Service
 Provides comprehensive analysis of crop rotation plans including benefits,
 economic impact, sustainability metrics, and risk assessment.
+Now integrated with real-time market price data.
 """
 
 import asyncio
@@ -9,10 +10,14 @@ from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, date
 from dataclasses import dataclass
 import numpy as np
+import logging
 
 from ..models.rotation_models import (
     CropRotationPlan, FieldProfile, RotationYear
 )
+from .market_price_service import MarketPriceService
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -71,15 +76,56 @@ class RiskAssessment:
 
 
 class RotationAnalysisService:
-    """Service for analyzing crop rotation plans."""
+    """Service for analyzing crop rotation plans with real-time market integration."""
     
     def __init__(self):
+        self.market_price_service = MarketPriceService()
         self.crop_economic_data = self._initialize_crop_economics()
         self.sustainability_factors = self._initialize_sustainability_factors()
         self.risk_factors = self._initialize_risk_factors()
+        self._price_cache = {}  # Cache for current session
     
+    async def get_market_prices(self, crop_names: List[str], region: str = "US") -> Dict[str, Dict[str, Any]]:
+        """Get current market prices for crops with caching."""
+        cache_key = f"{','.join(sorted(crop_names))}_{region}"
+        
+        # Check cache first (valid for 1 hour)
+        if cache_key in self._price_cache:
+            cached_data = self._price_cache[cache_key]
+            if (datetime.now() - cached_data['timestamp']).seconds < 3600:
+                return cached_data['prices']
+        
+        try:
+            # Get real-time prices
+            prices = await self.market_price_service.get_current_prices(crop_names, region)
+            
+            # Update cache
+            self._price_cache[cache_key] = {
+                'prices': prices,
+                'timestamp': datetime.now()
+            }
+            
+            return prices
+            
+        except Exception as e:
+            logger.warning(f"Failed to get market prices: {e}. Using fallback prices.")
+            # Return fallback prices
+            fallback_prices = {}
+            for crop_name in crop_names:
+                if crop_name.lower() in self.crop_economic_data:
+                    static_data = self.crop_economic_data[crop_name.lower()]
+                    fallback_prices[crop_name] = {
+                        'price_per_unit': static_data['price_per_unit'],
+                        'unit': static_data['yield_units'],
+                        'source': 'FALLBACK',
+                        'confidence': 0.5,
+                        'volatility': static_data['price_volatility'],
+                        'last_updated': datetime.now().isoformat()
+                    }
+            return fallback_prices
+
     def _initialize_crop_economics(self) -> Dict[str, Dict[str, float]]:
-        """Initialize crop economic data."""
+        """Initialize crop economic data as fallback/baseline."""
         return {
             'corn': {
                 'price_per_unit': 4.25,  # $/bushel
@@ -279,10 +325,21 @@ class RotationAnalysisService:
         field_profile: FieldProfile,
         market_conditions: Optional[Dict[str, Any]] = None
     ) -> EconomicAnalysis:
-        """Analyze economic impact of rotation plan."""
+        """Analyze economic impact of rotation plan with real-time market prices."""
         
         crop_sequence = rotation_plan.get_crop_sequence()
         field_size = field_profile.size_acres
+        
+        # Get current market prices for all crops in rotation
+        crop_names = list(set(crop_sequence))  # Remove duplicates
+        region = field_profile.location.get('region', 'US') if hasattr(field_profile, 'location') else 'US'
+        
+        try:
+            market_prices = await self.get_market_prices(crop_names, region)
+            logger.info(f"Retrieved market prices for {len(market_prices)} crops")
+        except Exception as e:
+            logger.error(f"Failed to get market prices: {e}")
+            market_prices = {}
         
         # Calculate revenue projections
         total_revenue = 0
@@ -294,15 +351,22 @@ class RotationAnalysisService:
             crop = rotation_year.crop_name
             estimated_yield = rotation_year.estimated_yield
             
-            crop_economics = self.crop_economic_data.get(crop, {})
+            # Get current market price or fallback to static data
+            if crop in market_prices:
+                price_per_unit = market_prices[crop]['price_per_unit']
+                logger.debug(f"Using market price for {crop}: ${price_per_unit}")
+            else:
+                crop_economics = self.crop_economic_data.get(crop.lower(), {})
+                price_per_unit = crop_economics.get('price_per_unit', 0)
+                logger.debug(f"Using fallback price for {crop}: ${price_per_unit}")
             
             # Calculate revenue
-            price_per_unit = crop_economics.get('price_per_unit', 0)
             revenue = estimated_yield * price_per_unit * field_size
             annual_revenues.append(revenue)
             total_revenue += revenue
             
-            # Calculate costs
+            # Calculate costs (still use static cost data)
+            crop_economics = self.crop_economic_data.get(crop.lower(), {})
             cost_per_acre = crop_economics.get('production_cost_per_acre', 0)
             
             # Apply rotation benefits to reduce costs
@@ -325,7 +389,7 @@ class RotationAnalysisService:
         
         # Calculate break-even adjustments
         break_even_adjustments = self._calculate_break_even_adjustments(
-            rotation_plan, field_profile
+            rotation_plan, field_profile, market_prices
         )
         
         return EconomicAnalysis(
@@ -678,9 +742,10 @@ class RotationAnalysisService:
     def _calculate_break_even_adjustments(
         self,
         rotation_plan: CropRotationPlan,
-        field_profile: FieldProfile
+        field_profile: FieldProfile,
+        market_prices: Dict[str, Dict[str, Any]]
     ) -> Dict[str, float]:
-        """Calculate break-even yield adjustments needed."""
+        """Calculate break-even yield adjustments needed using current market prices."""
         
         adjustments = {}
         
@@ -688,8 +753,14 @@ class RotationAnalysisService:
             crop = rotation_year.crop_name
             estimated_yield = rotation_year.estimated_yield
             
-            crop_economics = self.crop_economic_data.get(crop, {})
-            price_per_unit = crop_economics.get('price_per_unit', 0)
+            # Get current market price or fallback to static data
+            if crop in market_prices:
+                price_per_unit = market_prices[crop]['price_per_unit']
+            else:
+                crop_economics = self.crop_economic_data.get(crop.lower(), {})
+                price_per_unit = crop_economics.get('price_per_unit', 0)
+            
+            crop_economics = self.crop_economic_data.get(crop.lower(), {})
             cost_per_acre = crop_economics.get('production_cost_per_acre', 0)
             
             if price_per_unit > 0:

@@ -17,6 +17,7 @@ try:
     )
     from ..services.recommendation_engine import RecommendationEngine
     from .fertilizer_type_selection_routes import router as fertilizer_router
+    from .market_price_routes import router as market_price_router
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
@@ -26,6 +27,7 @@ except ImportError:
     )
     from services.recommendation_engine import RecommendationEngine
     from fertilizer_type_selection_routes import router as fertilizer_router
+    from market_price_routes import router as market_price_router
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["recommendation-engine"])
@@ -210,3 +212,6 @@ async def generate_recommendations(request: RecommendationRequest):
 
 # Include fertilizer type selection routes
 router.include_router(fertilizer_router)
+
+# Include market price routes
+router.include_router(market_price_router)
