@@ -100,6 +100,13 @@
     
     <!-- Main Content -->
     <div class="container mt-4">
+        <!-- Alert Container -->
+        <div id="alert-container" class="row mb-3">
+            <div class="col-12">
+                <!-- Alerts will be dynamically inserted here -->
+            </div>
+        </div>
+        
         <div class="row">
             <div class="col-12">
                 <h1><i class="fas fa-thermometer-half"></i> Climate Zone Selection</h1>
@@ -121,20 +128,26 @@
                             <form id="coordinateForm">
                                 <div class="row">
                                     <div class="col-md-6 mb-2">
-                                        <input type="number" class="form-control" name="latitude" 
+                                        <input type="number" class="form-control" name="latitude" id="latitude"
                                                placeholder="Latitude (e.g., 40.7128)" step="any" required>
                                     </div>
                                     <div class="col-md-6 mb-2">
-                                        <input type="number" class="form-control" name="longitude" 
+                                        <input type="number" class="form-control" name="longitude" id="longitude"
                                                placeholder="Longitude (e.g., -74.0060)" step="any" required>
                                     </div>
                                 </div>
                                 <div class="row">
-                                    <div class="col-md-6 mb-2">
-                                        <input type="number" class="form-control" name="elevation_ft" 
+                                    <div class="col-md-4 mb-2">
+                                        <input type="number" class="form-control" name="elevation_ft" id="elevation" 
                                                placeholder="Elevation (ft) - optional" step="any">
                                     </div>
-                                    <div class="col-md-6">
+                                    <div class="col-md-4 mb-2">
+                                        <button type="button" class="btn btn-outline-primary" id="get-current-location" onclick="climateZoneSelector.getCurrentLocation()">
+                                            <span class="loading-spinner spinner-border spinner-border-sm me-2"></span>
+                                            <i class="fas fa-crosshairs"></i> Use My Location
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
                                         <button type="submit" class="btn btn-primary">
                                             <span class="loading-spinner spinner-border spinner-border-sm me-2"></span>
                                             Detect Zone
@@ -176,25 +189,35 @@
                     <div class="card-body">
                         <p>Select your climate zone manually if you already know it</p>
                         
-                        <!-- Zone Type Selection -->
-                        <div class="mb-3">
-                            <label class="form-label">Zone Classification System</label>
-                            <div class="btn-group w-100" role="group">
-                                <input type="radio" class="btn-check" name="zoneType" id="usda-type" value="usda_hardiness" checked>
-                                <label class="btn btn-outline-success zone-type-tab" for="usda-type">USDA Hardiness</label>
-                                
-                                <input type="radio" class="btn-check" name="zoneType" id="koppen-type" value="koppen">
-                                <label class="btn btn-outline-success zone-type-tab" for="koppen-type">Köppen Climate</label>
+                        <form id="manualZoneForm">
+                            <!-- Zone Type Selection -->
+                            <div class="mb-3">
+                                <label class="form-label">Zone Classification System</label>
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="zoneType" id="usda-type" value="usda" checked>
+                                    <label class="btn btn-outline-success zone-type-tab" for="usda-type">USDA Hardiness</label>
+                                    
+                                    <input type="radio" class="btn-check" name="zoneType" id="koppen-type" value="koppen">
+                                    <label class="btn btn-outline-success zone-type-tab" for="koppen-type">Köppen Climate</label>
+                                </div>
                             </div>
-                        </div>
-                        
-                        <!-- Manual Zone Selection -->
-                        <div class="mb-3">
-                            <label class="form-label">Select Zone</label>
-                            <select class="form-select" id="manualZoneSelect">
-                                <option value="">Loading zones...</option>
-                            </select>
-                        </div>
+                            
+                            <!-- USDA Zone Selection -->
+                            <div class="mb-3" id="usda-zone-group" style="display: block;">
+                                <label class="form-label">USDA Hardiness Zone</label>
+                                <select class="form-select" name="usda-zone" id="usda-zone">
+                                    <option value="">Select USDA Zone</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Köppen Zone Selection -->
+                            <div class="mb-3" id="koppen-zone-group" style="display: none;">
+                                <label class="form-label">Köppen Climate Type</label>
+                                <select class="form-select" name="koppen-climate" id="koppen-climate">
+                                    <option value="">Select Köppen Type</option>
+                                </select>
+                            </div>
+                        </form>
                         
                         <button type="button" class="btn btn-success" id="selectManualZone">
                             Select This Zone
@@ -205,25 +228,50 @@
         </div>
         
         <!-- Detection Results -->
-        <div id="detectionResults" class="row mb-4" style="display: none;">
+        <div id="detection-results" class="row mb-4" style="display: none;">
             <div class="col-12">
                 <div class="card agricultural-card">
                     <div class="card-header bg-info text-white">
                         <h5><i class="fas fa-chart-line"></i> Climate Zone Detection Results</h5>
                     </div>
-                    <div class="card-body">
-                        <div id="resultsContent"></div>
-                        <div class="mt-3">
-                            <button type="button" class="btn btn-success" id="confirmZoneSelection">
-                                Confirm and Use This Zone
-                            </button>
-                            <button type="button" class="btn btn-outline-secondary ms-2" id="showAlternatives">
-                                View Alternative Zones
-                            </button>
-                        </div>
+                    <div class="card-body" id="resultsContent">
+                        <!-- Detection results will be populated here by JavaScript -->
                     </div>
                 </div>
             </div>
+        </div>
+        
+        <!-- Manual Results -->
+        <div id="manual-results" class="row mb-4" style="display: none;">
+            <div class="col-12">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-check-circle"></i> Manual Zone Selection Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Manual selection results will be populated here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Validation Results -->
+        <div id="validation-results" class="row mb-4" style="display: none;">
+            <div class="col-12">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-warning text-dark">
+                        <h5><i class="fas fa-shield-alt"></i> Zone Validation Results</h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Validation results will be populated here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Override Results -->
+        <div id="override-results" class="row mb-4" style="display: none;">
+            <!-- Override results will be populated here by JavaScript -->
         </div>
         
         <!-- Alternative Zones -->

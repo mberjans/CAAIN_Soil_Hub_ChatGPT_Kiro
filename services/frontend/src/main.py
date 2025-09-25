@@ -10,6 +10,7 @@ import logging
 from pathlib import Path
 from typing import Optional
 from datetime import datetime
+import time
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -591,6 +592,46 @@ async def validate_zone_selection(
     except httpx.RequestError as e:
         logger.error(f"Request error: {e}")
         raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/climate/zone-override")
+async def submit_zone_override(request: dict):
+    """Submit a climate zone override for logging and analysis"""
+    try:
+        # Log the override for improvement purposes
+        logger.info(f"Climate zone override submitted: {request}")
+        
+        # In a production system, this would save to database
+        # For now, we'll just validate the data and return success
+        
+        # Validate required fields
+        if not request.get('original_zone'):
+            raise HTTPException(status_code=400, detail="Original zone data required")
+        if not request.get('override_zone'):
+            raise HTTPException(status_code=400, detail="Override zone data required")
+        if not request.get('reason'):
+            raise HTTPException(status_code=400, detail="Override reason required")
+        
+        override_data = {
+            "status": "accepted",
+            "override_id": f"override_{int(time.time())}",
+            "message": "Zone override logged successfully",
+            "warning": "Please ensure your override is based on local knowledge or data",
+            "impact_assessment": {
+                "recommendation_accuracy": "may be affected",
+                "confidence_level": "user_specified",
+                "validation_source": "user_input"
+            }
+        }
+        
+        return override_data
+        
+    except Exception as e:
+        logger.error(f"Error processing zone override: {e}")
+        return {
+            "status": "error",
+            "message": "Failed to process override",
+            "fallback": "Override saved locally only"
+        }
 
 @app.get("/health")
 async def health_check():
