@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File
+from fastapi import FastAPI, Request, Form, HTTPException, UploadFile, File, Query
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -49,6 +49,7 @@ else:
 QUESTION_ROUTER_URL = os.getenv("QUESTION_ROUTER_URL", "http://localhost:8000")
 RECOMMENDATION_ENGINE_URL = os.getenv("RECOMMENDATION_ENGINE_URL", "http://localhost:8001")
 USER_MANAGEMENT_URL = os.getenv("USER_MANAGEMENT_URL", "http://localhost:8005")
+DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003")
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
@@ -93,6 +94,28 @@ async def fertilizer_strategy_page(request: Request):
         })
     else:
         return HTMLResponse("<h1>Fertilizer Strategy - Coming Soon</h1>")
+
+@app.get("/crop-rotation-goals", response_class=HTMLResponse)
+async def crop_rotation_goals_page(request: Request):
+    """Crop rotation goal prioritization page"""
+    if templates:
+        return templates.TemplateResponse("crop_rotation_goals.html", {
+            "request": request,
+            "title": "Crop Rotation Goal Prioritization"
+        })
+    else:
+        return HTMLResponse("<h1>Crop Rotation Goals - Coming Soon</h1>")
+
+@app.get("/climate-zone-selection", response_class=HTMLResponse)
+async def climate_zone_selection_page(request: Request):
+    """Climate zone selection page"""
+    if templates:
+        return templates.TemplateResponse("climate_zone_selection.html", {
+            "request": request,
+            "title": "Climate Zone Selection"
+        })
+    else:
+        return HTMLResponse("<h1>Climate Zone Selection - Coming Soon</h1>")
 
 @app.post("/api/ask-question")
 async def ask_question(
@@ -313,6 +336,257 @@ async def interpret_soil_test(
             else:
                 logger.error(f"Data integration error: {response.status_code}")
                 raise HTTPException(status_code=500, detail="Failed to interpret soil test")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/rotation-goals/prioritize")
+async def prioritize_rotation_goals(
+    field_id: str = Form(...),
+    field_name: Optional[str] = Form(None),
+    farm_size: Optional[float] = Form(None),
+    soil_health_priority: int = Form(...),
+    soil_health_weight: float = Form(...),
+    profit_priority: int = Form(...),
+    profit_weight: float = Form(...),
+    pest_management_priority: int = Form(...),
+    pest_management_weight: float = Form(...),
+    sustainability_priority: int = Form(...),
+    sustainability_weight: float = Form(...),
+    risk_reduction_priority: int = Form(...),
+    risk_reduction_weight: float = Form(...),
+    labor_efficiency_priority: int = Form(...),
+    labor_efficiency_weight: float = Form(...)
+):
+    """Process goal prioritization and generate rotation recommendations"""
+    try:
+        goals_data = [
+            {
+                "goal_type": "soil_health",
+                "priority": soil_health_priority,
+                "weight": soil_health_weight,
+                "description": "Improve soil organic matter and structure"
+            },
+            {
+                "goal_type": "profit",
+                "priority": profit_priority, 
+                "weight": profit_weight,
+                "description": "Maximize net profit per acre"
+            },
+            {
+                "goal_type": "pest_management",
+                "priority": pest_management_priority,
+                "weight": pest_management_weight,
+                "description": "Reduce pest and disease pressure"
+            },
+            {
+                "goal_type": "sustainability",
+                "priority": sustainability_priority,
+                "weight": sustainability_weight,
+                "description": "Enhance long-term environmental sustainability"
+            },
+            {
+                "goal_type": "risk_reduction",
+                "priority": risk_reduction_priority,
+                "weight": risk_reduction_weight,
+                "description": "Minimize production and market risks"
+            },
+            {
+                "goal_type": "labor_efficiency",
+                "priority": labor_efficiency_priority,
+                "weight": labor_efficiency_weight,
+                "description": "Optimize labor requirements and timing"
+            }
+        ]
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{RECOMMENDATION_ENGINE_URL}/api/v1/rotations/generate",
+                json={
+                    "field_id": field_id,
+                    "goals": goals_data,
+                    "constraints": [],
+                    "planning_horizon": 5
+                },
+                timeout=45.0
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                # Add prioritization summary
+                result["goal_prioritization"] = {
+                    "goals_configured": len(goals_data),
+                    "top_priority_goal": max(goals_data, key=lambda g: g["priority"]),
+                    "highest_weight_goal": max(goals_data, key=lambda g: g["weight"]),
+                    "prioritization_strategy": "weighted_priority"
+                }
+                return result
+            else:
+                logger.error(f"Recommendation engine error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to generate rotation plan")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/climate/detect-zone")
+async def detect_climate_zone(
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    elevation_ft: Optional[float] = Form(None)
+):
+    """Detect climate zone from coordinates"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{DATA_INTEGRATION_URL}/api/v1/climate/detect-zone",
+                json={
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "elevation_ft": elevation_ft
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Climate detection error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to detect climate zone")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/climate/zone-from-address")
+async def get_zone_from_address(
+    address: str = Form(...),
+    include_koppen: bool = Form(False)
+):
+    """Get climate zone from address"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{DATA_INTEGRATION_URL}/api/v1/climate/zone-from-address",
+                params={
+                    "address": address,
+                    "include_koppen": include_koppen
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Address climate lookup error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to get climate zone from address")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.get("/api/climate/zones")
+async def list_climate_zones(
+    zone_type: Optional[str] = Query(None, description="Filter by zone type"),
+    group: Optional[str] = Query(None, description="Filter Köppen zones by group")
+):
+    """List available climate zones"""
+    try:
+        params = {}
+        if zone_type:
+            params["zone_type"] = zone_type
+        if group:
+            params["group"] = group
+            
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{DATA_INTEGRATION_URL}/api/v1/climate/zones",
+                params=params,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Climate zones list error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to list climate zones")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.get("/api/climate/usda-zones")
+async def get_usda_zones():
+    """Get USDA hardiness zones"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{DATA_INTEGRATION_URL}/api/v1/climate/usda-zones",
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"USDA zones error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to get USDA zones")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.get("/api/climate/koppen-types")
+async def get_koppen_types(group: Optional[str] = Query(None)):
+    """Get Köppen climate types"""
+    try:
+        params = {}
+        if group:
+            params["group"] = group
+            
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{DATA_INTEGRATION_URL}/api/v1/climate/koppen-types",
+                params=params,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Köppen types error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to get Köppen types")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/climate/validate-zone")
+async def validate_zone_selection(
+    zone_id: str = Form(...),
+    zone_type: str = Form(...),
+    latitude: float = Form(...),
+    longitude: float = Form(...)
+):
+    """Validate climate zone selection"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{DATA_INTEGRATION_URL}/api/v1/climate/validate-zone",
+                json={
+                    "zone_id": zone_id,
+                    "zone_type": zone_type,
+                    "latitude": latitude,
+                    "longitude": longitude
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Zone validation error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to validate zone selection")
                 
     except httpx.RequestError as e:
         logger.error(f"Request error: {e}")
