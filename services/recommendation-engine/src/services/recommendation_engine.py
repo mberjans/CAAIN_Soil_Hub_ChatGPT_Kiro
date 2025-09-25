@@ -23,6 +23,7 @@ try:
     from .crop_rotation_service import CropRotationService
     from .rule_engine import AgriculturalRuleEngine, RuleType
     from .ai_explanation_service import AIExplanationService
+    from .climate_integration_service import climate_integration_service
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
@@ -37,6 +38,7 @@ except ImportError:
     from services.crop_rotation_service import CropRotationService
     from services.rule_engine import AgriculturalRuleEngine, RuleType
     from services.ai_explanation_service import AIExplanationService
+    from services.climate_integration_service import climate_integration_service
 
 logger = logging.getLogger(__name__)
 
@@ -93,6 +95,32 @@ class RecommendationEngine:
             # Validate request data
             self._validate_request(request)
             
+            # CLIMATE ZONE INTEGRATION: Auto-detect climate zone if not provided
+            climate_data = None
+            if request.location:
+                try:
+                    climate_data = await climate_integration_service.detect_climate_zone(
+                        latitude=request.location.latitude,
+                        longitude=request.location.longitude,
+                        elevation_ft=getattr(request.location, 'elevation_ft', None)
+                    )
+                    
+                    if climate_data:
+                        # Enhance location data with climate zone information
+                        enhanced_location_dict = climate_integration_service.enhance_location_with_climate(
+                            request.location.dict(), climate_data
+                        )
+                        
+                        # Update request with enhanced location data (preserve original structure)
+                        for key, value in enhanced_location_dict.items():
+                            if hasattr(request.location, key):
+                                setattr(request.location, key, value)
+                        
+                        logger.info(f"Enhanced request with climate zone: {enhanced_location_dict.get('climate_zone', 'unknown')}")
+                    
+                except Exception as e:
+                    logger.warning(f"Climate zone detection failed, proceeding without: {str(e)}")
+            
             # Get handler for question type
             handler = self.question_handlers.get(request.question_type)
             if not handler:
@@ -101,17 +129,33 @@ class RecommendationEngine:
             # Generate recommendations using appropriate handler
             recommendations = await handler(request)
             
+            # CLIMATE ZONE INTEGRATION: Adjust recommendations based on climate data
+            if climate_data and recommendations:
+                if request.question_type in ["crop_selection", "crop_rotation"]:
+                    recommendations = climate_integration_service.get_climate_adjusted_crop_recommendations(
+                        [rec.dict() for rec in recommendations], climate_data
+                    )
+                    # Convert back to RecommendationItem objects
+                    recommendations = [RecommendationItem(**rec) for rec in recommendations]
+                
+                elif request.question_type in ["fertilizer_strategy", "fertilizer_selection", "nutrient_timing"]:
+                    recommendations = climate_integration_service.get_climate_adjusted_fertilizer_recommendations(
+                        [rec.dict() for rec in recommendations], climate_data
+                    )
+                    # Convert back to RecommendationItem objects
+                    recommendations = [RecommendationItem(**rec) for rec in recommendations]
+            
             # Calculate overall confidence
             overall_confidence = self._calculate_overall_confidence(recommendations, request)
             
-            # Build confidence factors
-            confidence_factors = self._build_confidence_factors(request)
+            # Build confidence factors (enhanced with climate data)
+            confidence_factors = self._build_confidence_factors(request, climate_data)
             
             # Enhance recommendations with AI explanations
             recommendations = self._enhance_with_ai_explanations(recommendations, request)
             
-            # Generate warnings and next steps
-            warnings = self._generate_warnings(request, recommendations)
+            # Generate warnings and next steps (enhanced with climate warnings)
+            warnings = self._generate_warnings(request, recommendations, climate_data)
             next_steps = self._generate_next_steps(request, recommendations)
             follow_up_questions = self._generate_follow_up_questions(request.question_type)
             
@@ -257,7 +301,7 @@ class RecommendationEngine:
         
         return min(1.0, base_confidence * data_quality_factor)
     
-    def _build_confidence_factors(self, request: RecommendationRequest) -> ConfidenceFactors:
+    def _build_confidence_factors(self, request: RecommendationRequest, climate_data: Optional[Dict[str, Any]] = None) -> ConfidenceFactors:
         """Build detailed confidence factors breakdown."""
         
         # Soil data quality assessment
@@ -299,6 +343,16 @@ class RecommendationEngine:
         # Expert validation level (based on algorithm validation status)
         expert_validation = 0.85  # Current validation level
         
+        # Climate data enhancement
+        if climate_data:
+            climate_confidence = climate_data.get('confidence_score', 0.7)
+            # Enhance regional availability with climate data
+            regional_availability = min(1.0, regional_availability + (climate_confidence * 0.1))
+            
+            # Enhance expert validation with climate zone information
+            if climate_confidence > 0.8:
+                expert_validation = min(1.0, expert_validation + 0.05)
+        
         return ConfidenceFactors(
             soil_data_quality=soil_quality,
             regional_data_availability=regional_availability,
@@ -309,7 +363,8 @@ class RecommendationEngine:
     def _generate_warnings(
         self, 
         request: RecommendationRequest, 
-        recommendations: List[RecommendationItem]
+        recommendations: List[RecommendationItem],
+        climate_data: Optional[Dict[str, Any]] = None
     ) -> List[str]:
         """Generate appropriate warnings based on request and recommendations."""
         warnings = []
@@ -347,6 +402,33 @@ class RecommendationEngine:
                 "Northern locations have shorter growing seasons. "
                 "Verify variety maturity and frost tolerance."
             )
+        
+        # Climate-specific warnings
+        if climate_data and 'primary_zone' in climate_data:
+            primary_zone = climate_data['primary_zone']
+            usda_zone = primary_zone.get('zone_id', '')
+            
+            if usda_zone:
+                zone_num = int(usda_zone[0]) if usda_zone[0].isdigit() else 6
+                
+                # Extreme climate warnings
+                if zone_num <= 3:
+                    warnings.append(
+                        f"USDA Zone {usda_zone} has very short growing seasons and extreme cold. "
+                        "Verify all recommendations are suitable for arctic/subarctic conditions."
+                    )
+                elif zone_num >= 10:
+                    warnings.append(
+                        f"USDA Zone {usda_zone} has intense heat and possible drought stress. "
+                        "Ensure adequate irrigation and heat protection measures."
+                    )
+                
+                # Climate transition warnings
+                if climate_data.get('confidence_score', 1.0) < 0.7:
+                    warnings.append(
+                        "Location appears to be in a climate transition zone. "
+                        "Monitor local weather patterns closely and consider multiple climate scenarios."
+                    )
         
         # Confidence warnings
         overall_confidence = sum(rec.confidence_score for rec in recommendations) / len(recommendations) if recommendations else 0

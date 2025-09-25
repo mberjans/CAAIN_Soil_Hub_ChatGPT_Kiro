@@ -293,6 +293,137 @@ async def test_fertilizer_selection():
     return response
 
 
+async def test_climate_zone_integration():
+    """Test climate zone integration functionality."""
+    print("\n=== Testing Climate Zone Integration ===")
+    
+    # Test with coordinates that should trigger climate zone detection
+    request = RecommendationRequest(
+        request_id=str(uuid4()),
+        question_type="crop_selection",
+        location=LocationData(
+            latitude=42.0308,  # Ames, Iowa coordinates
+            longitude=-93.6319,
+            address="Ames, Iowa, USA"
+        ),
+        soil_data=SoilTestData(
+            ph=6.5,
+            organic_matter_percent=3.5,
+            phosphorus_ppm=25,
+            potassium_ppm=180,
+            test_date=date(2024, 3, 15)
+        ),
+        crop_data=CropData(
+            crop_name="corn",
+            yield_goal=175
+        )
+    )
+    
+    engine = RecommendationEngine()
+    response = await engine.generate_recommendations(request)
+    
+    print(f"Request ID: {response.request_id}")
+    print(f"Overall Confidence: {response.overall_confidence:.2f}")
+    
+    # Check if climate zone data was populated
+    location = request.location
+    print(f"\nClimate Zone Detection Results:")
+    print(f"  Climate Zone: {location.climate_zone or 'Not detected'}")
+    print(f"  Climate Zone Name: {location.climate_zone_name or 'Not available'}")
+    print(f"  Climate Confidence: {location.climate_confidence or 'Not available'}")
+    print(f"  Köppen Zone: {location.koppen_zone or 'Not available'}")
+    print(f"  Growing Season: {location.growing_season_months or 'Not available'} months")
+    
+    # Check if climate considerations are in recommendations
+    print(f"\nRecommendations with Climate Integration:")
+    climate_enhanced_count = 0
+    for i, rec in enumerate(response.recommendations, 1):
+        has_climate_info = (
+            "climate" in rec.description.lower() or 
+            "zone" in rec.description.lower() or
+            "usda" in rec.description.lower() or
+            any("Climate" in source or "Zone" in source for source in rec.agricultural_sources)
+        )
+        if has_climate_info:
+            climate_enhanced_count += 1
+            print(f"\n{i}. {rec.title} (Climate Enhanced)")
+            print(f"   Description: {rec.description[:200]}...")
+            print(f"   Climate Sources: {[s for s in rec.agricultural_sources if 'Climate' in s or 'Zone' in s]}")
+    
+    print(f"\nClimate-enhanced recommendations: {climate_enhanced_count}/{len(response.recommendations)}")
+    
+    # Check for climate-related warnings
+    climate_warnings = [w for w in response.warnings if "zone" in w.lower() or "climate" in w.lower()]
+    if climate_warnings:
+        print(f"\nClimate-related warnings:")
+        for warning in climate_warnings:
+            print(f"  - {warning}")
+    
+    return response
+
+
+async def test_extreme_climate_zones():
+    """Test recommendations for extreme climate zones."""
+    print("\n=== Testing Extreme Climate Zone Recommendations ===")
+    
+    # Test northern location (should trigger cold climate warnings)
+    northern_request = RecommendationRequest(
+        request_id=str(uuid4()),
+        question_type="crop_selection",
+        location=LocationData(
+            latitude=64.0685,  # Fairbanks, Alaska
+            longitude=-147.7208,
+            address="Fairbanks, Alaska, USA"
+        ),
+        soil_data=SoilTestData(
+            ph=6.0,
+            organic_matter_percent=4.0,
+            phosphorus_ppm=20,
+            potassium_ppm=150,
+            test_date=date(2024, 3, 1)
+        ),
+        crop_data=CropData(crop_name="potato")
+    )
+    
+    # Test southern location (should trigger heat warnings)  
+    southern_request = RecommendationRequest(
+        request_id=str(uuid4()),
+        question_type="fertilizer_strategy", 
+        location=LocationData(
+            latitude=25.7617,  # Miami, Florida
+            longitude=-80.1918,
+            address="Miami, Florida, USA"
+        ),
+        soil_data=SoilTestData(
+            ph=7.0,
+            organic_matter_percent=2.5,
+            phosphorus_ppm=15,
+            potassium_ppm=120,
+            test_date=date(2024, 2, 15)
+        )
+    )
+    
+    engine = RecommendationEngine()
+    
+    print("Northern Location (Alaska) Test:")
+    northern_response = await engine.generate_recommendations(northern_request)
+    print(f"  Climate Zone: {northern_request.location.climate_zone or 'Not detected'}")
+    print(f"  Warnings: {len(northern_response.warnings)}")
+    cold_warnings = [w for w in northern_response.warnings if "cold" in w.lower() or "short" in w.lower() or "northern" in w.lower()]
+    for warning in cold_warnings:
+        print(f"    - {warning}")
+    
+    print("\nSouthern Location (Florida) Test:")
+    southern_response = await engine.generate_recommendations(southern_request)
+    print(f"  Climate Zone: {southern_request.location.climate_zone or 'Not detected'}")
+    print(f"  Warnings: {len(southern_response.warnings)}")
+    heat_warnings = [w for w in southern_response.warnings if "heat" in w.lower() or "warm" in w.lower() or "drought" in w.lower()]
+    for warning in heat_warnings:
+        print(f"    - {warning}")
+    
+    return northern_response, southern_response
+
+
 async def test_confidence_factors():
     """Test confidence factor calculations."""
     print("\n=== Testing Confidence Factor Calculations ===")
@@ -359,6 +490,10 @@ async def main():
         await test_nutrient_deficiency()
         await test_fertilizer_selection()
         await test_confidence_factors()
+        
+        # Test climate zone integration
+        await test_climate_zone_integration()
+        await test_extreme_climate_zones()
         
         print("\n" + "=" * 50)
         print("All tests completed successfully!")

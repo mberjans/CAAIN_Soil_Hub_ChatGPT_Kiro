@@ -35,14 +35,27 @@ class SoilTestData(BaseModel):
 
 
 class LocationData(BaseModel):
-    """Geographic location data."""
+    """Geographic location data with climate zone integration."""
     
     latitude: float = Field(..., ge=-90, le=90, description="Latitude in decimal degrees")
     longitude: float = Field(..., ge=-180, le=180, description="Longitude in decimal degrees")
+    elevation_ft: Optional[float] = Field(None, description="Elevation in feet")
     address: Optional[str] = Field(None, description="Human-readable address")
-    climate_zone: Optional[str] = Field(None, description="USDA Hardiness Zone")
     state: Optional[str] = Field(None, description="State/Province")
     county: Optional[str] = Field(None, description="County/Region")
+    
+    # Primary climate zone information (auto-populated)
+    climate_zone: Optional[str] = Field(None, description="USDA Hardiness Zone ID")
+    climate_zone_name: Optional[str] = Field(None, description="USDA Hardiness Zone name")
+    climate_zone_description: Optional[str] = Field(None, description="Climate zone description")
+    temperature_range_f: Optional[Dict[str, float]] = Field(None, description="Temperature range in Fahrenheit")
+    climate_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Climate detection confidence")
+    
+    # Köppen climate classification (when available)
+    koppen_zone: Optional[str] = Field(None, description="Köppen climate classification")
+    koppen_description: Optional[str] = Field(None, description="Köppen zone description")
+    agricultural_suitability: Optional[str] = Field(None, description="Agricultural suitability rating") 
+    growing_season_months: Optional[int] = Field(None, ge=0, le=12, description="Growing season length in months")
 
 
 class CropData(BaseModel):

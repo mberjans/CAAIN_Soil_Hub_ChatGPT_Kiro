@@ -23,6 +23,7 @@ The Recommendation Engine is the central component that processes farmer questio
 - **Agricultural Safety**: Conservative approach with appropriate warnings and limitations
 - **Comprehensive Coverage**: Handles soil management, nutrient management, and crop selection
 - **Regional Awareness**: Considers geographic and climatic variations
+- **Climate Zone Integration**: Automatic climate zone detection and climate-adjusted recommendations
 - **Economic Analysis**: Includes cost estimates and ROI calculations where applicable
 
 ## Architecture
@@ -36,15 +37,17 @@ recommendation-engine/
 │   ├── api/
 │   │   └── routes.py              # API endpoints
 │   ├── models/
-│   │   └── agricultural_models.py  # Pydantic data models
+│   │   └── agricultural_models.py  # Pydantic data models (enhanced with climate fields)
 │   └── services/
-│       ├── recommendation_engine.py      # Central orchestrator
+│       ├── recommendation_engine.py      # Central orchestrator (climate-enhanced)
+│       ├── climate_integration_service.py # Climate zone detection integration
 │       ├── crop_recommendation_service.py
 │       ├── fertilizer_recommendation_service.py
 │       ├── soil_management_service.py
 │       ├── nutrient_deficiency_service.py
 │       └── crop_rotation_service.py
 ├── tests/                         # Test files
+├── test_climate_integration.py    # Climate integration tests
 ├── requirements.txt               # Dependencies
 └── README.md                     # This file
 ```
@@ -52,9 +55,51 @@ recommendation-engine/
 ### Data Models
 
 - **RecommendationRequest**: Input data including location, soil tests, crop data, farm profile
+- **LocationData**: Enhanced with automatic climate zone fields (USDA zones, Köppen classification)
 - **RecommendationResponse**: Structured response with recommendations, confidence factors, warnings
 - **RecommendationItem**: Individual recommendation with implementation steps and expected outcomes
-- **ConfidenceFactors**: Breakdown of confidence scoring factors
+- **ConfidenceFactors**: Breakdown of confidence scoring factors (includes climate data quality)
+
+## Climate Zone Integration
+
+### Automatic Climate Detection
+
+The recommendation engine now automatically detects and integrates climate zone information for all recommendations:
+
+- **USDA Hardiness Zones**: Automatically detected from location coordinates
+- **Köppen Climate Classification**: Enhanced climate classification when available
+- **Climate-Adjusted Recommendations**: Recommendations are automatically adjusted based on climate conditions
+- **Temperature Awareness**: Growing season and temperature patterns considered
+- **Climate Warnings**: Automatic warnings for extreme climate conditions
+
+### Climate Data Enhancement
+
+When a location is provided, the system automatically:
+
+1. **Detects Climate Zone**: Calls the data-integration service to identify USDA hardiness zone
+2. **Enhances Location Data**: Populates climate fields in the LocationData model
+3. **Adjusts Recommendations**: Modifies crop and fertilizer recommendations based on climate
+4. **Generates Climate Warnings**: Provides warnings for extreme climate conditions
+5. **Updates Confidence Factors**: Incorporates climate data quality into confidence calculations
+
+### Climate-Enhanced Fields
+
+The `LocationData` model now includes:
+
+```python
+# Primary climate zone information (auto-populated)
+climate_zone: Optional[str]                    # USDA Hardiness Zone ID (e.g., "5b")
+climate_zone_name: Optional[str]               # Full zone name
+climate_zone_description: Optional[str]        # Climate description
+temperature_range_f: Optional[Dict]            # Temperature range in Fahrenheit
+climate_confidence: Optional[float]            # Climate detection confidence (0.0-1.0)
+
+# Köppen climate classification (when available)
+koppen_zone: Optional[str]                     # Köppen zone ID (e.g., "Dfa")
+koppen_description: Optional[str]              # Köppen description
+agricultural_suitability: Optional[str]        # Agricultural suitability rating
+growing_season_months: Optional[int]           # Growing season length
+```
 
 ## API Endpoints
 
@@ -152,10 +197,10 @@ recommendations = response.json()
     "request_id": "unique-request-id",
     "generated_at": "2024-12-09T10:30:00Z",
     "question_type": "crop_selection",
-    "overall_confidence": 0.87,
+    "overall_confidence": 0.89,
     "confidence_factors": {
         "soil_data_quality": 0.9,
-        "regional_data_availability": 0.8,
+        "regional_data_availability": 0.85,
         "seasonal_appropriateness": 0.9,
         "expert_validation": 0.85
     },
@@ -163,7 +208,7 @@ recommendations = response.json()
         {
             "recommendation_type": "crop_selection",
             "title": "Grow Corn",
-            "description": "Corn is highly suitable for your farm conditions...",
+            "description": "Corn is highly suitable for your farm conditions. Climate Consideration: Well-suited for USDA Zone 5b with adequate growing season length.",
             "priority": 1,
             "confidence_score": 0.92,
             "implementation_steps": [
@@ -179,7 +224,8 @@ recommendations = response.json()
             "timing": "Plan for next growing season",
             "agricultural_sources": [
                 "USDA Crop Production Guidelines",
-                "State University Extension Services"
+                "State University Extension Services",
+                "USDA Hardiness Zone 5b Analysis"
             ]
         }
     ],
@@ -205,6 +251,9 @@ recommendations = response.json()
 # Test the recommendation engine core
 python test_recommendation_engine.py
 
+# Test climate zone integration
+python test_climate_integration.py
+
 # Test the API endpoints
 python test_api.py
 ```
@@ -213,7 +262,9 @@ python test_api.py
 
 The test suite covers:
 - All 5 implemented agricultural questions
-- Confidence factor calculations
+- Climate zone integration and detection
+- Climate-adjusted recommendations and warnings
+- Confidence factor calculations (including climate factors)
 - Error handling and validation
 - API endpoint functionality
 - Edge cases and data quality scenarios
