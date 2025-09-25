@@ -4,1179 +4,1414 @@ This master checklist combines all feature implementation tasks with unique iden
 
 ## Climate Zone Detection
 
-### climate-zone-detection-1. Climate Zone Data Service Implementation
-- [x] climate-zone-detection-1.1 Create climate zone data service in data-integration
-- [x] climate-zone-detection-1.2 Integrate with USDA Plant Hardiness Zone API
-- [x] climate-zone-detection-1.3 Add Köppen climate classification support
+### TICKET-001_climate-zone-detection-1. Climate Zone Data Service Implementation
+- [x] TICKET-001_climate-zone-detection-1.1 Create climate zone data service in data-integration
+- [x] TICKET-001_climate-zone-detection-1.2 Integrate with USDA Plant Hardiness Zone API
+- [x] TICKET-001_climate-zone-detection-1.3 Add Köppen climate classification support
 
-### climate-zone-detection-2. Auto-Detection Logic Implementation
-- [x] climate-zone-detection-2.1 Implement coordinate-based climate zone detection
-- [x] climate-zone-detection-2.2 Create climate zone inference from weather data
-- [x] climate-zone-detection-2.3 Implement address-based climate zone lookup
+### TICKET-002_climate-zone-detection-2. Auto-Detection Logic Implementation
+- [x] TICKET-002_climate-zone-detection-2.1 Implement coordinate-based climate zone detection
+- [x] TICKET-002_climate-zone-detection-2.2 Create climate zone inference from weather data
+- [x] TICKET-002_climate-zone-detection-2.3 Implement address-based climate zone lookup
 
-### climate-zone-detection-3. Manual Climate Zone Specification
-- [x] climate-zone-detection-3.1 Create climate zone selection interface
-- [x] climate-zone-detection-3.2 Add climate zone validation and feedback
-- [x] climate-zone-detection-3.3 Implement climate zone override functionality
+### TICKET-001_climate-zone-detection-3. Manual Climate Zone Specification
+- [x] TICKET-001_climate-zone-detection-3.1 Create climate zone selection interface
+- [x] TICKET-001_climate-zone-detection-3.2 Add climate zone validation and feedback
+- [x] TICKET-001_climate-zone-detection-3.3 Implement climate zone override functionality
 
-### climate-zone-detection-4. Climate Data Integration
-- [x] climate-zone-detection-4.1 Extend weather service with climate zone data
-- [x] climate-zone-detection-4.2 Update location validation service
-- [x] climate-zone-detection-4.3 Create climate zone database schema updates
+### TICKET-001_climate-zone-detection-4. Climate Data Integration
+- [x] TICKET-001_climate-zone-detection-4.1 Extend weather service with climate zone data
+- [x] TICKET-001_climate-zone-detection-4.2 Update location validation service
+- [x] TICKET-001_climate-zone-detection-4.3 Create climate zone database schema updates
 
-### climate-zone-detection-5. Frontend Climate Zone Interface
-- [x] climate-zone-detection-5.1 Add climate zone section to farm profile forms
-- [x] climate-zone-detection-5.2 Implement climate zone visualization
-- [x] climate-zone-detection-5.3 Create climate zone validation feedback
+### TICKET-001_climate-zone-detection-5. Frontend Climate Zone Interface
+- [x] TICKET-001_climate-zone-detection-5.1 Add climate zone section to farm profile forms
+- [x] TICKET-001_climate-zone-detection-5.2 Implement climate zone visualization
+- [x] TICKET-001_climate-zone-detection-5.3 Create climate zone validation feedback
 
-### climate-zone-detection-6. API Endpoints Implementation
-- [x] climate-zone-detection-6.1 Create climate zone detection endpoints
-- [x] climate-zone-detection-6.2 Implement climate zone lookup endpoints
-- [x] climate-zone-detection-6.3 Add climate zone integration to existing endpoints
+### TICKET-001_climate-zone-detection-6. API Endpoints Implementation
+- [x] TICKET-001_climate-zone-detection-6.1 Create climate zone detection endpoints
+- [x] TICKET-001_climate-zone-detection-6.2 Implement climate zone lookup endpoints
+- [x] TICKET-001_climate-zone-detection-6.3 Add climate zone integration to existing endpoints
 
-### climate-zone-detection-7. Climate Zone Data Sources
-- [x] climate-zone-detection-7.1 Implement USDA Plant Hardiness Zone data integration
-- [x] climate-zone-detection-7.2 Add Köppen climate classification data
-- [x] climate-zone-detection-7.3 Create agricultural climate zone mapping
+### TICKET-001_climate-zone-detection-7. Climate Zone Data Sources
+- [x] TICKET-001_climate-zone-detection-7.1 Implement USDA Plant Hardiness Zone data integration
+- [x] TICKET-001_climate-zone-detection-7.2 Add Köppen climate classification data
+- [x] TICKET-001_climate-zone-detection-7.3 Create agricultural climate zone mapping
 
-### climate-zone-detection-8. Climate Zone Validation and Quality
-- [x] climate-zone-detection-8.1 Implement climate zone consistency validation
-- [x] climate-zone-detection-8.2 Create climate zone confidence scoring
-- [x] climate-zone-detection-8.3 Add climate zone change detection
+### TICKET-002_climate-zone-detection-8. Climate Zone Validation and Quality
+- [x] TICKET-002_climate-zone-detection-8.1 Implement climate zone consistency validation
+- [x] TICKET-002_climate-zone-detection-8.2 Create climate zone confidence scoring
+- [x] TICKET-002_climate-zone-detection-8.3 Add climate zone change detection
 
-### climate-zone-detection-9. Integration with Crop Recommendations
-- [x] climate-zone-detection-9.1 Update crop recommendation engine with climate zones
-- [x] climate-zone-detection-9.2 Implement climate-based planting date calculations
-- [x] climate-zone-detection-9.3 Add climate zone to recommendation explanations
+### TICKET-001_climate-zone-detection-9. Integration with Crop Recommendations
+- [x] TICKET-001_climate-zone-detection-9.1 Update crop recommendation engine with climate zones
+- [x] TICKET-001_climate-zone-detection-9.2 Implement climate-based planting date calculations
+- [x] TICKET-001_climate-zone-detection-9.3 Add climate zone to recommendation explanations
 
-### climate-zone-detection-10. Testing and Validation
-- [x] climate-zone-detection-10.1 Create climate zone detection tests
-- [x] climate-zone-detection-10.2 Implement climate zone integration tests
-- [x] climate-zone-detection-10.3 Add climate zone performance tests
+### TICKET-011_climate-zone-detection-10. Testing and Validation
+- [x] TICKET-011_climate-zone-detection-10.1 Create climate zone detection tests
+- [x] TICKET-011_climate-zone-detection-10.2 Implement climate zone integration tests
+- [x] TICKET-011_climate-zone-detection-10.3 Add climate zone performance tests
 
-### climate-zone-detection-11. Documentation and User Guidance
-- [x] climate-zone-detection-11.1 Create climate zone user documentation
-- [x] climate-zone-detection-11.2 Add climate zone developer documentation
-- [x] climate-zone-detection-11.3 Create climate zone agricultural guidance
+### TICKET-001_climate-zone-detection-11. Documentation and User Guidance
+- [x] TICKET-001_climate-zone-detection-11.1 Create climate zone user documentation
+- [x] TICKET-001_climate-zone-detection-11.2 Add climate zone developer documentation
+- [x] TICKET-001_climate-zone-detection-11.3 Create climate zone agricultural guidance
 
 ## Soil pH Management
 
-### soil-ph-management-1. Service Structure Setup
-- [x] soil-ph-management-1.1 Set up soil pH management service structure
+### TICKET-003_soil-ph-management-1. Service Structure Setup
+- [x] TICKET-003_soil-ph-management-1.1 Set up soil pH management service structure
 
-### soil-ph-management-2. pH Data Input and Validation
-- [x] soil-ph-management-2.1 Implement pH data input and validation
+### TICKET-003_soil-ph-management-2. pH Data Input and Validation
+- [x] TICKET-003_soil-ph-management-2.1 Implement pH data input and validation
 
-### soil-ph-management-3. Crop pH Preference Database
-- [x] soil-ph-management-3.1 Develop crop pH preference database
+### TICKET-003_soil-ph-management-3. Crop pH Preference Database
+- [x] TICKET-003_soil-ph-management-3.1 Develop crop pH preference database
 
-### soil-ph-management-4. pH Adjustment Calculation Engine
-- [x] soil-ph-management-4.1 Build pH adjustment calculation engine
+### TICKET-004_soil-ph-management-4. pH Adjustment Calculation Engine
+- [x] TICKET-004_soil-ph-management-4.1 Build pH adjustment calculation engine
 
-### soil-ph-management-5. Soil Type Integration
-- [x] soil-ph-management-5.1 Create soil type integration
+### TICKET-003_soil-ph-management-5. Soil Type Integration
+- [x] TICKET-003_soil-ph-management-5.1 Create soil type integration
 
-### soil-ph-management-6. Timing Recommendation System
-- [x] soil-ph-management-6.1 Develop timing recommendation system
+### TICKET-004_soil-ph-management-6. Timing Recommendation System
+- [x] TICKET-004_soil-ph-management-6.1 Develop timing recommendation system
 
-### soil-ph-management-7. pH Change Timeline Predictions
-- [x] soil-ph-management-7.1 Build pH change timeline predictions
+### TICKET-004_soil-ph-management-7. pH Change Timeline Predictions
+- [x] TICKET-004_soil-ph-management-7.1 Build pH change timeline predictions
 
-### soil-ph-management-8. Nutrient Availability Education System
-- [x] soil-ph-management-8.1 Create nutrient availability education system
+### TICKET-003_soil-ph-management-8. Nutrient Availability Education System
+- [x] TICKET-003_soil-ph-management-8.1 Create nutrient availability education system
 
-### soil-ph-management-9. pH Management API Endpoints
-- [x] soil-ph-management-9.1 Implement pH management API endpoints
-  - [x] soil-ph-management-9.1.1 Create GET /api/v1/soil-ph/recommendations endpoint
-  - [x] soil-ph-management-9.1.2 Implement POST /api/v1/soil-ph/calculate-amendments endpoint
-  - [x] soil-ph-management-9.1.3 Add GET /api/v1/soil-ph/timeline endpoint
-  - [x] soil-ph-management-9.1.4 Create pH history tracking endpoints
+### TICKET-003_soil-ph-management-9. pH Management API Endpoints
+- [x] TICKET-003_soil-ph-management-9.1 Implement pH management API endpoints
+  - [x] TICKET-003_soil-ph-management-9.1.1 Create GET /api/v1/soil-ph/recommendations endpoint
+  - [x] TICKET-003_soil-ph-management-9.1.2 Implement POST /api/v1/soil-ph/calculate-amendments endpoint
+  - [x] TICKET-003_soil-ph-management-9.1.3 Add GET /api/v1/soil-ph/timeline endpoint
+  - [x] TICKET-003_soil-ph-management-9.1.4 Create pH history tracking endpoints
 
-### soil-ph-management-10. Comprehensive Testing Suite
-- [x] soil-ph-management-10.1 Build comprehensive testing suite
+### TICKET-011_soil-ph-management-10. Comprehensive Testing Suite
+- [x] TICKET-011_soil-ph-management-10.1 Build comprehensive testing suite
 
-### soil-ph-management-11. User Interface Components
-- [x] soil-ph-management-11.1 Develop user interface components
+### TICKET-003_soil-ph-management-11. User Interface Components
+- [x] TICKET-003_soil-ph-management-11.1 Develop user interface components
 
-### soil-ph-management-12. System Integration
-- [x] soil-ph-management-12.1 Integrate with existing systems
+### TICKET-003_soil-ph-management-12. System Integration
+- [x] TICKET-003_soil-ph-management-12.1 Integrate with existing systems
 
 ## Cover Crop Selection
 
-### cover-crop-selection-1. Service Structure Setup
-- [ ] cover-crop-selection-1.1 Set up cover crop selection service structure
+### TICKET-013_cover-crop-selection-1. Service Structure Setup
+- [ ] TICKET-013_cover-crop-selection-1.1 Set up cover crop selection service structure
 
-### cover-crop-selection-2. Main Crop and Rotation Integration System
-- [ ] cover-crop-selection-2.1 Create main crop and rotation integration system
+### TICKET-013_cover-crop-selection-2. Main Crop and Rotation Integration System
+- [ ] TICKET-013_cover-crop-selection-2.1 Create main crop and rotation integration system
 
-### cover-crop-selection-3. Goal-Based Cover Crop Recommendation Engine
-- [ ] cover-crop-selection-3.1 Develop goal-based cover crop recommendation engine
+### TICKET-013_cover-crop-selection-3. Goal-Based Cover Crop Recommendation Engine
+- [ ] TICKET-013_cover-crop-selection-3.1 Develop goal-based cover crop recommendation engine
 
-### cover-crop-selection-4. Climate Zone and Soil Type Integration
-- [ ] cover-crop-selection-4.1 Implement climate zone and soil type integration
+### TICKET-013_cover-crop-selection-4. Climate Zone and Soil Type Integration
+- [ ] TICKET-013_cover-crop-selection-4.1 Implement climate zone and soil type integration
 
-### cover-crop-selection-5. Comprehensive Cover Crop Species Database
-- [ ] cover-crop-selection-5.1 Build comprehensive cover crop species database
+### TICKET-013_cover-crop-selection-5. Comprehensive Cover Crop Species Database
+- [ ] TICKET-013_cover-crop-selection-5.1 Build comprehensive cover crop species database
 
-### cover-crop-selection-6. Planting and Termination Timing System
-- [ ] cover-crop-selection-6.1 Develop planting and termination timing system
+### TICKET-013_cover-crop-selection-6. Planting and Termination Timing System
+- [ ] TICKET-013_cover-crop-selection-6.1 Develop planting and termination timing system
 
-### cover-crop-selection-7. Benefit Quantification and Tracking System
-- [ ] cover-crop-selection-7.1 Create benefit quantification and tracking system
+### TICKET-013_cover-crop-selection-7. Benefit Quantification and Tracking System
+- [ ] TICKET-013_cover-crop-selection-7.1 Create benefit quantification and tracking system
 
-### cover-crop-selection-8. Management Requirement Assessment System
-- [ ] cover-crop-selection-8.1 Build management requirement assessment system
+### TICKET-013_cover-crop-selection-8. Management Requirement Assessment System
+- [ ] TICKET-013_cover-crop-selection-8.1 Build management requirement assessment system
 
-### cover-crop-selection-9. Main Crop Compatibility System
-- [ ] cover-crop-selection-9.1 Develop main crop compatibility system
+### TICKET-013_cover-crop-selection-9. Main Crop Compatibility System
+- [ ] TICKET-013_cover-crop-selection-9.1 Develop main crop compatibility system
 
-### cover-crop-selection-10. Cover Crop Mixture Optimization
-- [ ] cover-crop-selection-10.1 Create cover crop mixture optimization
+### TICKET-013_cover-crop-selection-10. Cover Crop Mixture Optimization
+- [ ] TICKET-013_cover-crop-selection-10.1 Create cover crop mixture optimization
 
-### cover-crop-selection-11. Cover Crop Selection API Endpoints
-- [ ] cover-crop-selection-11.1 Implement cover crop selection API endpoints
-  - [ ] cover-crop-selection-11.1.1 Create POST /api/v1/cover-crops/selection endpoint
-  - [ ] cover-crop-selection-11.1.2 Implement GET /api/v1/cover-crops/species endpoint
-  - [ ] cover-crop-selection-11.1.3 Add GET /api/v1/cover-crops/timing endpoint
-  - [ ] cover-crop-selection-11.1.4 Create benefit calculation and tracking endpoints
+### TICKET-013_cover-crop-selection-11. Cover Crop Selection API Endpoints
+- [ ] TICKET-013_cover-crop-selection-11.1 Implement cover crop selection API endpoints
+  - [ ] TICKET-013_cover-crop-selection-11.1.1 Create POST /api/v1/cover-crops/selection endpoint
+  - [ ] TICKET-013_cover-crop-selection-11.1.2 Implement GET /api/v1/cover-crops/species endpoint
+  - [ ] TICKET-013_cover-crop-selection-11.1.3 Add GET /api/v1/cover-crops/timing endpoint
+  - [ ] TICKET-013_cover-crop-selection-11.1.4 Create benefit calculation and tracking endpoints
 
-### cover-crop-selection-12. Comprehensive Testing Suite
-- [ ] cover-crop-selection-12.1 Build comprehensive testing suite
+### TICKET-013_cover-crop-selection-12. Comprehensive Testing Suite
+- [ ] TICKET-013_cover-crop-selection-12.1 Build comprehensive testing suite
 
-### cover-crop-selection-13. User Interface Components
-- [ ] cover-crop-selection-13.1 Develop user interface components
+### TICKET-013_cover-crop-selection-13. User Interface Components
+- [ ] TICKET-013_cover-crop-selection-13.1 Develop user interface components
 
-### cover-crop-selection-14. System Integration
-- [ ] cover-crop-selection-14.1 Integrate with existing systems
+### TICKET-013_cover-crop-selection-14. System Integration
+- [ ] TICKET-013_cover-crop-selection-14.1 Integrate with existing systems
 
 ## Crop Rotation Planning
 
-### crop-rotation-planning-1. Field History Management System
-- [x] crop-rotation-planning-1.1 Create field history data model
-- [x] crop-rotation-planning-1.2 Implement field history input interface
-- [x] crop-rotation-planning-1.3 Develop field history validation
+### TICKET-012_crop-rotation-planning-1. Field History Management System
+- [x] TICKET-012_crop-rotation-planning-1.1 Create field history data model
+- [x] TICKET-012_crop-rotation-planning-1.2 Implement field history input interface
+- [x] TICKET-012_crop-rotation-planning-1.3 Develop field history validation
 
-### crop-rotation-planning-2. Rotation Goal Setting System
-- [x] crop-rotation-planning-2.1 Create rotation objective framework
-- [x] crop-rotation-planning-2.2 Implement goal prioritization interface
-- [x] crop-rotation-planning-2.3 Develop goal-based optimization
+### TICKET-012_crop-rotation-planning-2. Rotation Goal Setting System
+- [x] TICKET-012_crop-rotation-planning-2.1 Create rotation objective framework
+- [x] TICKET-012_crop-rotation-planning-2.2 Implement goal prioritization interface
+- [x] TICKET-012_crop-rotation-planning-2.3 Develop goal-based optimization
 
-### crop-rotation-planning-3. Rotation Constraint Management
-- [x] crop-rotation-planning-3.1 Implement crop constraint system
-- [x] crop-rotation-planning-3.2 Create constraint validation engine
-- [x] crop-rotation-planning-3.3 Develop constraint-aware planning
+### TICKET-012_crop-rotation-planning-3. Rotation Constraint Management
+- [x] TICKET-012_crop-rotation-planning-3.1 Implement crop constraint system
+- [x] TICKET-012_crop-rotation-planning-3.2 Create constraint validation engine
+- [x] TICKET-012_crop-rotation-planning-3.3 Develop constraint-aware planning
 
-### crop-rotation-planning-4. Multi-Year Rotation Algorithm
-- [x] crop-rotation-planning-4.1 Develop rotation optimization engine
-- [x] crop-rotation-planning-4.2 Implement rotation evaluation system
-- [x] crop-rotation-planning-4.3 Create rotation comparison tools
+### TICKET-012_crop-rotation-planning-4. Multi-Year Rotation Algorithm
+- [x] TICKET-012_crop-rotation-planning-4.1 Develop rotation optimization engine
+- [x] TICKET-012_crop-rotation-planning-4.2 Implement rotation evaluation system
+- [x] TICKET-012_crop-rotation-planning-4.3 Create rotation comparison tools
 
-### crop-rotation-planning-5. Benefit Analysis and Explanation System
-- [x] crop-rotation-planning-5.1 Implement nutrient cycling analysis
-- [x] crop-rotation-planning-5.2 Create pest and disease break analysis
-- [x] crop-rotation-planning-5.3 Develop soil health impact analysis
+### TICKET-012_crop-rotation-planning-5. Benefit Analysis and Explanation System
+- [x] TICKET-012_crop-rotation-planning-5.1 Implement nutrient cycling analysis
+- [x] TICKET-012_crop-rotation-planning-5.2 Create pest and disease break analysis
+- [x] TICKET-012_crop-rotation-planning-5.3 Develop soil health impact analysis
 
-### crop-rotation-planning-6. Interactive Rotation Planning Interface
-- [x] crop-rotation-planning-6.1 Create rotation planning dashboard
-- [x] crop-rotation-planning-6.2 Implement rotation modification tools
-- [x] crop-rotation-planning-6.3 Create rotation impact visualization
+### TICKET-012_crop-rotation-planning-6. Interactive Rotation Planning Interface
+- [x] TICKET-012_crop-rotation-planning-6.1 Create rotation planning dashboard
+- [x] TICKET-012_crop-rotation-planning-6.2 Implement rotation modification tools
+- [x] TICKET-012_crop-rotation-planning-6.3 Create rotation impact visualization
 
-### crop-rotation-planning-7. Economic Analysis Integration
-- [x] crop-rotation-planning-7.1 Implement rotation profitability analysis
-- [x] crop-rotation-planning-7.2 Create market price integration
-- [x] crop-rotation-planning-7.3 Develop cost-benefit optimization
+### TICKET-012_crop-rotation-planning-7. Economic Analysis Integration
+- [x] TICKET-012_crop-rotation-planning-7.1 Implement rotation profitability analysis
+- [x] TICKET-012_crop-rotation-planning-7.2 Create market price integration
+- [x] TICKET-012_crop-rotation-planning-7.3 Develop cost-benefit optimization
 
-### crop-rotation-planning-8. API Endpoints for Rotation Planning
-- [x] crop-rotation-planning-8.1 Create rotation planning endpoints
-  - [x] crop-rotation-planning-8.1.1 POST /api/v1/rotations/generate - Generate rotation plans
-  - [x] crop-rotation-planning-8.1.2 GET /api/v1/rotations/{plan_id} - Get rotation plan details
-  - [x] crop-rotation-planning-8.1.3 PUT /api/v1/rotations/{plan_id} - Update rotation plan
-  - [x] crop-rotation-planning-8.1.4 POST /api/v1/rotations/compare - Compare rotation scenarios
-- [x] crop-rotation-planning-8.2 Implement field history endpoints
-  - [x] crop-rotation-planning-8.2.1 POST /api/v1/fields/{field_id}/history - Add field history
-  - [x] crop-rotation-planning-8.2.2 GET /api/v1/fields/{field_id}/history - Get field history
-  - [x] crop-rotation-planning-8.2.3 PUT /api/v1/fields/{field_id}/history/{year} - Update history
-  - [x] crop-rotation-planning-8.2.4 DELETE /api/v1/fields/{field_id}/history/{year} - Delete history
-- [x] crop-rotation-planning-8.3 Add rotation analysis endpoints
-  - [x] crop-rotation-planning-8.3.1 POST /api/v1/rotations/analyze-benefits - Analyze rotation benefits
-  - [x] crop-rotation-planning-8.3.2 POST /api/v1/rotations/economic-analysis - Get economic analysis
-  - [x] crop-rotation-planning-8.3.3 POST /api/v1/rotations/sustainability-score - Get sustainability score
-  - [x] crop-rotation-planning-8.3.4 POST /api/v1/rotations/risk-assessment - Assess rotation risks
+### TICKET-012_crop-rotation-planning-8. API Endpoints for Rotation Planning
+- [x] TICKET-012_crop-rotation-planning-8.1 Create rotation planning endpoints
+  - [x] TICKET-012_crop-rotation-planning-8.1.1 POST /api/v1/rotations/generate - Generate rotation plans
+  - [x] TICKET-012_crop-rotation-planning-8.1.2 GET /api/v1/rotations/{plan_id} - Get rotation plan details
+  - [x] TICKET-012_crop-rotation-planning-8.1.3 PUT /api/v1/rotations/{plan_id} - Update rotation plan
+  - [x] TICKET-012_crop-rotation-planning-8.1.4 POST /api/v1/rotations/compare - Compare rotation scenarios
+- [x] TICKET-012_crop-rotation-planning-8.2 Implement field history endpoints
+  - [x] TICKET-012_crop-rotation-planning-8.2.1 POST /api/v1/fields/{field_id}/history - Add field history
+  - [x] TICKET-012_crop-rotation-planning-8.2.2 GET /api/v1/fields/{field_id}/history - Get field history
+  - [x] TICKET-012_crop-rotation-planning-8.2.3 PUT /api/v1/fields/{field_id}/history/{year} - Update history
+  - [x] TICKET-012_crop-rotation-planning-8.2.4 DELETE /api/v1/fields/{field_id}/history/{year} - Delete history
+- [x] TICKET-012_crop-rotation-planning-8.3 Add rotation analysis endpoints
+  - [x] TICKET-012_crop-rotation-planning-8.3.1 POST /api/v1/rotations/analyze-benefits - Analyze rotation benefits
+  - [x] TICKET-012_crop-rotation-planning-8.3.2 POST /api/v1/rotations/economic-analysis - Get economic analysis
+  - [x] TICKET-012_crop-rotation-planning-8.3.3 POST /api/v1/rotations/sustainability-score - Get sustainability score
+  - [x] TICKET-012_crop-rotation-planning-8.3.4 POST /api/v1/rotations/risk-assessment - Assess rotation risks
 
-### crop-rotation-planning-9. Mobile Rotation Planning
-- [x] crop-rotation-planning-9.1 Create mobile rotation interface
-- [x] crop-rotation-planning-9.2 Implement mobile field mapping
-- [x] crop-rotation-planning-9.3 Create mobile rotation notifications
+### TICKET-012_crop-rotation-planning-9. Mobile Rotation Planning
+- [x] TICKET-012_crop-rotation-planning-9.1 Create mobile rotation interface
+- [x] TICKET-012_crop-rotation-planning-9.2 Implement mobile field mapping
+- [x] TICKET-012_crop-rotation-planning-9.3 Create mobile rotation notifications
 
-### crop-rotation-planning-10. Testing and Validation
-- [x] crop-rotation-planning-10.1 Test rotation algorithm accuracy
-- [x] crop-rotation-planning-10.2 Validate agricultural soundness
-- [x] crop-rotation-planning-10.3 Test user experience
+### TICKET-012_crop-rotation-planning-10. Testing and Validation
+- [x] TICKET-012_crop-rotation-planning-10.1 Test rotation algorithm accuracy
+- [x] TICKET-012_crop-rotation-planning-10.2 Validate agricultural soundness
+- [x] TICKET-012_crop-rotation-planning-10.3 Test user experience
 
 ## Crop Type Filtering
 
-### crop-type-filtering-1. Crop Classification and Categorization System
-- [ ] crop-type-filtering-1.1 Develop comprehensive crop taxonomy
-- [ ] crop-type-filtering-1.2 Implement crop attribute tagging
-- [ ] crop-type-filtering-1.3 Create crop preference profiles
+### TICKET-005_crop-type-filtering-1. Crop Classification and Categorization System
+- [ ] TICKET-005_crop-type-filtering-1.1 Develop comprehensive crop taxonomy
+- [ ] TICKET-005_crop-type-filtering-1.2 Implement crop attribute tagging
+- [ ] TICKET-005_crop-type-filtering-1.3 Create crop preference profiles
 
-### crop-type-filtering-2. Advanced Filtering Interface
-- [ ] crop-type-filtering-2.1 Design crop type filter interface
-- [ ] crop-type-filtering-2.2 Implement dynamic filter combinations
-- [ ] crop-type-filtering-2.3 Create filter result visualization
+### TICKET-005_crop-type-filtering-2. Advanced Filtering Interface
+- [ ] TICKET-005_crop-type-filtering-2.1 Design crop type filter interface
+- [ ] TICKET-005_crop-type-filtering-2.2 Implement dynamic filter combinations
+- [ ] TICKET-005_crop-type-filtering-2.3 Create filter result visualization
 
-### crop-type-filtering-3. Crop Preference Management
-- [ ] crop-type-filtering-3.1 Implement farmer preference storage
-- [ ] crop-type-filtering-3.2 Develop preference learning system
-- [ ] crop-type-filtering-3.3 Create preference recommendation engine
+### TICKET-005_crop-type-filtering-3. Crop Preference Management
+- [ ] TICKET-005_crop-type-filtering-3.1 Implement farmer preference storage
+- [ ] TICKET-005_crop-type-filtering-3.2 Develop preference learning system
+- [ ] TICKET-005_crop-type-filtering-3.3 Create preference recommendation engine
 
-### crop-type-filtering-4. API Endpoints for Filtering
-- [ ] crop-type-filtering-4.1 Create crop filtering endpoints
-  - [ ] crop-type-filtering-4.1.1 POST /api/v1/crops/filter - Apply crop filters
-  - [ ] crop-type-filtering-4.1.2 GET /api/v1/crops/categories - Get crop categories
-  - [ ] crop-type-filtering-4.1.3 GET /api/v1/crops/attributes - Get available attributes
-  - [ ] crop-type-filtering-4.1.4 POST /api/v1/crops/search - Search crops by criteria
-- [ ] crop-type-filtering-4.2 Implement preference management endpoints
-  - [ ] crop-type-filtering-4.2.1 GET /api/v1/preferences/crops - Get user crop preferences
-  - [ ] crop-type-filtering-4.2.2 PUT /api/v1/preferences/crops - Update crop preferences
-  - [ ] crop-type-filtering-4.2.3 POST /api/v1/preferences/save-filter - Save filter preset
-  - [ ] crop-type-filtering-4.2.4 GET /api/v1/preferences/filter-presets - Get saved filters
-- [ ] crop-type-filtering-4.3 Add recommendation filtering endpoints
-  - [ ] crop-type-filtering-4.3.1 POST /api/v1/recommendations/filter - Filter recommendations
-  - [ ] crop-type-filtering-4.3.2 GET /api/v1/recommendations/filtered - Get filtered recommendations
-  - [ ] crop-type-filtering-4.3.3 POST /api/v1/recommendations/apply-preferences - Apply preferences
-  - [ ] crop-type-filtering-4.3.4 GET /api/v1/recommendations/filter-options - Get filter options
+### TICKET-005_crop-type-filtering-4. API Endpoints for Filtering
+- [ ] TICKET-005_crop-type-filtering-4.1 Create crop filtering endpoints
+  - [ ] TICKET-005_crop-type-filtering-4.1.1 POST /api/v1/crops/filter - Apply crop filters
+  - [ ] TICKET-005_crop-type-filtering-4.1.2 GET /api/v1/crops/categories - Get crop categories
+  - [ ] TICKET-005_crop-type-filtering-4.1.3 GET /api/v1/crops/attributes - Get available attributes
+  - [ ] TICKET-005_crop-type-filtering-4.1.4 POST /api/v1/crops/search - Search crops by criteria
+- [ ] TICKET-005_crop-type-filtering-4.2 Implement preference management endpoints
+  - [ ] TICKET-005_crop-type-filtering-4.2.1 GET /api/v1/preferences/crops - Get user crop preferences
+  - [ ] TICKET-005_crop-type-filtering-4.2.2 PUT /api/v1/preferences/crops - Update crop preferences
+  - [ ] TICKET-005_crop-type-filtering-4.2.3 POST /api/v1/preferences/save-filter - Save filter preset
+  - [ ] TICKET-005_crop-type-filtering-4.2.4 GET /api/v1/preferences/filter-presets - Get saved filters
+- [ ] TICKET-005_crop-type-filtering-4.3 Add recommendation filtering endpoints
+  - [ ] TICKET-005_crop-type-filtering-4.3.1 POST /api/v1/recommendations/filter - Filter recommendations
+  - [ ] TICKET-005_crop-type-filtering-4.3.2 GET /api/v1/recommendations/filtered - Get filtered recommendations
+  - [ ] TICKET-005_crop-type-filtering-4.3.3 POST /api/v1/recommendations/apply-preferences - Apply preferences
+  - [ ] TICKET-005_crop-type-filtering-4.3.4 GET /api/v1/recommendations/filter-options - Get filter options
 
-### crop-type-filtering-5. Frontend Filter Interface Implementation
-- [ ] crop-type-filtering-5.1 Create crop type filter components
-- [ ] crop-type-filtering-5.2 Implement filter state management
-- [ ] crop-type-filtering-5.3 Create filter result display
+### TICKET-005_crop-type-filtering-5. Frontend Filter Interface Implementation
+- [ ] TICKET-005_crop-type-filtering-5.1 Create crop type filter components
+- [ ] TICKET-005_crop-type-filtering-5.2 Implement filter state management
+- [ ] TICKET-005_crop-type-filtering-5.3 Create filter result display
 
-### crop-type-filtering-6. Mobile Filter Interface
-- [ ] crop-type-filtering-6.1 Optimize filters for mobile
-- [ ] crop-type-filtering-6.2 Implement mobile filter shortcuts
-- [ ] crop-type-filtering-6.3 Create mobile filter persistence
+### TICKET-005_crop-type-filtering-6. Mobile Filter Interface
+- [ ] TICKET-005_crop-type-filtering-6.1 Optimize filters for mobile
+- [ ] TICKET-005_crop-type-filtering-6.2 Implement mobile filter shortcuts
+- [ ] TICKET-005_crop-type-filtering-6.3 Create mobile filter persistence
 
-### crop-type-filtering-7. Advanced Filtering Features
-- [ ] crop-type-filtering-7.1 Implement smart filtering suggestions
-- [ ] crop-type-filtering-7.2 Create filter analytics and insights
-- [ ] crop-type-filtering-7.3 Add collaborative filtering features
+### TICKET-005_crop-type-filtering-7. Advanced Filtering Features
+- [ ] TICKET-005_crop-type-filtering-7.1 Implement smart filtering suggestions
+- [ ] TICKET-005_crop-type-filtering-7.2 Create filter analytics and insights
+- [ ] TICKET-005_crop-type-filtering-7.3 Add collaborative filtering features
 
-### crop-type-filtering-8. Integration with Recommendation Engine
-- [ ] crop-type-filtering-8.1 Enhance recommendation engine with filtering
-- [ ] crop-type-filtering-8.2 Implement filter-based explanations
-- [ ] crop-type-filtering-8.3 Create filter performance optimization
+### TICKET-005_crop-type-filtering-8. Integration with Recommendation Engine
+- [ ] TICKET-005_crop-type-filtering-8.1 Enhance recommendation engine with filtering
+- [ ] TICKET-005_crop-type-filtering-8.2 Implement filter-based explanations
+- [ ] TICKET-005_crop-type-filtering-8.3 Create filter performance optimization
 
-### crop-type-filtering-9. Testing and Validation
-- [ ] crop-type-filtering-9.1 Test filter functionality
-- [ ] crop-type-filtering-9.2 Validate filter user experience
-- [ ] crop-type-filtering-9.3 Test filter integration
+### TICKET-005_crop-type-filtering-9. Testing and Validation
+- [ ] TICKET-005_crop-type-filtering-9.1 Test filter functionality
+- [ ] TICKET-005_crop-type-filtering-9.2 Validate filter user experience
+- [ ] TICKET-005_crop-type-filtering-9.3 Test filter integration
 
 ## Crop Variety Recommendations
 
-### crop-variety-recommendations-1. Crop Database Enhancement and Population
-- [ ] crop-variety-recommendations-1.1 Expand crop database with comprehensive variety data
-- [ ] crop-variety-recommendations-1.2 Integrate with seed company databases
-- [ ] crop-variety-recommendations-1.3 Add crop suitability matrices
+### TICKET-005_crop-variety-recommendations-1. Crop Database Enhancement and Population
+- [ ] TICKET-005_crop-variety-recommendations-1.1 Expand crop database with comprehensive variety data
+- [ ] TICKET-005_crop-variety-recommendations-1.2 Integrate with seed company databases
+- [ ] TICKET-005_crop-variety-recommendations-1.3 Add crop suitability matrices
 
-### crop-variety-recommendations-2. Ranking Algorithm Development
-- [ ] crop-variety-recommendations-2.1 Implement multi-criteria ranking system
-- [ ] crop-variety-recommendations-2.2 Create confidence scoring system
-- [ ] crop-variety-recommendations-2.3 Implement yield potential calculations
+### TICKET-005_crop-variety-recommendations-2. Ranking Algorithm Development
+- [ ] TICKET-005_crop-variety-recommendations-2.1 Implement multi-criteria ranking system
+- [ ] TICKET-005_crop-variety-recommendations-2.2 Create confidence scoring system
+- [ ] TICKET-005_crop-variety-recommendations-2.3 Implement yield potential calculations
 
-### crop-variety-recommendations-3. Explanation Generation System
-- [ ] crop-variety-recommendations-3.1 Develop agricultural reasoning engine
-- [ ] crop-variety-recommendations-3.2 Implement natural language explanation generation
-- [ ] crop-variety-recommendations-3.3 Add supporting evidence and references
+### TICKET-005_crop-variety-recommendations-3. Explanation Generation System
+- [ ] TICKET-005_crop-variety-recommendations-3.1 Develop agricultural reasoning engine
+- [ ] TICKET-005_crop-variety-recommendations-3.2 Implement natural language explanation generation
+- [ ] TICKET-005_crop-variety-recommendations-3.3 Add supporting evidence and references
 
-### crop-variety-recommendations-4. Crop Recommendation Service Enhancement
-- [ ] crop-variety-recommendations-4.1 Enhance existing crop recommendation service
-- [ ] crop-variety-recommendations-4.2 Implement variety comparison functionality
-- [ ] crop-variety-recommendations-4.3 Add recommendation personalization
+### TICKET-005_crop-variety-recommendations-4. Crop Recommendation Service Enhancement
+- [ ] TICKET-005_crop-variety-recommendations-4.1 Enhance existing crop recommendation service
+- [ ] TICKET-005_crop-variety-recommendations-4.2 Implement variety comparison functionality
+- [ ] TICKET-005_crop-variety-recommendations-4.3 Add recommendation personalization
 
-### crop-variety-recommendations-5. API Endpoints Implementation
-- [ ] crop-variety-recommendations-5.1 Create crop variety recommendation endpoints
-  - [ ] crop-variety-recommendations-5.1.1 POST /api/v1/recommendations/crop-varieties - Get ranked varieties
-  - [ ] crop-variety-recommendations-5.1.2 GET /api/v1/crops/{crop_id}/varieties - List varieties for crop
-  - [ ] crop-variety-recommendations-5.1.3 POST /api/v1/varieties/compare - Compare multiple varieties
-  - [ ] crop-variety-recommendations-5.1.4 GET /api/v1/varieties/{variety_id}/details - Get variety details
-- [ ] crop-variety-recommendations-5.2 Implement filtering and search endpoints
-  - [ ] crop-variety-recommendations-5.2.1 POST /api/v1/varieties/filter - Filter varieties by criteria
-  - [ ] crop-variety-recommendations-5.2.2 GET /api/v1/varieties/search - Search varieties by name/traits
-  - [ ] crop-variety-recommendations-5.2.3 POST /api/v1/recommendations/explain - Get recommendation explanations
-  - [ ] crop-variety-recommendations-5.2.4 GET /api/v1/crops/categories - List crop categories for filtering
-- [ ] crop-variety-recommendations-5.3 Add recommendation management endpoints
-  - [ ] crop-variety-recommendations-5.3.1 POST /api/v1/recommendations/save - Save recommendations
-  - [ ] crop-variety-recommendations-5.3.2 GET /api/v1/recommendations/history - Get recommendation history
-  - [ ] crop-variety-recommendations-5.3.3 POST /api/v1/recommendations/feedback - Submit feedback
-  - [ ] crop-variety-recommendations-5.3.4 PUT /api/v1/recommendations/{id}/update - Update saved recommendations
+### TICKET-005_crop-variety-recommendations-5. API Endpoints Implementation
+- [ ] TICKET-005_crop-variety-recommendations-5.1 Create crop variety recommendation endpoints
+  - [ ] TICKET-005_crop-variety-recommendations-5.1.1 POST /api/v1/recommendations/crop-varieties - Get ranked varieties
+  - [ ] TICKET-005_crop-variety-recommendations-5.1.2 GET /api/v1/crops/{crop_id}/varieties - List varieties for crop
+  - [ ] TICKET-005_crop-variety-recommendations-5.1.3 POST /api/v1/varieties/compare - Compare multiple varieties
+  - [ ] TICKET-005_crop-variety-recommendations-5.1.4 GET /api/v1/varieties/{variety_id}/details - Get variety details
+- [ ] TICKET-005_crop-variety-recommendations-5.2 Implement filtering and search endpoints
+  - [ ] TICKET-005_crop-variety-recommendations-5.2.1 POST /api/v1/varieties/filter - Filter varieties by criteria
+  - [ ] TICKET-005_crop-variety-recommendations-5.2.2 GET /api/v1/varieties/search - Search varieties by name/traits
+  - [ ] TICKET-005_crop-variety-recommendations-5.2.3 POST /api/v1/recommendations/explain - Get recommendation explanations
+  - [ ] TICKET-005_crop-variety-recommendations-5.2.4 GET /api/v1/crops/categories - List crop categories for filtering
+- [ ] TICKET-005_crop-variety-recommendations-5.3 Add recommendation management endpoints
+  - [ ] TICKET-005_crop-variety-recommendations-5.3.1 POST /api/v1/recommendations/save - Save recommendations
+  - [ ] TICKET-005_crop-variety-recommendations-5.3.2 GET /api/v1/recommendations/history - Get recommendation history
+  - [ ] TICKET-005_crop-variety-recommendations-5.3.3 POST /api/v1/recommendations/feedback - Submit feedback
+  - [ ] TICKET-005_crop-variety-recommendations-5.3.4 PUT /api/v1/recommendations/{id}/update - Update saved recommendations
 
-### crop-variety-recommendations-6. Frontend Crop Selection Interface Enhancement
-- [ ] crop-variety-recommendations-6.1 Enhance crop selection form with advanced inputs
-- [ ] crop-variety-recommendations-6.2 Implement ranked variety display
-- [ ] crop-variety-recommendations-6.3 Add explanation and reasoning display
+### TICKET-005_crop-variety-recommendations-6. Frontend Crop Selection Interface Enhancement
+- [ ] TICKET-005_crop-variety-recommendations-6.1 Enhance crop selection form with advanced inputs
+- [ ] TICKET-005_crop-variety-recommendations-6.2 Implement ranked variety display
+- [ ] TICKET-005_crop-variety-recommendations-6.3 Add explanation and reasoning display
 
-### crop-variety-recommendations-7. Variety Detail and Comparison Features
-- [ ] crop-variety-recommendations-7.1 Create detailed variety information pages
-- [ ] crop-variety-recommendations-7.2 Implement variety comparison tools
-- [ ] crop-variety-recommendations-7.3 Add variety selection and planning tools
+### TICKET-005_crop-variety-recommendations-7. Variety Detail and Comparison Features
+- [ ] TICKET-005_crop-variety-recommendations-7.1 Create detailed variety information pages
+- [ ] TICKET-005_crop-variety-recommendations-7.2 Implement variety comparison tools
+- [ ] TICKET-005_crop-variety-recommendations-7.3 Add variety selection and planning tools
 
-### crop-variety-recommendations-8. Planting Date and Timing Integration
-- [ ] crop-variety-recommendations-8.1 Calculate optimal planting dates by variety
-- [ ] crop-variety-recommendations-8.2 Implement growing season analysis
-- [ ] crop-variety-recommendations-8.3 Add timing-based variety filtering
+### TICKET-005_crop-variety-recommendations-8. Planting Date and Timing Integration
+- [ ] TICKET-005_crop-variety-recommendations-8.1 Calculate optimal planting dates by variety
+- [ ] TICKET-005_crop-variety-recommendations-8.2 Implement growing season analysis
+- [ ] TICKET-005_crop-variety-recommendations-8.3 Add timing-based variety filtering
 
-### crop-variety-recommendations-9. Economic Analysis Integration
-- [ ] crop-variety-recommendations-9.1 Add economic viability scoring
-- [ ] crop-variety-recommendations-9.2 Implement ROI and profitability analysis
-- [ ] crop-variety-recommendations-9.3 Add market and pricing integration
+### TICKET-005_crop-variety-recommendations-9. Economic Analysis Integration
+- [ ] TICKET-005_crop-variety-recommendations-9.1 Add economic viability scoring
+- [ ] TICKET-005_crop-variety-recommendations-9.2 Implement ROI and profitability analysis
+- [ ] TICKET-005_crop-variety-recommendations-9.3 Add market and pricing integration
 
-### crop-variety-recommendations-10. Disease and Pest Resistance Integration
-- [ ] crop-variety-recommendations-10.1 Implement disease pressure mapping
-- [ ] crop-variety-recommendations-10.2 Create pest resistance analysis
-- [ ] crop-variety-recommendations-10.3 Add resistance recommendation explanations
+### TICKET-005_crop-variety-recommendations-10. Disease and Pest Resistance Integration
+- [ ] TICKET-005_crop-variety-recommendations-10.1 Implement disease pressure mapping
+- [ ] TICKET-005_crop-variety-recommendations-10.2 Create pest resistance analysis
+- [ ] TICKET-005_crop-variety-recommendations-10.3 Add resistance recommendation explanations
 
-### crop-variety-recommendations-11. Regional Adaptation and Performance Data
-- [ ] crop-variety-recommendations-11.1 Integrate university variety trial data
-- [ ] crop-variety-recommendations-11.2 Implement regional performance scoring
-- [ ] crop-variety-recommendations-11.3 Add farmer experience integration
+### TICKET-005_crop-variety-recommendations-11. Regional Adaptation and Performance Data
+- [ ] TICKET-005_crop-variety-recommendations-11.1 Integrate university variety trial data
+- [ ] TICKET-005_crop-variety-recommendations-11.2 Implement regional performance scoring
+- [ ] TICKET-005_crop-variety-recommendations-11.3 Add farmer experience integration
 
-### crop-variety-recommendations-12. Mobile and Responsive Interface
-- [ ] crop-variety-recommendations-12.1 Optimize crop selection for mobile devices
-- [ ] crop-variety-recommendations-12.2 Implement mobile-specific features
-- [ ] crop-variety-recommendations-12.3 Add progressive web app features
+### TICKET-005_crop-variety-recommendations-12. Mobile and Responsive Interface
+- [ ] TICKET-005_crop-variety-recommendations-12.1 Optimize crop selection for mobile devices
+- [ ] TICKET-005_crop-variety-recommendations-12.2 Implement mobile-specific features
+- [ ] TICKET-005_crop-variety-recommendations-12.3 Add progressive web app features
 
-### crop-variety-recommendations-13. Testing and Validation
-- [ ] crop-variety-recommendations-13.1 Create comprehensive variety recommendation tests
-- [ ] crop-variety-recommendations-13.2 Implement agricultural validation tests
-- [ ] crop-variety-recommendations-13.3 Add user experience testing
+### TICKET-005_crop-variety-recommendations-13. Testing and Validation
+- [ ] TICKET-005_crop-variety-recommendations-13.1 Create comprehensive variety recommendation tests
+- [ ] TICKET-005_crop-variety-recommendations-13.2 Implement agricultural validation tests
+- [ ] TICKET-005_crop-variety-recommendations-13.3 Add user experience testing
 
-### crop-variety-recommendations-14. Performance Optimization
-- [ ] crop-variety-recommendations-14.1 Optimize variety recommendation performance
-- [ ] crop-variety-recommendations-14.2 Add scalability improvements
-- [ ] crop-variety-recommendations-14.3 Implement monitoring and alerting
+### TICKET-005_crop-variety-recommendations-14. Performance Optimization
+- [ ] TICKET-005_crop-variety-recommendations-14.1 Optimize variety recommendation performance
+- [ ] TICKET-005_crop-variety-recommendations-14.2 Add scalability improvements
+- [ ] TICKET-005_crop-variety-recommendations-14.3 Implement monitoring and alerting
 
-### crop-variety-recommendations-15. Documentation and Training
-- [ ] crop-variety-recommendations-15.1 Create user documentation for variety selection
-- [ ] crop-variety-recommendations-15.2 Add developer documentation
-- [ ] crop-variety-recommendations-15.3 Create agricultural guidance materials
+### TICKET-005_crop-variety-recommendations-15. Documentation and Training
+- [ ] TICKET-005_crop-variety-recommendations-15.1 Create user documentation for variety selection
+- [ ] TICKET-005_crop-variety-recommendations-15.2 Add developer documentation
+- [ ] TICKET-005_crop-variety-recommendations-15.3 Create agricultural guidance materials
 
 ## Drought Management
 
-### drought-management-1. Service Structure Setup
-- [ ] drought-management-1.1 Set up drought management service structure
+### TICKET-014_drought-management-1. Service Structure Setup
+- [ ] TICKET-014_drought-management-1.1 Set up drought management service structure
 
-### drought-management-2. Current Soil Management Practice Assessment
-- [ ] drought-management-2.1 Implement current soil management practice assessment
+### TICKET-014_drought-management-2. Current Soil Management Practice Assessment
+- [ ] TICKET-014_drought-management-2.1 Implement current soil management practice assessment
 
-### drought-management-3. Soil Type and Weather Pattern Integration
-- [ ] drought-management-3.1 Develop soil type and weather pattern integration
+### TICKET-014_drought-management-3. Soil Type and Weather Pattern Integration
+- [ ] TICKET-014_drought-management-3.1 Develop soil type and weather pattern integration
 
-### drought-management-4. Irrigation Capability and Constraint System
-- [ ] drought-management-4.1 Build irrigation capability and constraint system
+### TICKET-014_drought-management-4. Irrigation Capability and Constraint System
+- [ ] TICKET-014_drought-management-4.1 Build irrigation capability and constraint system
 
-### drought-management-5. Moisture Conservation Practice Recommendation Engine
-- [ ] drought-management-5.1 Create moisture conservation practice recommendation engine
+### TICKET-014_drought-management-5. Moisture Conservation Practice Recommendation Engine
+- [ ] TICKET-014_drought-management-5.1 Create moisture conservation practice recommendation engine
 
-### drought-management-6. No-Till and Tillage Practice Optimization
-- [ ] drought-management-6.1 Develop no-till and tillage practice optimization
+### TICKET-014_drought-management-6. No-Till and Tillage Practice Optimization
+- [ ] TICKET-014_drought-management-6.1 Develop no-till and tillage practice optimization
 
-### drought-management-7. Mulching and Cover Management System
-- [ ] drought-management-7.1 Build mulching and cover management system
+### TICKET-014_drought-management-7. Mulching and Cover Management System
+- [ ] TICKET-014_drought-management-7.1 Build mulching and cover management system
 
-### drought-management-8. Drought-Resilient Crop Selection System
-- [ ] drought-management-8.1 Create drought-resilient crop selection system
+### TICKET-014_drought-management-8. Drought-Resilient Crop Selection System
+- [ ] TICKET-014_drought-management-8.1 Create drought-resilient crop selection system
 
-### drought-management-9. Water Savings Quantification System
-- [ ] drought-management-9.1 Develop water savings quantification system
+### TICKET-014_drought-management-9. Water Savings Quantification System
+- [ ] TICKET-014_drought-management-9.1 Develop water savings quantification system
 
-### drought-management-10. Farm Size and Equipment Consideration System
-- [ ] drought-management-10.1 Build farm size and equipment consideration system
+### TICKET-014_drought-management-10. Farm Size and Equipment Consideration System
+- [ ] TICKET-014_drought-management-10.1 Build farm size and equipment consideration system
 
-### drought-management-11. Drought Monitoring and Alert System
-- [ ] drought-management-11.1 Create drought monitoring and alert system
+### TICKET-014_drought-management-11. Drought Monitoring and Alert System
+- [ ] TICKET-014_drought-management-11.1 Create drought monitoring and alert system
 
-### drought-management-12. Drought Management API Endpoints
-- [ ] drought-management-12.1 Implement drought management API endpoints
-  - [ ] drought-management-12.1.1 Create POST /api/v1/drought/assessment endpoint
-  - [ ] drought-management-12.1.2 Implement GET /api/v1/drought/recommendations endpoint
-  - [ ] drought-management-12.1.3 Add GET /api/v1/drought/water-savings endpoint
-  - [ ] drought-management-12.1.4 Create drought monitoring and alert subscription endpoints
+### TICKET-014_drought-management-12. Drought Management API Endpoints
+- [ ] TICKET-014_drought-management-12.1 Implement drought management API endpoints
+  - [ ] TICKET-014_drought-management-12.1.1 Create POST /api/v1/drought/assessment endpoint
+  - [ ] TICKET-014_drought-management-12.1.2 Implement GET /api/v1/drought/recommendations endpoint
+  - [ ] TICKET-014_drought-management-12.1.3 Add GET /api/v1/drought/water-savings endpoint
+  - [ ] TICKET-014_drought-management-12.1.4 Create drought monitoring and alert subscription endpoints
 
-### drought-management-13. Comprehensive Testing Suite
-- [ ] drought-management-13.1 Build comprehensive testing suite
+### TICKET-014_drought-management-13. Comprehensive Testing Suite
+- [ ] TICKET-014_drought-management-13.1 Build comprehensive testing suite
 
-### drought-management-14. User Interface Components
-- [ ] drought-management-14.1 Develop user interface components
+### TICKET-014_drought-management-14. User Interface Components
+- [ ] TICKET-014_drought-management-14.1 Develop user interface components
 
-### drought-management-15. System Integration
-- [ ] drought-management-15.1 Integrate with existing systems
+### TICKET-014_drought-management-15. System Integration
+- [ ] TICKET-014_drought-management-15.1 Integrate with existing systems
 
 ## Farm Location Input
 
-### farm-location-input-1. Database Schema and Models Setup
-- [x] farm-location-input-1.1 Set up database schema and models for location data
+### TICKET-008_farm-location-input-1. Database Schema and Models Setup
+- [x] TICKET-008_farm-location-input-1.1 Set up database schema and models for location data
 
-### farm-location-input-2. Core Location Validation Service
-- [x] farm-location-input-2.1 Implement core location validation service
+### TICKET-008_farm-location-input-2. Core Location Validation Service
+- [x] TICKET-008_farm-location-input-2.1 Implement core location validation service
 
-### farm-location-input-3. Geocoding Service with External API Integration
-- [ ] farm-location-input-3.1 Build geocoding service with external API integration
+### TICKET-008_farm-location-input-3. Geocoding Service with External API Integration
+- [ ] TICKET-008_farm-location-input-3.1 Build geocoding service with external API integration
 
-### farm-location-input-4. Location Management API Endpoints
-- [ ] farm-location-input-4.1 Create location management API endpoints
-  - [ ] farm-location-input-4.1.1 Implement POST /api/v1/locations/ for creating farm locations
-  - [ ] farm-location-input-4.1.2 Create GET /api/v1/locations/ for retrieving user locations
-  - [ ] farm-location-input-4.1.3 Add PUT /api/v1/locations/{id} for updating locations
-  - [ ] farm-location-input-4.1.4 Implement DELETE /api/v1/locations/{id} for removing locations
-  - [ ] farm-location-input-4.1.5 Add location validation endpoint POST /api/v1/locations/validate
-  - [ ] farm-location-input-4.1.6 Create geocoding endpoints for address conversion
+### TICKET-008_farm-location-input-4. Location Management API Endpoints
+- [ ] TICKET-008_farm-location-input-4.1 Create location management API endpoints
+  - [ ] TICKET-008_farm-location-input-4.1.1 Implement POST /api/v1/locations/ for creating farm locations
+  - [ ] TICKET-008_farm-location-input-4.1.2 Create GET /api/v1/locations/ for retrieving user locations
+  - [ ] TICKET-008_farm-location-input-4.1.3 Add PUT /api/v1/locations/{id} for updating locations
+  - [ ] TICKET-008_farm-location-input-4.1.4 Implement DELETE /api/v1/locations/{id} for removing locations
+  - [ ] TICKET-008_farm-location-input-4.1.5 Add location validation endpoint POST /api/v1/locations/validate
+  - [ ] TICKET-008_farm-location-input-4.1.6 Create geocoding endpoints for address conversion
 
-### farm-location-input-5. Field Management Functionality
-- [ ] farm-location-input-5.1 Implement field management functionality
-  - [ ] farm-location-input-5.1.1 Create field management API endpoints for multiple fields per farm
-  - [ ] farm-location-input-5.1.2 Add field CRUD operations with location association
-  - [ ] farm-location-input-5.1.3 Implement field listing and selection functionality
-  - [ ] farm-location-input-5.1.4 Create field validation with agricultural context
+### TICKET-008_farm-location-input-5. Field Management Functionality
+- [ ] TICKET-008_farm-location-input-5.1 Implement field management functionality
+  - [ ] TICKET-008_farm-location-input-5.1.1 Create field management API endpoints for multiple fields per farm
+  - [ ] TICKET-008_farm-location-input-5.1.2 Add field CRUD operations with location association
+  - [ ] TICKET-008_farm-location-input-5.1.3 Implement field listing and selection functionality
+  - [ ] TICKET-008_farm-location-input-5.1.4 Create field validation with agricultural context
 
-### farm-location-input-6. GPS Coordinate Input Component
-- [ ] farm-location-input-6.1 Build GPS coordinate input component
+### TICKET-008_farm-location-input-6. GPS Coordinate Input Component
+- [ ] TICKET-008_farm-location-input-6.1 Build GPS coordinate input component
 
-### farm-location-input-7. Address Input with Autocomplete
-- [ ] farm-location-input-7.1 Implement address input with autocomplete
+### TICKET-008_farm-location-input-7. Address Input with Autocomplete
+- [ ] TICKET-008_farm-location-input-7.1 Implement address input with autocomplete
 
-### farm-location-input-8. Interactive Map Interface
-- [ ] farm-location-input-8.1 Build interactive map interface
+### TICKET-008_farm-location-input-8. Interactive Map Interface
+- [ ] TICKET-008_farm-location-input-8.1 Build interactive map interface
 
-### farm-location-input-9. Current Location Detection
-- [ ] farm-location-input-9.1 Implement current location detection
+### TICKET-008_farm-location-input-9. Current Location Detection
+- [ ] TICKET-008_farm-location-input-9.1 Implement current location detection
 
-### farm-location-input-10. Field Management User Interface
-- [ ] farm-location-input-10.1 Create field management user interface
+### TICKET-010_farm-location-input-10. Field Management User Interface
+- [ ] TICKET-010_farm-location-input-10.1 Create field management user interface
 
-### farm-location-input-11. Mobile-Responsive Design
-- [ ] farm-location-input-11.1 Implement mobile-responsive design
+### TICKET-010_farm-location-input-11. Mobile-Responsive Design
+- [ ] TICKET-010_farm-location-input-11.1 Implement mobile-responsive design
 
-### farm-location-input-12. Security and Privacy Features
-- [ ] farm-location-input-12.1 Add security and privacy features
+### TICKET-008_farm-location-input-12. Security and Privacy Features
+- [ ] TICKET-008_farm-location-input-12.1 Add security and privacy features
 
-### farm-location-input-13. Integration with Existing Recommendation System
-- [ ] farm-location-input-13.1 Integrate location input with existing recommendation system
+### TICKET-008_farm-location-input-13. Integration with Existing Recommendation System
+- [ ] TICKET-008_farm-location-input-13.1 Integrate location input with existing recommendation system
 
-### farm-location-input-14. Comprehensive Error Handling and User Feedback
-- [ ] farm-location-input-14.1 Implement comprehensive error handling and user feedback
+### TICKET-008_farm-location-input-14. Comprehensive Error Handling and User Feedback
+- [ ] TICKET-008_farm-location-input-14.1 Implement comprehensive error handling and user feedback
 
-### farm-location-input-15. Comprehensive Testing and Validation
-- [ ] farm-location-input-15.1 Add comprehensive testing and validation
+### TICKET-008_farm-location-input-15. Comprehensive Testing and Validation
+- [ ] TICKET-008_farm-location-input-15.1 Add comprehensive testing and validation
 
 ## Fertilizer Application Method
 
-### fertilizer-application-method-1. Service Structure Setup
-- [ ] fertilizer-application-method-1.1 Set up fertilizer application method service structure
+### TICKET-023_fertilizer-application-method-1. Service Structure Setup
+- [ ] TICKET-023_fertilizer-application-method-1.1 Set up fertilizer application method service structure
 
-### fertilizer-application-method-2. Equipment and Farm Size Assessment System
-- [ ] fertilizer-application-method-2.1 Create equipment and farm size assessment system
+### TICKET-023_fertilizer-application-method-2. Equipment and Farm Size Assessment System
+- [ ] TICKET-023_fertilizer-application-method-2.1 Create equipment and farm size assessment system
 
-### fertilizer-application-method-3. Crop Type and Growth Stage Integration
-- [ ] fertilizer-application-method-3.1 Develop crop type and growth stage integration
+### TICKET-023_fertilizer-application-method-3. Crop Type and Growth Stage Integration
+- [ ] TICKET-023_fertilizer-application-method-3.1 Develop crop type and growth stage integration
 
-### fertilizer-application-method-4. Goal-Based Recommendation Engine
-- [ ] fertilizer-application-method-4.1 Build goal-based recommendation engine
+### TICKET-023_fertilizer-application-method-4. Goal-Based Recommendation Engine
+- [ ] TICKET-023_fertilizer-application-method-4.1 Build goal-based recommendation engine
 
-### fertilizer-application-method-5. Application Method Comparison System
-- [ ] fertilizer-application-method-5.1 Create application method comparison system
+### TICKET-023_fertilizer-application-method-5. Application Method Comparison System
+- [ ] TICKET-023_fertilizer-application-method-5.1 Create application method comparison system
 
-### fertilizer-application-method-6. Cost and Labor Analysis Engine
-- [ ] fertilizer-application-method-6.1 Develop cost and labor analysis engine
+### TICKET-023_fertilizer-application-method-6. Cost and Labor Analysis Engine
+- [ ] TICKET-023_fertilizer-application-method-6.1 Develop cost and labor analysis engine
 
-### fertilizer-application-method-7. Application Guidance System
-- [ ] fertilizer-application-method-7.1 Build application guidance system
+### TICKET-023_fertilizer-application-method-7. Application Guidance System
+- [ ] TICKET-023_fertilizer-application-method-7.1 Build application guidance system
 
-### fertilizer-application-method-8. Method Selection Algorithms
-- [ ] fertilizer-application-method-8.1 Implement method selection algorithms
+### TICKET-023_fertilizer-application-method-8. Method Selection Algorithms
+- [ ] TICKET-023_fertilizer-application-method-8.1 Implement method selection algorithms
 
-### fertilizer-application-method-9. Educational Content System
-- [ ] fertilizer-application-method-9.1 Create educational content system
+### TICKET-023_fertilizer-application-method-9. Educational Content System
+- [ ] TICKET-023_fertilizer-application-method-9.1 Create educational content system
 
-### fertilizer-application-method-10. Application Method API Endpoints
-- [ ] fertilizer-application-method-10.1 Implement application method API endpoints
-  - [ ] fertilizer-application-method-10.1.1 Create POST /api/v1/fertilizer/application-method endpoint
-  - [ ] fertilizer-application-method-10.1.2 Implement GET /api/v1/fertilizer/application-options endpoint
-  - [ ] fertilizer-application-method-10.1.3 Add GET /api/v1/fertilizer/method-comparison endpoint
-  - [ ] fertilizer-application-method-10.1.4 Create application guidance and timing endpoints
+### TICKET-023_fertilizer-application-method-10. Application Method API Endpoints
+- [ ] TICKET-023_fertilizer-application-method-10.1 Implement application method API endpoints
+  - [ ] TICKET-023_fertilizer-application-method-10.1.1 Create POST /api/v1/fertilizer/application-method endpoint
+  - [ ] TICKET-023_fertilizer-application-method-10.1.2 Implement GET /api/v1/fertilizer/application-options endpoint
+  - [ ] TICKET-023_fertilizer-application-method-10.1.3 Add GET /api/v1/fertilizer/method-comparison endpoint
+  - [ ] TICKET-023_fertilizer-application-method-10.1.4 Create application guidance and timing endpoints
 
-### fertilizer-application-method-11. Comprehensive Testing Suite
-- [ ] fertilizer-application-method-11.1 Build comprehensive testing suite
+### TICKET-023_fertilizer-application-method-11. Comprehensive Testing Suite
+- [ ] TICKET-023_fertilizer-application-method-11.1 Build comprehensive testing suite
 
-### fertilizer-application-method-12. User Interface Components
-- [ ] fertilizer-application-method-12.1 Develop user interface components
+### TICKET-023_fertilizer-application-method-12. User Interface Components
+- [ ] TICKET-023_fertilizer-application-method-12.1 Develop user interface components
 
-### fertilizer-application-method-13. System Integration
-- [ ] fertilizer-application-method-13.1 Integrate with existing systems
+### TICKET-023_fertilizer-application-method-13. System Integration
+- [ ] TICKET-023_fertilizer-application-method-13.1 Integrate with existing systems
 
 ## Fertilizer Strategy Optimization
 
-### fertilizer-strategy-optimization-1. Market Price Integration System
-- [ ] fertilizer-strategy-optimization-1.1 Implement real-time fertilizer price tracking
-- [ ] fertilizer-strategy-optimization-1.2 Create commodity price integration
-- [ ] fertilizer-strategy-optimization-1.3 Develop price impact analysis
+### TICKET-006_fertilizer-strategy-optimization-1. Market Price Integration System
+- [ ] TICKET-006_fertilizer-strategy-optimization-1.1 Implement real-time fertilizer price tracking
+- [ ] TICKET-006_fertilizer-strategy-optimization-1.2 Create commodity price integration
+- [ ] TICKET-006_fertilizer-strategy-optimization-1.3 Develop price impact analysis
 
-### fertilizer-strategy-optimization-2. Economic Optimization Engine
-- [ ] fertilizer-strategy-optimization-2.1 Implement fertilizer ROI optimization
-- [ ] fertilizer-strategy-optimization-2.2 Develop budget constraint optimization
-- [ ] fertilizer-strategy-optimization-2.3 Create break-even analysis system
+### TICKET-006_fertilizer-strategy-optimization-2. Economic Optimization Engine
+- [ ] TICKET-006_fertilizer-strategy-optimization-2.1 Implement fertilizer ROI optimization
+- [ ] TICKET-006_fertilizer-strategy-optimization-2.2 Develop budget constraint optimization
+- [ ] TICKET-006_fertilizer-strategy-optimization-2.3 Create break-even analysis system
 
-### fertilizer-strategy-optimization-3. Yield Goal Integration
-- [ ] fertilizer-strategy-optimization-3.1 Implement yield goal setting system
-- [ ] fertilizer-strategy-optimization-3.2 Develop yield-fertilizer response curves
-- [ ] fertilizer-strategy-optimization-3.3 Create yield goal optimization
+### TICKET-006_fertilizer-strategy-optimization-3. Yield Goal Integration
+- [ ] TICKET-006_fertilizer-strategy-optimization-3.1 Implement yield goal setting system
+- [ ] TICKET-006_fertilizer-strategy-optimization-3.2 Develop yield-fertilizer response curves
+- [ ] TICKET-006_fertilizer-strategy-optimization-3.3 Create yield goal optimization
 
-### fertilizer-strategy-optimization-4. Fertilizer Strategy Optimization
-- [ ] fertilizer-strategy-optimization-4.1 Implement multi-nutrient optimization
-- [ ] fertilizer-strategy-optimization-4.2 Create timing optimization system
-- [ ] fertilizer-strategy-optimization-4.3 Develop application method optimization
+### TICKET-006_fertilizer-strategy-optimization-4. Fertilizer Strategy Optimization
+- [ ] TICKET-006_fertilizer-strategy-optimization-4.1 Implement multi-nutrient optimization
+- [ ] TICKET-006_fertilizer-strategy-optimization-4.2 Create timing optimization system
+- [ ] TICKET-006_fertilizer-strategy-optimization-4.3 Develop application method optimization
 
-### fertilizer-strategy-optimization-5. Price Change Impact Analysis
-- [ ] fertilizer-strategy-optimization-5.1 Implement dynamic price adjustment
-- [ ] fertilizer-strategy-optimization-5.2 Create price scenario modeling
-- [ ] fertilizer-strategy-optimization-5.3 Develop price optimization alerts
+### TICKET-006_fertilizer-strategy-optimization-5. Price Change Impact Analysis
+- [ ] TICKET-006_fertilizer-strategy-optimization-5.1 Implement dynamic price adjustment
+- [ ] TICKET-006_fertilizer-strategy-optimization-5.2 Create price scenario modeling
+- [ ] TICKET-006_fertilizer-strategy-optimization-5.3 Develop price optimization alerts
 
-### fertilizer-strategy-optimization-6. Environmental and Regulatory Compliance
-- [ ] fertilizer-strategy-optimization-6.1 Implement environmental limit integration
-- [ ] fertilizer-strategy-optimization-6.2 Create regulatory compliance system
-- [ ] fertilizer-strategy-optimization-6.3 Develop sustainability optimization
+### TICKET-006_fertilizer-strategy-optimization-6. Environmental and Regulatory Compliance
+- [ ] TICKET-006_fertilizer-strategy-optimization-6.1 Implement environmental limit integration
+- [ ] TICKET-006_fertilizer-strategy-optimization-6.2 Create regulatory compliance system
+- [ ] TICKET-006_fertilizer-strategy-optimization-6.3 Develop sustainability optimization
 
-### fertilizer-strategy-optimization-7. API Endpoints for Fertilizer Strategy
-- [ ] fertilizer-strategy-optimization-7.1 Create strategy optimization endpoints
-  - [ ] fertilizer-strategy-optimization-7.1.1 POST /api/v1/fertilizer/optimize-strategy - Optimize fertilizer strategy
-  - [ ] fertilizer-strategy-optimization-7.1.2 POST /api/v1/fertilizer/roi-analysis - Calculate ROI analysis
-  - [ ] fertilizer-strategy-optimization-7.1.3 POST /api/v1/fertilizer/break-even - Calculate break-even analysis
-  - [ ] fertilizer-strategy-optimization-7.1.4 GET /api/v1/fertilizer/price-trends - Get price trend data
-- [ ] fertilizer-strategy-optimization-7.2 Implement price analysis endpoints
-  - [ ] fertilizer-strategy-optimization-7.2.1 GET /api/v1/prices/fertilizer-current - Get current fertilizer prices
-  - [ ] fertilizer-strategy-optimization-7.2.2 GET /api/v1/prices/commodity-current - Get current commodity prices
-  - [ ] fertilizer-strategy-optimization-7.2.3 POST /api/v1/prices/impact-analysis - Analyze price impacts
-  - [ ] fertilizer-strategy-optimization-7.2.4 GET /api/v1/prices/alerts - Get price alerts
-- [ ] fertilizer-strategy-optimization-7.3 Add strategy management endpoints
-  - [ ] fertilizer-strategy-optimization-7.3.1 POST /api/v1/strategies/save - Save fertilizer strategy
-  - [ ] fertilizer-strategy-optimization-7.3.2 GET /api/v1/strategies/compare - Compare strategies
-  - [ ] fertilizer-strategy-optimization-7.3.3 PUT /api/v1/strategies/{id}/update - Update strategy
-  - [ ] fertilizer-strategy-optimization-7.3.4 POST /api/v1/strategies/track-performance - Track strategy performance
+### TICKET-006_fertilizer-strategy-optimization-7. API Endpoints for Fertilizer Strategy
+- [ ] TICKET-006_fertilizer-strategy-optimization-7.1 Create strategy optimization endpoints
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.1.1 POST /api/v1/fertilizer/optimize-strategy - Optimize fertilizer strategy
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.1.2 POST /api/v1/fertilizer/roi-analysis - Calculate ROI analysis
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.1.3 POST /api/v1/fertilizer/break-even - Calculate break-even analysis
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.1.4 GET /api/v1/fertilizer/price-trends - Get price trend data
+- [ ] TICKET-006_fertilizer-strategy-optimization-7.2 Implement price analysis endpoints
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.2.1 GET /api/v1/prices/fertilizer-current - Get current fertilizer prices
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.2.2 GET /api/v1/prices/commodity-current - Get current commodity prices
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.2.3 POST /api/v1/prices/impact-analysis - Analyze price impacts
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.2.4 GET /api/v1/prices/alerts - Get price alerts
+- [ ] TICKET-006_fertilizer-strategy-optimization-7.3 Add strategy management endpoints
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.3.1 POST /api/v1/strategies/save - Save fertilizer strategy
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.3.2 GET /api/v1/strategies/compare - Compare strategies
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.3.3 PUT /api/v1/strategies/{id}/update - Update strategy
+  - [ ] TICKET-006_fertilizer-strategy-optimization-7.3.4 POST /api/v1/strategies/track-performance - Track strategy performance
 
-### fertilizer-strategy-optimization-8. Interactive Strategy Planning Interface
-- [ ] fertilizer-strategy-optimization-8.1 Create fertilizer strategy dashboard
-- [ ] fertilizer-strategy-optimization-8.2 Implement strategy modification tools
-- [ ] fertilizer-strategy-optimization-8.3 Create strategy visualization system
+### TICKET-006_fertilizer-strategy-optimization-8. Interactive Strategy Planning Interface
+- [ ] TICKET-006_fertilizer-strategy-optimization-8.1 Create fertilizer strategy dashboard
+- [ ] TICKET-006_fertilizer-strategy-optimization-8.2 Implement strategy modification tools
+- [ ] TICKET-006_fertilizer-strategy-optimization-8.3 Create strategy visualization system
 
-### fertilizer-strategy-optimization-9. Mobile Strategy Planning
-- [ ] fertilizer-strategy-optimization-9.1 Create mobile strategy interface
-- [ ] fertilizer-strategy-optimization-9.2 Implement mobile price alerts
-- [ ] fertilizer-strategy-optimization-9.3 Create mobile strategy tracking
+### TICKET-006_fertilizer-strategy-optimization-9. Mobile Strategy Planning
+- [ ] TICKET-006_fertilizer-strategy-optimization-9.1 Create mobile strategy interface
+- [ ] TICKET-006_fertilizer-strategy-optimization-9.2 Implement mobile price alerts
+- [ ] TICKET-006_fertilizer-strategy-optimization-9.3 Create mobile strategy tracking
 
-### fertilizer-strategy-optimization-10. Testing and Validation
-- [ ] fertilizer-strategy-optimization-10.1 Test optimization algorithm accuracy
-- [ ] fertilizer-strategy-optimization-10.2 Validate economic assumptions
-- [ ] fertilizer-strategy-optimization-10.3 Test user experience
+### TICKET-006_fertilizer-strategy-optimization-10. Testing and Validation
+- [ ] TICKET-006_fertilizer-strategy-optimization-10.1 Test optimization algorithm accuracy
+- [ ] TICKET-006_fertilizer-strategy-optimization-10.2 Validate economic assumptions
+- [ ] TICKET-006_fertilizer-strategy-optimization-10.3 Test user experience
 
 ## Fertilizer Timing Optimization
 
-### fertilizer-timing-optimization-1. Service Structure Setup
-- [ ] fertilizer-timing-optimization-1.1 Set up fertilizer timing optimization service structure
+### TICKET-006_fertilizer-timing-optimization-1. Service Structure Setup
+- [ ] TICKET-006_fertilizer-timing-optimization-1.1 Set up fertilizer timing optimization service structure
 
-### fertilizer-timing-optimization-2. Crop and Planting Date Integration
-- [ ] fertilizer-timing-optimization-2.1 Implement crop and planting date integration
+### TICKET-006_fertilizer-timing-optimization-2. Crop and Planting Date Integration
+- [ ] TICKET-006_fertilizer-timing-optimization-2.1 Implement crop and planting date integration
 
-### fertilizer-timing-optimization-3. Current Fertilizer Program Analysis
-- [ ] fertilizer-timing-optimization-3.1 Develop current fertilizer program analysis
+### TICKET-023_fertilizer-timing-optimization-3. Current Fertilizer Program Analysis
+- [ ] TICKET-023_fertilizer-timing-optimization-3.1 Develop current fertilizer program analysis
 
-### fertilizer-timing-optimization-4. Seasonal Fertilizer Calendar System
-- [ ] fertilizer-timing-optimization-4.1 Build seasonal fertilizer calendar system
+### TICKET-006_fertilizer-timing-optimization-4. Seasonal Fertilizer Calendar System
+- [ ] TICKET-006_fertilizer-timing-optimization-4.1 Build seasonal fertilizer calendar system
 
-### fertilizer-timing-optimization-5. Weather Forecasting and Soil Conditions Integration
-- [ ] fertilizer-timing-optimization-5.1 Integrate weather forecasting and soil conditions
+### TICKET-006_fertilizer-timing-optimization-5. Weather Forecasting and Soil Conditions Integration
+- [ ] TICKET-006_fertilizer-timing-optimization-5.1 Integrate weather forecasting and soil conditions
 
-### fertilizer-timing-optimization-6. Optimal Application Window Alerts
-- [ ] fertilizer-timing-optimization-6.1 Create optimal application window alerts
+### TICKET-006_fertilizer-timing-optimization-6. Optimal Application Window Alerts
+- [ ] TICKET-006_fertilizer-timing-optimization-6.1 Create optimal application window alerts
 
-### fertilizer-timing-optimization-7. Timing Reasoning and Explanation System
-- [ ] fertilizer-timing-optimization-7.1 Develop timing reasoning and explanation system
+### TICKET-006_fertilizer-timing-optimization-7. Timing Reasoning and Explanation System
+- [ ] TICKET-006_fertilizer-timing-optimization-7.1 Develop timing reasoning and explanation system
 
-### fertilizer-timing-optimization-8. Operational Constraint Accommodation
-- [ ] fertilizer-timing-optimization-8.1 Build operational constraint accommodation
+### TICKET-006_fertilizer-timing-optimization-8. Operational Constraint Accommodation
+- [ ] TICKET-006_fertilizer-timing-optimization-8.1 Build operational constraint accommodation
 
-### fertilizer-timing-optimization-9. Nutrient Uptake and Loss Modeling
-- [ ] fertilizer-timing-optimization-9.1 Create nutrient uptake and loss modeling
+### TICKET-006_fertilizer-timing-optimization-9. Nutrient Uptake and Loss Modeling
+- [ ] TICKET-006_fertilizer-timing-optimization-9.1 Create nutrient uptake and loss modeling
 
-### fertilizer-timing-optimization-10. Timing Optimization Algorithms
-- [ ] fertilizer-timing-optimization-10.1 Develop timing optimization algorithms
+### TICKET-006_fertilizer-timing-optimization-10. Timing Optimization Algorithms
+- [ ] TICKET-006_fertilizer-timing-optimization-10.1 Develop timing optimization algorithms
 
-### fertilizer-timing-optimization-11. Timing Optimization API Endpoints
-- [ ] fertilizer-timing-optimization-11.1 Implement timing optimization API endpoints
-  - [ ] fertilizer-timing-optimization-11.1.1 Create POST /api/v1/fertilizer/timing-optimization endpoint
-  - [ ] fertilizer-timing-optimization-11.1.2 Implement GET /api/v1/fertilizer/calendar endpoint
-  - [ ] fertilizer-timing-optimization-11.1.3 Add GET /api/v1/fertilizer/application-windows endpoint
-  - [ ] fertilizer-timing-optimization-11.1.4 Create alert subscription and management endpoints
+### TICKET-006_fertilizer-timing-optimization-11. Timing Optimization API Endpoints
+- [ ] TICKET-006_fertilizer-timing-optimization-11.1 Implement timing optimization API endpoints
+  - [ ] TICKET-006_fertilizer-timing-optimization-11.1.1 Create POST /api/v1/fertilizer/timing-optimization endpoint
+  - [ ] TICKET-006_fertilizer-timing-optimization-11.1.2 Implement GET /api/v1/fertilizer/calendar endpoint
+  - [ ] TICKET-006_fertilizer-timing-optimization-11.1.3 Add GET /api/v1/fertilizer/application-windows endpoint
+  - [ ] TICKET-006_fertilizer-timing-optimization-11.1.4 Create alert subscription and management endpoints
 
-### fertilizer-timing-optimization-12. Comprehensive Testing Suite
-- [ ] fertilizer-timing-optimization-12.1 Build comprehensive testing suite
+### TICKET-006_fertilizer-timing-optimization-12. Comprehensive Testing Suite
+- [ ] TICKET-006_fertilizer-timing-optimization-12.1 Build comprehensive testing suite
 
-### fertilizer-timing-optimization-13. User Interface Components
-- [ ] fertilizer-timing-optimization-13.1 Develop user interface components
+### TICKET-006_fertilizer-timing-optimization-13. User Interface Components
+- [ ] TICKET-006_fertilizer-timing-optimization-13.1 Develop user interface components
 
-### fertilizer-timing-optimization-14. System Integration
-- [ ] fertilizer-timing-optimization-14.1 Integrate with existing systems
+### TICKET-006_fertilizer-timing-optimization-14. System Integration
+- [ ] TICKET-006_fertilizer-timing-optimization-14.1 Integrate with existing systems
 
 ## Fertilizer Type Selection
 
-### fertilizer-type-selection-1. Service Structure Setup
-- [-] fertilizer-type-selection-1.1 Set up fertilizer type selection service structure
+### TICKET-023_fertilizer-type-selection-1. Service Structure Setup
+- [-] TICKET-023_fertilizer-type-selection-1.1 Set up fertilizer type selection service structure
 
-### fertilizer-type-selection-2. Fertilizer Database and Classification System
-- [ ] fertilizer-type-selection-2.1 Create fertilizer database and classification system
+### TICKET-023_fertilizer-type-selection-2. Fertilizer Database and Classification System
+- [ ] TICKET-023_fertilizer-type-selection-2.1 Create fertilizer database and classification system
 
-### fertilizer-type-selection-3. Priority and Constraint Input System
-- [ ] fertilizer-type-selection-3.1 Implement priority and constraint input system
+### TICKET-023_fertilizer-type-selection-3. Priority and Constraint Input System
+- [ ] TICKET-023_fertilizer-type-selection-3.1 Implement priority and constraint input system
 
-### fertilizer-type-selection-4. Equipment Compatibility Engine
-- [ ] fertilizer-type-selection-4.1 Develop equipment compatibility engine
+### TICKET-023_fertilizer-type-selection-4. Equipment Compatibility Engine
+- [ ] TICKET-023_fertilizer-type-selection-4.1 Develop equipment compatibility engine
 
-### fertilizer-type-selection-5. Fertilizer Comparison and Scoring System
-- [ ] fertilizer-type-selection-5.1 Build fertilizer comparison and scoring system
+### TICKET-023_fertilizer-type-selection-5. Fertilizer Comparison and Scoring System
+- [ ] TICKET-023_fertilizer-type-selection-5.1 Build fertilizer comparison and scoring system
 
-### fertilizer-type-selection-6. Environmental Impact Assessment
-- [ ] fertilizer-type-selection-6.1 Create environmental impact assessment
+### TICKET-023_fertilizer-type-selection-6. Environmental Impact Assessment
+- [ ] TICKET-023_fertilizer-type-selection-6.1 Create environmental impact assessment
 
-### fertilizer-type-selection-7. Soil Health Integration
-- [ ] fertilizer-type-selection-7.1 Develop soil health integration
+### TICKET-023_fertilizer-type-selection-7. Soil Health Integration
+- [ ] TICKET-023_fertilizer-type-selection-7.1 Develop soil health integration
 
-### fertilizer-type-selection-8. Cost Analysis and Comparison Engine
-- [ ] fertilizer-type-selection-8.1 Build cost analysis and comparison engine
+### TICKET-023_fertilizer-type-selection-8. Cost Analysis and Comparison Engine
+- [ ] TICKET-023_fertilizer-type-selection-8.1 Build cost analysis and comparison engine
 
-### fertilizer-type-selection-9. Recommendation Explanation System
-- [ ] fertilizer-type-selection-9.1 Create recommendation explanation system
+### TICKET-023_fertilizer-type-selection-9. Recommendation Explanation System
+- [ ] TICKET-023_fertilizer-type-selection-9.1 Create recommendation explanation system
 
-### fertilizer-type-selection-10. Fertilizer Selection API Endpoints
-- [ ] fertilizer-type-selection-10.1 Implement fertilizer selection API endpoints
-  - [ ] fertilizer-type-selection-10.1.1 Create POST /api/v1/fertilizer/type-selection endpoint
-  - [ ] fertilizer-type-selection-10.1.2 Implement GET /api/v1/fertilizer/types endpoint for browsing
-  - [ ] fertilizer-type-selection-10.1.3 Add GET /api/v1/fertilizer/comparison endpoint
-  - [ ] fertilizer-type-selection-10.1.4 Create fertilizer recommendation history endpoints
+### TICKET-023_fertilizer-type-selection-10. Fertilizer Selection API Endpoints
+- [ ] TICKET-023_fertilizer-type-selection-10.1 Implement fertilizer selection API endpoints
+  - [ ] TICKET-023_fertilizer-type-selection-10.1.1 Create POST /api/v1/fertilizer/type-selection endpoint
+  - [ ] TICKET-023_fertilizer-type-selection-10.1.2 Implement GET /api/v1/fertilizer/types endpoint for browsing
+  - [ ] TICKET-023_fertilizer-type-selection-10.1.3 Add GET /api/v1/fertilizer/comparison endpoint
+  - [ ] TICKET-023_fertilizer-type-selection-10.1.4 Create fertilizer recommendation history endpoints
 
-### fertilizer-type-selection-11. Comprehensive Testing Suite
-- [ ] fertilizer-type-selection-11.1 Build comprehensive testing suite
+### TICKET-023_fertilizer-type-selection-11. Comprehensive Testing Suite
+- [ ] TICKET-023_fertilizer-type-selection-11.1 Build comprehensive testing suite
 
-### fertilizer-type-selection-12. User Interface Components
-- [ ] fertilizer-type-selection-12.1 Develop user interface components
+### TICKET-023_fertilizer-type-selection-12. User Interface Components
+- [ ] TICKET-023_fertilizer-type-selection-12.1 Develop user interface components
 
-### fertilizer-type-selection-13. System Integration
-- [ ] fertilizer-type-selection-13.1 Integrate with existing systems
+### TICKET-023_fertilizer-type-selection-13. System Integration
+- [ ] TICKET-023_fertilizer-type-selection-13.1 Integrate with existing systems
 
 ## Micronutrient Management
 
-### micronutrient-management-1. Service Structure Setup
-- [ ] micronutrient-management-1.1 Set up micronutrient management service structure
+### TICKET-016_micronutrient-management-1. Service Structure Setup
+- [ ] TICKET-016_micronutrient-management-1.1 Set up micronutrient management service structure
 
-### micronutrient-management-2. Micronutrient Soil Test Integration System
-- [ ] micronutrient-management-2.1 Implement micronutrient soil test integration system
+### TICKET-016_micronutrient-management-2. Micronutrient Soil Test Integration System
+- [ ] TICKET-016_micronutrient-management-2.1 Implement micronutrient soil test integration system
 
-### micronutrient-management-3. Crop-Specific Micronutrient Requirement System
-- [ ] micronutrient-management-3.1 Develop crop-specific micronutrient requirement system
+### TICKET-016_micronutrient-management-3. Crop-Specific Micronutrient Requirement System
+- [ ] TICKET-016_micronutrient-management-3.1 Develop crop-specific micronutrient requirement system
 
-### micronutrient-management-4. Micronutrient Budget and Cost Analysis System
-- [ ] micronutrient-management-4.1 Create micronutrient budget and cost analysis system
+### TICKET-016_micronutrient-management-4. Micronutrient Budget and Cost Analysis System
+- [ ] TICKET-016_micronutrient-management-4.1 Create micronutrient budget and cost analysis system
 
-### micronutrient-management-5. Prioritized Micronutrient Recommendation Engine
-- [ ] micronutrient-management-5.1 Build prioritized micronutrient recommendation engine
+### TICKET-016_micronutrient-management-5. Prioritized Micronutrient Recommendation Engine
+- [ ] TICKET-016_micronutrient-management-5.1 Build prioritized micronutrient recommendation engine
 
-### micronutrient-management-6. Application Method and Timing System
-- [ ] micronutrient-management-6.1 Develop application method and timing system
+### TICKET-016_micronutrient-management-6. Application Method and Timing System
+- [ ] TICKET-016_micronutrient-management-6.1 Develop application method and timing system
 
-### micronutrient-management-7. Toxicity Risk and Over-Application Warning System
-- [ ] micronutrient-management-7.1 Build toxicity risk and over-application warning system
+### TICKET-016_micronutrient-management-7. Toxicity Risk and Over-Application Warning System
+- [ ] TICKET-016_micronutrient-management-7.1 Build toxicity risk and over-application warning system
 
-### micronutrient-management-8. Yield Response and Economic Return Prediction System
-- [ ] micronutrient-management-8.1 Create yield response and economic return prediction system
+### TICKET-016_micronutrient-management-8. Yield Response and Economic Return Prediction System
+- [ ] TICKET-016_micronutrient-management-8.1 Create yield response and economic return prediction system
 
-### micronutrient-management-9. Micronutrient Deficiency Diagnosis System
-- [ ] micronutrient-management-9.1 Develop micronutrient deficiency diagnosis system
+### TICKET-016_micronutrient-management-9. Micronutrient Deficiency Diagnosis System
+- [ ] TICKET-016_micronutrient-management-9.1 Develop micronutrient deficiency diagnosis system
 
-### micronutrient-management-10. Micronutrient Interaction and Compatibility System
-- [ ] micronutrient-management-10.1 Build micronutrient interaction and compatibility system
+### TICKET-016_micronutrient-management-10. Micronutrient Interaction and Compatibility System
+- [ ] TICKET-016_micronutrient-management-10.1 Build micronutrient interaction and compatibility system
 
-### micronutrient-management-11. Monitoring and Response Tracking System
-- [ ] micronutrient-management-11.1 Create monitoring and response tracking system
+### TICKET-016_micronutrient-management-11. Monitoring and Response Tracking System
+- [ ] TICKET-016_micronutrient-management-11.1 Create monitoring and response tracking system
 
-### micronutrient-management-12. Micronutrient Management API Endpoints
-- [ ] micronutrient-management-12.1 Implement micronutrient management API endpoints
-  - [ ] micronutrient-management-12.1.1 Create POST /api/v1/micronutrients/assessment endpoint
-  - [ ] micronutrient-management-12.1.2 Implement GET /api/v1/micronutrients/recommendations endpoint
-  - [ ] micronutrient-management-12.1.3 Add GET /api/v1/micronutrients/application-methods endpoint
-  - [ ] micronutrient-management-12.1.4 Create yield response and economic analysis endpoints
+### TICKET-016_micronutrient-management-12. Micronutrient Management API Endpoints
+- [ ] TICKET-016_micronutrient-management-12.1 Implement micronutrient management API endpoints
+  - [ ] TICKET-016_micronutrient-management-12.1.1 Create POST /api/v1/micronutrients/assessment endpoint
+  - [ ] TICKET-016_micronutrient-management-12.1.2 Implement GET /api/v1/micronutrients/recommendations endpoint
+  - [ ] TICKET-016_micronutrient-management-12.1.3 Add GET /api/v1/micronutrients/application-methods endpoint
+  - [ ] TICKET-016_micronutrient-management-12.1.4 Create yield response and economic analysis endpoints
 
-### micronutrient-management-13. Comprehensive Testing Suite
-- [ ] micronutrient-management-13.1 Build comprehensive testing suite
+### TICKET-016_micronutrient-management-13. Comprehensive Testing Suite
+- [ ] TICKET-016_micronutrient-management-13.1 Build comprehensive testing suite
 
-### micronutrient-management-14. User Interface Components
-- [ ] micronutrient-management-14.1 Develop user interface components
+### TICKET-016_micronutrient-management-14. User Interface Components
+- [ ] TICKET-016_micronutrient-management-14.1 Develop user interface components
 
-### micronutrient-management-15. System Integration
-- [ ] micronutrient-management-15.1 Integrate with existing systems
+### TICKET-016_micronutrient-management-15. System Integration
+- [ ] TICKET-016_micronutrient-management-15.1 Integrate with existing systems
 
 ## Nutrient Deficiency Detection
 
-### nutrient-deficiency-detection-1. Comprehensive Nutrient Analysis System
-- [x] nutrient-deficiency-detection-1.1 Expand soil test nutrient analysis
-- [x] nutrient-deficiency-detection-1.2 Implement tissue test integration
-- [x] nutrient-deficiency-detection-1.3 Create nutrient deficiency scoring system
+### TICKET-007_nutrient-deficiency-detection-1. Comprehensive Nutrient Analysis System
+- [x] TICKET-007_nutrient-deficiency-detection-1.1 Expand soil test nutrient analysis
+- [x] TICKET-007_nutrient-deficiency-detection-1.2 Implement tissue test integration
+- [x] TICKET-007_nutrient-deficiency-detection-1.3 Create nutrient deficiency scoring system
 
-### nutrient-deficiency-detection-2. Visual Symptom Analysis System
-- [x] nutrient-deficiency-detection-2.1 Implement crop photo analysis
-- [x] nutrient-deficiency-detection-2.2 Develop symptom database and matching
-- [x] nutrient-deficiency-detection-2.3 Create image quality and validation system
+### TICKET-007_nutrient-deficiency-detection-2. Visual Symptom Analysis System
+- [x] TICKET-007_nutrient-deficiency-detection-2.1 Implement crop photo analysis
+- [x] TICKET-007_nutrient-deficiency-detection-2.2 Develop symptom database and matching
+- [x] TICKET-007_nutrient-deficiency-detection-2.3 Create image quality and validation system
 
-### nutrient-deficiency-detection-3. Symptom Description and Analysis
-- [x] nutrient-deficiency-detection-3.1 Create symptom description interface
-- [x] nutrient-deficiency-detection-3.2 Implement natural language symptom processing
-- [x] nutrient-deficiency-detection-3.3 Develop symptom validation system
+### TICKET-007_nutrient-deficiency-detection-3. Symptom Description and Analysis
+- [x] TICKET-007_nutrient-deficiency-detection-3.1 Create symptom description interface
+- [x] TICKET-007_nutrient-deficiency-detection-3.2 Implement natural language symptom processing
+- [x] TICKET-007_nutrient-deficiency-detection-3.3 Develop symptom validation system
 
-### nutrient-deficiency-detection-4. Deficiency Identification Engine
-- [x] nutrient-deficiency-detection-4.1 Create multi-source deficiency detection
-- [x] nutrient-deficiency-detection-4.2 Implement deficiency differential diagnosis
-- [x] nutrient-deficiency-detection-4.3 Create deficiency impact assessment
+### TICKET-007_nutrient-deficiency-detection-4. Deficiency Identification Engine
+- [x] TICKET-007_nutrient-deficiency-detection-4.1 Create multi-source deficiency detection
+- [x] TICKET-007_nutrient-deficiency-detection-4.2 Implement deficiency differential diagnosis
+- [x] TICKET-007_nutrient-deficiency-detection-4.3 Create deficiency impact assessment
 
-### nutrient-deficiency-detection-5. Treatment Recommendation System
-- [x] nutrient-deficiency-detection-5.1 Implement deficiency-specific treatments
-- [x] nutrient-deficiency-detection-5.2 Develop treatment prioritization
-- [x] nutrient-deficiency-detection-5.3 Create treatment monitoring system
+### TICKET-007_nutrient-deficiency-detection-5. Treatment Recommendation System
+- [x] TICKET-007_nutrient-deficiency-detection-5.1 Implement deficiency-specific treatments
+- [x] TICKET-007_nutrient-deficiency-detection-5.2 Develop treatment prioritization
+- [x] TICKET-007_nutrient-deficiency-detection-5.3 Create treatment monitoring system
 
-### nutrient-deficiency-detection-6. Follow-up Testing and Monitoring
-- [x] nutrient-deficiency-detection-6.1 Implement testing schedule recommendations
-- [x] nutrient-deficiency-detection-6.2 Create monitoring alert system
-- [x] nutrient-deficiency-detection-6.3 Develop monitoring dashboard
+### TICKET-007_nutrient-deficiency-detection-6. Follow-up Testing and Monitoring
+- [x] TICKET-007_nutrient-deficiency-detection-6.1 Implement testing schedule recommendations
+- [x] TICKET-007_nutrient-deficiency-detection-6.2 Create monitoring alert system
+- [x] TICKET-007_nutrient-deficiency-detection-6.3 Develop monitoring dashboard
 
-### nutrient-deficiency-detection-7. Regional Comparison and Benchmarking
-- [x] nutrient-deficiency-detection-7.1 Implement regional deficiency databases
-- [x] nutrient-deficiency-detection-7.2 Create benchmarking system
-- [x] nutrient-deficiency-detection-7.3 Develop regional alert system
+### TICKET-007_nutrient-deficiency-detection-7. Regional Comparison and Benchmarking
+- [x] TICKET-007_nutrient-deficiency-detection-7.1 Implement regional deficiency databases
+- [x] TICKET-007_nutrient-deficiency-detection-7.2 Create benchmarking system
+- [x] TICKET-007_nutrient-deficiency-detection-7.3 Develop regional alert system
 
-### nutrient-deficiency-detection-8. API Endpoints for Deficiency Detection
-- [x] nutrient-deficiency-detection-8.1 Create deficiency detection endpoints
-  - [x] nutrient-deficiency-detection-8.1.1 POST /api/v1/deficiency/analyze - Analyze for deficiencies
-  - [x] nutrient-deficiency-detection-8.1.2 POST /api/v1/deficiency/image-analysis - Analyze crop photos
-  - [x] nutrient-deficiency-detection-8.1.3 POST /api/v1/deficiency/symptoms - Process symptom descriptions
-  - [x] nutrient-deficiency-detection-8.1.4 GET /api/v1/deficiency/recommendations - Get treatment recommendations
-- [x] nutrient-deficiency-detection-8.2 Implement monitoring endpoints
-  - [x] nutrient-deficiency-detection-8.2.1 POST /api/v1/deficiency/monitor - Set up deficiency monitoring
-  - [x] nutrient-deficiency-detection-8.2.2 GET /api/v1/deficiency/alerts - Get deficiency alerts
-  - [x] nutrient-deficiency-detection-8.2.3 POST /api/v1/deficiency/track-treatment - Track treatment progress
-  - [x] nutrient-deficiency-detection-8.2.4 GET /api/v1/deficiency/dashboard - Get monitoring dashboard
-- [x] nutrient-deficiency-detection-8.3 Add comparison endpoints
-  - [x] nutrient-deficiency-detection-8.3.1 GET /api/v1/deficiency/regional-comparison - Compare to regional data
-  - [x] nutrient-deficiency-detection-8.3.2 POST /api/v1/deficiency/benchmark - Benchmark against peers
-  - [x] nutrient-deficiency-detection-8.3.3 GET /api/v1/deficiency/trends - Get deficiency trends
-  - [x] nutrient-deficiency-detection-8.3.4 POST /api/v1/deficiency/report - Generate deficiency report
+### TICKET-007_nutrient-deficiency-detection-8. API Endpoints for Deficiency Detection
+- [x] TICKET-007_nutrient-deficiency-detection-8.1 Create deficiency detection endpoints
+  - [x] TICKET-007_nutrient-deficiency-detection-8.1.1 POST /api/v1/deficiency/analyze - Analyze for deficiencies
+  - [x] TICKET-007_nutrient-deficiency-detection-8.1.2 POST /api/v1/deficiency/image-analysis - Analyze crop photos
+  - [x] TICKET-007_nutrient-deficiency-detection-8.1.3 POST /api/v1/deficiency/symptoms - Process symptom descriptions
+  - [x] TICKET-007_nutrient-deficiency-detection-8.1.4 GET /api/v1/deficiency/recommendations - Get treatment recommendations
+- [x] TICKET-007_nutrient-deficiency-detection-8.2 Implement monitoring endpoints
+  - [x] TICKET-007_nutrient-deficiency-detection-8.2.1 POST /api/v1/deficiency/monitor - Set up deficiency monitoring
+  - [x] TICKET-007_nutrient-deficiency-detection-8.2.2 GET /api/v1/deficiency/alerts - Get deficiency alerts
+  - [x] TICKET-007_nutrient-deficiency-detection-8.2.3 POST /api/v1/deficiency/track-treatment - Track treatment progress
+  - [x] TICKET-007_nutrient-deficiency-detection-8.2.4 GET /api/v1/deficiency/dashboard - Get monitoring dashboard
+- [x] TICKET-007_nutrient-deficiency-detection-8.3 Add comparison endpoints
+  - [x] TICKET-007_nutrient-deficiency-detection-8.3.1 GET /api/v1/deficiency/regional-comparison - Compare to regional data
+  - [x] TICKET-007_nutrient-deficiency-detection-8.3.2 POST /api/v1/deficiency/benchmark - Benchmark against peers
+  - [x] TICKET-007_nutrient-deficiency-detection-8.3.3 GET /api/v1/deficiency/trends - Get deficiency trends
+  - [x] TICKET-007_nutrient-deficiency-detection-8.3.4 POST /api/v1/deficiency/report - Generate deficiency report
 
-### nutrient-deficiency-detection-9. Mobile Deficiency Detection
-- [x] nutrient-deficiency-detection-9.1 Create mobile photo capture interface
-- [x] nutrient-deficiency-detection-9.2 Implement mobile symptom documentation
-- [x] nutrient-deficiency-detection-9.3 Create mobile deficiency alerts
+### TICKET-007_nutrient-deficiency-detection-9. Mobile Deficiency Detection
+- [x] TICKET-007_nutrient-deficiency-detection-9.1 Create mobile photo capture interface
+- [x] TICKET-007_nutrient-deficiency-detection-9.2 Implement mobile symptom documentation
+- [x] TICKET-007_nutrient-deficiency-detection-9.3 Create mobile deficiency alerts
 
-### nutrient-deficiency-detection-10. Testing and Validation
-- [x] nutrient-deficiency-detection-10.1 Test deficiency detection accuracy
-- [x] nutrient-deficiency-detection-10.2 Validate agricultural soundness
-- [x] nutrient-deficiency-detection-10.3 Test user experience
+### TICKET-007_nutrient-deficiency-detection-10. Testing and Validation
+- [x] TICKET-007_nutrient-deficiency-detection-10.1 Test deficiency detection accuracy
+- [x] TICKET-007_nutrient-deficiency-detection-10.2 Validate agricultural soundness
+- [x] TICKET-007_nutrient-deficiency-detection-10.3 Test user experience
 
 ## Soil Fertility Assessment
 
-### soil-fertility-assessment-1. Comprehensive Soil Test Analysis System
-- [x] soil-fertility-assessment-1.1 Enhance soil test interpretation engine
-- [x] soil-fertility-assessment-1.2 Implement multi-parameter soil assessment
-- [x] soil-fertility-assessment-1.3 Develop soil fertility trend analysis
+### TICKET-003_soil-fertility-assessment-1. Comprehensive Soil Test Analysis System
+- [x] TICKET-003_soil-fertility-assessment-1.1 Enhance soil test interpretation engine
+- [x] TICKET-003_soil-fertility-assessment-1.2 Implement multi-parameter soil assessment
+- [x] TICKET-003_soil-fertility-assessment-1.3 Develop soil fertility trend analysis
 
-### soil-fertility-assessment-2. Fertilization Goal Setting System
-- [x] soil-fertility-assessment-2.1 Create fertilization objective framework
-- [x] soil-fertility-assessment-2.2 Implement goal-based recommendation engine
-- [x] soil-fertility-assessment-2.3 Develop goal impact prediction
+### TICKET-017_soil-fertility-assessment-2. Fertilization Goal Setting System
+- [x] TICKET-017_soil-fertility-assessment-2.1 Create fertilization objective framework
+- [x] TICKET-017_soil-fertility-assessment-2.2 Implement goal-based recommendation engine
+- [x] TICKET-017_soil-fertility-assessment-2.3 Develop goal impact prediction
 
-### soil-fertility-assessment-3. Sustainable Soil Improvement Recommendations
-- [x] soil-fertility-assessment-3.1 Implement organic amendment recommendation system
-- [x] soil-fertility-assessment-3.2 Develop cover crop recommendation engine
-- [x] soil-fertility-assessment-3.3 Create integrated soil building strategy
+### TICKET-003_soil-fertility-assessment-3. Sustainable Soil Improvement Recommendations
+- [x] TICKET-003_soil-fertility-assessment-3.1 Implement organic amendment recommendation system
+- [x] TICKET-003_soil-fertility-assessment-3.2 Develop cover crop recommendation engine
+- [x] TICKET-003_soil-fertility-assessment-3.3 Create integrated soil building strategy
 
-### soil-fertility-assessment-4. Fertilizer Optimization System
-- [x] soil-fertility-assessment-4.1 Implement precision fertilizer recommendations
-- [x] soil-fertility-assessment-4.2 Create fertilizer efficiency optimization
-- [x] soil-fertility-assessment-4.3 Develop fertilizer reduction strategies
+### TICKET-003_soil-fertility-assessment-4. Fertilizer Optimization System
+- [x] TICKET-003_soil-fertility-assessment-4.1 Implement precision fertilizer recommendations
+- [x] TICKET-003_soil-fertility-assessment-4.2 Create fertilizer efficiency optimization
+- [x] TICKET-003_soil-fertility-assessment-4.3 Develop fertilizer reduction strategies
 
-### soil-fertility-assessment-5. Implementation Timeline System
-- [x] soil-fertility-assessment-5.1 Create soil improvement timeline generator
-- [x] soil-fertility-assessment-5.2 Implement progress tracking system
-- [x] soil-fertility-assessment-5.3 Develop timeline optimization
+### TICKET-003_soil-fertility-assessment-5. Implementation Timeline System
+- [x] TICKET-003_soil-fertility-assessment-5.1 Create soil improvement timeline generator
+- [x] TICKET-003_soil-fertility-assessment-5.2 Implement progress tracking system
+- [x] TICKET-003_soil-fertility-assessment-5.3 Develop timeline optimization
 
-### soil-fertility-assessment-6. Expected Outcomes and Benefits System
-- [x] soil-fertility-assessment-6.1 Implement benefit prediction models
-- [x] soil-fertility-assessment-6.2 Create outcome visualization system
-- [x] soil-fertility-assessment-6.3 Develop benefit tracking system
+### TICKET-003_soil-fertility-assessment-6. Expected Outcomes and Benefits System
+- [x] TICKET-003_soil-fertility-assessment-6.1 Implement benefit prediction models
+- [x] TICKET-003_soil-fertility-assessment-6.2 Create outcome visualization system
+- [x] TICKET-003_soil-fertility-assessment-6.3 Develop benefit tracking system
 
-### soil-fertility-assessment-7. Soil Health Tracking System
-- [x] soil-fertility-assessment-7.1 Implement soil health monitoring dashboard
-- [x] soil-fertility-assessment-7.2 Create soil health improvement tracking
-- [x] soil-fertility-assessment-7.3 Develop soil health reporting system
+### TICKET-003_soil-fertility-assessment-7. Soil Health Tracking System
+- [x] TICKET-003_soil-fertility-assessment-7.1 Implement soil health monitoring dashboard
+- [x] TICKET-003_soil-fertility-assessment-7.2 Create soil health improvement tracking
+- [x] TICKET-003_soil-fertility-assessment-7.3 Develop soil health reporting system
 
-### soil-fertility-assessment-8. API Endpoints for Soil Fertility
-- [x] soil-fertility-assessment-8.1 Create soil fertility assessment endpoints
-  - [x] soil-fertility-assessment-8.1.1 POST /api/v1/soil-fertility/assess - Assess soil fertility
-  - [x] soil-fertility-assessment-8.1.2 GET /api/v1/soil-fertility/{assessment_id} - Get assessment
-  - [x] soil-fertility-assessment-8.1.3 POST /api/v1/soil-fertility/goals - Set fertilization goals
-  - [x] soil-fertility-assessment-8.1.4 POST /api/v1/soil-fertility/recommendations - Get recommendations
-- [x] soil-fertility-assessment-8.2 Implement soil improvement endpoints
-  - [x] soil-fertility-assessment-8.2.1 POST /api/v1/soil-improvement/plan - Create improvement plan
-  - [x] soil-fertility-assessment-8.2.2 GET /api/v1/soil-improvement/timeline - Get implementation timeline
-  - [x] soil-fertility-assessment-8.2.3 POST /api/v1/soil-improvement/track-progress - Track progress
-  - [x] soil-fertility-assessment-8.2.4 GET /api/v1/soil-improvement/benefits - Get expected benefits
-- [x] soil-fertility-assessment-8.3 Add soil health tracking endpoints
-  - [x] soil-fertility-assessment-8.3.1 GET /api/v1/soil-health/dashboard - Get soil health dashboard
-  - [x] soil-fertility-assessment-8.3.2 POST /api/v1/soil-health/update - Update soil health data
-  - [x] soil-fertility-assessment-8.3.3 GET /api/v1/soil-health/trends - Get soil health trends
-  - [x] soil-fertility-assessment-8.3.4 POST /api/v1/soil-health/report - Generate soil health report
+### TICKET-017_soil-fertility-assessment-8. API Endpoints for Soil Fertility
+- [x] TICKET-017_soil-fertility-assessment-8.1 Create soil fertility assessment endpoints
+  - [x] TICKET-017_soil-fertility-assessment-8.1.1 POST /api/v1/soil-fertility/assess - Assess soil fertility
+  - [x] TICKET-017_soil-fertility-assessment-8.1.2 GET /api/v1/soil-fertility/{assessment_id} - Get assessment
+  - [x] TICKET-017_soil-fertility-assessment-8.1.3 POST /api/v1/soil-fertility/goals - Set fertilization goals
+  - [x] TICKET-017_soil-fertility-assessment-8.1.4 POST /api/v1/soil-fertility/recommendations - Get recommendations
+- [x] TICKET-017_soil-fertility-assessment-8.2 Implement soil improvement endpoints
+  - [x] TICKET-017_soil-fertility-assessment-8.2.1 POST /api/v1/soil-improvement/plan - Create improvement plan
+  - [x] TICKET-017_soil-fertility-assessment-8.2.2 GET /api/v1/soil-improvement/timeline - Get implementation timeline
+  - [x] TICKET-017_soil-fertility-assessment-8.2.3 POST /api/v1/soil-improvement/track-progress - Track progress
+  - [x] TICKET-017_soil-fertility-assessment-8.2.4 GET /api/v1/soil-improvement/benefits - Get expected benefits
+- [x] TICKET-017_soil-fertility-assessment-8.3 Add soil health tracking endpoints
+  - [x] TICKET-017_soil-fertility-assessment-8.3.1 GET /api/v1/soil-health/dashboard - Get soil health dashboard
+  - [x] TICKET-017_soil-fertility-assessment-8.3.2 POST /api/v1/soil-health/update - Update soil health data
+  - [x] TICKET-017_soil-fertility-assessment-8.3.3 GET /api/v1/soil-health/trends - Get soil health trends
+  - [x] TICKET-017_soil-fertility-assessment-8.3.4 POST /api/v1/soil-health/report - Generate soil health report
 
-### soil-fertility-assessment-9. Mobile Soil Fertility Interface
-- [x] soil-fertility-assessment-9.1 Create mobile soil assessment interface
-- [x] soil-fertility-assessment-9.2 Implement mobile soil improvement tracking
-- [x] soil-fertility-assessment-9.3 Create mobile soil health dashboard
+### TICKET-003_soil-fertility-assessment-9. Mobile Soil Fertility Interface
+- [x] TICKET-003_soil-fertility-assessment-9.1 Create mobile soil assessment interface
+- [x] TICKET-003_soil-fertility-assessment-9.2 Implement mobile soil improvement tracking
+- [x] TICKET-003_soil-fertility-assessment-9.3 Create mobile soil health dashboard
 
-### soil-fertility-assessment-10. Testing and Validation
-- [x] soil-fertility-assessment-10.1 Test soil fertility assessment accuracy
-- [x] soil-fertility-assessment-10.2 Validate sustainable practices
-- [x] soil-fertility-assessment-10.3 Test user experience
+### TICKET-003_soil-fertility-assessment-10. Testing and Validation
+- [x] TICKET-003_soil-fertility-assessment-10.1 Test soil fertility assessment accuracy
+- [x] TICKET-003_soil-fertility-assessment-10.2 Validate sustainable practices
+- [x] TICKET-003_soil-fertility-assessment-10.3 Test user experience
 
 ## Runoff Prevention
 
-### runoff-prevention-1. Service Structure Setup
-- [ ] runoff-prevention-1.1 Set up runoff prevention service structure
+### TICKET-024_runoff-prevention-1. Service Structure Setup
+- [ ] TICKET-024_runoff-prevention-1.1 Set up runoff prevention service structure
 
-### runoff-prevention-2. Field Characteristics Assessment System
-- [ ] runoff-prevention-2.1 Implement field characteristics assessment system
+### TICKET-024_runoff-prevention-2. Field Characteristics Assessment System
+- [ ] TICKET-024_runoff-prevention-2.1 Implement field characteristics assessment system
 
-### runoff-prevention-3. Current Practices Evaluation System
-- [ ] runoff-prevention-3.1 Develop current practices evaluation system
+### TICKET-024_runoff-prevention-3. Current Practices Evaluation System
+- [ ] TICKET-024_runoff-prevention-3.1 Develop current practices evaluation system
 
-### runoff-prevention-4. Runoff Reduction Recommendation Engine
-- [ ] runoff-prevention-4.1 Build runoff reduction recommendation engine
+### TICKET-024_runoff-prevention-4. Runoff Reduction Recommendation Engine
+- [ ] TICKET-024_runoff-prevention-4.1 Build runoff reduction recommendation engine
 
-### runoff-prevention-5. Timing and Application Method Optimization
-- [ ] runoff-prevention-5.1 Create timing and application method optimization
+### TICKET-024_runoff-prevention-5. Timing and Application Method Optimization
+- [ ] TICKET-024_runoff-prevention-5.1 Create timing and application method optimization
 
-### runoff-prevention-6. Buffer Strip and Conservation Practice System
-- [ ] runoff-prevention-6.1 Develop buffer strip and conservation practice system
+### TICKET-024_runoff-prevention-6. Buffer Strip and Conservation Practice System
+- [ ] TICKET-024_runoff-prevention-6.1 Develop buffer strip and conservation practice system
 
-### runoff-prevention-7. Environmental Benefit Quantification System
-- [ ] runoff-prevention-7.1 Build environmental benefit quantification system
+### TICKET-024_runoff-prevention-7. Environmental Benefit Quantification System
+- [ ] TICKET-024_runoff-prevention-7.1 Build environmental benefit quantification system
 
-### runoff-prevention-8. High-Risk Area Identification System
-- [ ] runoff-prevention-8.1 Create high-risk area identification system
+### TICKET-024_runoff-prevention-8. High-Risk Area Identification System
+- [ ] TICKET-024_runoff-prevention-8.1 Create high-risk area identification system
 
-### runoff-prevention-9. Regulatory Compliance and Incentive System
-- [ ] runoff-prevention-9.1 Develop regulatory compliance and incentive system
+### TICKET-024_runoff-prevention-9. Regulatory Compliance and Incentive System
+- [ ] TICKET-024_runoff-prevention-9.1 Develop regulatory compliance and incentive system
 
-### runoff-prevention-10. Practice Effectiveness Monitoring System
-- [ ] runoff-prevention-10.1 Build practice effectiveness monitoring system
+### TICKET-024_runoff-prevention-10. Practice Effectiveness Monitoring System
+- [ ] TICKET-024_runoff-prevention-10.1 Build practice effectiveness monitoring system
 
-### runoff-prevention-11. Runoff Prevention API Endpoints
-- [ ] runoff-prevention-11.1 Implement runoff prevention API endpoints
-  - [ ] runoff-prevention-11.1.1 Create POST /api/v1/runoff/assessment endpoint
-  - [ ] runoff-prevention-11.1.2 Implement GET /api/v1/runoff/recommendations endpoint
-  - [ ] runoff-prevention-11.1.3 Add GET /api/v1/runoff/risk-mapping endpoint
-  - [ ] runoff-prevention-11.1.4 Create regulatory compliance and incentive information endpoints
+### TICKET-024_runoff-prevention-11. Runoff Prevention API Endpoints
+- [ ] TICKET-024_runoff-prevention-11.1 Implement runoff prevention API endpoints
+  - [ ] TICKET-024_runoff-prevention-11.1.1 Create POST /api/v1/runoff/assessment endpoint
+  - [ ] TICKET-024_runoff-prevention-11.1.2 Implement GET /api/v1/runoff/recommendations endpoint
+  - [ ] TICKET-024_runoff-prevention-11.1.3 Add GET /api/v1/runoff/risk-mapping endpoint
+  - [ ] TICKET-024_runoff-prevention-11.1.4 Create regulatory compliance and incentive information endpoints
 
-### runoff-prevention-12. Comprehensive Testing Suite
-- [ ] runoff-prevention-12.1 Build comprehensive testing suite
+### TICKET-024_runoff-prevention-12. Comprehensive Testing Suite
+- [ ] TICKET-024_runoff-prevention-12.1 Build comprehensive testing suite
 
-### runoff-prevention-13. User Interface Components
-- [ ] runoff-prevention-13.1 Develop user interface components
+### TICKET-024_runoff-prevention-13. User Interface Components
+- [ ] TICKET-024_runoff-prevention-13.1 Develop user interface components
 
-### runoff-prevention-14. System Integration
-- [ ] runoff-prevention-14.1 Integrate with existing systems
+### TICKET-024_runoff-prevention-14. System Integration
+- [ ] TICKET-024_runoff-prevention-14.1 Integrate with existing systems
 
 ## Soil Tissue Test Integration
 
-### soil-tissue-test-integration-1. Service Structure Setup
-- [ ] soil-tissue-test-integration-1.1 Set up soil and tissue test integration service structure
+### TICKET-017_soil-tissue-test-integration-1. Service Structure Setup
+- [ ] TICKET-017_soil-tissue-test-integration-1.1 Set up soil and tissue test integration service structure
 
-### soil-tissue-test-integration-2. Soil Test Report Upload and Processing System
-- [ ] soil-tissue-test-integration-2.1 Implement soil test report upload and processing system
+### TICKET-017_soil-tissue-test-integration-2. Soil Test Report Upload and Processing System
+- [ ] TICKET-017_soil-tissue-test-integration-2.1 Implement soil test report upload and processing system
 
-### soil-tissue-test-integration-3. Tissue Test Data Input and Management System
-- [ ] soil-tissue-test-integration-3.1 Develop tissue test data input and management system
+### TICKET-017_soil-tissue-test-integration-3. Tissue Test Data Input and Management System
+- [ ] TICKET-017_soil-tissue-test-integration-3.1 Develop tissue test data input and management system
 
-### soil-tissue-test-integration-4. Comprehensive Test Result Tracking System
-- [ ] soil-tissue-test-integration-4.1 Build comprehensive test result tracking system
+### TICKET-017_soil-tissue-test-integration-4. Comprehensive Test Result Tracking System
+- [ ] TICKET-017_soil-tissue-test-integration-4.1 Build comprehensive test result tracking system
 
-### soil-tissue-test-integration-5. Test Result Interpretation and Recommendation Engine
-- [ ] soil-tissue-test-integration-5.1 Create test result interpretation and recommendation engine
+### TICKET-017_soil-tissue-test-integration-5. Test Result Interpretation and Recommendation Engine
+- [ ] TICKET-017_soil-tissue-test-integration-5.1 Create test result interpretation and recommendation engine
 
-### soil-tissue-test-integration-6. Test Timing and Frequency Optimization System
-- [ ] soil-tissue-test-integration-6.1 Develop test timing and frequency optimization system
+### TICKET-017_soil-tissue-test-integration-6. Test Timing and Frequency Optimization System
+- [ ] TICKET-017_soil-tissue-test-integration-6.1 Develop test timing and frequency optimization system
 
-### soil-tissue-test-integration-7. Fertilizer Recommendation Adjustment System
-- [ ] soil-tissue-test-integration-7.1 Build fertilizer recommendation adjustment system
+### TICKET-017_soil-tissue-test-integration-7. Fertilizer Recommendation Adjustment System
+- [ ] TICKET-017_soil-tissue-test-integration-7.1 Build fertilizer recommendation adjustment system
 
-### soil-tissue-test-integration-8. Regional Benchmark Comparison System
-- [ ] soil-tissue-test-integration-8.1 Create regional benchmark comparison system
+### TICKET-017_soil-tissue-test-integration-8. Regional Benchmark Comparison System
+- [ ] TICKET-017_soil-tissue-test-integration-8.1 Create regional benchmark comparison system
 
-### soil-tissue-test-integration-9. Laboratory Integration and Standardization
-- [ ] soil-tissue-test-integration-9.1 Develop laboratory integration and standardization
+### TICKET-017_soil-tissue-test-integration-9. Laboratory Integration and Standardization
+- [ ] TICKET-017_soil-tissue-test-integration-9.1 Develop laboratory integration and standardization
 
-### soil-tissue-test-integration-10. Test Result Correlation and Analysis System
-- [ ] soil-tissue-test-integration-10.1 Build test result correlation and analysis system
+### TICKET-017_soil-tissue-test-integration-10. Test Result Correlation and Analysis System
+- [ ] TICKET-017_soil-tissue-test-integration-10.1 Build test result correlation and analysis system
 
-### soil-tissue-test-integration-11. Test Planning and Sampling Guidance System
-- [ ] soil-tissue-test-integration-11.1 Create test planning and sampling guidance system
+### TICKET-017_soil-tissue-test-integration-11. Test Planning and Sampling Guidance System
+- [ ] TICKET-017_soil-tissue-test-integration-11.1 Create test planning and sampling guidance system
 
-### soil-tissue-test-integration-12. Soil and Tissue Test API Endpoints
-- [ ] soil-tissue-test-integration-12.1 Implement soil and tissue test API endpoints
-  - [ ] soil-tissue-test-integration-12.1.1 Create POST /api/v1/tests/soil-upload endpoint
-  - [ ] soil-tissue-test-integration-12.1.2 Implement POST /api/v1/tests/tissue-input endpoint
-  - [ ] soil-tissue-test-integration-12.1.3 Add GET /api/v1/tests/history endpoint
-  - [ ] soil-tissue-test-integration-12.1.4 Create GET /api/v1/tests/recommendations endpoint
+### TICKET-017_soil-tissue-test-integration-12. Soil and Tissue Test API Endpoints
+- [ ] TICKET-017_soil-tissue-test-integration-12.1 Implement soil and tissue test API endpoints
+  - [ ] TICKET-017_soil-tissue-test-integration-12.1.1 Create POST /api/v1/tests/soil-upload endpoint
+  - [ ] TICKET-017_soil-tissue-test-integration-12.1.2 Implement POST /api/v1/tests/tissue-input endpoint
+  - [ ] TICKET-017_soil-tissue-test-integration-12.1.3 Add GET /api/v1/tests/history endpoint
+  - [ ] TICKET-017_soil-tissue-test-integration-12.1.4 Create GET /api/v1/tests/recommendations endpoint
 
-### soil-tissue-test-integration-13. Comprehensive Testing Suite
-- [ ] soil-tissue-test-integration-13.1 Build comprehensive testing suite
+### TICKET-017_soil-tissue-test-integration-13. Comprehensive Testing Suite
+- [ ] TICKET-017_soil-tissue-test-integration-13.1 Build comprehensive testing suite
 
-### soil-tissue-test-integration-14. User Interface Components
-- [ ] soil-tissue-test-integration-14.1 Develop user interface components
+### TICKET-017_soil-tissue-test-integration-14. User Interface Components
+- [ ] TICKET-017_soil-tissue-test-integration-14.1 Develop user interface components
 
-### soil-tissue-test-integration-15. System Integration
-- [ ] soil-tissue-test-integration-15.1 Integrate with existing systems
+### TICKET-017_soil-tissue-test-integration-15. System Integration
+- [ ] TICKET-017_soil-tissue-test-integration-15.1 Integrate with existing systems
 
 ## Tillage Practice Recommendations
 
-### tillage-practice-recommendations-1. Service Structure Setup
-- [ ] tillage-practice-recommendations-1.1 Set up tillage practice recommendation service structure
+### TICKET-018_tillage-practice-recommendations-1. Service Structure Setup
+- [ ] TICKET-018_tillage-practice-recommendations-1.1 Set up tillage practice recommendation service structure
 
-### tillage-practice-recommendations-2. Current Tillage Practice Assessment System
-- [ ] tillage-practice-recommendations-2.1 Implement current tillage practice assessment system
+### TICKET-018_tillage-practice-recommendations-2. Current Tillage Practice Assessment System
+- [ ] TICKET-018_tillage-practice-recommendations-2.1 Implement current tillage practice assessment system
 
-### tillage-practice-recommendations-3. Soil Health Concern and Yield Goal Integration
-- [ ] tillage-practice-recommendations-3.1 Develop soil health concern and yield goal integration
+### TICKET-018_tillage-practice-recommendations-3. Soil Health Concern and Yield Goal Integration
+- [ ] TICKET-018_tillage-practice-recommendations-3.1 Develop soil health concern and yield goal integration
 
-### tillage-practice-recommendations-4. Crop Rotation and Field Characteristic Analysis
-- [ ] tillage-practice-recommendations-4.1 Build crop rotation and field characteristic analysis
+### TICKET-018_tillage-practice-recommendations-4. Crop Rotation and Field Characteristic Analysis
+- [ ] TICKET-018_tillage-practice-recommendations-4.1 Build crop rotation and field characteristic analysis
 
-### tillage-practice-recommendations-5. Tillage Practice Recommendation Engine
-- [ ] tillage-practice-recommendations-5.1 Create tillage practice recommendation engine
+### TICKET-018_tillage-practice-recommendations-5. Tillage Practice Recommendation Engine
+- [ ] TICKET-018_tillage-practice-recommendations-5.1 Create tillage practice recommendation engine
 
-### tillage-practice-recommendations-6. Transition Strategy and Timeline System
-- [ ] tillage-practice-recommendations-6.1 Develop transition strategy and timeline system
+### TICKET-018_tillage-practice-recommendations-6. Transition Strategy and Timeline System
+- [ ] TICKET-018_tillage-practice-recommendations-6.1 Develop transition strategy and timeline system
 
-### tillage-practice-recommendations-7. Impact Assessment and Projection System
-- [ ] tillage-practice-recommendations-7.1 Build impact assessment and projection system
+### TICKET-018_tillage-practice-recommendations-7. Impact Assessment and Projection System
+- [ ] TICKET-018_tillage-practice-recommendations-7.1 Build impact assessment and projection system
 
-### tillage-practice-recommendations-8. Equipment Needs and Incentive Information System
-- [ ] tillage-practice-recommendations-8.1 Create equipment needs and incentive information system
+### TICKET-018_tillage-practice-recommendations-8. Equipment Needs and Incentive Information System
+- [ ] TICKET-018_tillage-practice-recommendations-8.1 Create equipment needs and incentive information system
 
-### tillage-practice-recommendations-9. Tillage System Optimization Algorithms
-- [ ] tillage-practice-recommendations-9.1 Develop tillage system optimization algorithms
+### TICKET-018_tillage-practice-recommendations-9. Tillage System Optimization Algorithms
+- [ ] TICKET-018_tillage-practice-recommendations-9.1 Develop tillage system optimization algorithms
 
-### tillage-practice-recommendations-10. Soil Health Monitoring and Tracking System
-- [ ] tillage-practice-recommendations-10.1 Build soil health monitoring and tracking system
+### TICKET-018_tillage-practice-recommendations-10. Soil Health Monitoring and Tracking System
+- [ ] TICKET-018_tillage-practice-recommendations-10.1 Build soil health monitoring and tracking system
 
-### tillage-practice-recommendations-11. Economic Analysis and ROI Calculation System
-- [ ] tillage-practice-recommendations-11.1 Create economic analysis and ROI calculation system
+### TICKET-018_tillage-practice-recommendations-11. Economic Analysis and ROI Calculation System
+- [ ] TICKET-018_tillage-practice-recommendations-11.1 Create economic analysis and ROI calculation system
 
-### tillage-practice-recommendations-12. Tillage Practice Recommendation API Endpoints
-- [ ] tillage-practice-recommendations-12.1 Implement tillage practice recommendation API endpoints
-  - [ ] tillage-practice-recommendations-12.1.1 Create POST /api/v1/tillage/assessment endpoint
-  - [ ] tillage-practice-recommendations-12.1.2 Implement GET /api/v1/tillage/recommendations endpoint
-  - [ ] tillage-practice-recommendations-12.1.3 Add GET /api/v1/tillage/transition-plan endpoint
-  - [ ] tillage-practice-recommendations-12.1.4 Create equipment and incentive information endpoints
+### TICKET-018_tillage-practice-recommendations-12. Tillage Practice Recommendation API Endpoints
+- [ ] TICKET-018_tillage-practice-recommendations-12.1 Implement tillage practice recommendation API endpoints
+  - [ ] TICKET-018_tillage-practice-recommendations-12.1.1 Create POST /api/v1/tillage/assessment endpoint
+  - [ ] TICKET-018_tillage-practice-recommendations-12.1.2 Implement GET /api/v1/tillage/recommendations endpoint
+  - [ ] TICKET-018_tillage-practice-recommendations-12.1.3 Add GET /api/v1/tillage/transition-plan endpoint
+  - [ ] TICKET-018_tillage-practice-recommendations-12.1.4 Create equipment and incentive information endpoints
 
-### tillage-practice-recommendations-13. Comprehensive Testing Suite
-- [ ] tillage-practice-recommendations-13.1 Build comprehensive testing suite
+### TICKET-018_tillage-practice-recommendations-13. Comprehensive Testing Suite
+- [ ] TICKET-018_tillage-practice-recommendations-13.1 Build comprehensive testing suite
 
-### tillage-practice-recommendations-14. User Interface Components
-- [ ] tillage-practice-recommendations-14.1 Develop user interface components
+### TICKET-018_tillage-practice-recommendations-14. User Interface Components
+- [ ] TICKET-018_tillage-practice-recommendations-14.1 Develop user interface components
 
-### tillage-practice-recommendations-15. System Integration
-- [ ] tillage-practice-recommendations-15.1 Integrate with existing systems
+### TICKET-018_tillage-practice-recommendations-15. System Integration
+- [ ] TICKET-018_tillage-practice-recommendations-15.1 Integrate with existing systems
 
 ## Variety Suitability Explanations
 
-### variety-suitability-explanations-1. Agricultural Reasoning Engine Development
-- [ ] variety-suitability-explanations-1.1 Create rule-based explanation system
-- [ ] variety-suitability-explanations-1.2 Implement explanation template system
-- [ ] variety-suitability-explanations-1.3 Develop confidence-based explanations
+### TICKET-005_variety-suitability-explanations-1. Agricultural Reasoning Engine Development
+- [ ] TICKET-005_variety-suitability-explanations-1.1 Create rule-based explanation system
+- [ ] TICKET-005_variety-suitability-explanations-1.2 Implement explanation template system
+- [ ] TICKET-005_variety-suitability-explanations-1.3 Develop confidence-based explanations
 
-### variety-suitability-explanations-2. Soil Suitability Explanation System
-- [ ] variety-suitability-explanations-2.1 Implement pH compatibility explanations
-- [ ] variety-suitability-explanations-2.2 Create soil texture compatibility explanations
-- [ ] variety-suitability-explanations-2.3 Develop nutrient requirement explanations
+### TICKET-005_variety-suitability-explanations-2. Soil Suitability Explanation System
+- [ ] TICKET-005_variety-suitability-explanations-2.1 Implement pH compatibility explanations
+- [ ] TICKET-005_variety-suitability-explanations-2.2 Create soil texture compatibility explanations
+- [ ] TICKET-005_variety-suitability-explanations-2.3 Develop nutrient requirement explanations
 
-### variety-suitability-explanations-3. Climate Suitability Explanation System
-- [ ] variety-suitability-explanations-3.1 Implement climate zone explanations
-- [ ] variety-suitability-explanations-3.2 Create growing season explanations
-- [ ] variety-suitability-explanations-3.3 Develop weather risk explanations
+### TICKET-005_variety-suitability-explanations-3. Climate Suitability Explanation System
+- [ ] TICKET-005_variety-suitability-explanations-3.1 Implement climate zone explanations
+- [ ] TICKET-005_variety-suitability-explanations-3.2 Create growing season explanations
+- [ ] TICKET-005_variety-suitability-explanations-3.3 Develop weather risk explanations
 
-### variety-suitability-explanations-4. Economic Viability Explanation System
-- [ ] variety-suitability-explanations-4.1 Create profitability explanations
-- [ ] variety-suitability-explanations-4.2 Implement market suitability explanations
-- [ ] variety-suitability-explanations-4.3 Develop risk assessment explanations
+### TICKET-005_variety-suitability-explanations-4. Economic Viability Explanation System
+- [ ] TICKET-005_variety-suitability-explanations-4.1 Create profitability explanations
+- [ ] TICKET-005_variety-suitability-explanations-4.2 Implement market suitability explanations
+- [ ] TICKET-005_variety-suitability-explanations-4.3 Develop risk assessment explanations
 
-### variety-suitability-explanations-5. AI-Enhanced Explanation Generation
-- [ ] variety-suitability-explanations-5.1 Integrate natural language generation
-- [ ] variety-suitability-explanations-5.2 Implement explanation personalization
-- [ ] variety-suitability-explanations-5.3 Create explanation validation system
+### TICKET-005_variety-suitability-explanations-5. AI-Enhanced Explanation Generation
+- [ ] TICKET-005_variety-suitability-explanations-5.1 Integrate natural language generation
+- [ ] TICKET-005_variety-suitability-explanations-5.2 Implement explanation personalization
+- [ ] TICKET-005_variety-suitability-explanations-5.3 Create explanation validation system
 
-### variety-suitability-explanations-6. Explanation Display and Interface
-- [ ] variety-suitability-explanations-6.1 Design explanation presentation components
-- [ ] variety-suitability-explanations-6.2 Implement interactive explanation features
-- [ ] variety-suitability-explanations-6.3 Create mobile explanation interface
+### TICKET-005_variety-suitability-explanations-6. Explanation Display and Interface
+- [ ] TICKET-005_variety-suitability-explanations-6.1 Design explanation presentation components
+- [ ] TICKET-005_variety-suitability-explanations-6.2 Implement interactive explanation features
+- [ ] TICKET-005_variety-suitability-explanations-6.3 Create mobile explanation interface
 
-### variety-suitability-explanations-7. Supporting Evidence and References
-- [ ] variety-suitability-explanations-7.1 Implement citation system
-- [ ] variety-suitability-explanations-7.2 Create reference link system
-- [ ] variety-suitability-explanations-7.3 Develop evidence quality indicators
+### TICKET-005_variety-suitability-explanations-7. Supporting Evidence and References
+- [ ] TICKET-005_variety-suitability-explanations-7.1 Implement citation system
+- [ ] TICKET-005_variety-suitability-explanations-7.2 Create reference link system
+- [ ] TICKET-005_variety-suitability-explanations-7.3 Develop evidence quality indicators
 
-### variety-suitability-explanations-8. API Endpoints for Explanations
-- [ ] variety-suitability-explanations-8.1 Create explanation generation endpoints
-  - [ ] variety-suitability-explanations-8.1.1 POST /api/v1/explanations/generate - Generate variety explanations
-  - [ ] variety-suitability-explanations-8.1.2 GET /api/v1/explanations/{variety_id} - Get variety explanation
-  - [ ] variety-suitability-explanations-8.1.3 POST /api/v1/explanations/compare - Compare variety explanations
-  - [ ] variety-suitability-explanations-8.1.4 GET /api/v1/explanations/templates - Get explanation templates
-- [ ] variety-suitability-explanations-8.2 Implement explanation customization endpoints
-  - [ ] variety-suitability-explanations-8.2.1 POST /api/v1/explanations/personalize - Personalize explanations
-  - [ ] variety-suitability-explanations-8.2.2 PUT /api/v1/explanations/preferences - Update explanation preferences
-  - [ ] variety-suitability-explanations-8.2.3 GET /api/v1/explanations/styles - Get explanation styles
-  - [ ] variety-suitability-explanations-8.2.4 POST /api/v1/explanations/feedback - Submit explanation feedback
-- [ ] variety-suitability-explanations-8.3 Add explanation analytics endpoints
-  - [ ] variety-suitability-explanations-8.3.1 GET /api/v1/explanations/analytics - Get explanation usage analytics
-  - [ ] variety-suitability-explanations-8.3.2 POST /api/v1/explanations/track-usage - Track explanation usage
-  - [ ] variety-suitability-explanations-8.3.3 GET /api/v1/explanations/effectiveness - Get explanation effectiveness
-  - [ ] variety-suitability-explanations-8.3.4 POST /api/v1/explanations/improve - Submit improvement suggestions
+### TICKET-005_variety-suitability-explanations-8. API Endpoints for Explanations
+- [ ] TICKET-005_variety-suitability-explanations-8.1 Create explanation generation endpoints
+  - [ ] TICKET-005_variety-suitability-explanations-8.1.1 POST /api/v1/explanations/generate - Generate variety explanations
+  - [ ] TICKET-005_variety-suitability-explanations-8.1.2 GET /api/v1/explanations/{variety_id} - Get variety explanation
+  - [ ] TICKET-005_variety-suitability-explanations-8.1.3 POST /api/v1/explanations/compare - Compare variety explanations
+  - [ ] TICKET-005_variety-suitability-explanations-8.1.4 GET /api/v1/explanations/templates - Get explanation templates
+- [ ] TICKET-005_variety-suitability-explanations-8.2 Implement explanation customization endpoints
+  - [ ] TICKET-005_variety-suitability-explanations-8.2.1 POST /api/v1/explanations/personalize - Personalize explanations
+  - [ ] TICKET-005_variety-suitability-explanations-8.2.2 PUT /api/v1/explanations/preferences - Update explanation preferences
+  - [ ] TICKET-005_variety-suitability-explanations-8.2.3 GET /api/v1/explanations/styles - Get explanation styles
+  - [ ] TICKET-005_variety-suitability-explanations-8.2.4 POST /api/v1/explanations/feedback - Submit explanation feedback
+- [ ] TICKET-005_variety-suitability-explanations-8.3 Add explanation analytics endpoints
+  - [ ] TICKET-005_variety-suitability-explanations-8.3.1 GET /api/v1/explanations/analytics - Get explanation usage analytics
+  - [ ] TICKET-005_variety-suitability-explanations-8.3.2 POST /api/v1/explanations/track-usage - Track explanation usage
+  - [ ] TICKET-005_variety-suitability-explanations-8.3.3 GET /api/v1/explanations/effectiveness - Get explanation effectiveness
+  - [ ] TICKET-005_variety-suitability-explanations-8.3.4 POST /api/v1/explanations/improve - Submit improvement suggestions
 
-### variety-suitability-explanations-9. Testing and Quality Assurance
-- [ ] variety-suitability-explanations-9.1 Test explanation accuracy
-- [ ] variety-suitability-explanations-9.2 Test explanation usability
-- [ ] variety-suitability-explanations-9.3 Test explanation performance
+### TICKET-005_variety-suitability-explanations-9. Testing and Quality Assurance
+- [ ] TICKET-005_variety-suitability-explanations-9.1 Test explanation accuracy
+- [ ] TICKET-005_variety-suitability-explanations-9.2 Test explanation usability
+- [ ] TICKET-005_variety-suitability-explanations-9.3 Test explanation performance
 
-### variety-suitability-explanations-10. Explanation Analytics and Improvement
-- [ ] variety-suitability-explanations-10.1 Implement explanation usage tracking
-- [ ] variety-suitability-explanations-10.2 Create explanation effectiveness measurement
-- [ ] variety-suitability-explanations-10.3 Develop explanation optimization system
+### TICKET-005_variety-suitability-explanations-10. Explanation Analytics and Improvement
+- [ ] TICKET-005_variety-suitability-explanations-10.1 Implement explanation usage tracking
+- [ ] TICKET-005_variety-suitability-explanations-10.2 Create explanation effectiveness measurement
+- [ ] TICKET-005_variety-suitability-explanations-10.3 Develop explanation optimization system
 
 ## Variety Yield Disease Planting
 
-### variety-yield-disease-planting-1. Yield Potential Calculation System
-- [ ] variety-yield-disease-planting-1.1 Develop yield prediction algorithms
-- [ ] variety-yield-disease-planting-1.2 Integrate regional yield databases
-- [ ] variety-yield-disease-planting-1.3 Create yield potential display components
+### TICKET-005_variety-yield-disease-planting-1. Yield Potential Calculation System
+- [ ] TICKET-005_variety-yield-disease-planting-1.1 Develop yield prediction algorithms
+- [ ] TICKET-005_variety-yield-disease-planting-1.2 Integrate regional yield databases
+- [ ] TICKET-005_variety-yield-disease-planting-1.3 Create yield potential display components
 
-### variety-yield-disease-planting-2. Disease Resistance Profile System
-- [ ] variety-yield-disease-planting-2.1 Build comprehensive disease resistance database
-- [ ] variety-yield-disease-planting-2.2 Develop disease pressure mapping
-- [ ] variety-yield-disease-planting-2.3 Create disease resistance visualization
+### TICKET-005_variety-yield-disease-planting-2. Disease Resistance Profile System
+- [ ] TICKET-005_variety-yield-disease-planting-2.1 Build comprehensive disease resistance database
+- [ ] TICKET-005_variety-yield-disease-planting-2.2 Develop disease pressure mapping
+- [ ] TICKET-005_variety-yield-disease-planting-2.3 Create disease resistance visualization
 
-### variety-yield-disease-planting-3. Planting Date Calculation System
-- [ ] variety-yield-disease-planting-3.1 Implement optimal planting date algorithms
-- [ ] variety-yield-disease-planting-3.2 Create planting window optimization
-- [ ] variety-yield-disease-planting-3.3 Add planting date visualization
+### TICKET-005_variety-yield-disease-planting-3. Planting Date Calculation System
+- [ ] TICKET-005_variety-yield-disease-planting-3.1 Implement optimal planting date algorithms
+- [ ] TICKET-005_variety-yield-disease-planting-3.2 Create planting window optimization
+- [ ] TICKET-005_variety-yield-disease-planting-3.3 Add planting date visualization
 
-### variety-yield-disease-planting-4. Integrated Recommendation Display
-- [ ] variety-yield-disease-planting-4.1 Enhance variety recommendation cards
-- [ ] variety-yield-disease-planting-4.2 Create detailed variety information pages
-- [ ] variety-yield-disease-planting-4.3 Implement variety comparison enhancements
+### TICKET-005_variety-yield-disease-planting-4. Integrated Recommendation Display
+- [ ] TICKET-005_variety-yield-disease-planting-4.1 Enhance variety recommendation cards
+- [ ] TICKET-005_variety-yield-disease-planting-4.2 Create detailed variety information pages
+- [ ] TICKET-005_variety-yield-disease-planting-4.3 Implement variety comparison enhancements
 
-### variety-yield-disease-planting-5. API Endpoints for Enhanced Data
-- [ ] variety-yield-disease-planting-5.1 Create yield potential endpoints
-  - [ ] variety-yield-disease-planting-5.1.1 GET /api/v1/varieties/{id}/yield-potential - Get yield predictions
-  - [ ] variety-yield-disease-planting-5.1.2 POST /api/v1/yield/calculate - Calculate yield for conditions
-  - [ ] variety-yield-disease-planting-5.1.3 GET /api/v1/yield/regional-averages - Get regional yield data
-  - [ ] variety-yield-disease-planting-5.1.4 GET /api/v1/yield/historical-trends - Get yield trend data
-- [ ] variety-yield-disease-planting-5.2 Implement disease resistance endpoints
-  - [ ] variety-yield-disease-planting-5.2.1 GET /api/v1/varieties/{id}/disease-resistance - Get resistance profile
-  - [ ] variety-yield-disease-planting-5.2.2 GET /api/v1/diseases/regional-pressure - Get disease pressure data
-  - [ ] variety-yield-disease-planting-5.2.3 POST /api/v1/diseases/risk-assessment - Calculate disease risk
-  - [ ] variety-yield-disease-planting-5.2.4 GET /api/v1/diseases/management-guide - Get disease management info
-- [ ] variety-yield-disease-planting-5.3 Add planting date endpoints
-  - [ ] variety-yield-disease-planting-5.3.1 POST /api/v1/planting/optimal-dates - Calculate optimal planting dates
-  - [ ] variety-yield-disease-planting-5.3.2 GET /api/v1/planting/windows/{variety_id} - Get planting windows
-  - [ ] variety-yield-disease-planting-5.3.3 POST /api/v1/planting/calendar - Generate planting calendar
-  - [ ] variety-yield-disease-planting-5.3.4 GET /api/v1/planting/frost-dates - Get frost date information
+### TICKET-005_variety-yield-disease-planting-5. API Endpoints for Enhanced Data
+- [ ] TICKET-005_variety-yield-disease-planting-5.1 Create yield potential endpoints
+  - [ ] TICKET-005_variety-yield-disease-planting-5.1.1 GET /api/v1/varieties/{id}/yield-potential - Get yield predictions
+  - [ ] TICKET-005_variety-yield-disease-planting-5.1.2 POST /api/v1/yield/calculate - Calculate yield for conditions
+  - [ ] TICKET-005_variety-yield-disease-planting-5.1.3 GET /api/v1/yield/regional-averages - Get regional yield data
+  - [ ] TICKET-005_variety-yield-disease-planting-5.1.4 GET /api/v1/yield/historical-trends - Get yield trend data
+- [ ] TICKET-005_variety-yield-disease-planting-5.2 Implement disease resistance endpoints
+  - [ ] TICKET-005_variety-yield-disease-planting-5.2.1 GET /api/v1/varieties/{id}/disease-resistance - Get resistance profile
+  - [ ] TICKET-005_variety-yield-disease-planting-5.2.2 GET /api/v1/diseases/regional-pressure - Get disease pressure data
+  - [ ] TICKET-005_variety-yield-disease-planting-5.2.3 POST /api/v1/diseases/risk-assessment - Calculate disease risk
+  - [ ] TICKET-005_variety-yield-disease-planting-5.2.4 GET /api/v1/diseases/management-guide - Get disease management info
+- [ ] TICKET-005_variety-yield-disease-planting-5.3 Add planting date endpoints
+  - [ ] TICKET-005_variety-yield-disease-planting-5.3.1 POST /api/v1/planting/optimal-dates - Calculate optimal planting dates
+  - [ ] TICKET-005_variety-yield-disease-planting-5.3.2 GET /api/v1/planting/windows/{variety_id} - Get planting windows
+  - [ ] TICKET-005_variety-yield-disease-planting-5.3.3 POST /api/v1/planting/calendar - Generate planting calendar
+  - [ ] TICKET-005_variety-yield-disease-planting-5.3.4 GET /api/v1/planting/frost-dates - Get frost date information
 
-### variety-yield-disease-planting-6. Data Integration and Sources
-- [ ] variety-yield-disease-planting-6.1 Integrate university variety trial data
-- [ ] variety-yield-disease-planting-6.2 Add seed company data integration
-- [ ] variety-yield-disease-planting-6.3 Implement weather data integration for timing
+### TICKET-005_variety-yield-disease-planting-6. Data Integration and Sources
+- [ ] TICKET-005_variety-yield-disease-planting-6.1 Integrate university variety trial data
+- [ ] TICKET-005_variety-yield-disease-planting-6.2 Add seed company data integration
+- [ ] TICKET-005_variety-yield-disease-planting-6.3 Implement weather data integration for timing
 
-### variety-yield-disease-planting-7. Mobile Interface Enhancements
-- [ ] variety-yield-disease-planting-7.1 Optimize yield display for mobile
-- [ ] variety-yield-disease-planting-7.2 Enhance disease resistance mobile display
-- [ ] variety-yield-disease-planting-7.3 Improve planting date mobile interface
+### TICKET-005_variety-yield-disease-planting-7. Mobile Interface Enhancements
+- [ ] TICKET-005_variety-yield-disease-planting-7.1 Optimize yield display for mobile
+- [ ] TICKET-005_variety-yield-disease-planting-7.2 Enhance disease resistance mobile display
+- [ ] TICKET-005_variety-yield-disease-planting-7.3 Improve planting date mobile interface
 
-### variety-yield-disease-planting-8. Testing and Validation
-- [ ] variety-yield-disease-planting-8.1 Validate yield prediction accuracy
-- [ ] variety-yield-disease-planting-8.2 Verify disease resistance information
-- [ ] variety-yield-disease-planting-8.3 Test planting date calculations
+### TICKET-005_variety-yield-disease-planting-8. Testing and Validation
+- [ ] TICKET-005_variety-yield-disease-planting-8.1 Validate yield prediction accuracy
+- [ ] TICKET-005_variety-yield-disease-planting-8.2 Verify disease resistance information
+- [ ] TICKET-005_variety-yield-disease-planting-8.3 Test planting date calculations
 
 ## Weather Impact Analysis
 
-### weather-impact-analysis-1. Service Structure Setup
-- [ ] weather-impact-analysis-1.1 Set up weather impact analysis service structure
+### TICKET-009_weather-impact-analysis-1. Service Structure Setup
+- [ ] TICKET-009_weather-impact-analysis-1.1 Set up weather impact analysis service structure
 
-### weather-impact-analysis-2. Current Season Weather Pattern Analysis
-- [ ] weather-impact-analysis-2.1 Implement current season weather pattern analysis
+### TICKET-009_weather-impact-analysis-2. Current Season Weather Pattern Analysis
+- [ ] TICKET-009_weather-impact-analysis-2.1 Implement current season weather pattern analysis
 
-### weather-impact-analysis-3. Weather Impact Assessment for Crops and Fertilizer
-- [ ] weather-impact-analysis-3.1 Develop weather impact assessment for crops and fertilizer
+### TICKET-009_weather-impact-analysis-3. Weather Impact Assessment for Crops and Fertilizer
+- [ ] TICKET-009_weather-impact-analysis-3.1 Develop weather impact assessment for crops and fertilizer
 
-### weather-impact-analysis-4. Weather-Appropriate Adjustment Recommendation System
-- [ ] weather-impact-analysis-4.1 Build weather-appropriate adjustment recommendation system
+### TICKET-009_weather-impact-analysis-4. Weather-Appropriate Adjustment Recommendation System
+- [ ] TICKET-009_weather-impact-analysis-4.1 Build weather-appropriate adjustment recommendation system
 
-### weather-impact-analysis-5. Alternative Crop Recommendation System for Unusual Weather
-- [ ] weather-impact-analysis-5.1 Create alternative crop recommendation system for unusual weather
+### TICKET-009_weather-impact-analysis-5. Alternative Crop Recommendation System for Unusual Weather
+- [ ] TICKET-009_weather-impact-analysis-5.1 Create alternative crop recommendation system for unusual weather
 
-### weather-impact-analysis-6. Fertilizer Timing Adjustment System
-- [ ] weather-impact-analysis-6.1 Develop fertilizer timing adjustment system
+### TICKET-009_weather-impact-analysis-6. Fertilizer Timing Adjustment System
+- [ ] TICKET-009_weather-impact-analysis-6.1 Develop fertilizer timing adjustment system
 
-### weather-impact-analysis-7. Management Scenario Risk Assessment System
-- [ ] weather-impact-analysis-7.1 Build management scenario risk assessment system
+### TICKET-009_weather-impact-analysis-7. Management Scenario Risk Assessment System
+- [ ] TICKET-009_weather-impact-analysis-7.1 Build management scenario risk assessment system
 
-### weather-impact-analysis-8. Critical Weather Event Alert System
-- [ ] weather-impact-analysis-8.1 Create critical weather event alert system
+### TICKET-009_weather-impact-analysis-8. Critical Weather Event Alert System
+- [ ] TICKET-009_weather-impact-analysis-8.1 Create critical weather event alert system
 
-### weather-impact-analysis-9. Weather-Crop Interaction Modeling
-- [ ] weather-impact-analysis-9.1 Develop weather-crop interaction modeling
+### TICKET-009_weather-impact-analysis-9. Weather-Crop Interaction Modeling
+- [ ] TICKET-009_weather-impact-analysis-9.1 Develop weather-crop interaction modeling
 
-### weather-impact-analysis-10. Long-Term Weather Trend Analysis
-- [ ] weather-impact-analysis-10.1 Build long-term weather trend analysis
+### TICKET-009_weather-impact-analysis-10. Long-Term Weather Trend Analysis
+- [ ] TICKET-009_weather-impact-analysis-10.1 Build long-term weather trend analysis
 
-### weather-impact-analysis-11. Weather Data Integration and Validation System
-- [ ] weather-impact-analysis-11.1 Create weather data integration and validation system
+### TICKET-009_weather-impact-analysis-11. Weather Data Integration and Validation System
+- [ ] TICKET-009_weather-impact-analysis-11.1 Create weather data integration and validation system
 
-### weather-impact-analysis-12. Weather Impact Analysis API Endpoints
-- [ ] weather-impact-analysis-12.1 Implement weather impact analysis API endpoints
-  - [ ] weather-impact-analysis-12.1.1 Create GET /api/v1/weather/current-analysis endpoint
-  - [ ] weather-impact-analysis-12.1.2 Implement POST /api/v1/weather/impact-assessment endpoint
-  - [ ] weather-impact-analysis-12.1.3 Add GET /api/v1/weather/recommendations endpoint
-  - [ ] weather-impact-analysis-12.1.4 Create weather alert subscription and management endpoints
+### TICKET-009_weather-impact-analysis-12. Weather Impact Analysis API Endpoints
+- [ ] TICKET-009_weather-impact-analysis-12.1 Implement weather impact analysis API endpoints
+  - [ ] TICKET-009_weather-impact-analysis-12.1.1 Create GET /api/v1/weather/current-analysis endpoint
+  - [ ] TICKET-009_weather-impact-analysis-12.1.2 Implement POST /api/v1/weather/impact-assessment endpoint
+  - [ ] TICKET-009_weather-impact-analysis-12.1.3 Add GET /api/v1/weather/recommendations endpoint
+  - [ ] TICKET-009_weather-impact-analysis-12.1.4 Create weather alert subscription and management endpoints
 
-### weather-impact-analysis-13. Comprehensive Testing Suite
-- [ ] weather-impact-analysis-13.1 Build comprehensive testing suite
+### TICKET-009_weather-impact-analysis-13. Comprehensive Testing Suite
+- [ ] TICKET-009_weather-impact-analysis-13.1 Build comprehensive testing suite
 
-### weather-impact-analysis-14. User Interface Components
-- [ ] weather-impact-analysis-14.1 Develop user interface components
+### TICKET-009_weather-impact-analysis-14. User Interface Components
+- [ ] TICKET-009_weather-impact-analysis-14.1 Develop user interface components
 
-### weather-impact-analysis-15. System Integration
-- [ ] weather-impact-analysis-15.1 Integrate with existing systems
+### TICKET-009_weather-impact-analysis-15. System Integration
+- [ ] TICKET-009_weather-impact-analysis-15.1 Integrate with existing systems
+
+---
+
+## Precision Agriculture ROI Assessment
+
+### TICKET-015_precision-agriculture-roi-1. Technology Assessment Framework
+- [ ] TICKET-015_precision-agriculture-roi-1.1 Set up precision agriculture ROI assessment service structure
+- [ ] TICKET-015_precision-agriculture-roi-1.2 Create technology cost database integration
+- [ ] TICKET-015_precision-agriculture-roi-1.3 Develop ROI calculation algorithms
+
+### TICKET-015_precision-agriculture-roi-2. Farm-Specific Analysis System
+- [ ] TICKET-015_precision-agriculture-roi-2.1 Implement farm size and crop type analysis
+- [ ] TICKET-015_precision-agriculture-roi-2.2 Create current practice assessment system
+- [ ] TICKET-015_precision-agriculture-roi-2.3 Develop technology compatibility analysis
+
+### TICKET-015_precision-agriculture-roi-3. Investment Prioritization Engine
+- [ ] TICKET-015_precision-agriculture-roi-3.1 Build multi-objective optimization for technology selection
+- [ ] TICKET-015_precision-agriculture-roi-3.2 Create payback period calculations
+- [ ] TICKET-015_precision-agriculture-roi-3.3 Implement risk assessment and sensitivity analysis
+
+### TICKET-015_precision-agriculture-roi-4. ROI Analysis API Endpoints
+- [ ] TICKET-015_precision-agriculture-roi-4.1 Implement precision agriculture ROI API endpoints
+  - [ ] TICKET-015_precision-agriculture-roi-4.1.1 Create POST /api/v1/precision-ag/roi-analysis endpoint
+  - [ ] TICKET-015_precision-agriculture-roi-4.1.2 Implement GET /api/v1/precision-ag/technologies endpoint
+  - [ ] TICKET-015_precision-agriculture-roi-4.1.3 Add POST /api/v1/precision-ag/investment-priorities endpoint
+
+### TICKET-015_precision-agriculture-roi-5. Testing and Validation
+- [ ] TICKET-015_precision-agriculture-roi-5.1 Test ROI calculation accuracy
+- [ ] TICKET-015_precision-agriculture-roi-5.2 Validate technology cost assumptions
+- [ ] TICKET-015_precision-agriculture-roi-5.3 Test user experience and interface
+
+---
+
+## Sustainable Intensification
+
+### TICKET-019_sustainable-intensification-1. Integrated Optimization Framework
+- [ ] TICKET-019_sustainable-intensification-1.1 Set up sustainable intensification service structure
+- [ ] TICKET-019_sustainable-intensification-1.2 Create multi-objective optimization engine
+- [ ] TICKET-019_sustainable-intensification-1.3 Develop sustainability metrics framework
+
+### TICKET-019_sustainable-intensification-2. Soil Health Integration System
+- [ ] TICKET-019_sustainable-intensification-2.1 Implement long-term soil health modeling
+- [ ] TICKET-019_sustainable-intensification-2.2 Create carbon sequestration calculations
+- [ ] TICKET-019_sustainable-intensification-2.3 Develop environmental impact assessments
+
+### TICKET-019_sustainable-intensification-3. Economic-Environmental Balance Engine
+- [ ] TICKET-019_sustainable-intensification-3.1 Build profitability-sustainability optimization
+- [ ] TICKET-019_sustainable-intensification-3.2 Create sustainability scorecards
+- [ ] TICKET-019_sustainable-intensification-3.3 Implement trade-off analysis tools
+
+### TICKET-019_sustainable-intensification-4. Sustainable Intensification API Endpoints
+- [ ] TICKET-019_sustainable-intensification-4.1 Implement sustainable intensification API endpoints
+  - [ ] TICKET-019_sustainable-intensification-4.1.1 Create POST /api/v1/sustainability/optimize endpoint
+  - [ ] TICKET-019_sustainable-intensification-4.1.2 Implement GET /api/v1/sustainability/scorecard endpoint
+  - [ ] TICKET-019_sustainable-intensification-4.1.3 Add POST /api/v1/sustainability/carbon-footprint endpoint
+
+### TICKET-019_sustainable-intensification-5. Testing and Validation
+- [ ] TICKET-019_sustainable-intensification-5.1 Test optimization algorithm accuracy
+- [ ] TICKET-019_sustainable-intensification-5.2 Validate sustainability metrics
+- [ ] TICKET-019_sustainable-intensification-5.3 Test integrated system performance
+
+---
+
+## Government Program Integration
+
+### TICKET-020_government-program-integration-1. Policy Database Framework
+- [ ] TICKET-020_government-program-integration-1.1 Set up government program integration service structure
+- [ ] TICKET-020_government-program-integration-1.2 Create policy database integration
+- [ ] TICKET-020_government-program-integration-1.3 Develop compliance checking algorithms
+
+### TICKET-020_government-program-integration-2. Program Identification System
+- [ ] TICKET-020_government-program-integration-2.1 Implement applicable program identification
+- [ ] TICKET-020_government-program-integration-2.2 Create eligibility assessment engine
+- [ ] TICKET-020_government-program-integration-2.3 Develop benefit calculation system
+
+### TICKET-020_government-program-integration-3. Application Guidance System
+- [ ] TICKET-020_government-program-integration-3.1 Build application guidance and deadline tracking
+- [ ] TICKET-020_government-program-integration-3.2 Create document preparation assistance
+- [ ] TICKET-020_government-program-integration-3.3 Implement program optimization recommendations
+
+### TICKET-020_government-program-integration-4. Government Program API Endpoints
+- [ ] TICKET-020_government-program-integration-4.1 Implement government program API endpoints
+  - [ ] TICKET-020_government-program-integration-4.1.1 Create GET /api/v1/programs/applicable endpoint
+  - [ ] TICKET-020_government-program-integration-4.1.2 Implement POST /api/v1/programs/eligibility endpoint
+  - [ ] TICKET-020_government-program-integration-4.1.3 Add GET /api/v1/programs/deadlines endpoint
+
+### TICKET-020_government-program-integration-5. Testing and Validation
+- [ ] TICKET-020_government-program-integration-5.1 Test program identification accuracy
+- [ ] TICKET-020_government-program-integration-5.2 Validate compliance requirements
+- [ ] TICKET-020_government-program-integration-5.3 Test application guidance effectiveness
+
+---
+
+## Mobile Field Access
+
+### TICKET-021_mobile-field-access-1. Progressive Web App Framework
+- [ ] TICKET-021_mobile-field-access-1.1 Set up mobile field access PWA structure
+- [ ] TICKET-021_mobile-field-access-1.2 Implement offline data synchronization
+- [ ] TICKET-021_mobile-field-access-1.3 Create GPS and location services integration
+
+### TICKET-021_mobile-field-access-2. Camera and Image Integration
+- [ ] TICKET-021_mobile-field-access-2.1 Implement camera integration for crop photos
+- [ ] TICKET-021_mobile-field-access-2.2 Create image preprocessing and upload system
+- [ ] TICKET-021_mobile-field-access-2.3 Develop offline image storage and sync
+
+### TICKET-021_mobile-field-access-3. Push Notification System
+- [ ] TICKET-021_mobile-field-access-3.1 Build push notification infrastructure
+- [ ] TICKET-021_mobile-field-access-3.2 Create time-sensitive recommendation alerts
+- [ ] TICKET-021_mobile-field-access-3.3 Implement weather and field condition notifications
+
+### TICKET-021_mobile-field-access-4. Mobile-Optimized Interface
+- [ ] TICKET-021_mobile-field-access-4.1 Create touch-friendly interface components
+- [ ] TICKET-021_mobile-field-access-4.2 Implement mobile-specific navigation
+- [ ] TICKET-021_mobile-field-access-4.3 Develop mobile data entry forms
+
+### TICKET-021_mobile-field-access-5. Testing and Validation
+- [ ] TICKET-021_mobile-field-access-5.1 Test offline functionality
+- [ ] TICKET-021_mobile-field-access-5.2 Validate mobile user experience
+- [ ] TICKET-021_mobile-field-access-5.3 Test cross-platform compatibility
+
+---
+
+## Recommendation History and Tracking
+
+### TICKET-022_recommendation-tracking-1. Data Collection Framework
+- [ ] TICKET-022_recommendation-tracking-1.1 Set up recommendation tracking service structure
+- [ ] TICKET-022_recommendation-tracking-1.2 Create recommendation history database schema
+- [ ] TICKET-022_recommendation-tracking-1.3 Implement user action tracking system
+
+### TICKET-022_recommendation-tracking-2. Outcome Analysis System
+- [ ] TICKET-022_recommendation-tracking-2.1 Build outcome data collection system
+- [ ] TICKET-022_recommendation-tracking-2.2 Create farmer feedback integration
+- [ ] TICKET-022_recommendation-tracking-2.3 Develop performance analytics engine
+
+### TICKET-022_recommendation-tracking-3. Learning and Improvement System
+- [ ] TICKET-022_recommendation-tracking-3.1 Implement machine learning for recommendation improvement
+- [ ] TICKET-022_recommendation-tracking-3.2 Create recommendation effectiveness scoring
+- [ ] TICKET-022_recommendation-tracking-3.3 Develop adaptive recommendation algorithms
+
+### TICKET-022_recommendation-tracking-4. Tracking API Endpoints
+- [ ] TICKET-022_recommendation-tracking-4.1 Implement recommendation tracking API endpoints
+  - [ ] TICKET-022_recommendation-tracking-4.1.1 Create POST /api/v1/tracking/recommendation endpoint
+  - [ ] TICKET-022_recommendation-tracking-4.1.2 Implement GET /api/v1/tracking/history endpoint
+  - [ ] TICKET-022_recommendation-tracking-4.1.3 Add POST /api/v1/tracking/outcome endpoint
+
+### TICKET-022_recommendation-tracking-5. Testing and Validation
+- [ ] TICKET-022_recommendation-tracking-5.1 Test tracking data accuracy
+- [ ] TICKET-022_recommendation-tracking-5.2 Validate learning algorithm effectiveness
+- [ ] TICKET-022_recommendation-tracking-5.3 Test privacy and data security
 
 ---
 
 ## Summary
 
-This master checklist contains **1,157 individual tasks** across **20 major feature areas** of the CAAIN Soil Hub agricultural advisory system. Each task has a unique identifier following the pattern `{feature-name}-{section}.{subsection}` to ensure comprehensive tracking and avoid conflicts.
+This master checklist contains **1,400+ individual tasks** across **26 major feature areas** of the CAAIN Soil Hub agricultural advisory system. Each task has a unique identifier following the pattern `{feature-name}-{section}.{subsection}` to ensure comprehensive tracking and avoid conflicts.
 
 ### Completion Status Overview:
-- **Completed [x]**: 4 feature areas (Climate Zone Detection, Soil pH Management, Crop Rotation Planning, Nutrient Deficiency Detection, Soil Fertility Assessment)
+- **Completed [x]**: 5 feature areas (Climate Zone Detection, Soil pH Management, Crop Rotation Planning, Nutrient Deficiency Detection, Soil Fertility Assessment)
+- **Partially Complete [/]**: 1 feature area (Farm Location Input)
+- **Not Started [ ]**: 20 feature areas
+- **Cancelled [-]**: 1 task (fertilizer-type-selection-1.1)
+
+### User Story Coverage:
+All **23 user stories** are now covered by the checklist tasks:
+
+**Epic 1: Crop Selection and Planning**
+- US-001: Crop Variety Recommendation → Climate Zone Detection + Crop Variety Recommendations
+- US-002: Crop Rotation Planning → Crop Rotation Planning
+
+**Epic 2: Soil Health and Fertility Management**
+- US-003: Soil Fertility Assessment → Soil Fertility Assessment + Soil Tissue Test Integration
+- US-004: Nutrient Deficiency Detection → Nutrient Deficiency Detection
+- US-005: Soil pH Management → Soil pH Management
+
+**Epic 3: Fertilizer Management and Optimization**
+- US-006: Fertilizer Type Selection → Fertilizer Type Selection
+- US-007: Fertilizer Application Method → Fertilizer Application Method
+- US-008: Fertilizer Timing Optimization → Fertilizer Timing Optimization
+- US-009: Cost-Effective Fertilizer Strategy → Fertilizer Strategy Optimization
+
+**Epic 4: Environmental Stewardship and Sustainability**
+- US-010: Runoff Prevention → Runoff Prevention
+- US-011: Cover Crop Selection → Cover Crop Selection
+- US-012: Drought Management → Drought Management
+
+**Epic 5: Technology and Precision Agriculture**
+- US-013: Precision Agriculture ROI Assessment → Precision Agriculture ROI Assessment
+- US-014: Early Deficiency Detection → Nutrient Deficiency Detection (advanced features)
+
+**Epic 6: Testing and Data Integration**
+- US-015: Soil and Tissue Test Integration → Soil Tissue Test Integration
+
+**Epic 7: Weather and Climate Adaptation**
+- US-016: Weather Impact Analysis → Weather Impact Analysis
+
+**Epic 8: Sustainable Yield Optimization**
+- US-017: Tillage Practice Recommendations → Tillage Practice Recommendations
+- US-018: Sustainable Intensification → Sustainable Intensification
+
+**Epic 9: Policy and Economic Considerations**
+- US-019: Micronutrient Management → Micronutrient Management
+- US-020: Government Program Integration → Government Program Integration
+
+**Cross-Cutting User Stories**
+- US-021: User Profile Management → Farm Location Input
+- US-022: Recommendation History and Tracking → Recommendation History and Tracking
+- US-023: Mobile Field Access → Mobile Field Access + Mobile components across features
+
+### Ticket Coverage Summary:
+All **24 tickets** from docs/tickets.md are now represented in the checklist:
+
+**Foundation Tickets (TICKET-001 to TICKET-011)**:
+- ✅ TICKET-001, 002: Climate Zone Detection
+- ✅ TICKET-003, 004: Soil pH Management
+- ✅ TICKET-005: Crop Variety Recommendations
+- ✅ TICKET-006: Fertilizer Strategy Optimization
+- ✅ TICKET-007: Nutrient Deficiency Detection
+- ✅ TICKET-008: Farm Location Input
+- ✅ TICKET-009: Weather Impact Analysis
+- ✅ TICKET-010: Farm Location Input (UI components)
+- ✅ TICKET-011: Testing and Quality Assurance (integrated across all features)
+
+**Comprehensive Coverage Tickets (TICKET-012 to TICKET-024)**:
+- ✅ TICKET-012: Crop Rotation Planning
+- ✅ TICKET-013: Cover Crop Selection
+- ✅ TICKET-014: Drought Management
+- ✅ TICKET-015: Precision Agriculture ROI Assessment
+- ✅ TICKET-016: Micronutrient Management
+- ✅ TICKET-017: Soil Tissue Test Integration
+- ✅ TICKET-018: Tillage Practice Recommendations
+- ✅ TICKET-019: Sustainable Intensification
+- ✅ TICKET-020: Government Program Integration
+- ✅ TICKET-021: Mobile Field Access
+- ✅ TICKET-022: Recommendation History and Tracking
+- ✅ TICKET-023: Fertilizer Type Selection + Fertilizer Application Method
+- ✅ TICKET-024: Runoff Prevention
+
+### Implementation Priority:
+1. **Phase 1 (Months 1-3)**: Complete foundation features (Climate Zone, Soil pH, Farm Location)
+2. **Phase 2 (Months 4-6)**: Implement core agricultural features (Fertilizer management, Crop recommendations)
+3. **Phase 3 (Months 7-9)**: Add advanced features (Precision agriculture, Sustainability, Policy integration)
+4. **Phase 4 (Months 10-12)**: Complete user experience features (Mobile access, Tracking, Advanced UI)
+
+This comprehensive checklist ensures complete coverage of all user stories and tickets with detailed task breakdown for systematic implementation tracking.
 - **In Progress**: 1 feature area (Farm Location Input - partially completed)
 - **Not Started [ ]**: 15 feature areas
 - **Cancelled [-]**: 1 task (fertilizer-type-selection-1.1)
