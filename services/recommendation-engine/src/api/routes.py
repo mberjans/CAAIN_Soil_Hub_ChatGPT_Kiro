@@ -16,6 +16,7 @@ try:
         ConfidenceFactors
     )
     from ..services.recommendation_engine import RecommendationEngine
+    from .fertilizer_type_selection_routes import router as fertilizer_router
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
@@ -24,6 +25,7 @@ except ImportError:
         ConfidenceFactors
     )
     from services.recommendation_engine import RecommendationEngine
+    from fertilizer_type_selection_routes import router as fertilizer_router
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["recommendation-engine"])
@@ -204,3 +206,7 @@ async def generate_recommendations(request: RecommendationRequest):
             status_code=500,
             detail=f"Error generating recommendations: {str(e)}"
         )
+
+
+# Include fertilizer type selection routes
+router.include_router(fertilizer_router)
