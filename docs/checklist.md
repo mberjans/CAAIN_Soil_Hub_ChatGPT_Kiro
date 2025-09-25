@@ -302,8 +302,8 @@ This master checklist combines all feature implementation tasks with unique iden
     **Status**: ✅ FUNCTIONAL - Implemented
   - [x] TICKET-012_crop-rotation-planning-8.1.2 GET /api/v1/rotations/{plan_id} - Get rotation plan details
     **Status**: ✅ FUNCTIONAL - Implemented
-  - [ ] TICKET-012_crop-rotation-planning-8.1.3 PUT /api/v1/rotations/{plan_id} - Update rotation plan
-    **Status**: ❌ NOT IMPLEMENTED - Update endpoint not found
+  - [x] TICKET-012_crop-rotation-planning-8.1.3 PUT /api/v1/rotations/{plan_id} - Update rotation plan
+    **Status**: ✅ FUNCTIONAL - Implemented with validation, storage, and tests
   - [x] TICKET-012_crop-rotation-planning-8.1.4 POST /api/v1/rotations/compare - Compare rotation scenarios
     **Status**: ✅ FUNCTIONAL - Implemented
 - [x] TICKET-012_crop-rotation-planning-8.2 Implement field history endpoints

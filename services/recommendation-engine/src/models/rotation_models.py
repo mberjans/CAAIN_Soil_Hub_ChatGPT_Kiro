@@ -408,6 +408,49 @@ class RotationPlanResponse(BaseModel):
     warnings: List[str]
 
 
+class RotationPlanUpdateRequest(BaseModel):
+    """Request model for updating rotation plans (partial updates supported)."""
+    plan_name: Optional[str] = Field(None, min_length=1, max_length=100)
+    planning_horizon: Optional[int] = Field(None, ge=1, le=20)
+    
+    # Rotation schedule updates
+    rotation_years: Optional[Dict[int, str]] = None  # year -> crop_name
+    rotation_details: Optional[Dict[int, Dict]] = None  # year -> details
+    
+    # Goals and constraints updates
+    goals: Optional[List[RotationGoalRequest]] = None
+    constraints: Optional[List[RotationConstraintRequest]] = None
+    
+    # Plan evaluation updates
+    overall_score: Optional[float] = Field(None, ge=0.0, le=10.0) 
+    benefit_scores: Optional[Dict[str, float]] = None
+    risk_scores: Optional[Dict[str, float]] = None
+    economic_projections: Optional[Dict] = None
+    
+    # Status updates
+    is_active: Optional[bool] = None
+    implementation_status: Optional[Dict[int, str]] = None
+    actual_vs_planned: Optional[Dict[int, Dict]] = None
+    
+    @validator('goals')
+    def validate_goal_weights(cls, v):
+        if v:
+            total_weight = sum(goal.weight for goal in v)
+            if abs(total_weight - 1.0) > 0.01:
+                raise ValueError('Goal weights must sum to 1.0')
+        return v
+    
+    @validator('rotation_years')
+    def validate_rotation_years(cls, v):
+        if v:
+            for year, crop in v.items():
+                if year < 2020 or year > 2050:
+                    raise ValueError(f'Year {year} must be between 2020 and 2050')
+                if not crop or len(crop.strip()) == 0:
+                    raise ValueError(f'Crop name for year {year} cannot be empty')
+        return v
+
+
 class RotationAnalysisResponse(BaseModel):
     """Response model for rotation analysis."""
     analysis_id: str

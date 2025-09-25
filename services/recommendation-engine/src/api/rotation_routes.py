@@ -11,10 +11,12 @@ from datetime import datetime, date
 
 from ..models.rotation_models import (
     FieldHistoryRequest, RotationGoalRequest, RotationConstraintRequest,
-    RotationPlanRequest, RotationPlanResponse, RotationAnalysisResponse
+    RotationPlanRequest, RotationPlanResponse, RotationAnalysisResponse,
+    RotationPlanUpdateRequest
 )
 from ..services.field_history_service import field_history_service
 from ..services.rotation_optimization_engine import rotation_optimization_engine
+from ..services.rotation_storage_service import rotation_storage_service
 
 logger = logging.getLogger(__name__)
 
@@ -335,20 +337,53 @@ async def get_rotation_plan(plan_id: str):
         raise HTTPException(status_code=500, detail=f"Failed to get rotation plan: {str(e)}")
 
 
-@router.put("/plans/{plan_id}")
-async def update_rotation_plan(plan_id: str, updates: Dict[str, Any]):
-    """Update rotation plan."""
+@router.put("/plans/{plan_id}", response_model=RotationPlanResponse)
+async def update_rotation_plan(plan_id: str, updates: RotationPlanUpdateRequest):
+    """Update rotation plan with partial updates support."""
     try:
-        # In production, this would update database
+        # Validate plan_id format
+        if not plan_id or len(plan_id.strip()) == 0:
+            raise HTTPException(
+                status_code=400, 
+                detail="Plan ID cannot be empty"
+            )
         
-        return {
-            "plan_id": plan_id,
-            "updated_fields": list(updates.keys()),
-            "message": "Rotation plan updated successfully"
-        }
+        # Check if plan exists and update it
+        updated_plan = await rotation_storage_service.update_plan(plan_id, updates)
         
+        if not updated_plan:
+            raise HTTPException(
+                status_code=404, 
+                detail=f"Rotation plan with ID {plan_id} not found"
+            )
+        
+        # Convert to response model
+        response = RotationPlanResponse(
+            plan_id=updated_plan.plan_id,
+            field_id=updated_plan.field_id,
+            plan_name=updated_plan.plan_name,
+            created_date=updated_plan.created_date,
+            rotation_schedule=updated_plan.rotation_years,
+            rotation_details=updated_plan.rotation_details,
+            overall_score=updated_plan.overall_score or 0.0,
+            benefit_scores=updated_plan.benefit_scores,
+            economic_projections=updated_plan.economic_projections or {},
+            key_insights=[],  # These would be populated by analysis service
+            recommendations=[],
+            warnings=[]
+        )
+        
+        logger.info(f"Successfully updated rotation plan: {plan_id}")
+        return response
+        
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
+    except ValueError as e:
+        logger.error(f"Validation error updating rotation plan {plan_id}: {str(e)}")
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        logger.error(f"Error updating rotation plan: {str(e)}")
+        logger.error(f"Error updating rotation plan {plan_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to update rotation plan: {str(e)}")
 
 
