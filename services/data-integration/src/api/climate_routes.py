@@ -13,6 +13,7 @@ from ..services.climate_zone_service import climate_zone_service, ClimateZoneTyp
 from ..services.coordinate_climate_detector import coordinate_climate_detector
 from ..services.usda_zone_api import usda_zone_api
 from ..services.koppen_climate_service import koppen_climate_service, KoppenGroup
+from ..services.address_climate_lookup import address_climate_service
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +68,18 @@ class ZoneValidationResponse(BaseModel):
     detected_zone: str
     specified_zone: str
     recommendations: Optional[List[str]] = None
+
+
+class AddressClimateResponse(BaseModel):
+    """Address-based climate zone detection response."""
+    address: str
+    geocoded_coordinates: Optional[tuple]
+    climate_data: Optional[Dict]
+    geocoding_confidence: float
+    address_components: Dict
+    lookup_method: str
+    success: bool = True
+    message: Optional[str] = None
 
 
 # API Endpoints
@@ -423,26 +436,70 @@ async def get_koppen_types(group: Optional[str] = Query(None, description="Filte
         raise HTTPException(status_code=500, detail=f"Failed to get Köppen types: {str(e)}")
 
 
-@router.post("/zone-from-address")
+@router.post("/zone-from-address", response_model=AddressClimateResponse)
 async def get_zone_from_address(
     address: str = Query(..., description="Address to geocode and detect climate zone"),
     include_koppen: bool = Query(False, description="Include Köppen climate analysis")
 ):
     """
-    Detect climate zone from address (requires geocoding).
+    Detect climate zone from address using geocoding.
     
-    Note: This endpoint requires integration with a geocoding service.
+    This endpoint uses multiple lookup methods:
+    1. Full geocoding (most accurate)
+    2. ZIP code lookup 
+    3. State/county lookup
+    4. Fallback methods
     """
     try:
-        # This would require geocoding service integration
-        # For now, return a placeholder response
+        logger.info(f"Getting climate zone from address: {address}")
         
-        return {
-            "message": "Address-based climate zone detection requires geocoding service integration",
-            "address": address,
-            "status": "not_implemented",
-            "suggestion": "Use coordinates-based detection endpoint with latitude/longitude"
-        }
+        # Use the address climate service to get climate data
+        result = await address_climate_service.get_climate_from_address(
+            address=address,
+            country="US"
+        )
+        
+        # Format climate data for response
+        climate_data = None
+        if result.climate_data:
+            climate_data = {
+                "usda_zone": {
+                    "zone": result.climate_data.usda_zone.zone if result.climate_data.usda_zone else None,
+                    "description": result.climate_data.usda_zone.description if result.climate_data.usda_zone else None,
+                    "temperature_range": result.climate_data.usda_zone.temperature_range if result.climate_data.usda_zone else None
+                },
+                "koppen_analysis": {
+                    "koppen_type": {
+                        "code": result.climate_data.koppen_analysis.koppen_type.code,
+                        "name": result.climate_data.koppen_analysis.koppen_type.name,
+                        "description": result.climate_data.koppen_analysis.koppen_type.description
+                    }
+                } if result.climate_data.koppen_analysis and include_koppen else None,
+                "confidence_factors": result.climate_data.confidence_factors,
+                "detection_metadata": result.climate_data.detection_metadata
+            }
+        
+        # Determine success status and message
+        success = result.geocoding_confidence > 0.3
+        message = None
+        if not success:
+            message = "Low confidence in address geocoding. Consider using coordinates-based detection."
+        elif result.lookup_method == "fallback":
+            message = "Used fallback method for address lookup. Results may be less accurate."
+        
+        response = AddressClimateResponse(
+            address=result.address,
+            geocoded_coordinates=result.geocoded_coordinates,
+            climate_data=climate_data,
+            geocoding_confidence=result.geocoding_confidence,
+            address_components=result.address_components,
+            lookup_method=result.lookup_method,
+            success=success,
+            message=message
+        )
+        
+        logger.info(f"Successfully detected climate zone from address {address} using method {result.lookup_method}")
+        return response
         
     except Exception as e:
         logger.error(f"Error getting zone from address: {str(e)}")
