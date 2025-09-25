@@ -6,11 +6,12 @@ The Autonomous Farm Advisory System (AFAS) is a comprehensive agricultural decis
 
 ## Project Overview
 
-**Duration**: 12 months  
-**Team Size**: 8-12 developers  
-**Budget**: $800K - $1.2M  
-**Architecture**: Python microservices with FastAPI  
-**Target Users**: 10,000+ farmers in first year  
+**Duration**: 12 months
+**Team Size**: 8-12 developers (including AI coding agents)
+**Budget**: $800K - $1.2M
+**Architecture**: Python microservices with FastAPI
+**Target Users**: 10,000+ farmers in first year
+**AI Integration**: AI coding agents supported with comprehensive documentation
 
 ## Current Status Assessment
 
@@ -275,6 +276,37 @@ Based on the implementation plan and checklist analysis:
 - Performance benchmarking
 - Security audit and hardening
 
+## AI Coding Agent Integration
+
+### Agent-Ready Documentation
+The project includes comprehensive documentation specifically designed for AI coding agents:
+
+- **docs/ai-agent-integration-guide.md**: Complete workflow guide for AI agents
+- **docs/tickets.md**: Detailed technical specifications with acceptance criteria
+- **docs/checklist.md**: Granular task breakdown with ticket mapping (TICKET-XXX_task-id format)
+- **services/ai-agent/**: Reference implementation showing established patterns
+
+### AI Agent Workflow
+1. **Task Selection**: AI agents select tickets from current sprint priorities
+2. **Context Analysis**: Review ticket specifications and existing codebase patterns
+3. **Implementation**: Follow established service patterns and API conventions
+4. **Integration**: Connect with existing services (AI Agent, Context Management)
+5. **Testing**: Implement comprehensive tests including agricultural validation
+6. **Human Handoff**: Flag complex agricultural logic for expert review
+
+### Existing Codebase Foundation
+AI agents can leverage the existing implementation:
+- ✅ **AI Agent Service**: OpenRouter LLM integration with agricultural context
+- ✅ **Context Management**: Conversation and agricultural context handling
+- ✅ **Service Patterns**: Established FastAPI microservice architecture
+- ✅ **Testing Framework**: pytest with agricultural validation patterns
+
+### Quality Assurance for AI Agents
+- **Code Standards**: >80% test coverage, full type hints, comprehensive documentation
+- **Agricultural Validation**: Expert review required for domain-specific logic
+- **Integration Testing**: Validation against existing services and APIs
+- **Performance Requirements**: <3 second response time for all endpoints
+
 ## Technical Implementation Details
 
 ### Architecture Stack
@@ -400,15 +432,16 @@ tests/
 
 ## Resource Requirements
 
-### Team Structure
-- **Technical Lead**: Python/FastAPI architecture oversight
-- **Backend Developers**: 2-3 senior Python developers
+### Team Structure (Human + AI Agents)
+- **Technical Lead**: Python/FastAPI architecture oversight and AI agent coordination
+- **Backend Developers**: 2-3 senior Python developers (working with AI agents)
 - **ML Engineers**: 2 specialists for AI/ML features
 - **Frontend Developer**: Python web development
 - **Data Engineer**: Integration and data pipeline specialist
-- **QA Engineer**: Testing and quality assurance
+- **QA Engineer**: Testing and quality assurance (including AI-generated code validation)
 - **DevOps Engineer**: Infrastructure and deployment
-- **Agricultural Expert**: Domain knowledge and validation (0.5 FTE)
+- **Agricultural Expert**: Domain knowledge and validation (0.5 FTE, critical for AI agent output review)
+- **AI Agent Coordinators**: 2-3 AI coding agents following docs/ai-agent-integration-guide.md
 
 ### Infrastructure Costs (Monthly)
 - **Development Environment**: $2,000
@@ -430,10 +463,12 @@ tests/
    - Add coordinate validation
    - Implement caching layer
 
-3. **Team Onboarding**
-   - Review existing codebase
+3. **Team Onboarding** (Human + AI Agents)
+   - Review existing codebase and service patterns
    - Set up development environments
-   - Assign ticket ownership
+   - Assign ticket ownership to human developers and AI agents
+   - **AI Agent Setup**: Review docs/ai-agent-integration-guide.md
+   - **Context Familiarization**: Study existing services/ai-agent/ implementation
 
 ### Success Criteria for Phase 1 Completion
 - [ ] All foundation services have >80% test coverage

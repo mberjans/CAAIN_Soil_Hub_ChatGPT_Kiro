@@ -1,6 +1,17 @@
 # CAAIN Soil Hub - Software Development Tickets
 
-This document contains comprehensive software development tickets for AI coding agents to implement the Autonomous Farm Advisory System. Each ticket corresponds to tasks from the master checklist and includes detailed technical specifications.
+This document contains comprehensive software development tickets for AI coding agents to implement the Autonomous Farm Advisory System. Each ticket corresponds to tasks from the master checklist and includes detailed technical specifications with complete implementation guidance for AI agent independence.
+
+## AI Agent Implementation Notes
+
+**Enhanced for AI Independence**: All tickets now include:
+- ✅ **Step-by-Step Implementation Guides**: Complete code examples and directory structures
+- ✅ **Comprehensive Testing Requirements**: Unit, integration, and agricultural validation tests
+- ✅ **Integration Instructions**: Service connections and deployment procedures
+- ✅ **Agricultural Domain Context**: Safety checks, validation rules, and expert review criteria
+- ✅ **Performance Requirements**: Response time, accuracy, and reliability specifications
+
+**Reference Implementation**: Use `services/ai-agent/` as the pattern for service architecture, API design, and testing frameworks.
 
 ## Ticket Template Structure
 
@@ -44,60 +55,551 @@ Each ticket includes:
 - [ ] Service handles API failures gracefully with fallback data
 - [ ] Response time < 2 seconds for zone lookup
 
-**Implementation Details**:
+**Step-by-Step Implementation Guide**:
+
+**1. Create Service Directory Structure**:
+```bash
+# Execute these commands to create the service structure
+mkdir -p services/data-integration/climate_zones/{providers,tests}
+touch services/data-integration/climate_zones/__init__.py
+touch services/data-integration/climate_zones/{models.py,service.py,cache.py,exceptions.py}
+touch services/data-integration/climate_zones/providers/{__init__.py,usda_provider.py,koppen_provider.py}
+touch services/data-integration/climate_zones/tests/{__init__.py,test_service.py,test_providers.py}
+```
+
+**2. Implement Data Models** (`models.py`):
 ```python
-# Service structure: services/data-integration/climate_zones/
-├── __init__.py
-├── models.py          # Climate zone data models
-├── service.py         # Core climate zone service
-├── providers/         # External API providers
-│   ├── usda_provider.py
-│   └── koppen_provider.py
-├── cache.py          # Redis caching layer
-└── exceptions.py     # Custom exceptions
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+from enum import Enum
+
+class ClimateZoneType(str, Enum):
+    """Types of climate zone classifications."""
+    USDA_HARDINESS = "usda_hardiness"
+    KOPPEN = "koppen"
+    AGRICULTURAL = "agricultural"
+
+class ClimateZoneData(BaseModel):
+    """Climate zone data model with validation."""
+
+    zone_id: str = Field(..., description="Unique zone identifier")
+    zone_name: str = Field(..., description="Human-readable zone name")
+    zone_type: ClimateZoneType = Field(..., description="Type of climate classification")
+    hardiness_zone: Optional[str] = Field(None, description="USDA hardiness zone (e.g., '5a', '6b')")
+    koppen_class: Optional[str] = Field(None, description="Köppen climate classification")
+    min_temp_celsius: float = Field(..., description="Average minimum temperature")
+    max_temp_celsius: float = Field(..., description="Average maximum temperature")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Detection confidence score")
+    source: str = Field(..., description="Data source (USDA, Köppen, etc.)")
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+
+    @validator('hardiness_zone')
+    def validate_hardiness_zone(cls, v):
+        if v and not v.match(r'^[1-9][0-9]?[ab]?$'):
+            raise ValueError('Invalid USDA hardiness zone format')
+        return v
+
+class CoordinateRequest(BaseModel):
+    """Request model for coordinate-based zone lookup."""
+
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude in decimal degrees")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude in decimal degrees")
+    include_koppen: bool = Field(default=True, description="Include Köppen classification")
+
+class ClimateZoneResponse(BaseModel):
+    """Response model for climate zone queries."""
+
+    request_id: str = Field(..., description="Unique request identifier")
+    zones: List[ClimateZoneData] = Field(..., description="Detected climate zones")
+    primary_zone: ClimateZoneData = Field(..., description="Primary/most confident zone")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
 ```
 
-**API Specifications**:
-```yaml
-GET /api/v1/climate-zones/by-coordinates
-  parameters:
-    - latitude: float (required)
-    - longitude: float (required)
-  response:
-    - zone_id: string
-    - zone_name: string
-    - hardiness_zone: string
-    - koppen_classification: string
-    - confidence: float
+**3. Implement Core Service** (`service.py`):
+```python
+import asyncio
+import logging
+import time
+from typing import Optional, List, Dict, Any
+from uuid import uuid4
 
-POST /api/v1/climate-zones/batch-lookup
-  body:
-    locations: array of {lat, lng, location_id}
-  response:
-    results: array of climate zone data
+from .models import ClimateZoneData, CoordinateRequest, ClimateZoneResponse, ClimateZoneType
+from .providers.usda_provider import USDAProvider
+from .providers.koppen_provider import KoppenProvider
+from .cache import ClimateZoneCache
+from .exceptions import ClimateZoneError, ProviderError
+
+logger = logging.getLogger(__name__)
+
+class ClimateZoneService:
+    """Core climate zone detection service."""
+
+    def __init__(self):
+        self.usda_provider = USDAProvider()
+        self.koppen_provider = KoppenProvider()
+        self.cache = ClimateZoneCache()
+
+    async def get_zone_by_coordinates(
+        self,
+        latitude: float,
+        longitude: float,
+        include_koppen: bool = True
+    ) -> ClimateZoneResponse:
+        """
+        Get climate zone data for given coordinates.
+
+        Args:
+            latitude: Latitude in decimal degrees
+            longitude: Longitude in decimal degrees
+            include_koppen: Whether to include Köppen classification
+
+        Returns:
+            ClimateZoneResponse with detected zones
+
+        Raises:
+            ClimateZoneError: If zone detection fails
+        """
+        start_time = time.time()
+        request_id = str(uuid4())
+
+        try:
+            # Check cache first
+            cache_key = f"coords:{latitude}:{longitude}:{include_koppen}"
+            cached_result = await self.cache.get(cache_key)
+            if cached_result:
+                logger.info(f"Cache hit for coordinates {latitude}, {longitude}")
+                return cached_result
+
+            # Fetch from providers concurrently
+            tasks = [self.usda_provider.get_zone(latitude, longitude)]
+            if include_koppen:
+                tasks.append(self.koppen_provider.get_zone(latitude, longitude))
+
+            results = await asyncio.gather(*tasks, return_exceptions=True)
+
+            # Process results
+            zones = []
+            for result in results:
+                if isinstance(result, Exception):
+                    logger.warning(f"Provider error: {result}")
+                    continue
+                if result:
+                    zones.append(result)
+
+            if not zones:
+                raise ClimateZoneError("No climate zone data available for coordinates")
+
+            # Select primary zone (highest confidence)
+            primary_zone = max(zones, key=lambda z: z.confidence)
+
+            response = ClimateZoneResponse(
+                request_id=request_id,
+                zones=zones,
+                primary_zone=primary_zone,
+                metadata={
+                    "coordinates": {"lat": latitude, "lng": longitude},
+                    "providers_used": [z.source for z in zones],
+                    "cache_miss": True
+                },
+                processing_time_ms=(time.time() - start_time) * 1000
+            )
+
+            # Cache the result
+            await self.cache.set(cache_key, response, ttl_seconds=86400)  # 24 hours
+
+            return response
+
+        except Exception as e:
+            logger.error(f"Error getting climate zone: {e}")
+            raise ClimateZoneError(f"Failed to get climate zone: {str(e)}")
+
+    async def batch_lookup(
+        self,
+        coordinates: List[Dict[str, float]]
+    ) -> List[ClimateZoneResponse]:
+        """Batch lookup for multiple coordinates."""
+        tasks = [
+            self.get_zone_by_coordinates(coord["lat"], coord["lng"])
+            for coord in coordinates
+        ]
+        return await asyncio.gather(*tasks, return_exceptions=True)
 ```
 
-**Database Schema**:
+**4. Implement Caching Layer** (`cache.py`):
+```python
+import json
+import logging
+from typing import Optional, Any
+import redis.asyncio as redis
+from .models import ClimateZoneResponse
+
+logger = logging.getLogger(__name__)
+
+class ClimateZoneCache:
+    """Redis-based caching for climate zone data."""
+
+    def __init__(self, redis_url: str = "redis://localhost:6379"):
+        self.redis_url = redis_url
+        self._redis = None
+
+    async def get_redis(self):
+        """Get Redis connection."""
+        if not self._redis:
+            self._redis = redis.from_url(self.redis_url)
+        return self._redis
+
+    async def get(self, key: str) -> Optional[ClimateZoneResponse]:
+        """Get cached climate zone data."""
+        try:
+            redis_client = await self.get_redis()
+            cached_data = await redis_client.get(f"climate_zone:{key}")
+            if cached_data:
+                data = json.loads(cached_data)
+                return ClimateZoneResponse(**data)
+        except Exception as e:
+            logger.warning(f"Cache get error: {e}")
+        return None
+
+    async def set(self, key: str, data: ClimateZoneResponse, ttl_seconds: int = 86400):
+        """Cache climate zone data."""
+        try:
+            redis_client = await self.get_redis()
+            await redis_client.setex(
+                f"climate_zone:{key}",
+                ttl_seconds,
+                data.json()
+            )
+        except Exception as e:
+            logger.warning(f"Cache set error: {e}")
+```
+
+**5. Implement API Endpoints** (`api/routes.py`):
+```python
+from fastapi import APIRouter, HTTPException, Query, Depends
+from typing import List, Dict, Any
+import logging
+
+from ..models import CoordinateRequest, ClimateZoneResponse
+from ..service import ClimateZoneService
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api/v1/climate-zones", tags=["climate-zones"])
+
+# Dependency injection
+async def get_climate_service() -> ClimateZoneService:
+    return ClimateZoneService()
+
+@router.get("/by-coordinates", response_model=ClimateZoneResponse)
+async def get_zone_by_coordinates(
+    latitude: float = Query(..., ge=-90, le=90, description="Latitude in decimal degrees"),
+    longitude: float = Query(..., ge=-180, le=180, description="Longitude in decimal degrees"),
+    include_koppen: bool = Query(True, description="Include Köppen classification"),
+    service: ClimateZoneService = Depends(get_climate_service)
+):
+    """
+    Get climate zone data for specific coordinates.
+
+    This endpoint provides USDA hardiness zones and Köppen climate classifications
+    for agricultural planning and crop selection decisions.
+
+    Agricultural Use Cases:
+    - Crop variety selection based on hardiness zones
+    - Planting date calculations using climate data
+    - Risk assessment for temperature-sensitive crops
+    """
+    try:
+        result = await service.get_zone_by_coordinates(latitude, longitude, include_koppen)
+        return result
+    except Exception as e:
+        logger.error(f"Error getting climate zone: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/batch-lookup", response_model=List[ClimateZoneResponse])
+async def batch_climate_lookup(
+    coordinates: List[Dict[str, float]],
+    service: ClimateZoneService = Depends(get_climate_service)
+):
+    """
+    Batch lookup for multiple coordinate pairs.
+
+    Efficient endpoint for processing multiple locations simultaneously,
+    useful for farm management systems with multiple fields.
+
+    Request format:
+    [
+        {"lat": 41.8781, "lng": -87.6298},
+        {"lat": 40.7128, "lng": -74.0060}
+    ]
+    """
+    try:
+        if len(coordinates) > 100:
+            raise HTTPException(status_code=400, detail="Maximum 100 coordinates per request")
+
+        results = await service.batch_lookup(coordinates)
+        return results
+    except Exception as e:
+        logger.error(f"Error in batch lookup: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/health")
+async def health_check():
+    """Health check endpoint for service monitoring."""
+    return {"status": "healthy", "service": "climate-zones"}
+```
+
+**6. Implement External Providers** (`providers/usda_provider.py`):
+```python
+import aiohttp
+import logging
+from typing import Optional
+from ..models import ClimateZoneData, ClimateZoneType
+from ..exceptions import ProviderError
+
+logger = logging.getLogger(__name__)
+
+class USDAProvider:
+    """USDA Plant Hardiness Zone API provider."""
+
+    def __init__(self):
+        self.base_url = "https://phzmapi.org"
+        self.session = None
+
+    async def get_session(self):
+        """Get aiohttp session."""
+        if not self.session:
+            self.session = aiohttp.ClientSession()
+        return self.session
+
+    async def get_zone(self, latitude: float, longitude: float) -> Optional[ClimateZoneData]:
+        """Get USDA hardiness zone for coordinates."""
+        try:
+            session = await self.get_session()
+            url = f"{self.base_url}/{latitude}/{longitude}.json"
+
+            async with session.get(url, timeout=10) as response:
+                if response.status == 200:
+                    data = await response.json()
+
+                    return ClimateZoneData(
+                        zone_id=f"usda_{data['zone']}",
+                        zone_name=f"USDA Zone {data['zone']}",
+                        zone_type=ClimateZoneType.USDA_HARDINESS,
+                        hardiness_zone=data['zone'],
+                        min_temp_celsius=data.get('temperature_range', {}).get('min', -999),
+                        max_temp_celsius=data.get('temperature_range', {}).get('max', 999),
+                        confidence=0.9,  # USDA data is highly reliable
+                        source="USDA Plant Hardiness Zone API"
+                    )
+                else:
+                    logger.warning(f"USDA API returned status {response.status}")
+                    return None
+
+        except Exception as e:
+            logger.error(f"USDA provider error: {e}")
+            raise ProviderError(f"USDA API error: {str(e)}")
+
+    async def close(self):
+        """Close aiohttp session."""
+        if self.session:
+            await self.session.close()
+```
+
+**7. Database Schema and Migrations**:
 ```sql
-CREATE TABLE climate_zones (
+-- Create climate zones reference table
+CREATE TABLE climate_zones_reference (
     id SERIAL PRIMARY KEY,
     zone_id VARCHAR(20) UNIQUE NOT NULL,
     zone_name VARCHAR(100) NOT NULL,
+    zone_type VARCHAR(20) NOT NULL,
     hardiness_zone VARCHAR(10),
     koppen_class VARCHAR(10),
     min_temp_celsius DECIMAL(5,2),
     max_temp_celsius DECIMAL(5,2),
+    description TEXT,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
-CREATE INDEX idx_climate_zones_zone_id ON climate_zones(zone_id);
+-- Create climate zone cache table for performance
+CREATE TABLE climate_zone_cache (
+    id SERIAL PRIMARY KEY,
+    cache_key VARCHAR(255) UNIQUE NOT NULL,
+    latitude DECIMAL(10,8) NOT NULL,
+    longitude DECIMAL(11,8) NOT NULL,
+    zone_data JSONB NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Indexes for performance
+CREATE INDEX idx_climate_zones_zone_id ON climate_zones_reference(zone_id);
+CREATE INDEX idx_climate_zones_type ON climate_zones_reference(zone_type);
+CREATE INDEX idx_cache_coordinates ON climate_zone_cache(latitude, longitude);
+CREATE INDEX idx_cache_expires ON climate_zone_cache(expires_at);
 ```
 
-**Testing Requirements**:
-- Unit tests for all service methods (>90% coverage)
-- Integration tests with external APIs
-- Mock tests for API failures
+**8. Comprehensive Testing Implementation** (`tests/test_service.py`):
+```python
+import pytest
+import asyncio
+from unittest.mock import AsyncMock, patch
+from ..service import ClimateZoneService
+from ..models import ClimateZoneData, ClimateZoneType
+from ..exceptions import ClimateZoneError
+
+class TestClimateZoneService:
+    """Comprehensive test suite for climate zone service."""
+
+    @pytest.fixture
+    def service(self):
+        return ClimateZoneService()
+
+    @pytest.fixture
+    def mock_usda_data(self):
+        return ClimateZoneData(
+            zone_id="usda_6a",
+            zone_name="USDA Zone 6a",
+            zone_type=ClimateZoneType.USDA_HARDINESS,
+            hardiness_zone="6a",
+            min_temp_celsius=-23.3,
+            max_temp_celsius=-20.6,
+            confidence=0.9,
+            source="USDA Plant Hardiness Zone API"
+        )
+
+    @pytest.mark.asyncio
+    async def test_get_zone_by_coordinates_success(self, service, mock_usda_data):
+        """Test successful zone detection."""
+        with patch.object(service.usda_provider, 'get_zone', return_value=mock_usda_data):
+            with patch.object(service.cache, 'get', return_value=None):
+                with patch.object(service.cache, 'set', return_value=None):
+                    result = await service.get_zone_by_coordinates(41.8781, -87.6298)
+
+                    assert result.primary_zone.zone_id == "usda_6a"
+                    assert result.primary_zone.hardiness_zone == "6a"
+                    assert len(result.zones) >= 1
+                    assert result.processing_time_ms > 0
+
+    @pytest.mark.asyncio
+    async def test_cache_hit(self, service, mock_usda_data):
+        """Test cache hit scenario."""
+        cached_response = ClimateZoneResponse(
+            request_id="test",
+            zones=[mock_usda_data],
+            primary_zone=mock_usda_data,
+            metadata={"cache_hit": True},
+            processing_time_ms=1.0
+        )
+
+        with patch.object(service.cache, 'get', return_value=cached_response):
+            result = await service.get_zone_by_coordinates(41.8781, -87.6298)
+            assert result.metadata.get("cache_hit") is True
+
+    @pytest.mark.asyncio
+    async def test_provider_failure_handling(self, service):
+        """Test handling of provider failures."""
+        with patch.object(service.usda_provider, 'get_zone', side_effect=Exception("API Error")):
+            with patch.object(service.koppen_provider, 'get_zone', side_effect=Exception("API Error")):
+                with pytest.raises(ClimateZoneError):
+                    await service.get_zone_by_coordinates(41.8781, -87.6298)
+
+    @pytest.mark.asyncio
+    async def test_batch_lookup(self, service, mock_usda_data):
+        """Test batch coordinate lookup."""
+        coordinates = [
+            {"lat": 41.8781, "lng": -87.6298},
+            {"lat": 40.7128, "lng": -74.0060}
+        ]
+
+        with patch.object(service, 'get_zone_by_coordinates', return_value=mock_usda_data):
+            results = await service.batch_lookup(coordinates)
+            assert len(results) == 2
+
+    @pytest.mark.performance
+    async def test_response_time_requirement(self, service):
+        """Test that response time is under 2 seconds."""
+        import time
+        start_time = time.time()
+
+        # Mock fast response
+        with patch.object(service.usda_provider, 'get_zone', return_value=mock_usda_data):
+            await service.get_zone_by_coordinates(41.8781, -87.6298)
+
+        elapsed = time.time() - start_time
+        assert elapsed < 2.0, f"Response time {elapsed}s exceeds 2s requirement"
+
+# Agricultural validation tests
+class TestAgriculturalValidation:
+    """Tests for agricultural accuracy and domain validation."""
+
+    @pytest.mark.asyncio
+    async def test_corn_belt_zone_accuracy(self, service):
+        """Test accuracy for major corn belt coordinates."""
+        # Iowa coordinates - should be zone 5a-6a
+        result = await service.get_zone_by_coordinates(41.5868, -93.6250)
+        assert result.primary_zone.hardiness_zone in ["5a", "5b", "6a", "6b"]
+
+    @pytest.mark.asyncio
+    async def test_temperature_range_validation(self, service):
+        """Test that temperature ranges are agriculturally valid."""
+        result = await service.get_zone_by_coordinates(41.8781, -87.6298)
+        zone = result.primary_zone
+
+        # Validate temperature ranges make agricultural sense
+        assert zone.min_temp_celsius < zone.max_temp_celsius
+        assert -50 <= zone.min_temp_celsius <= 20  # Reasonable range for agriculture
+        assert -30 <= zone.max_temp_celsius <= 50
+```
+
+**9. Integration Instructions**:
+```bash
+# 1. Install dependencies
+pip install fastapi aiohttp redis pydantic
+
+# 2. Set up environment variables
+export REDIS_URL="redis://localhost:6379"
+export USDA_API_BASE_URL="https://phzmapi.org"
+
+# 3. Run database migrations
+python -m alembic upgrade head
+
+# 4. Start the service
+uvicorn main:app --host 0.0.0.0 --port 8001
+
+# 5. Test the endpoints
+curl "http://localhost:8001/api/v1/climate-zones/by-coordinates?latitude=41.8781&longitude=-87.6298"
+
+# 6. Run tests
+pytest tests/ -v --cov=. --cov-report=html
+```
+
+**10. Service Registration and Integration**:
+```python
+# Add to main FastAPI application
+from services.data_integration.climate_zones.api.routes import router as climate_router
+
+app = FastAPI(title="AFAS Data Integration Service")
+app.include_router(climate_router)
+
+# Add to service discovery
+SERVICES = {
+    "climate-zones": {
+        "url": "http://localhost:8001",
+        "health_endpoint": "/api/v1/climate-zones/health"
+    }
+}
+```
+
+**Validation Criteria**:
+- ✅ Service responds to coordinate queries in <2 seconds
+- ✅ >90% test coverage achieved
+- ✅ Cache hit rate >60% in production
+- ✅ Handles API failures gracefully with fallback mechanisms
+- ✅ Agricultural validation tests pass for major farming regions
+- ✅ Integration tests with external APIs successful
 - Performance tests for batch operations
 - Cache invalidation tests
 
@@ -124,33 +626,254 @@ CREATE INDEX idx_climate_zones_zone_id ON climate_zones(zone_id);
 - [ ] Validates coordinate ranges (-90 to 90 lat, -180 to 180 lng)
 - [ ] Caches results by coordinate grid (0.1 degree precision)
 
-**Implementation Details**:
+**Step-by-Step Implementation Guide**:
+
+**1. Enhance Climate Zone Service with Advanced Detection** (`service.py` additions):
 ```python
-# Core detection algorithm
+import math
+from shapely.geometry import Point
+from shapely.ops import transform
+import pyproj
+from typing import Tuple, Optional
+
 class ClimateZoneDetector:
-    def detect_by_coordinates(self, lat: float, lng: float) -> ClimateZoneResult:
+    """Advanced coordinate-based climate zone detection."""
+
+    def __init__(self, service: ClimateZoneService):
+        self.service = service
+        self.grid_precision = 0.1  # degrees for caching
+
+    async def detect_by_coordinates(
+        self,
+        latitude: float,
+        longitude: float,
+        include_details: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Advanced coordinate-based detection with confidence scoring.
+
+        Args:
+            latitude: Latitude in decimal degrees
+            longitude: Longitude in decimal degrees
+            include_details: Include detailed analysis
+
+        Returns:
+            Detection result with confidence scoring
+        """
         # 1. Validate coordinates
-        # 2. Check cache for nearby coordinates
-        # 3. Query USDA API for hardiness zone
-        # 4. Query Köppen classification data
-        # 5. Calculate confidence based on data sources
-        # 6. Cache result
-        # 7. Return structured result
+        self._validate_coordinates(latitude, longitude)
+
+        # 2. Check for edge cases
+        edge_case_result = self._handle_edge_cases(latitude, longitude)
+        if edge_case_result:
+            return edge_case_result
+
+        # 3. Check grid-based cache
+        grid_key = self._get_grid_key(latitude, longitude)
+        cached_result = await self.service.cache.get(f"grid:{grid_key}")
+        if cached_result:
+            return self._adjust_for_precise_coordinates(cached_result, latitude, longitude)
+
+        # 4. Perform multi-source detection
+        detection_result = await self._multi_source_detection(latitude, longitude)
+
+        # 5. Calculate confidence score
+        confidence = self._calculate_confidence(detection_result, latitude, longitude)
+
+        # 6. Prepare response
+        result = {
+            "zone_id": detection_result["primary_zone"].zone_id,
+            "confidence": confidence,
+            "hardiness_zone": detection_result["primary_zone"].hardiness_zone,
+            "koppen_class": detection_result["primary_zone"].koppen_class,
+            "coordinates": {"latitude": latitude, "longitude": longitude},
+            "grid_key": grid_key
+        }
+
+        if include_details:
+            result["details"] = {
+                "all_zones": detection_result["all_zones"],
+                "data_sources": detection_result["sources"],
+                "edge_case_flags": detection_result.get("edge_cases", []),
+                "nearby_references": await self._get_nearby_references(latitude, longitude)
+            }
+
+        # 7. Cache at grid level
+        await self.service.cache.set(f"grid:{grid_key}", result, ttl_seconds=86400)
+
+        return result
+
+    def _validate_coordinates(self, latitude: float, longitude: float):
+        """Validate coordinate ranges and format."""
+        if not (-90 <= latitude <= 90):
+            raise ValueError(f"Invalid latitude: {latitude}. Must be between -90 and 90")
+        if not (-180 <= longitude <= 180):
+            raise ValueError(f"Invalid longitude: {longitude}. Must be between -180 and 180")
+
+        # Check for common coordinate errors
+        if abs(latitude) < 0.001 and abs(longitude) < 0.001:
+            raise ValueError("Coordinates appear to be null island (0,0)")
+
+    def _handle_edge_cases(self, latitude: float, longitude: float) -> Optional[Dict[str, Any]]:
+        """Handle special coordinate cases."""
+        edge_cases = []
+
+        # Ocean coordinates
+        if self._is_ocean_coordinate(latitude, longitude):
+            edge_cases.append("ocean_coordinate")
+            return {
+                "zone_id": "ocean",
+                "confidence": 0.1,
+                "hardiness_zone": None,
+                "koppen_class": "Ocean",
+                "edge_cases": edge_cases,
+                "message": "Coordinates appear to be over ocean - limited agricultural relevance"
+            }
+
+        # Polar regions
+        if abs(latitude) > 66.5:  # Arctic/Antarctic circles
+            edge_cases.append("polar_region")
+            return {
+                "zone_id": "polar",
+                "confidence": 0.3,
+                "hardiness_zone": "1" if latitude > 0 else None,
+                "koppen_class": "ET" if latitude > 0 else "EF",
+                "edge_cases": edge_cases,
+                "message": "Polar region - limited agricultural potential"
+            }
+
+        return None
+
+    def _get_grid_key(self, latitude: float, longitude: float) -> str:
+        """Generate grid key for caching."""
+        grid_lat = round(latitude / self.grid_precision) * self.grid_precision
+        grid_lng = round(longitude / self.grid_precision) * self.grid_precision
+        return f"{grid_lat:.1f},{grid_lng:.1f}"
+
+    async def _multi_source_detection(self, latitude: float, longitude: float) -> Dict[str, Any]:
+        """Perform detection using multiple data sources."""
+        sources_used = []
+        all_zones = []
+
+        try:
+            # USDA Hardiness Zone
+            usda_zone = await self.service.usda_provider.get_zone(latitude, longitude)
+            if usda_zone:
+                all_zones.append(usda_zone)
+                sources_used.append("USDA")
+        except Exception as e:
+            logger.warning(f"USDA provider failed: {e}")
+
+        try:
+            # Köppen Classification
+            koppen_zone = await self.service.koppen_provider.get_zone(latitude, longitude)
+            if koppen_zone:
+                all_zones.append(koppen_zone)
+                sources_used.append("Köppen")
+        except Exception as e:
+            logger.warning(f"Köppen provider failed: {e}")
+
+        # Select primary zone (highest confidence)
+        primary_zone = max(all_zones, key=lambda z: z.confidence) if all_zones else None
+
+        return {
+            "primary_zone": primary_zone,
+            "all_zones": all_zones,
+            "sources": sources_used
+        }
+
+    def _calculate_confidence(self, detection_result: Dict[str, Any], latitude: float, longitude: float) -> float:
+        """Calculate confidence score based on multiple factors."""
+        base_confidence = 0.5
+
+        # Factor 1: Number of data sources
+        num_sources = len(detection_result["sources"])
+        source_bonus = min(num_sources * 0.2, 0.4)
+
+        # Factor 2: Data source reliability
+        reliability_bonus = 0.0
+        if "USDA" in detection_result["sources"]:
+            reliability_bonus += 0.3
+        if "Köppen" in detection_result["sources"]:
+            reliability_bonus += 0.2
+
+        # Factor 3: Geographic factors
+        geo_penalty = 0.0
+        if abs(latitude) > 60:  # High latitudes less reliable
+            geo_penalty = 0.1
+        if self._is_border_region(latitude, longitude):
+            geo_penalty += 0.1
+
+        final_confidence = min(base_confidence + source_bonus + reliability_bonus - geo_penalty, 1.0)
+        return max(final_confidence, 0.1)  # Minimum confidence
+
+    def _is_ocean_coordinate(self, latitude: float, longitude: float) -> bool:
+        """Check if coordinates are over ocean (simplified)."""
+        # Simplified ocean detection - in production, use coastline data
+        major_land_masses = [
+            # North America
+            (25, 70, -170, -50),
+            # Europe/Asia
+            (35, 80, -10, 180),
+            # Africa
+            (-35, 40, -20, 55),
+            # South America
+            (-60, 15, -85, -30),
+            # Australia
+            (-45, -10, 110, 160)
+        ]
+
+        for min_lat, max_lat, min_lng, max_lng in major_land_masses:
+            if min_lat <= latitude <= max_lat and min_lng <= longitude <= max_lng:
+                return False
+        return True
+
+    def _is_border_region(self, latitude: float, longitude: float) -> bool:
+        """Check if coordinates are near climate zone borders."""
+        # Simplified border detection
+        # In production, use actual zone boundary data
+        return False
+
+    async def _get_nearby_references(self, latitude: float, longitude: float) -> List[Dict[str, Any]]:
+        """Get nearby reference points for validation."""
+        # Find nearby weather stations, agricultural research stations, etc.
+        return []
 ```
 
-**API Specifications**:
-```yaml
-POST /api/v1/climate-zones/detect
-  body:
-    latitude: float
-    longitude: float
-    include_details: boolean (default: false)
-  response:
-    zone_id: string
-    confidence: float (0.0-1.0)
-    hardiness_zone: string
-    koppen_class: string
-    details: object (if requested)
+**2. Enhanced API Endpoint** (`api/routes.py` additions):
+```python
+@router.post("/detect", response_model=Dict[str, Any])
+async def detect_climate_zone(
+    request: CoordinateRequest,
+    include_details: bool = Query(False, description="Include detailed analysis"),
+    service: ClimateZoneService = Depends(get_climate_service)
+):
+    """
+    Advanced coordinate-based climate zone detection.
+
+    This endpoint provides enhanced detection with confidence scoring,
+    edge case handling, and detailed analysis for agricultural planning.
+
+    Features:
+    - Multi-source data validation
+    - Confidence scoring based on data quality
+    - Edge case handling (ocean, polar regions)
+    - Grid-based caching for performance
+    - Detailed analysis including nearby references
+    """
+    try:
+        detector = ClimateZoneDetector(service)
+        result = await detector.detect_by_coordinates(
+            request.latitude,
+            request.longitude,
+            include_details
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Detection error: {e}")
+        raise HTTPException(status_code=500, detail="Climate zone detection failed")
 ```
 
 ---

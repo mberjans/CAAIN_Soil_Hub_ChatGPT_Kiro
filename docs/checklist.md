@@ -1,18 +1,57 @@
 # CAAIN Soil Hub - Master Implementation Checklist
 
-This master checklist combines all feature implementation tasks with unique identifiers for comprehensive project tracking.
+This master checklist combines all feature implementation tasks with unique identifiers for comprehensive project tracking. Enhanced for AI coding agent independence with detailed implementation guidance.
+
+## AI Agent Implementation Notes
+
+**Enhanced Task Descriptions**: Each task now includes:
+- ✅ **Implementation Steps**: Specific commands and code snippets to execute
+- ✅ **Configuration Details**: Environment variables, dependencies, and setup requirements
+- ✅ **Validation Criteria**: Success metrics and testing procedures
+- ✅ **Integration Notes**: Service connections and deployment considerations
+- ✅ **Agricultural Context**: Domain-specific requirements and safety considerations
+
+**Usage for AI Agents**: Follow the implementation steps exactly, validate results against criteria, and flag any agricultural domain logic for expert review when confidence is low.
 
 ## Climate Zone Detection
 
 ### TICKET-001_climate-zone-detection-1. Climate Zone Data Service Implementation
 - [x] TICKET-001_climate-zone-detection-1.1 Create climate zone data service in data-integration
+  **Implementation**: Execute `mkdir -p services/data-integration/climate_zones/{providers,tests}` and create base service structure with models.py, service.py, cache.py, exceptions.py following the pattern in TICKET-001 specification
+  **Validation**: Service directory structure created with all required files
+  **Testing**: Run `python -m pytest services/data-integration/climate_zones/tests/ -v`
+
 - [x] TICKET-001_climate-zone-detection-1.2 Integrate with USDA Plant Hardiness Zone API
+  **Implementation**: Create USDAProvider class in providers/usda_provider.py with aiohttp client, implement get_zone() method with error handling and timeout (10s), add API endpoint https://phzmapi.org/{lat}/{lng}.json
+  **Configuration**: Set USDA_API_BASE_URL="https://phzmapi.org" in environment
+  **Validation**: Test API call returns valid ClimateZoneData object with hardiness_zone field
+  **Testing**: Mock API responses and test error scenarios
+
 - [x] TICKET-001_climate-zone-detection-1.3 Add Köppen climate classification support
+  **Implementation**: Create KoppenProvider class in providers/koppen_provider.py, implement Köppen climate classification lookup with fallback data, integrate with main service
+  **Data**: Include Köppen classification reference data in database or static files
+  **Validation**: Service returns Köppen class (e.g., "Dfa", "Cfb") for test coordinates
+  **Testing**: Validate Köppen classifications for known climate regions
 
 ### TICKET-002_climate-zone-detection-2. Auto-Detection Logic Implementation
 - [x] TICKET-002_climate-zone-detection-2.1 Implement coordinate-based climate zone detection
+  **Implementation**: Create ClimateZoneDetector class with detect_by_coordinates() method, add coordinate validation (-90≤lat≤90, -180≤lng≤180), implement grid-based caching (0.1° precision), handle edge cases (ocean, polar regions)
+  **Code**: Follow TICKET-002 specification for multi-source detection with confidence scoring
+  **Validation**: Test with coordinates (41.8781, -87.6298) returns valid zone with confidence >0.7
+  **Testing**: Test edge cases including (0,0), (90,0), ocean coordinates
+
 - [x] TICKET-002_climate-zone-detection-2.2 Create climate zone inference from weather data
+  **Implementation**: Add weather data integration to ClimateZoneDetector, use temperature patterns to infer hardiness zones, implement fallback logic when direct API fails
+  **Integration**: Connect with existing weather service APIs, use historical temperature data for zone inference
+  **Validation**: Inference accuracy >80% compared to USDA API results
+  **Testing**: Test with weather stations data from known climate zones
+
 - [x] TICKET-002_climate-zone-detection-2.3 Implement address-based climate zone lookup
+  **Implementation**: Add geocoding service integration (Google Maps/OpenStreetMap), convert addresses to coordinates, apply coordinate-based detection
+  **Dependencies**: Install geocoding library: `pip install geopy`
+  **Configuration**: Set GEOCODING_API_KEY in environment variables
+  **Validation**: Address "Chicago, IL" resolves to correct climate zone
+  **Testing**: Test various address formats and international addresses
 
 ### TICKET-001_climate-zone-detection-3. Manual Climate Zone Specification
 - [x] TICKET-001_climate-zone-detection-3.1 Create climate zone selection interface
