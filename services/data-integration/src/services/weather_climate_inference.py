@@ -89,9 +89,9 @@ class WeatherClimateInference:
             
         except Exception as e:
             logger.error(f"Error inferring climate from weather data: {str(e)}")
-            return self._get_fallback_inference(latitude, longitude)    
-   
- def _analyze_weather_patterns(self, weather_data: List[Dict]) -> WeatherPattern:
+            return self._get_fallback_inference(latitude, longitude)
+    
+    def _analyze_weather_patterns(self, weather_data: List[Dict]) -> WeatherPattern:
         """Analyze weather patterns from historical data."""
         
         # Extract temperature and precipitation data

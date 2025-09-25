@@ -13,6 +13,8 @@ from datetime import datetime
 from .climate_zone_service import ClimateZone, ClimateZoneType, ClimateDetectionResult
 from .usda_zone_api import USDAZoneAPI, USDAZoneData
 from .koppen_climate_service import KoppenClimateService, ClimateAnalysis
+from .weather_climate_inference import WeatherClimateInference, ClimateInference
+from .weather_service import WeatherService
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +46,8 @@ class CoordinateClimateDetector:
     def __init__(self):
         self.usda_api = USDAZoneAPI()
         self.koppen_service = KoppenClimateService()
+        self.weather_inference = WeatherClimateInference()
+        self.weather_service = WeatherService()
         self.elevation_cache = {}
         self.climate_cache = {}
         
@@ -94,8 +98,8 @@ class CoordinateClimateDetector:
                     accuracy="unknown"
                 )
             
-            # Detect USDA hardiness zone
-            usda_zone = await self._detect_usda_zone_with_adjustments(
+            # Detect USDA hardiness zone with weather fallback
+            usda_zone = await self._detect_usda_zone_with_weather_fallback(
                 latitude, longitude, elevation_ft
             )
             
@@ -208,6 +212,90 @@ class CoordinateClimateDetector:
         # Default elevation for other regions
         return 500
     
+    async def _detect_usda_zone_with_weather_fallback(
+        self,
+        latitude: float,
+        longitude: float,
+        elevation_ft: float
+    ) -> Optional[USDAZoneData]:
+        """Detect USDA zone with weather data fallback when API fails."""
+        
+        try:
+            # First try the standard USDA zone detection with adjustments
+            usda_zone = await self._detect_usda_zone_with_adjustments(latitude, longitude, elevation_ft)
+            
+            # If we get a low-confidence result or the API fails, try weather inference
+            if not usda_zone or (hasattr(usda_zone, 'confidence') and usda_zone.confidence < 0.6):
+                logger.info(f"USDA API result has low confidence, attempting weather-based inference")
+                weather_zone = await self._infer_zone_from_weather(latitude, longitude)
+                
+                if weather_zone and weather_zone.confidence_score > 0.8:
+                    # Convert weather inference to USDAZoneData format
+                    usda_zone = self._convert_weather_inference_to_usda(weather_zone, latitude, longitude)
+                    logger.info(f"Using weather-inferred USDA zone: {usda_zone.zone}")
+            
+            return usda_zone
+            
+        except Exception as e:
+            logger.error(f"Error in weather fallback detection: {str(e)}")
+            # Try weather inference as last resort
+            try:
+                weather_zone = await self._infer_zone_from_weather(latitude, longitude)
+                if weather_zone:
+                    return self._convert_weather_inference_to_usda(weather_zone, latitude, longitude)
+            except Exception as weather_e:
+                logger.error(f"Weather inference also failed: {str(weather_e)}")
+            
+            return self._get_fallback_usda_zone(latitude, longitude)
+    
+    async def _infer_zone_from_weather(
+        self,
+        latitude: float,
+        longitude: float
+    ) -> Optional[ClimateInference]:
+        """Infer climate zone from historical weather data."""
+        
+        try:
+            # Get historical weather data for the location
+            weather_data = await self.weather_service.get_historical_weather(
+                latitude, longitude, years=3
+            )
+            
+            if not weather_data or len(weather_data) < 365:  # Need at least 1 year of data
+                logger.warning(f"Insufficient weather data for location {latitude}, {longitude}")
+                return None
+            
+            # Use weather climate inference service
+            climate_inference = await self.weather_inference.infer_climate_from_weather(
+                weather_data, latitude, longitude
+            )
+            
+            return climate_inference
+            
+        except Exception as e:
+            logger.error(f"Error inferring climate from weather: {str(e)}")
+            return None
+    
+    def _convert_weather_inference_to_usda(
+        self,
+        weather_inference: ClimateInference,
+        latitude: float,
+        longitude: float
+    ) -> USDAZoneData:
+        """Convert weather climate inference to USDA zone format."""
+        
+        zone = weather_inference.inferred_usda_zone
+        temp_range = self._get_zone_temperature_range(zone)
+        
+        return USDAZoneData(
+            zone=zone,
+            temperature_range=temp_range,
+            description=f"USDA Hardiness Zone {zone} (Weather-inferred)",
+            coordinates=(latitude, longitude),
+            confidence=weather_inference.confidence_score,
+            source="weather_inference"
+        )
+
     async def _detect_usda_zone_with_adjustments(
         self,
         latitude: float,
