@@ -1,0 +1,2497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Rotation Planning - CAAIN Soil Hub Mobile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .mobile-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #2c5530 0%, #4a7c59 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .rotation-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #28a745;
+        }
+        
+        .rotation-status-good {
+            border-left-color: #28a745;
+        }
+        
+        .rotation-status-warning {
+            border-left-color: #ffc107;
+        }
+        
+        .rotation-status-critical {
+            border-left-color: #dc3545;
+        }
+        
+        .rotation-status-info {
+            border-left-color: #17a2b8;
+        }
+        
+        .quick-action-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.25rem;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .quick-action-btn:hover {
+            background: #218838;
+            color: white;
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        
+        .status-excellent {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-good {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        .status-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .status-critical {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .input-group-mobile {
+            margin-bottom: 1rem;
+        }
+        
+        .input-group-mobile label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        
+        .input-group-mobile input,
+        .input-group-mobile select,
+        .input-group-mobile textarea {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            padding: 0.75rem;
+        }
+        
+        .tab-content {
+            padding: 1rem 0;
+        }
+        
+        .nav-tabs .nav-link {
+            border-radius: 8px 8px 0 0;
+            margin-right: 0.25rem;
+            font-size: 0.85rem;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .crop-timeline {
+            display: flex;
+            overflow-x: auto;
+            padding: 1rem 0;
+            margin: 1rem 0;
+            background: #e8f5e8;
+            border-radius: 8px;
+        }
+        
+        .timeline-year {
+            min-width: 120px;
+            margin: 0 0.5rem;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #28a745;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .timeline-year.current {
+            background: #28a745;
+            color: white;
+        }
+        
+        .crop-selector {
+            margin-top: 0.5rem;
+        }
+        
+        .crop-option {
+            display: inline-block;
+            margin: 0.1rem;
+            padding: 0.25rem 0.5rem;
+            background: #e9ecef;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+        
+        .crop-option.selected {
+            background: #28a745;
+            color: white;
+        }
+        
+        .crop-option:hover {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .field-selection-card {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.25rem 0;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .field-selection-card.selected {
+            border-color: #28a745;
+            background: #e8f5e8;
+        }
+        
+        .field-selection-card:hover {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container {
+            height: 200px;
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #dee2e6;
+        }
+        
+        .goal-constraint-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.25rem 0;
+        }
+        
+        .gps-info {
+            background: #e3f2fd;
+            border-radius: 8px;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            font-size: 0.85rem;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .alert-item {
+            background: white;
+            border-left: 4px solid #ffc107;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border-radius: 0 8px 8px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .alert-item:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .alert-item.read {
+            opacity: 0.7;
+            border-left-color: #6c757d;
+        }
+        
+        .alert-item.unread {
+            border-left-color: #007bff;
+            background: #f8f9ff;
+        }
+        
+        .alert-item.priority-high {
+            border-left-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .alert-item.priority-medium {
+            border-left-color: #ffc107;
+            background: #fffef5;
+        }
+        
+        .alert-item.priority-low {
+            border-left-color: #28a745;
+            background: #f5fff5;
+        }
+        
+        .notifications-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .notification-actions {
+            display: none;
+            gap: 0.25rem;
+        }
+        
+        .alert-item:hover .notification-actions {
+            display: flex;
+        }
+        
+        .notification-timestamp {
+            font-size: 0.7rem;
+            color: #6c757d;
+        }
+        
+        .notification-category {
+            background: #e9ecef;
+            color: #495057;
+            padding: 0.1rem 0.4rem;
+            border-radius: 10px;
+            font-size: 0.65rem;
+            font-weight: 500;
+        }
+        
+        .notification-category.planning { background: #d1ecf1; color: #0c5460; }
+        .notification-category.nitrogen { background: #d4edda; color: #155724; }
+        .notification-category.weather { background: #fff3cd; color: #856404; }
+        .notification-category.field { background: #f8d7da; color: #721c24; }
+        
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.25rem;
+            text-align: center;
+            border: 1px solid #dee2e6;
+        }
+        
+        .metric-value {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .metric-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        
+        .progress-ring {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto;
+        }
+        
+        .progress-ring-circle {
+            fill: none;
+            stroke: #e9ecef;
+            stroke-width: 4;
+        }
+        
+        .progress-ring-progress {
+            fill: none;
+            stroke: #28a745;
+            stroke-width: 4;
+            stroke-linecap: round;
+            transition: stroke-dasharray 0.5s;
+        }
+        
+        .btn-sm-mobile {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+        
+        .rotation-timeline-mobile {
+            display: flex;
+            overflow-x: auto;
+            padding: 0.5rem;
+            gap: 0.5rem;
+        }
+        
+        .timeline-item {
+            min-width: 100px;
+            text-align: center;
+            background: white;
+            border-radius: 8px;
+            padding: 0.75rem;
+            border: 1px solid #dee2e6;
+            flex-shrink: 0;
+        }
+        
+        .offline-indicator {
+            background: #dc3545;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .analysis-panel {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        }
+        
+        .risk-indicator {
+            padding: 0.125rem 0.375rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+        
+        .risk-low {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .risk-medium {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .risk-high {
+            background: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Offline Indicator -->
+        <div class="offline-indicator" id="offlineIndicator">
+            <i class="fas fa-wifi"></i> Offline Mode
+        </div>
+        
+        <!-- Header -->
+        <div class="header-section">
+            <h4><i class="fas fa-sync-alt"></i> Crop Rotation Planning</h4>
+            <p class="mb-0">Plan optimal crop rotations for sustainable farming</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="container-fluid p-2">
+            <ul class="nav nav-tabs" id="rotationTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="dashboard-tab" data-bs-toggle="tab" 
+                            data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="planning-tab" data-bs-toggle="tab" 
+                            data-bs-target="#planning" type="button" role="tab">
+                        <i class="fas fa-seedling"></i> Planning
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analysis-tab" data-bs-toggle="tab" 
+                            data-bs-target="#analysis" type="button" role="tab">
+                        <i class="fas fa-chart-bar"></i> Analysis
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="fields-tab" data-bs-toggle="tab" 
+                            data-bs-target="#fields" type="button" role="tab">
+                        <i class="fas fa-map-marked-alt"></i> Fields
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="rotationTabContent">
+                <!-- Dashboard Tab -->
+                <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                    <!-- Current Rotation Status -->
+                    <div class="rotation-card rotation-status-good">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">North Field Rotation</h6>
+                                <p class="mb-1">Year 2 of 4: Soybeans <span class="status-badge status-good">On Track</span></p>
+                                <small class="text-muted">Next: Winter Wheat (2025)</small>
+                            </div>
+                            <div class="text-end">
+                                <i class="fas fa-check-circle text-success fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="rotation-timeline-mobile">
+                            <div class="timeline-item">
+                                <div class="fw-bold text-success">2023</div>
+                                <div class="small">Corn</div>
+                                <i class="fas fa-check text-success"></i>
+                            </div>
+                            <div class="timeline-item" style="background: #28a745; color: white;">
+                                <div class="fw-bold">2024</div>
+                                <div class="small">Soybeans</div>
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="fw-bold">2025</div>
+                                <div class="small">W. Wheat</div>
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="fw-bold">2026</div>
+                                <div class="small">Alfalfa</div>
+                                <i class="fas fa-calendar-alt"></i>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <button class="quick-action-btn btn-success">
+                                    <i class="fas fa-edit"></i> Modify Plan
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="quick-action-btn btn-info">
+                                    <i class="fas fa-eye"></i> View Details
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="rotation-card rotation-status-warning">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">South Field Rotation</h6>
+                                <p class="mb-1">Year 3 of 3: Corn <span class="status-badge status-warning">Needs Planning</span></p>
+                                <small class="text-muted">Plan 2025 rotation now</small>
+                            </div>
+                            <div class="text-end">
+                                <i class="fas fa-exclamation-triangle text-warning fa-2x"></i>
+                            </div>
+                        </div>
+                        <div class="rotation-timeline-mobile">
+                            <div class="timeline-item">
+                                <div class="fw-bold text-success">2022</div>
+                                <div class="small">Soybeans</div>
+                                <i class="fas fa-check text-success"></i>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="fw-bold text-success">2023</div>
+                                <div class="small">Wheat</div>
+                                <i class="fas fa-check text-success"></i>
+                            </div>
+                            <div class="timeline-item" style="background: #ffc107; color: #000;">
+                                <div class="fw-bold">2024</div>
+                                <div class="small">Corn</div>
+                                <i class="fas fa-seedling"></i>
+                            </div>
+                            <div class="timeline-item" style="border: 2px dashed #ffc107;">
+                                <div class="fw-bold">2025</div>
+                                <div class="small">?</div>
+                                <i class="fas fa-question text-warning"></i>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <button class="quick-action-btn btn-warning">
+                                    <i class="fas fa-plus"></i> Create 2025 Plan
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Stats -->
+                    <div class="rotation-card">
+                        <h6><i class="fas fa-chart-pie"></i> Farm Overview</h6>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">5</div>
+                                    <div class="metric-label">Active Fields</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">3</div>
+                                    <div class="metric-label">Planned Rotations</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-card">
+                                    <div class="metric-value">85%</div>
+                                    <div class="metric-label">Avg Score</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sustainability Score -->
+                    <div class="rotation-card">
+                        <h6><i class="fas fa-leaf"></i> Sustainability Overview</h6>
+                        <div class="row align-items-center">
+                            <div class="col-4">
+                                <svg class="progress-ring" width="60" height="60">
+                                    <circle class="progress-ring-circle" cx="30" cy="30" r="26"></circle>
+                                    <circle class="progress-ring-progress" cx="30" cy="30" r="26" 
+                                            style="stroke-dasharray: 130 163;"></circle>
+                                </svg>
+                                <div class="text-center mt-1">
+                                    <small class="fw-bold text-success">82/100</small>
+                                </div>
+                            </div>
+                            <div class="col-8">
+                                <div class="small mb-1">
+                                    <strong>Carbon Sequestration:</strong> <span class="text-success">Good</span>
+                                </div>
+                                <div class="small mb-1">
+                                    <strong>Soil Health:</strong> <span class="text-success">Excellent</span>
+                                </div>
+                                <div class="small">
+                                    <strong>Biodiversity:</strong> <span class="text-info">Good</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alerts & Notifications -->
+                    <div class="rotation-card">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0"><i class="fas fa-bell"></i> Recent Alerts</h6>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button class="btn btn-outline-primary btn-sm-mobile" id="refreshNotificationsBtn">
+                                    <i class="fas fa-sync"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm-mobile" id="markAllReadBtn">
+                                    <i class="fas fa-check-double"></i>
+                                </button>
+                                <button class="btn btn-outline-info btn-sm-mobile" id="notificationSettingsBtn">
+                                    <i class="fas fa-cog"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Dynamic Notifications Container -->
+                        <div id="notificationsContainer" class="notifications-list">
+                            <div class="text-center py-3 text-muted" id="noNotificationsMessage">
+                                <i class="fas fa-bell-slash"></i>
+                                <br>Loading notifications...
+                            </div>
+                        </div>
+                        
+                        <!-- Notification Badge -->
+                        <div class="text-center mt-2">
+                            <span id="notificationBadge" class="badge bg-success">0 unread</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Planning Tab -->
+                <div class="tab-pane fade" id="planning" role="tabpanel">
+                    <!-- Field Selection -->
+                    <div class="rotation-card">
+                        <h6><i class="fas fa-map-marked-alt"></i> Select Field</h6>
+                        <div id="fieldSelectionList">
+                            <div class="field-selection-card" data-field-id="north_field">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>North Field</strong>
+                                        <div class="small text-muted">125 acres • Corn-Soy-Wheat rotation</div>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-muted"></i>
+                                </div>
+                            </div>
+                            <div class="field-selection-card selected" data-field-id="south_field">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>South Field</strong>
+                                        <div class="small text-muted">85 acres • Needs 2025 plan</div>
+                                    </div>
+                                    <i class="fas fa-check-circle text-success"></i>
+                                </div>
+                            </div>
+                            <div class="field-selection-card" data-field-id="east_field">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>East Field</strong>
+                                        <div class="small text-muted">200 acres • Continuous corn</div>
+                                    </div>
+                                    <i class="fas fa-chevron-right text-muted"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rotation Goals -->
+                    <div class="rotation-card">
+                        <h6><i class="fas fa-bullseye"></i> Rotation Goals</h6>
+                        <form id="rotationGoalsForm">
+                            <div class="goal-constraint-item">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="soilHealthGoal" checked>
+                                    <label class="form-check-label fw-bold" for="soilHealthGoal">
+                                        Improve Soil Health
+                                    </label>
+                                </div>
+                                <div class="small text-muted">Increase organic matter and soil structure</div>
+                                <div class="mt-2">
+                                    <label class="small">Priority:</label>
+                                    <input type="range" class="form-range" min="1" max="10" value="8" id="soilHealthPriority">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>Low</span><span>High</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="goal-constraint-item">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="profitGoal" checked>
+                                    <label class="form-check-label fw-bold" for="profitGoal">
+                                        Maximize Profitability
+                                    </label>
+                                </div>
+                                <div class="small text-muted">Optimize economic returns per acre</div>
+                                <div class="mt-2">
+                                    <label class="small">Priority:</label>
+                                    <input type="range" class="form-range" min="1" max="10" value="9" id="profitPriority">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>Low</span><span>High</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="goal-constraint-item">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="sustainabilityGoal">
+                                    <label class="form-check-label fw-bold" for="sustainabilityGoal">
+                                        Enhance Sustainability
+                                    </label>
+                                </div>
+                                <div class="small text-muted">Reduce environmental impact</div>
+                                <div class="mt-2">
+                                    <label class="small">Priority:</label>
+                                    <input type="range" class="form-range" min="1" max="10" value="6" id="sustainabilityPriority">
+                                    <div class="d-flex justify-content-between small text-muted">
+                                        <span>Low</span><span>High</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Crop Timeline Planning -->
+                    <div class="rotation-card">
+                        <h6><i class="fas fa-calendar-alt"></i> Plan Rotation Timeline</h6>
+                        <div class="input-group-mobile">
+                            <label>Planning Horizon</label>
+                            <select class="form-control" id="planningHorizon">
+                                <option value="3">3 Years</option>
+                                <option value="4" selected>4 Years</option>
+                                <option value="5">5 Years</option>
+                                <option value="6">6 Years</option>
+                            </select>
+                        </div>
+
+                        <div class="crop-timeline" id="cropTimeline">
+                            <div class="timeline-year">
+                                <div class="fw-bold">2025</div>
+                                <div class="crop-selector">
+                                    <select class="form-select form-select-sm" id="crop2025">
+                                        <option value="">Select Crop</option>
+                                        <option value="corn">Corn</option>
+                                        <option value="soybeans" selected>Soybeans</option>
+                                        <option value="wheat">Winter Wheat</option>
+                                        <option value="alfalfa">Alfalfa</option>
+                                        <option value="oats">Oats</option>
+                                    </select>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small text-success">
+                                        <i class="fas fa-leaf"></i> N-Fixing
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="timeline-year">
+                                <div class="fw-bold">2026</div>
+                                <div class="crop-selector">
+                                    <select class="form-select form-select-sm" id="crop2026">
+                                        <option value="">Select Crop</option>
+                                        <option value="corn" selected>Corn</option>
+                                        <option value="soybeans">Soybeans</option>
+                                        <option value="wheat">Winter Wheat</option>
+                                        <option value="alfalfa">Alfalfa</option>
+                                        <option value="oats">Oats</option>
+                                    </select>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small text-info">
+                                        <i class="fas fa-dollar-sign"></i> High Value
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="timeline-year">
+                                <div class="fw-bold">2027</div>
+                                <div class="crop-selector">
+                                    <select class="form-select form-select-sm" id="crop2027">
+                                        <option value="">Select Crop</option>
+                                        <option value="corn">Corn</option>
+                                        <option value="soybeans">Soybeans</option>
+                                        <option value="wheat" selected>Winter Wheat</option>
+                                        <option value="alfalfa">Alfalfa</option>
+                                        <option value="oats">Oats</option>
+                                    </select>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small text-warning">
+                                        <i class="fas fa-seedling"></i> Cover Crop
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="timeline-year">
+                                <div class="fw-bold">2028</div>
+                                <div class="crop-selector">
+                                    <select class="form-select form-select-sm" id="crop2028">
+                                        <option value="">Select Crop</option>
+                                        <option value="corn">Corn</option>
+                                        <option value="soybeans">Soybeans</option>
+                                        <option value="wheat">Winter Wheat</option>
+                                        <option value="alfalfa" selected>Alfalfa</option>
+                                        <option value="oats">Oats</option>
+                                    </select>
+                                </div>
+                                <div class="mt-2">
+                                    <div class="small text-success">
+                                        <i class="fas fa-leaf"></i> Perennial
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Generate Plan Button -->
+                    <div class="rotation-card">
+                        <button class="quick-action-btn" id="generatePlanBtn">
+                            <i class="fas fa-cogs"></i> Generate Optimal Plan
+                        </button>
+                        <button class="quick-action-btn btn-outline-secondary mt-2" id="comparePlansBtn">
+                            <i class="fas fa-balance-scale"></i> Compare Scenarios
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Analysis Tab -->
+                <div class="tab-pane fade" id="analysis" role="tabpanel">
+                    <!-- Current Plan Analysis -->
+                    <div class="analysis-panel">
+                        <h6><i class="fas fa-chart-line"></i> Rotation Benefits Analysis</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="h4 text-success">87%</div>
+                                    <small>Soil Health Score</small>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="text-center">
+                                    <div class="h4 text-info">92%</div>
+                                    <small>Economic Score</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="small mb-1">
+                                <strong>Nitrogen Fixation:</strong> 145 lbs/acre annually
+                            </div>
+                            <div class="small mb-1">
+                                <strong>Pest Management:</strong> 65% reduction in pressure
+                            </div>
+                            <div class="small">
+                                <strong>Yield Stability:</strong> 12% improvement expected
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Economic Projections -->
+                    <div class="analysis-panel">
+                        <h6><i class="fas fa-dollar-sign"></i> Economic Projections</h6>
+                        <div class="chart-container">
+                            <canvas id="economicChart" width="300" height="150"></canvas>
+                        </div>
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="metric-value text-success">$450</div>
+                                <div class="metric-label">Avg Profit/Acre</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-value text-info">$1,800</div>
+                                <div class="metric-label">Total Net/Year</div>
+                            </div>
+                            <div class="col-4">
+                                <div class="metric-value text-primary">8.2%</div>
+                                <div class="metric-label">ROI</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Risk Assessment -->
+                    <div class="analysis-panel">
+                        <h6><i class="fas fa-shield-alt"></i> Risk Assessment</h6>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small">Weather Risk</span>
+                                <span class="risk-indicator risk-low">Low</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small">Market Volatility</span>
+                                <span class="risk-indicator risk-medium">Medium</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small">Pest/Disease Pressure</span>
+                                <span class="risk-indicator risk-low">Low</span>
+                            </div>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="small">Soil Health Degradation</span>
+                                <span class="risk-indicator risk-low">Low</span>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-outline-primary btn-sm w-100" id="fullRiskAnalysisBtn">
+                                <i class="fas fa-search"></i> Detailed Risk Analysis
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sustainability Metrics -->
+                    <div class="analysis-panel">
+                        <h6><i class="fas fa-leaf"></i> Sustainability Metrics</h6>
+                        <div class="chart-container">
+                            <canvas id="sustainabilityChart" width="300" height="150"></canvas>
+                        </div>
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="small mb-1">
+                                    <strong>Carbon Sequestration:</strong><br>
+                                    2.3 tons CO₂/acre/year
+                                </div>
+                                <div class="small">
+                                    <strong>Water Efficiency:</strong><br>
+                                    15% improvement
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="small mb-1">
+                                    <strong>Biodiversity Index:</strong><br>
+                                    7.2/10
+                                </div>
+                                <div class="small">
+                                    <strong>Erosion Reduction:</strong><br>
+                                    28% decrease
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fields Tab -->
+                <div class="tab-pane fade" id="fields" role="tabpanel">
+                    <!-- GPS Location -->
+                    <div class="rotation-card">
+                        <h6><i class="fas fa-map-marker-alt"></i> Current Location</h6>
+                        <div class="gps-info">
+                            <i class="fas fa-crosshairs"></i> 
+                            <span id="gpsLocation">Getting location...</span>
+                            <button class="btn btn-sm btn-outline-primary float-end" onclick="getLocation()">
+                                <i class="fas fa-sync"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Field Management -->
+                    <div class="rotation-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6><i class="fas fa-map"></i> Field Management</h6>
+                            <button class="btn btn-sm btn-primary" id="addFieldBtn">
+                                <i class="fas fa-plus"></i> Add Field
+                            </button>
+                        </div>
+                        
+                        <div class="field-selection-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>North Field</strong>
+                                    <div class="small text-muted">125.5 acres • Loam soil</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary" data-field="north_field">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="small">
+                                <span class="status-badge status-good">Active Rotation</span>
+                                <span class="ms-2">Current: Soybeans (Year 2/4)</span>
+                            </div>
+                        </div>
+
+                        <div class="field-selection-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>South Field</strong>
+                                    <div class="small text-muted">85.2 acres • Clay loam</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary" data-field="south_field">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="small">
+                                <span class="status-badge status-warning">Planning Needed</span>
+                                <span class="ms-2">2025 rotation required</span>
+                            </div>
+                        </div>
+
+                        <div class="field-selection-card">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div>
+                                    <strong>East Field</strong>
+                                    <div class="small text-muted">200.0 acres • Sandy loam</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary" data-field="east_field">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </div>
+                            <div class="small">
+                                <span class="status-badge status-critical">High Risk</span>
+                                <span class="ms-2">Continuous corn (3 years)</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field History -->
+                    <div class="rotation-card">
+                        <h6><i class="fas fa-history"></i> Field History</h6>
+                        <div class="input-group-mobile">
+                            <label>Select Field for History</label>
+                            <select class="form-control" id="fieldHistorySelect">
+                                <option value="north_field">North Field</option>
+                                <option value="south_field" selected>South Field</option>
+                                <option value="east_field">East Field</option>
+                            </select>
+                        </div>
+                        
+                        <div id="fieldHistoryDisplay">
+                            <div class="table-responsive">
+                                <table class="table table-sm">
+                                    <thead>
+                                        <tr>
+                                            <th>Year</th>
+                                            <th>Crop</th>
+                                            <th>Yield</th>
+                                            <th>Profit</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td>2024</td>
+                                            <td>Corn</td>
+                                            <td>185 bu/ac</td>
+                                            <td>$485/ac</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2023</td>
+                                            <td>Wheat</td>
+                                            <td>68 bu/ac</td>
+                                            <td>$325/ac</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2022</td>
+                                            <td>Soybeans</td>
+                                            <td>52 bu/ac</td>
+                                            <td>$410/ac</td>
+                                        </tr>
+                                        <tr>
+                                            <td>2021</td>
+                                            <td>Corn</td>
+                                            <td>178 bu/ac</td>
+                                            <td>$465/ac</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Mobile Field Mapping -->
+                    <div class="rotation-card">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6><i class="fas fa-map-marked-alt"></i> Field Mapping</h6>
+                            <button class="btn btn-sm btn-success" id="startMappingBtn" onclick="startFieldMapping()">
+                                <i class="fas fa-play"></i> Start Mapping
+                            </button>
+                        </div>
+                        
+                        <!-- Mapping Status -->
+                        <div id="mappingStatus" class="alert alert-info d-none">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="fas fa-crosshairs"></i> <span id="mappingStatusText">Ready to map</span>
+                                </div>
+                                <div>
+                                    <span class="badge bg-primary" id="pointsCollected">0 points</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active Mapping Controls -->
+                        <div id="mappingControls" class="d-none">
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <button class="btn btn-primary w-100" id="addPointBtn" onclick="addBoundaryPoint()">
+                                        <i class="fas fa-plus-circle"></i> Add Point
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button class="btn btn-warning w-100" id="finishMappingBtn" onclick="finishFieldMapping()">
+                                        <i class="fas fa-check-circle"></i> Finish
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <button class="btn btn-outline-secondary w-100" onclick="undoLastPoint()">
+                                        <i class="fas fa-undo"></i> Undo
+                                    </button>
+                                </div>
+                                <div class="col-6">
+                                    <button class="btn btn-outline-danger w-100" onclick="cancelMapping()">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Current Position Info -->
+                        <div class="mapping-info">
+                            <div class="small text-muted mb-2">
+                                <i class="fas fa-location-arrow"></i> Current Position
+                            </div>
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="small">
+                                        <strong>Lat:</strong> <span id="currentLat">--</span>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="small">
+                                        <strong>Lng:</strong> <span id="currentLng">--</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row mt-1">
+                                <div class="col-6">
+                                    <div class="small">
+                                        <strong>Accuracy:</strong> <span id="gpsAccuracy">--</span>m
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="small">
+                                        <strong>Speed:</strong> <span id="gpsSpeed">--</span> km/h
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Existing Field Boundaries -->
+                        <div class="mt-3">
+                            <h6 class="small text-muted">Saved Field Boundaries</h6>
+                            <div id="savedBoundaries">
+                                <div class="boundary-item d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                    <div>
+                                        <strong>North Field Boundary</strong>
+                                        <div class="small text-muted">15 points • 125.5 acres</div>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="viewBoundary('north_field')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editBoundary('north_field')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="boundary-item d-flex justify-content-between align-items-center mb-2 p-2 bg-light rounded">
+                                    <div>
+                                        <strong>South Field Boundary</strong>
+                                        <div class="small text-muted">12 points • 85.2 acres</div>
+                                    </div>
+                                    <div>
+                                        <button class="btn btn-sm btn-outline-primary me-1" onclick="viewBoundary('south_field')">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="editBoundary('south_field')">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div class="text-center mt-2">
+                                    <button class="btn btn-sm btn-outline-success" onclick="createNewBoundary()">
+                                        <i class="fas fa-plus"></i> Map New Field
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Data Quality Assessment -->
+                    <div class="rotation-card">
+                        <h6><i class="fas fa-check-circle"></i> Data Quality Status</h6>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <div class="h4 text-success">95%</div>
+                                    <small>Completeness</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <div class="h4 text-info">88%</div>
+                                    <small>Accuracy</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <div class="h4 text-success">5</div>
+                                    <small>Years Data</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <div class="small text-success">
+                                <i class="fas fa-check"></i> Ready for advanced planning
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="mt-2">Analyzing rotation plan...</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <script>
+        // Global variables
+        let currentField = 'south_field';
+        let rotationPlan = {};
+        let isOffline = false;
+
+        // GPS Location Functions
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else {
+                document.getElementById("gpsLocation").innerHTML = "Geolocation not supported";
+            }
+        }
+
+        function showPosition(position) {
+            const lat = position.coords.latitude.toFixed(6);
+            const lon = position.coords.longitude.toFixed(6);
+            document.getElementById("gpsLocation").innerHTML = `${lat}, ${lon}`;
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    document.getElementById("gpsLocation").innerHTML = "Location access denied";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    document.getElementById("gpsLocation").innerHTML = "Location unavailable";
+                    break;
+                case error.TIMEOUT:
+                    document.getElementById("gpsLocation").innerHTML = "Location timeout";
+                    break;
+                default:
+                    document.getElementById("gpsLocation").innerHTML = "Location error";
+                    break;
+            }
+        }
+
+        // Field Selection Handler
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize GPS
+            getLocation();
+            
+            // Initialize charts
+            initializeCharts();
+            
+            // Field selection handlers
+            const fieldCards = document.querySelectorAll('.field-selection-card');
+            fieldCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remove selected class from all cards
+                    fieldCards.forEach(c => c.classList.remove('selected'));
+                    // Add selected class to clicked card
+                    this.classList.add('selected');
+                    // Update current field
+                    currentField = this.dataset.fieldId;
+                    updateFieldData();
+                });
+            });
+            
+            // Generate plan button
+            document.getElementById('generatePlanBtn').addEventListener('click', generateRotationPlan);
+            
+            // Compare plans button
+            document.getElementById('comparePlansBtn').addEventListener('click', comparePlanScenarios);
+            
+            // Risk analysis button
+            document.getElementById('fullRiskAnalysisBtn').addEventListener('click', performRiskAnalysis);
+            
+            // Crop selection changes
+            const cropSelectors = document.querySelectorAll('[id^="crop"]');
+            cropSelectors.forEach(selector => {
+                selector.addEventListener('change', validateRotationPlan);
+            });
+            
+            // Field mapping button listeners
+            const startMappingBtn = document.getElementById('startMappingBtn');
+            if (startMappingBtn) {
+                startMappingBtn.addEventListener('click', startFieldMapping);
+            }
+            
+            const addPointBtn = document.getElementById('addPointBtn');
+            if (addPointBtn) {
+                addPointBtn.addEventListener('click', addBoundaryPoint);
+            }
+            
+            const finishMappingBtn = document.getElementById('finishMappingBtn');
+            if (finishMappingBtn) {
+                finishMappingBtn.addEventListener('click', finishFieldMapping);
+            }
+            
+            const stopMappingBtn = document.getElementById('stopMappingBtn');
+            if (stopMappingBtn) {
+                stopMappingBtn.addEventListener('click', stopFieldMapping);
+            }
+            
+            // Notification system button listeners
+            const refreshNotificationsBtn = document.getElementById('refreshNotificationsBtn');
+            if (refreshNotificationsBtn) {
+                refreshNotificationsBtn.addEventListener('click', refreshNotifications);
+            }
+            
+            const markAllReadBtn = document.getElementById('markAllReadBtn');
+            if (markAllReadBtn) {
+                markAllReadBtn.addEventListener('click', markAllAsRead);
+            }
+            
+            const notificationSettingsBtn = document.getElementById('notificationSettingsBtn');
+            if (notificationSettingsBtn) {
+                notificationSettingsBtn.addEventListener('click', showNotificationSettings);
+            }
+            
+            // Initialize notification system
+            initializeNotificationSystem();
+        });
+
+        // Update field data when selection changes
+        function updateFieldData() {
+            // Update field-specific information
+            console.log(`Field changed to: ${currentField}`);
+            
+            // In a real app, this would fetch field-specific data
+            if (currentField === 'south_field') {
+                // Update planning tab for South Field
+                document.getElementById('crop2025').value = 'soybeans';
+            } else if (currentField === 'north_field') {
+                // Update for North Field
+                document.getElementById('crop2025').value = 'wheat';
+            }
+            
+            validateRotationPlan();
+        }
+
+        // Generate Rotation Plan
+        async function generateRotationPlan() {
+            showLoading(true);
+            
+            try {
+                // Collect form data
+                const goals = collectGoalsData();
+                const constraints = collectConstraintsData();
+                const cropSequence = collectCropSequence();
+                
+                // API call to generate rotation plan
+                const response = await fetch('/api/v1/rotations/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        field_id: currentField,
+                        planning_horizon: parseInt(document.getElementById('planningHorizon').value),
+                        goals: goals,
+                        constraints: constraints
+                    })
+                });
+                
+                if (response.ok) {
+                    const planData = await response.json();
+                    rotationPlan = planData;
+                    updatePlanDisplay(planData);
+                    showNotification('Rotation plan generated successfully!', 'success');
+                } else {
+                    throw new Error('Failed to generate plan');
+                }
+                
+            } catch (error) {
+                console.error('Error generating plan:', error);
+                
+                // Offline fallback
+                if (!navigator.onLine) {
+                    const offlinePlan = generateOfflinePlan();
+                    storeOfflineData('rotation_plan', offlinePlan);
+                    updatePlanDisplay(offlinePlan);
+                    showNotification('Plan generated offline - will sync when online', 'warning');
+                } else {
+                    showNotification('Failed to generate rotation plan', 'error');
+                }
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Compare Plan Scenarios
+        async function comparePlanScenarios() {
+            showLoading(true);
+            
+            try {
+                // Create different scenarios to compare
+                const scenarios = [
+                    ['soybeans', 'corn', 'wheat', 'alfalfa'],
+                    ['corn', 'soybeans', 'oats', 'alfalfa'],
+                    ['wheat', 'soybeans', 'corn', 'alfalfa']
+                ];
+                
+                const response = await fetch('/api/v1/rotations/compare', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        field_id: currentField,
+                        rotation_scenarios: scenarios,
+                        goals: collectGoalsData()
+                    })
+                });
+                
+                if (response.ok) {
+                    const comparisonData = await response.json();
+                    displayComparisonResults(comparisonData);
+                } else {
+                    throw new Error('Failed to compare scenarios');
+                }
+                
+            } catch (error) {
+                console.error('Error comparing scenarios:', error);
+                showNotification('Failed to compare scenarios', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Risk Analysis
+        async function performRiskAnalysis() {
+            showLoading(true);
+            
+            try {
+                const cropSequence = collectCropSequence();
+                
+                const response = await fetch(`/api/v1/rotations/risk-assessment?field_id=${currentField}&rotation_sequence=${cropSequence.join(',')}`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    const riskData = await response.json();
+                    displayRiskAnalysis(riskData);
+                } else {
+                    throw new Error('Failed to perform risk analysis');
+                }
+                
+            } catch (error) {
+                console.error('Error in risk analysis:', error);
+                showNotification('Failed to perform risk analysis', 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Collect Goals Data
+        function collectGoalsData() {
+            const goals = [];
+            
+            if (document.getElementById('soilHealthGoal').checked) {
+                goals.push({
+                    goal_type: 'SOIL_HEALTH',
+                    priority: parseInt(document.getElementById('soilHealthPriority').value),
+                    weight: parseInt(document.getElementById('soilHealthPriority').value) / 10,
+                    target_value: 85,
+                    description: 'Improve soil health and organic matter'
+                });
+            }
+            
+            if (document.getElementById('profitGoal').checked) {
+                goals.push({
+                    goal_type: 'ECONOMIC_RETURN',
+                    priority: parseInt(document.getElementById('profitPriority').value),
+                    weight: parseInt(document.getElementById('profitPriority').value) / 10,
+                    target_value: 500,
+                    description: 'Maximize profitability per acre'
+                });
+            }
+            
+            if (document.getElementById('sustainabilityGoal').checked) {
+                goals.push({
+                    goal_type: 'SUSTAINABILITY',
+                    priority: parseInt(document.getElementById('sustainabilityPriority').value),
+                    weight: parseInt(document.getElementById('sustainabilityPriority').value) / 10,
+                    target_value: 80,
+                    description: 'Enhance environmental sustainability'
+                });
+            }
+            
+            return goals;
+        }
+
+        // Collect Constraints Data
+        function collectConstraintsData() {
+            // In a real app, this would collect constraint inputs
+            return [];
+        }
+
+        // Collect Crop Sequence
+        function collectCropSequence() {
+            const sequence = [];
+            const planningHorizon = parseInt(document.getElementById('planningHorizon').value);
+            const currentYear = new Date().getFullYear() + 1; // Start from next year
+            
+            for (let i = 0; i < planningHorizon; i++) {
+                const cropSelector = document.getElementById(`crop${currentYear + i}`);
+                if (cropSelector && cropSelector.value) {
+                    sequence.push(cropSelector.value);
+                }
+            }
+            
+            return sequence;
+        }
+
+        // Validate Rotation Plan
+        function validateRotationPlan() {
+            const sequence = collectCropSequence();
+            
+            // Check for continuous cropping
+            let hasIssues = false;
+            const issues = [];
+            
+            for (let i = 1; i < sequence.length; i++) {
+                if (sequence[i] === sequence[i-1] && sequence[i] !== 'alfalfa') {
+                    hasIssues = true;
+                    issues.push(`Continuous ${sequence[i]} detected (years ${new Date().getFullYear() + i} - ${new Date().getFullYear() + i + 1})`);
+                }
+            }
+            
+            // Check for nitrogen-fixing crops
+            const nitrogenFixers = ['soybeans', 'alfalfa', 'clover', 'peas'];
+            const hasNitrogenFixer = sequence.some(crop => nitrogenFixers.includes(crop));
+            
+            if (!hasNitrogenFixer && sequence.length > 0) {
+                issues.push('No nitrogen-fixing crops in rotation - consider adding legumes');
+            }
+            
+            // Update UI with validation results
+            updateValidationDisplay(hasIssues, issues);
+        }
+
+        // Update validation display
+        function updateValidationDisplay(hasIssues, issues) {
+            // In a real app, this would update validation indicators
+            console.log('Validation issues:', issues);
+        }
+
+        // Initialize Charts
+        function initializeCharts() {
+            initializeEconomicChart();
+            initializeSustainabilityChart();
+        }
+
+        // Economic Chart
+        function initializeEconomicChart() {
+            const ctx = document.getElementById('economicChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['2025', '2026', '2027', '2028'],
+                    datasets: [{
+                        label: 'Net Profit $/acre',
+                        data: [420, 485, 350, 520],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Sustainability Chart
+        function initializeSustainabilityChart() {
+            const ctx = document.getElementById('sustainabilityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Soil Health', 'Carbon Seq.', 'Water Eff.', 'Biodiversity', 'Nutrient Cycle'],
+                    datasets: [{
+                        label: 'Current Plan',
+                        data: [85, 78, 82, 72, 88],
+                        borderColor: '#28a745',
+                        backgroundColor: 'rgba(40, 167, 69, 0.2)',
+                        pointBackgroundColor: '#28a745'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                stepSize: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Display Functions
+        function updatePlanDisplay(planData) {
+            // Update dashboard with new plan data
+            console.log('Updated plan:', planData);
+        }
+
+        function displayComparisonResults(comparisonData) {
+            // Display scenario comparison results
+            console.log('Comparison results:', comparisonData);
+            showNotification(`Best scenario score: ${comparisonData.best_scenario?.overall_score || 0}`, 'success');
+        }
+
+        function displayRiskAnalysis(riskData) {
+            // Display detailed risk analysis
+            console.log('Risk analysis:', riskData);
+            showNotification(`Overall risk level: ${riskData.risk_level || 'Unknown'}`, 'info');
+        }
+
+        // Utility Functions
+        function showLoading(show) {
+            const spinner = document.getElementById('loadingSpinner');
+            spinner.style.display = show ? 'block' : 'none';
+        }
+
+        function showNotification(message, type = 'info') {
+            // Create and show notification
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 10px; left: 50%; transform: translateX(-50%); z-index: 1050; max-width: 90%;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Offline Support
+        function generateOfflinePlan() {
+            // Generate a basic offline rotation plan
+            return {
+                plan_id: 'offline_' + Date.now(),
+                field_id: currentField,
+                rotation_schedule: {
+                    2025: 'soybeans',
+                    2026: 'corn',
+                    2027: 'wheat',
+                    2028: 'alfalfa'
+                },
+                overall_score: 75,
+                benefit_scores: {
+                    soil_health: 80,
+                    economic_value: 70,
+                    sustainability: 75
+                }
+            };
+        }
+
+        function storeOfflineData(key, data) {
+            const offlineData = JSON.parse(localStorage.getItem('rotationOfflineData') || '{}');
+            offlineData[key] = {...data, offline: true, timestamp: Date.now()};
+            localStorage.setItem('rotationOfflineData', JSON.stringify(offlineData));
+        }
+
+        function syncOfflineData() {
+            const offlineData = JSON.parse(localStorage.getItem('rotationOfflineData') || '{}');
+            if (Object.keys(offlineData).length > 0 && navigator.onLine) {
+                // Sync offline data with server
+                console.log('Syncing offline rotation data:', offlineData);
+                localStorage.removeItem('rotationOfflineData');
+                showNotification('Offline data synced successfully', 'success');
+            }
+        }
+
+        // Network status handlers
+        window.addEventListener('online', function() {
+            isOffline = false;
+            document.getElementById('offlineIndicator').style.display = 'none';
+            syncOfflineData();
+        });
+
+        window.addEventListener('offline', function() {
+            isOffline = true;
+            document.getElementById('offlineIndicator').style.display = 'block';
+        });
+
+        // Field Mapping Functions
+        let isMapping = false;
+        let boundaryPoints = [];
+        let watchId = null;
+        let currentFieldBoundary = null;
+
+        function startFieldMapping() {
+            if (!navigator.geolocation) {
+                showNotification('GPS not available on this device', 'error');
+                return;
+            }
+
+            isMapping = true;
+            boundaryPoints = [];
+            
+            // Update UI
+            document.getElementById('startMappingBtn').style.display = 'none';
+            document.getElementById('mappingControls').style.display = 'block';
+            document.getElementById('mappingStatus').innerHTML = '<i class="fas fa-satellite-dish text-success"></i> Mapping Active';
+            
+            // Start continuous GPS tracking
+            const options = {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 0
+            };
+            
+            watchId = navigator.geolocation.watchPosition(
+                updateMappingPosition, 
+                handleMappingError, 
+                options
+            );
+            
+            showNotification('Field mapping started. Move to field boundaries and tap "Add Point"', 'success');
+        }
+
+        function updateMappingPosition(position) {
+            if (!isMapping) return;
+            
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            const speed = position.coords.speed || 0;
+            
+            // Update current position display
+            document.getElementById('currentLat').textContent = lat.toFixed(6);
+            document.getElementById('currentLon').textContent = lon.toFixed(6);
+            document.getElementById('currentAccuracy').textContent = accuracy.toFixed(0) + 'm';
+            document.getElementById('currentSpeed').textContent = (speed * 3.6).toFixed(1) + ' km/h';
+            
+            // Update point counter
+            document.getElementById('pointCount').textContent = boundaryPoints.length;
+            
+            // Enable/disable finish button based on points
+            const finishBtn = document.getElementById('finishMappingBtn');
+            if (boundaryPoints.length >= 3) {
+                finishBtn.disabled = false;
+                finishBtn.classList.remove('btn-secondary');
+                finishBtn.classList.add('btn-success');
+            }
+        }
+
+        function handleMappingError(error) {
+            let message = 'GPS error occurred';
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    message = 'GPS permission denied';
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    message = 'GPS position unavailable';
+                    break;
+                case error.TIMEOUT:
+                    message = 'GPS timeout';
+                    break;
+            }
+            showNotification(message, 'error');
+            stopFieldMapping();
+        }
+
+        function addBoundaryPoint() {
+            if (!isMapping) return;
+            
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const point = {
+                        lat: position.coords.latitude,
+                        lon: position.coords.longitude,
+                        accuracy: position.coords.accuracy,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    boundaryPoints.push(point);
+                    
+                    // Update UI
+                    document.getElementById('pointCount').textContent = boundaryPoints.length;
+                    
+                    // Show feedback
+                    showNotification(`Point ${boundaryPoints.length} added`, 'success');
+                    
+                    // Enable finish button if enough points
+                    if (boundaryPoints.length >= 3) {
+                        const finishBtn = document.getElementById('finishMappingBtn');
+                        finishBtn.disabled = false;
+                        finishBtn.classList.remove('btn-secondary');
+                        finishBtn.classList.add('btn-success');
+                    }
+                },
+                function(error) {
+                    showNotification('Failed to get current position for boundary point', 'error');
+                },
+                { enableHighAccuracy: true, timeout: 5000 }
+            );
+        }
+
+        function finishFieldMapping() {
+            if (boundaryPoints.length < 3) {
+                showNotification('Need at least 3 points to create a field boundary', 'warning');
+                return;
+            }
+            
+            // Calculate field area (simple polygon area calculation)
+            const area = calculatePolygonArea(boundaryPoints);
+            
+            // Create field boundary object
+            currentFieldBoundary = {
+                id: 'field_' + Date.now(),
+                name: `Field ${new Date().toLocaleDateString()}`,
+                points: boundaryPoints,
+                area: area,
+                created: new Date().toISOString(),
+                accuracy_avg: boundaryPoints.reduce((sum, p) => sum + p.accuracy, 0) / boundaryPoints.length
+            };
+            
+            // Save to local storage
+            saveBoundaryToStorage(currentFieldBoundary);
+            
+            // Stop mapping
+            stopFieldMapping();
+            
+            // Update saved boundaries display
+            updateSavedBoundariesDisplay();
+            
+            showNotification(`Field mapped successfully! Area: ${area.toFixed(2)} hectares`, 'success');
+        }
+
+        function stopFieldMapping() {
+            isMapping = false;
+            
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            
+            // Reset UI
+            document.getElementById('startMappingBtn').style.display = 'block';
+            document.getElementById('mappingControls').style.display = 'none';
+            document.getElementById('mappingStatus').innerHTML = '<i class="fas fa-map-marker-alt text-muted"></i> Ready to Map';
+            
+            // Reset finish button
+            const finishBtn = document.getElementById('finishMappingBtn');
+            finishBtn.disabled = true;
+            finishBtn.classList.remove('btn-success');
+            finishBtn.classList.add('btn-secondary');
+            
+            boundaryPoints = [];
+        }
+
+        function calculatePolygonArea(points) {
+            if (points.length < 3) return 0;
+            
+            let area = 0;
+            const earthRadius = 6371000; // meters
+            
+            // Convert to radians and use shoelace formula with Earth radius
+            for (let i = 0; i < points.length; i++) {
+                const j = (i + 1) % points.length;
+                const lat1 = points[i].lat * Math.PI / 180;
+                const lon1 = points[i].lon * Math.PI / 180;
+                const lat2 = points[j].lat * Math.PI / 180;
+                const lon2 = points[j].lon * Math.PI / 180;
+                
+                area += (lon2 - lon1) * (2 + Math.sin(lat1) + Math.sin(lat2));
+            }
+            
+            area = Math.abs(area) * earthRadius * earthRadius / 2;
+            return area / 10000; // Convert to hectares
+        }
+
+        function saveBoundaryToStorage(boundary) {
+            const savedBoundaries = JSON.parse(localStorage.getItem('fieldBoundaries') || '[]');
+            savedBoundaries.push(boundary);
+            localStorage.setItem('fieldBoundaries', JSON.stringify(savedBoundaries));
+        }
+
+        function updateSavedBoundariesDisplay() {
+            const savedBoundaries = JSON.parse(localStorage.getItem('fieldBoundaries') || '[]');
+            const container = document.getElementById('savedBoundaries');
+            
+            if (savedBoundaries.length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-3">No saved field boundaries</div>';
+                return;
+            }
+            
+            container.innerHTML = savedBoundaries.map(boundary => `
+                <div class="card mb-2">
+                    <div class="card-body py-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold">${boundary.name}</div>
+                                <small class="text-muted">
+                                    ${boundary.area.toFixed(2)} ha • ${boundary.points.length} points
+                                </small>
+                            </div>
+                            <div class="btn-group btn-group-sm">
+                                <button class="btn btn-outline-primary" onclick="viewBoundary('${boundary.id}')">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button class="btn btn-outline-secondary" onclick="editBoundary('${boundary.id}')">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="deleteBoundary('${boundary.id}')">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewBoundary(boundaryId) {
+            const savedBoundaries = JSON.parse(localStorage.getItem('fieldBoundaries') || '[]');
+            const boundary = savedBoundaries.find(b => b.id === boundaryId);
+            
+            if (!boundary) return;
+            
+            let details = `Field: ${boundary.name}\n`;
+            details += `Area: ${boundary.area.toFixed(2)} hectares\n`;
+            details += `Points: ${boundary.points.length}\n`;
+            details += `Created: ${new Date(boundary.created).toLocaleString()}\n`;
+            details += `Avg Accuracy: ${boundary.accuracy_avg.toFixed(0)}m\n\n`;
+            details += `Boundary Points:\n`;
+            
+            boundary.points.forEach((point, index) => {
+                details += `${index + 1}: ${point.lat.toFixed(6)}, ${point.lon.toFixed(6)}\n`;
+            });
+            
+            alert(details);
+        }
+
+        function editBoundary(boundaryId) {
+            showNotification('Boundary editing coming soon', 'info');
+        }
+
+        function deleteBoundary(boundaryId) {
+            if (!confirm('Delete this field boundary?')) return;
+            
+            const savedBoundaries = JSON.parse(localStorage.getItem('fieldBoundaries') || '[]');
+            const filteredBoundaries = savedBoundaries.filter(b => b.id !== boundaryId);
+            localStorage.setItem('fieldBoundaries', JSON.stringify(filteredBoundaries));
+            
+            updateSavedBoundariesDisplay();
+            showNotification('Field boundary deleted', 'success');
+        }
+
+        // Initialize field mapping on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update saved boundaries display
+            updateSavedBoundariesDisplay();
+        });
+
+        // Mobile Rotation Notification System
+        let notifications = [];
+        let notificationSettings = {
+            enabled: true,
+            categories: {
+                planning: true,
+                nitrogen: true,
+                weather: true,
+                field: true
+            },
+            pushEnabled: false
+        };
+
+        function initializeNotificationSystem() {
+            // Load notifications from localStorage
+            loadNotifications();
+            
+            // Load notification settings
+            loadNotificationSettings();
+            
+            // Generate initial notifications based on current data
+            generateRotationNotifications();
+            
+            // Update the notifications display
+            updateNotificationsDisplay();
+            
+            // Set up periodic notification checks
+            setInterval(checkForNewNotifications, 60000); // Check every minute
+        }
+
+        function loadNotifications() {
+            const stored = localStorage.getItem('rotationNotifications');
+            notifications = stored ? JSON.parse(stored) : [];
+            
+            // Clean up old notifications (older than 30 days)
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            notifications = notifications.filter(n => new Date(n.timestamp) > thirtyDaysAgo);
+        }
+
+        function saveNotifications() {
+            localStorage.setItem('rotationNotifications', JSON.stringify(notifications));
+        }
+
+        function loadNotificationSettings() {
+            const stored = localStorage.getItem('notificationSettings');
+            if (stored) {
+                notificationSettings = {...notificationSettings, ...JSON.parse(stored)};
+            }
+        }
+
+        function saveNotificationSettings() {
+            localStorage.setItem('notificationSettings', JSON.stringify(notificationSettings));
+        }
+
+        function generateRotationNotifications() {
+            const now = new Date();
+            
+            // Check for planning deadlines
+            checkPlanningDeadlines(now);
+            
+            // Check for nitrogen credits
+            checkNitrogenCredits();
+            
+            // Check for optimal planting windows
+            checkPlantingWindows(now);
+            
+            // Check for validation issues
+            checkValidationIssues();
+            
+            // Check for field mapping reminders
+            checkFieldMappingReminders();
+        }
+
+        function checkPlanningDeadlines(now) {
+            const fields = ['south_field', 'north_field', 'east_field'];
+            
+            fields.forEach(fieldId => {
+                // Check if field needs 2025 planning (example logic)
+                if (fieldId === 'south_field') {
+                    const deadline = new Date('2024-10-01');
+                    const daysUntilDeadline = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
+                    
+                    if (daysUntilDeadline <= 30 && daysUntilDeadline > 0) {
+                        addNotification({
+                            id: `planning_deadline_${fieldId}`,
+                            category: 'planning',
+                            priority: daysUntilDeadline <= 7 ? 'high' : 'medium',
+                            title: 'Planning Deadline Approaching',
+                            message: `2025 rotation plan needed for South Field by ${deadline.toLocaleDateString()}`,
+                            field: fieldId,
+                            actionable: true,
+                            actions: ['Plan Now', 'Remind Later']
+                        });
+                    }
+                }
+            });
+        }
+
+        function checkNitrogenCredits() {
+            // Example: Check if previous crop was legume and nitrogen credit is available
+            const rotationHistory = getCurrentRotationHistory();
+            
+            if (rotationHistory && rotationHistory.lastCrop === 'soybeans') {
+                addNotification({
+                    id: 'nitrogen_credit_available',
+                    category: 'nitrogen',
+                    priority: 'medium',
+                    title: 'Nitrogen Credit Available',
+                    message: 'Soybeans fixed 120 lbs/acre - optimize next crop selection',
+                    field: currentField,
+                    actionable: true,
+                    actions: ['View Options', 'Plan Crop']
+                });
+            }
+        }
+
+        function checkPlantingWindows(now) {
+            const month = now.getMonth();
+            
+            // Spring planting window (March-May)
+            if (month >= 2 && month <= 4) {
+                addNotification({
+                    id: 'spring_planting_window',
+                    category: 'planning',
+                    priority: 'medium',
+                    title: 'Optimal Planting Window',
+                    message: 'Spring planting season - review crop timing schedules',
+                    actionable: true,
+                    actions: ['Check Weather', 'Review Plans']
+                });
+            }
+        }
+
+        function checkValidationIssues() {
+            // Check current rotation plan for issues
+            if (rotationPlan && rotationPlan.validation_issues) {
+                rotationPlan.validation_issues.forEach((issue, index) => {
+                    addNotification({
+                        id: `validation_issue_${index}`,
+                        category: 'planning',
+                        priority: issue.severity === 'error' ? 'high' : 'medium',
+                        title: 'Rotation Validation Issue',
+                        message: issue.message,
+                        field: currentField,
+                        actionable: true,
+                        actions: ['Fix Issue', 'Learn More']
+                    });
+                });
+            }
+        }
+
+        function checkFieldMappingReminders() {
+            const savedBoundaries = JSON.parse(localStorage.getItem('fieldBoundaries') || '[]');
+            
+            if (savedBoundaries.length === 0) {
+                addNotification({
+                    id: 'field_mapping_reminder',
+                    category: 'field',
+                    priority: 'low',
+                    title: 'Field Mapping Available',
+                    message: 'Map your field boundaries for more accurate recommendations',
+                    actionable: true,
+                    actions: ['Start Mapping', 'Learn More']
+                });
+            }
+        }
+
+        function addNotification(notification) {
+            // Check if notification already exists
+            const existingIndex = notifications.findIndex(n => n.id === notification.id);
+            
+            if (existingIndex >= 0) {
+                // Update existing notification
+                notifications[existingIndex] = {
+                    ...notifications[existingIndex],
+                    ...notification,
+                    timestamp: notifications[existingIndex].timestamp // Keep original timestamp
+                };
+            } else {
+                // Add new notification
+                notifications.unshift({
+                    ...notification,
+                    timestamp: new Date().toISOString(),
+                    read: false
+                });
+            }
+            
+            saveNotifications();
+        }
+
+        function updateNotificationsDisplay() {
+            const container = document.getElementById('notificationsContainer');
+            const badge = document.getElementById('notificationBadge');
+            const noMessageDiv = document.getElementById('noNotificationsMessage');
+            
+            if (!container) return;
+            
+            // Filter notifications by settings
+            const filteredNotifications = notifications.filter(n => 
+                notificationSettings.enabled && 
+                notificationSettings.categories[n.category]
+            );
+            
+            if (filteredNotifications.length === 0) {
+                container.innerHTML = '<div class="text-center py-3 text-muted" id="noNotificationsMessage"><i class="fas fa-bell-slash"></i><br>No notifications</div>';
+                badge.textContent = '0 unread';
+                badge.className = 'badge bg-secondary';
+                return;
+            }
+            
+            // Sort by priority and timestamp
+            const sortedNotifications = filteredNotifications.sort((a, b) => {
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                if (priorityOrder[a.priority] !== priorityOrder[b.priority]) {
+                    return priorityOrder[b.priority] - priorityOrder[a.priority];
+                }
+                return new Date(b.timestamp) - new Date(a.timestamp);
+            });
+            
+            container.innerHTML = sortedNotifications.map(notification => 
+                createNotificationHTML(notification)
+            ).join('');
+            
+            // Update badge
+            const unreadCount = filteredNotifications.filter(n => !n.read).length;
+            badge.textContent = `${unreadCount} unread`;
+            badge.className = `badge ${unreadCount > 0 ? 'bg-primary' : 'bg-secondary'}`;
+        }
+
+        function createNotificationHTML(notification) {
+            const timeAgo = getTimeAgo(new Date(notification.timestamp));
+            const priorityClass = `priority-${notification.priority}`;
+            const readClass = notification.read ? 'read' : 'unread';
+            
+            return `
+                <div class="alert-item ${priorityClass} ${readClass}" onclick="handleNotificationClick('${notification.id}')">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <strong>${notification.title}</strong>
+                                <span class="notification-category ${notification.category}">${notification.category}</span>
+                                ${notification.priority === 'high' ? '<i class="fas fa-exclamation-triangle text-danger"></i>' : ''}
+                            </div>
+                            <small>${notification.message}</small>
+                            ${notification.field ? `<div class="notification-timestamp mt-1">Field: ${notification.field}</div>` : ''}
+                        </div>
+                        <div class="d-flex flex-column align-items-end">
+                            <small class="notification-timestamp">${timeAgo}</small>
+                            <div class="notification-actions mt-1">
+                                <button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); markAsRead('${notification.id}')">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation(); dismissNotification('${notification.id}')">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    ${notification.actionable && notification.actions ? `
+                        <div class="mt-2 d-flex gap-1 flex-wrap">
+                            ${notification.actions.map(action => 
+                                `<button class="btn btn-sm btn-outline-primary" onclick="event.stopPropagation(); handleNotificationAction('${notification.id}', '${action}')">${action}</button>`
+                            ).join('')}
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffInSeconds = Math.floor((now - date) / 1000);
+            
+            if (diffInSeconds < 60) return 'Just now';
+            if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+            if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+            if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+            return `${Math.floor(diffInSeconds / 604800)}w ago`;
+        }
+
+        function handleNotificationClick(notificationId) {
+            markAsRead(notificationId);
+            
+            // Navigate based on notification type
+            const notification = notifications.find(n => n.id === notificationId);
+            if (!notification) return;
+            
+            switch (notification.category) {
+                case 'planning':
+                    // Switch to planning tab
+                    document.querySelector('[data-bs-target="#planning"]').click();
+                    break;
+                case 'field':
+                    // Switch to fields tab
+                    document.querySelector('[data-bs-target="#fields"]').click();
+                    break;
+            }
+        }
+
+        function handleNotificationAction(notificationId, action) {
+            const notification = notifications.find(n => n.id === notificationId);
+            if (!notification) return;
+            
+            switch (action) {
+                case 'Plan Now':
+                    document.querySelector('[data-bs-target="#planning"]').click();
+                    break;
+                case 'Start Mapping':
+                    document.querySelector('[data-bs-target="#fields"]').click();
+                    setTimeout(() => startFieldMapping(), 500);
+                    break;
+                case 'View Options':
+                    showNotification('Viewing crop options optimized for nitrogen credits', 'info');
+                    break;
+                default:
+                    showNotification(`Action: ${action}`, 'info');
+            }
+            
+            markAsRead(notificationId);
+        }
+
+        function markAsRead(notificationId) {
+            const notification = notifications.find(n => n.id === notificationId);
+            if (notification) {
+                notification.read = true;
+                saveNotifications();
+                updateNotificationsDisplay();
+            }
+        }
+
+        function dismissNotification(notificationId) {
+            notifications = notifications.filter(n => n.id !== notificationId);
+            saveNotifications();
+            updateNotificationsDisplay();
+            showNotification('Notification dismissed', 'success');
+        }
+
+        function markAllAsRead() {
+            notifications.forEach(n => n.read = true);
+            saveNotifications();
+            updateNotificationsDisplay();
+            showNotification('All notifications marked as read', 'success');
+        }
+
+        function refreshNotifications() {
+            generateRotationNotifications();
+            updateNotificationsDisplay();
+            showNotification('Notifications refreshed', 'success');
+        }
+
+        function checkForNewNotifications() {
+            const oldCount = notifications.filter(n => !n.read).length;
+            generateRotationNotifications();
+            const newCount = notifications.filter(n => !n.read).length;
+            
+            if (newCount > oldCount) {
+                updateNotificationsDisplay();
+                showNotification(`${newCount - oldCount} new notification(s)`, 'info');
+            }
+        }
+
+        function getCurrentRotationHistory() {
+            // Mock function - in real app, this would fetch from API
+            return {
+                lastCrop: 'soybeans',
+                year: 2024,
+                nitrogenFixed: 120
+            };
+        }
+
+        function showNotificationSettings() {
+            const settingsHTML = `
+                <div class="modal fade" id="notificationSettingsModal" tabindex="-1">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Notification Settings</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" id="enableNotifications" ${notificationSettings.enabled ? 'checked' : ''}>
+                                    <label class="form-check-label" for="enableNotifications">
+                                        Enable Notifications
+                                    </label>
+                                </div>
+                                
+                                <h6>Notification Categories:</h6>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="planningNotifications" ${notificationSettings.categories.planning ? 'checked' : ''}>
+                                    <label class="form-check-label" for="planningNotifications">
+                                        Planning & Deadlines
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="nitrogenNotifications" ${notificationSettings.categories.nitrogen ? 'checked' : ''}>
+                                    <label class="form-check-label" for="nitrogenNotifications">
+                                        Nitrogen & Nutrients
+                                    </label>
+                                </div>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="weatherNotifications" ${notificationSettings.categories.weather ? 'checked' : ''}>
+                                    <label class="form-check-label" for="weatherNotifications">
+                                        Weather Alerts
+                                    </label>
+                                </div>
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="fieldNotifications" ${notificationSettings.categories.field ? 'checked' : ''}>
+                                    <label class="form-check-label" for="fieldNotifications">
+                                        Field Management
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-primary" onclick="saveNotificationSettingsFromModal()">Save Settings</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if present
+            const existingModal = document.getElementById('notificationSettingsModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', settingsHTML);
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('notificationSettingsModal'));
+            modal.show();
+        }
+
+        function saveNotificationSettingsFromModal() {
+            notificationSettings.enabled = document.getElementById('enableNotifications').checked;
+            notificationSettings.categories.planning = document.getElementById('planningNotifications').checked;
+            notificationSettings.categories.nitrogen = document.getElementById('nitrogenNotifications').checked;
+            notificationSettings.categories.weather = document.getElementById('weatherNotifications').checked;
+            notificationSettings.categories.field = document.getElementById('fieldNotifications').checked;
+            
+            saveNotificationSettings();
+            updateNotificationsDisplay();
+            
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('notificationSettingsModal'));
+            modal.hide();
+            
+            showNotification('Notification settings saved', 'success');
+        }
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => console.log('SW registered'))
+                .catch(error => console.log('SW registration failed'));
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            // Check initial online status
+            if (!navigator.onLine) {
+                isOffline = true;
+                document.getElementById('offlineIndicator').style.display = 'block';
+            }
+            
+            // Validate initial rotation plan
+            validateRotationPlan();
+        };
+    </script>
+</body>
+</html>
