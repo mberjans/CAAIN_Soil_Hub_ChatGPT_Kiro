@@ -205,6 +205,7 @@ class GeographicInfo(BaseModel):
     state: Optional[str] = Field(None, description="State name")
     climate_zone: Optional[str] = Field(None, description="Climate zone")
     is_agricultural: bool = Field(..., description="Whether location is in agricultural area")
+    climate_analysis: Optional[dict] = Field(None, description="Comprehensive climate analysis data")
 
 
 class ValidationResult(BaseModel):

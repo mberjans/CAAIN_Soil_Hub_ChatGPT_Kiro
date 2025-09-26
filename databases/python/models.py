@@ -585,6 +585,167 @@ class FarmEquipment(Base):
 
 
 # ============================================================================
+# CLIMATE ZONE DATA MODELS
+# ============================================================================
+
+class ClimateZoneData(Base):
+    """Climate zone data model for storing detailed climate information."""
+    
+    __tablename__ = 'climate_zone_data'
+    
+    climate_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    
+    # USDA Hardiness Zone Information
+    usda_zone = Column(String(10))
+    usda_zone_confidence = Column(Float)
+    
+    # Köppen Climate Classification
+    koppen_classification = Column(String(10))
+    koppen_description = Column(Text)
+    
+    # Temperature Profile (Fahrenheit)
+    average_min_temp_f = Column(Float)
+    average_max_temp_f = Column(Float)
+    extreme_min_temp_f = Column(Float)
+    extreme_max_temp_f = Column(Float)
+    
+    # Precipitation Profile
+    annual_precipitation_inches = Column(Float)
+    wet_season_months = Column(ARRAY(Integer))
+    dry_season_months = Column(ARRAY(Integer))
+    
+    # Growing Season Information
+    growing_season_length = Column(Integer)
+    last_frost_date = Column(Date)
+    first_frost_date = Column(Date)
+    frost_free_days = Column(Integer)
+    
+    # Agricultural Suitability
+    agricultural_suitability_score = Column(Float)
+    agricultural_category = Column(String(50))
+    limiting_factors = Column(ARRAY(Text))
+    recommendations = Column(ARRAY(Text))
+    
+    # Data Quality and Sources
+    data_sources = Column(ARRAY(Text))
+    historical_years_analyzed = Column(Integer)
+    data_quality_score = Column(Float)
+    
+    # Timestamps
+    last_updated = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    cache_expires_at = Column(DateTime(timezone=True))
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("latitude >= -90 AND latitude <= 90", name='check_latitude_range'),
+        CheckConstraint("longitude >= -180 AND longitude <= 180", name='check_longitude_range'),
+        CheckConstraint("usda_zone_confidence >= 0 AND usda_zone_confidence <= 1", name='check_usda_confidence'),
+        CheckConstraint("agricultural_suitability_score >= 0 AND agricultural_suitability_score <= 1", name='check_ag_suitability'),
+        CheckConstraint("data_quality_score >= 0 AND data_quality_score <= 1", name='check_data_quality'),
+        CheckConstraint("growing_season_length >= 0 AND growing_season_length <= 365", name='check_growing_season'),
+        CheckConstraint("frost_free_days >= 0 AND frost_free_days <= 365", name='check_frost_free_days'),
+        Index('idx_climate_zone_location', 'latitude', 'longitude'),
+        Index('idx_climate_zone_usda', 'usda_zone'),
+        Index('idx_climate_zone_koppen', 'koppen_classification'),
+    )
+    
+    def __repr__(self):
+        return f"<ClimateZoneData(lat={self.latitude}, lon={self.longitude}, usda_zone='{self.usda_zone}')>"
+
+
+class HistoricalClimatePatterns(Base):
+    """Historical climate patterns model for storing historical weather analysis."""
+    
+    __tablename__ = 'historical_climate_patterns'
+    
+    pattern_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    climate_id = Column(UUID(as_uuid=True), ForeignKey('climate_zone_data.climate_id', ondelete='CASCADE'))
+    
+    # Monthly Temperature Arrays (12 elements, Jan-Dec, Fahrenheit)
+    monthly_avg_temps = Column(ARRAY(Float))  # Average monthly temperatures
+    monthly_min_temps = Column(ARRAY(Float))  # Monthly minimum temperatures
+    monthly_max_temps = Column(ARRAY(Float))  # Monthly maximum temperatures
+    
+    # Monthly Precipitation Array (12 elements, Jan-Dec, inches)
+    monthly_precipitation = Column(ARRAY(Float))
+    
+    # Monthly Growing Degree Days Arrays (12 elements, Jan-Dec)
+    monthly_gdd_base_50 = Column(ARRAY(Float))  # GDD base 50°F
+    monthly_gdd_base_86 = Column(ARRAY(Float))  # GDD base 86°F
+    
+    # Climate Event Frequencies
+    heat_wave_frequency = Column(Float)  # Heat waves per year
+    cold_snap_frequency = Column(Float)  # Cold snaps per year
+    drought_frequency = Column(Float)    # Drought events per year
+    
+    # Analysis Period Information
+    years_analyzed = Column(Integer)     # Number of years in analysis
+    data_start_year = Column(Integer)    # First year of data
+    data_end_year = Column(Integer)      # Last year of data
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # Relationships
+    climate_zone = relationship("ClimateZoneData")
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("years_analyzed > 0", name='check_years_analyzed'),
+        CheckConstraint("data_start_year >= 1880 AND data_start_year <= 2030", name='check_start_year'),
+        CheckConstraint("data_end_year >= 1880 AND data_end_year <= 2030", name='check_end_year'),
+        CheckConstraint("data_end_year >= data_start_year", name='check_year_order'),
+        CheckConstraint("heat_wave_frequency >= 0", name='check_heat_wave_freq'),
+        CheckConstraint("cold_snap_frequency >= 0", name='check_cold_snap_freq'),
+        CheckConstraint("drought_frequency >= 0", name='check_drought_freq'),
+        Index('idx_historical_patterns_climate', 'climate_id'),
+    )
+    
+    def __repr__(self):
+        return f"<HistoricalClimatePatterns(climate_id='{self.climate_id}', years={self.years_analyzed})>"
+
+
+class ClimateZoneCache(Base):
+    """Climate zone cache model for storing API response cache."""
+    
+    __tablename__ = 'climate_zone_cache'
+    
+    cache_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    location_hash = Column(String(255), unique=True, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    
+    # Cached Response Data
+    climate_data_json = Column(JSONB, nullable=False)
+    weather_service_response = Column(JSONB)
+    
+    # Cache Metadata
+    access_count = Column(Integer, default=0)
+    data_source = Column(String(100))
+    generation_time_ms = Column(Integer)
+    
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    last_accessed = Column(DateTime(timezone=True), server_default=func.now())
+    expires_at = Column(DateTime(timezone=True), nullable=False)
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("latitude >= -90 AND latitude <= 90", name='check_cache_latitude_range'),
+        CheckConstraint("longitude >= -180 AND longitude <= 180", name='check_cache_longitude_range'),
+        CheckConstraint("access_count >= 0", name='check_cache_access_count'),
+        CheckConstraint("generation_time_ms >= 0", name='check_generation_time'),
+        Index('idx_climate_cache_location', 'latitude', 'longitude'),
+        Index('idx_climate_cache_expires', 'expires_at'),
+        Index('idx_climate_cache_hash', 'location_hash'),
+    )
+    
+    def __repr__(self):
+        return f"<ClimateZoneCache(lat={self.latitude}, lon={self.longitude}, accesses={self.access_count})>"
+
+
+# ============================================================================
 # WEATHER AND ENVIRONMENTAL DATA MODELS
 # ============================================================================
 
@@ -680,6 +841,7 @@ __all__ = [
     'FertilizerProduct', 'FertilizerApplication',
     'QuestionType', 'Recommendation',
     'EquipmentType', 'FarmEquipment',
+    'ClimateZoneData', 'HistoricalClimatePatterns', 'ClimateZoneCache',
     'WeatherStation', 'WeatherData',
     'create_all_tables', 'drop_all_tables'
 ]
