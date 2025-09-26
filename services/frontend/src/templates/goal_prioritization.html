@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Goal Prioritization - AFAS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .agricultural-card {
+            border-left: 4px solid #28a745;
+            transition: transform 0.2s;
+        }
+        .agricultural-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .goal-input {
+            background-color: #f8f9fa;
+            border: 2px solid #e9ecef;
+        }
+        .goal-input:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        .goal-card {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            transition: all 0.3s ease;
+        }
+        .goal-card.selected {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #e8f5e8, #f8fff8);
+        }
+        .goal-card.disabled {
+            opacity: 0.6;
+            background: linear-gradient(135deg, #f5f5f5, #e9ecef);
+        }
+        .weight-slider {
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #ddd;
+            outline: none;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        .weight-slider:hover {
+            opacity: 1;
+        }
+        .weight-slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #28a745;
+            cursor: pointer;
+        }
+        .weight-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #28a745;
+            cursor: pointer;
+            border: none;
+        }
+        .compatibility-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+        .compatibility-high { background-color: #28a745; }
+        .compatibility-medium { background-color: #ffc107; }
+        .compatibility-low { background-color: #dc3545; }
+        .weight-total {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+        .weight-total.valid { color: #28a745; }
+        .weight-total.invalid { color: #dc3545; }
+        .results-card {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #e8f5e8, #ffffff);
+        }
+        .priority-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #28a745;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        .conflict-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i> AFAS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/crop-selection">Crop Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/goal-prioritization">Goal Prioritization</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/soil-fertility">Soil Fertility</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-tasks"></i> Rotation Goal Prioritization</h1>
+                <p class="lead">Set and prioritize your crop rotation goals to optimize your farming strategy</p>
+            </div>
+        </div>
+        
+        <!-- Goal Selection Section -->
+        <div class="row">
+            <div class="col-lg-8">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-bullseye"></i> Select and Weight Your Goals</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="goalPrioritizationForm">
+                            <div class="row" id="goalCards">
+                                <!-- Goal cards will be dynamically populated -->
+                            </div>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Prioritization Strategy</label>
+                                    <select class="form-control goal-input" id="prioritizationStrategy" name="strategy">
+                                        <option value="weighted_average">Weighted Average</option>
+                                        <option value="lexicographic">Lexicographic (Priority First)</option>
+                                        <option value="pareto_optimal">Pareto Optimal</option>
+                                        <option value="farmer_preference">Farmer Preference</option>
+                                    </select>
+                                    <small class="form-text text-muted">How goals should be balanced against each other</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Total Weight</label>
+                                    <div class="weight-total" id="totalWeight">0%</div>
+                                    <small class="form-text text-muted">Must equal 100% to proceed</small>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-4">
+                                <button type="submit" class="btn btn-success" id="prioritizeBtn" disabled>
+                                    <i class="fas fa-sort-amount-down"></i> Prioritize Goals
+                                </button>
+                                <button type="button" class="btn btn-outline-secondary ms-2" id="resetBtn">
+                                    <i class="fas fa-undo"></i> Reset
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Goal Information Panel -->
+            <div class="col-lg-4">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-info-circle"></i> Goal Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="goalInfo">
+                            <p class="text-muted">Select a goal to see detailed information about its objectives and measurements.</p>
+                        </div>
+                        
+                        <!-- Compatibility Matrix -->
+                        <div id="compatibilityMatrix" style="display: none;">
+                            <h6 class="mt-3">Goal Compatibility</h6>
+                            <div id="compatibilityList"></div>
+                            <small class="text-muted">
+                                <span class="compatibility-indicator compatibility-high"></span> High compatibility<br>
+                                <span class="compatibility-indicator compatibility-medium"></span> Medium compatibility<br>
+                                <span class="compatibility-indicator compatibility-low"></span> Low compatibility
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Results Section -->
+        <div id="resultsSection" class="row mt-4" style="display: none;">
+            <div class="col-12">
+                <h3><i class="fas fa-trophy"></i> Prioritized Goals</h3>
+                <div id="prioritizedGoals"></div>
+            </div>
+        </div>
+        
+        <!-- Conflicts Section -->
+        <div id="conflictsSection" class="row mt-4" style="display: none;">
+            <div class="col-12">
+                <h3><i class="fas fa-exclamation-triangle"></i> Goal Conflicts Analysis</h3>
+                <div id="goalConflicts"></div>
+            </div>
+        </div>
+        
+        <!-- Loading State -->
+        <div id="loadingState" class="row mt-4" style="display: none;">
+            <div class="col-12 text-center">
+                <div class="spinner-border text-success" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Analyzing goal prioritization...</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Goal templates data
+        const goalTemplates = {
+            'soil_health_improvement': {
+                'type': 'SOIL_HEALTH',
+                'description': 'Improve soil health through diverse rotation',
+                'default_weight': 30,
+                'icon': 'fas fa-seedling',
+                'color': '#6f4e37',
+                'measurement_criteria': [
+                    'organic_matter_increase',
+                    'erosion_reduction', 
+                    'soil_structure_improvement'
+                ],
+                'target_metrics': {
+                    'organic_matter_increase_percent': 10.0,
+                    'erosion_reduction_percent': 25.0,
+                    'soil_compaction_reduction': 15.0
+                }
+            },
+            'profit_maximization': {
+                'type': 'PROFIT_MAXIMIZATION',
+                'description': 'Maximize long-term profitability',
+                'default_weight': 40,
+                'icon': 'fas fa-dollar-sign',
+                'color': '#228b22',
+                'measurement_criteria': [
+                    'net_profit_per_acre',
+                    'roi_percentage',
+                    'cost_reduction'
+                ],
+                'target_metrics': {
+                    'min_roi_percent': 15.0,
+                    'profit_increase_percent': 20.0,
+                    'cost_reduction_percent': 10.0
+                }
+            },
+            'pest_disease_management': {
+                'type': 'PEST_MANAGEMENT',
+                'description': 'Reduce pest and disease pressure',
+                'default_weight': 20,
+                'icon': 'fas fa-bug',
+                'color': '#dc143c',
+                'measurement_criteria': [
+                    'pest_pressure_reduction',
+                    'pesticide_use_reduction',
+                    'beneficial_insect_habitat'
+                ],
+                'target_metrics': {
+                    'pest_pressure_reduction_percent': 30.0,
+                    'pesticide_reduction_percent': 25.0,
+                    'beneficial_habitat_increase': 40.0
+                }
+            },
+            'environmental_sustainability': {
+                'type': 'SUSTAINABILITY',
+                'description': 'Enhance environmental sustainability',
+                'default_weight': 25,
+                'icon': 'fas fa-leaf',
+                'color': '#32cd32',
+                'measurement_criteria': [
+                    'carbon_sequestration',
+                    'water_conservation',
+                    'biodiversity_enhancement'
+                ],
+                'target_metrics': {
+                    'carbon_sequestration_tons_per_acre': 0.5,
+                    'water_use_reduction_percent': 15.0,
+                    'biodiversity_index_increase': 25.0
+                }
+            },
+            'risk_reduction': {
+                'type': 'RISK_MANAGEMENT',
+                'description': 'Minimize production and market risks',
+                'default_weight': 15,
+                'icon': 'fas fa-shield-alt',
+                'color': '#ff8c00',
+                'measurement_criteria': [
+                    'yield_stability',
+                    'market_diversification',
+                    'weather_resilience'
+                ],
+                'target_metrics': {
+                    'yield_coefficient_variation': 0.15,
+                    'market_correlation_reduction': 0.3,
+                    'drought_tolerance_improvement': 20.0
+                }
+            },
+            'labor_efficiency': {
+                'type': 'OPERATIONAL_EFFICIENCY',
+                'description': 'Optimize labor and equipment efficiency',
+                'default_weight': 10,
+                'icon': 'fas fa-cogs',
+                'color': '#4682b4',
+                'measurement_criteria': [
+                    'labor_hour_reduction',
+                    'equipment_utilization',
+                    'timing_optimization'
+                ],
+                'target_metrics': {
+                    'labor_reduction_percent': 15.0,
+                    'equipment_efficiency_increase': 20.0,
+                    'timing_conflict_reduction': 30.0
+                }
+            }
+        };
+
+        // Goal compatibility matrix
+        const compatibilityMatrix = {
+            'soil_health_improvement': {
+                'profit_maximization': 0.7,
+                'pest_disease_management': 0.9,
+                'environmental_sustainability': 0.95,
+                'risk_reduction': 0.8,
+                'labor_efficiency': 0.6
+            },
+            'profit_maximization': {
+                'soil_health_improvement': 0.7,
+                'pest_disease_management': 0.6,
+                'environmental_sustainability': 0.5,
+                'risk_reduction': 0.8,
+                'labor_efficiency': 0.9
+            },
+            'pest_disease_management': {
+                'soil_health_improvement': 0.9,
+                'profit_maximization': 0.6,
+                'environmental_sustainability': 0.85,
+                'risk_reduction': 0.9,
+                'labor_efficiency': 0.7
+            },
+            'environmental_sustainability': {
+                'soil_health_improvement': 0.95,
+                'profit_maximization': 0.5,
+                'pest_disease_management': 0.85,
+                'risk_reduction': 0.8,
+                'labor_efficiency': 0.6
+            },
+            'risk_reduction': {
+                'soil_health_improvement': 0.8,
+                'profit_maximization': 0.8,
+                'pest_disease_management': 0.9,
+                'environmental_sustainability': 0.8,
+                'labor_efficiency': 0.7
+            },
+            'labor_efficiency': {
+                'soil_health_improvement': 0.6,
+                'profit_maximization': 0.9,
+                'pest_disease_management': 0.7,
+                'environmental_sustainability': 0.6,
+                'risk_reduction': 0.7
+            }
+        };
+
+        // Initialize the interface
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeGoalCards();
+            setupEventListeners();
+        });
+
+        function initializeGoalCards() {
+            const goalCardsContainer = document.getElementById('goalCards');
+            goalCardsContainer.innerHTML = '';
+
+            Object.keys(goalTemplates).forEach(goalKey => {
+                const goal = goalTemplates[goalKey];
+                const goalCard = createGoalCard(goalKey, goal);
+                goalCardsContainer.appendChild(goalCard);
+            });
+        }
+
+        function createGoalCard(goalKey, goal) {
+            const colDiv = document.createElement('div');
+            colDiv.className = 'col-md-6 mb-3';
+            
+            const goalId = goalKey;
+            const displayName = goalKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            
+            colDiv.innerHTML = `
+                <div class="goal-card" data-goal="${goalKey}">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" id="goal_${goalId}" name="selected_goals" value="${goalKey}">
+                        <label class="form-check-label fw-bold" for="goal_${goalId}">
+                            <i class="${goal.icon}" style="color: ${goal.color}"></i>
+                            ${displayName}
+                        </label>
+                    </div>
+                    <p class="text-muted small mb-2">${goal.description}</p>
+                    <div class="weight-control" style="display: none;">
+                        <label class="form-label small">Weight: <span class="weight-value">0</span>%</label>
+                        <input type="range" class="weight-slider" id="weight_${goalId}" 
+                               min="0" max="100" value="0" data-goal="${goalKey}">
+                    </div>
+                </div>
+            `;
+            
+            return colDiv;
+        }
+
+        function setupEventListeners() {
+            // Goal selection checkboxes
+            document.addEventListener('change', function(e) {
+                if (e.target.name === 'selected_goals') {
+                    handleGoalSelection(e.target);
+                }
+            });
+
+            // Weight sliders
+            document.addEventListener('input', function(e) {
+                if (e.target.classList.contains('weight-slider')) {
+                    handleWeightChange(e.target);
+                }
+            });
+
+            // Goal cards hover for info display
+            document.addEventListener('click', function(e) {
+                const goalCard = e.target.closest('.goal-card');
+                if (goalCard) {
+                    displayGoalInfo(goalCard.dataset.goal);
+                }
+            });
+
+            // Form submission
+            document.getElementById('goalPrioritizationForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                prioritizeGoals();
+            });
+
+            // Reset button
+            document.getElementById('resetBtn').addEventListener('click', resetForm);
+        }
+
+        function handleGoalSelection(checkbox) {
+            const goalKey = checkbox.value;
+            const goalCard = checkbox.closest('.goal-card');
+            const weightControl = goalCard.querySelector('.weight-control');
+            const weightSlider = goalCard.querySelector('.weight-slider');
+            
+            if (checkbox.checked) {
+                goalCard.classList.add('selected');
+                weightControl.style.display = 'block';
+                
+                // Set default weight
+                const defaultWeight = goalTemplates[goalKey].default_weight;
+                weightSlider.value = defaultWeight;
+                updateWeightDisplay(weightSlider);
+            } else {
+                goalCard.classList.remove('selected');
+                weightControl.style.display = 'none';
+                weightSlider.value = 0;
+            }
+            
+            updateTotalWeight();
+            checkForConflicts();
+        }
+
+        function handleWeightChange(slider) {
+            updateWeightDisplay(slider);
+            updateTotalWeight();
+            normalizeWeights();
+        }
+
+        function updateWeightDisplay(slider) {
+            const weightValue = slider.parentElement.querySelector('.weight-value');
+            weightValue.textContent = slider.value;
+        }
+
+        function updateTotalWeight() {
+            const selectedSliders = document.querySelectorAll('.goal-card.selected .weight-slider');
+            let total = 0;
+            
+            selectedSliders.forEach(slider => {
+                total += parseInt(slider.value);
+            });
+            
+            const totalWeightElement = document.getElementById('totalWeight');
+            totalWeightElement.textContent = total + '%';
+            
+            if (total === 100) {
+                totalWeightElement.classList.remove('invalid');
+                totalWeightElement.classList.add('valid');
+                document.getElementById('prioritizeBtn').disabled = false;
+            } else {
+                totalWeightElement.classList.remove('valid');
+                totalWeightElement.classList.add('invalid');
+                document.getElementById('prioritizeBtn').disabled = true;
+            }
+        }
+
+        function normalizeWeights() {
+            // Auto-normalize weights if they exceed 100%
+            const selectedSliders = document.querySelectorAll('.goal-card.selected .weight-slider');
+            let total = 0;
+            
+            selectedSliders.forEach(slider => {
+                total += parseInt(slider.value);
+            });
+            
+            if (total > 100) {
+                const factor = 100 / total;
+                selectedSliders.forEach(slider => {
+                    const newValue = Math.round(parseInt(slider.value) * factor);
+                    slider.value = newValue;
+                    updateWeightDisplay(slider);
+                });
+                updateTotalWeight();
+            }
+        }
+
+        function displayGoalInfo(goalKey) {
+            const goal = goalTemplates[goalKey];
+            const goalInfoDiv = document.getElementById('goalInfo');
+            const compatibilityDiv = document.getElementById('compatibilityMatrix');
+            
+            goalInfoDiv.innerHTML = `
+                <h6><i class="${goal.icon}" style="color: ${goal.color}"></i> ${goalKey.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</h6>
+                <p>${goal.description}</p>
+                <h6>Measurement Criteria:</h6>
+                <ul class="small">
+                    ${goal.measurement_criteria.map(criteria => `<li>${criteria.replace(/_/g, ' ')}</li>`).join('')}
+                </ul>
+                <h6>Target Metrics:</h6>
+                <ul class="small">
+                    ${Object.entries(goal.target_metrics).map(([key, value]) => 
+                        `<li>${key.replace(/_/g, ' ')}: ${value}${key.includes('percent') ? '%' : ''}</li>`
+                    ).join('')}
+                </ul>
+            `;
+            
+            // Show compatibility with other goals
+            const compatibility = compatibilityMatrix[goalKey];
+            if (compatibility) {
+                let compatibilityHTML = '';
+                Object.entries(compatibility).forEach(([otherGoal, score]) => {
+                    const compatibilityClass = score >= 0.8 ? 'compatibility-high' : 
+                                            score >= 0.6 ? 'compatibility-medium' : 'compatibility-low';
+                    compatibilityHTML += `
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="small">${otherGoal.replace(/_/g, ' ')}</span>
+                            <span>
+                                <span class="compatibility-indicator ${compatibilityClass}"></span>
+                                ${Math.round(score * 100)}%
+                            </span>
+                        </div>
+                    `;
+                });
+                
+                document.getElementById('compatibilityList').innerHTML = compatibilityHTML;
+                compatibilityDiv.style.display = 'block';
+            }
+        }
+
+        function checkForConflicts() {
+            const selectedGoals = Array.from(document.querySelectorAll('input[name="selected_goals"]:checked'))
+                .map(cb => cb.value);
+            
+            // Clear existing conflict warnings
+            document.querySelectorAll('.conflict-warning').forEach(warning => warning.remove());
+            
+            // Check for potential conflicts
+            selectedGoals.forEach(goal1 => {
+                selectedGoals.forEach(goal2 => {
+                    if (goal1 !== goal2 && compatibilityMatrix[goal1] && compatibilityMatrix[goal1][goal2] < 0.6) {
+                        showConflictWarning(goal1, goal2, compatibilityMatrix[goal1][goal2]);
+                    }
+                });
+            });
+        }
+
+        function showConflictWarning(goal1, goal2, compatibility) {
+            const goal1Card = document.querySelector(`[data-goal="${goal1}"]`);
+            const existingWarning = goal1Card.querySelector('.conflict-warning');
+            
+            if (!existingWarning) {
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'conflict-warning';
+                warningDiv.innerHTML = `
+                    <small><i class="fas fa-exclamation-triangle"></i> 
+                    Potential conflict with ${goal2.replace(/_/g, ' ')} (${Math.round(compatibility * 100)}% compatibility)</small>
+                `;
+                goal1Card.appendChild(warningDiv);
+            }
+        }
+
+        async function prioritizeGoals() {
+            const selectedGoals = Array.from(document.querySelectorAll('input[name="selected_goals"]:checked'))
+                .map(cb => {
+                    const goalKey = cb.value;
+                    const goal = goalTemplates[goalKey];
+                    const weight = parseInt(document.getElementById(`weight_${cb.id.replace('goal_', '')}`).value) / 100;
+                    
+                    return {
+                        goal_id: goalKey,
+                        type: goal.type,
+                        description: goal.description,
+                        priority: Math.round(10 * weight), // Convert weight to priority scale
+                        weight: weight,
+                        target_value: 100.0,
+                        measurement_criteria: goal.measurement_criteria
+                    };
+                });
+            
+            if (selectedGoals.length === 0) {
+                alert('Please select at least one goal.');
+                return;
+            }
+            
+            const strategy = document.getElementById('prioritizationStrategy').value;
+            
+            const requestData = {
+                goals: selectedGoals,
+                strategy: strategy,
+                farmer_preferences: {}
+            };
+            
+            // Show loading state
+            document.getElementById('loadingState').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('conflictsSection').style.display = 'none';
+            
+            try {
+                // Call prioritization API
+                const response = await fetch('/api/v1/rotations/prioritize-goals', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                displayResults(result);
+                
+                // Analyze conflicts
+                await analyzeConflicts(selectedGoals);
+                
+            } catch (error) {
+                console.error('Error prioritizing goals:', error);
+                alert('Error prioritizing goals. Please try again.');
+            } finally {
+                document.getElementById('loadingState').style.display = 'none';
+            }
+        }
+
+        function displayResults(result) {
+            const resultsDiv = document.getElementById('prioritizedGoals');
+            let resultsHTML = '';
+            
+            result.prioritized_goals.forEach((goal, index) => {
+                const goalTemplate = goalTemplates[goal.goal_id];
+                const displayName = goal.goal_id.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                
+                resultsHTML += `
+                    <div class="results-card position-relative">
+                        <div class="priority-badge">${index + 1}</div>
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h5><i class="${goalTemplate.icon}" style="color: ${goalTemplate.color}"></i> ${displayName}</h5>
+                                <p class="text-muted">${goal.description}</p>
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <strong>Priority:</strong> ${goal.priority.toFixed(1)}
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <strong>Weight:</strong> ${Math.round(goal.weight * 100)}%
+                                    </div>
+                                    ${goal.composite_score ? `<div class="col-sm-4"><strong>Score:</strong> ${goal.composite_score.toFixed(2)}</div>` : ''}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <h6>Target Metrics:</h6>
+                                <ul class="small mb-0">
+                                    ${goalTemplate.measurement_criteria.map(criteria => 
+                                        `<li>${criteria.replace(/_/g, ' ')}</li>`
+                                    ).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            resultsDiv.innerHTML = resultsHTML;
+            document.getElementById('resultsSection').style.display = 'block';
+        }
+
+        async function analyzeConflicts(selectedGoals) {
+            try {
+                const response = await fetch('/api/v1/rotations/analyze-goal-conflicts', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ goals: selectedGoals })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                displayConflicts(result);
+                
+            } catch (error) {
+                console.error('Error analyzing conflicts:', error);
+            }
+        }
+
+        function displayConflicts(result) {
+            const conflictsDiv = document.getElementById('goalConflicts');
+            
+            if (result.conflicts.length === 0) {
+                conflictsDiv.innerHTML = '<div class="alert alert-success"><i class="fas fa-check-circle"></i> No significant conflicts detected between your selected goals.</div>';
+            } else {
+                let conflictsHTML = '';
+                result.conflicts.forEach(conflict => {
+                    conflictsHTML += `
+                        <div class="alert alert-warning">
+                            <h6><i class="fas fa-exclamation-triangle"></i> Conflict Resolution</h6>
+                            <p><strong>Conflicting Goals:</strong> ${conflict.conflicting_goals.join(', ')}</p>
+                            <p><strong>Resolution Strategy:</strong> ${conflict.resolution_strategy}</p>
+                            <p><strong>Explanation:</strong> ${conflict.explanation}</p>
+                            ${Object.keys(conflict.weight_adjustments).length > 0 ? 
+                                `<p><strong>Suggested Weight Adjustments:</strong></p>
+                                <ul>
+                                    ${Object.entries(conflict.weight_adjustments).map(([goal, adjustment]) => 
+                                        `<li>${goal}: ${adjustment > 0 ? '+' : ''}${Math.round(adjustment * 100)}%</li>`
+                                    ).join('')}
+                                </ul>` : ''
+                            }
+                        </div>
+                    `;
+                });
+                conflictsDiv.innerHTML = conflictsHTML;
+            }
+            
+            document.getElementById('conflictsSection').style.display = 'block';
+        }
+
+        function resetForm() {
+            // Uncheck all goals
+            document.querySelectorAll('input[name="selected_goals"]').forEach(cb => {
+                cb.checked = false;
+            });
+            
+            // Reset all goal cards
+            document.querySelectorAll('.goal-card').forEach(card => {
+                card.classList.remove('selected');
+                card.querySelector('.weight-control').style.display = 'none';
+                card.querySelector('.weight-slider').value = 0;
+                const conflictWarning = card.querySelector('.conflict-warning');
+                if (conflictWarning) {
+                    conflictWarning.remove();
+                }
+            });
+            
+            // Reset strategy
+            document.getElementById('prioritizationStrategy').value = 'weighted_average';
+            
+            // Hide results
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('conflictsSection').style.display = 'none';
+            
+            // Reset total weight
+            updateTotalWeight();
+            
+            // Clear goal info
+            document.getElementById('goalInfo').innerHTML = '<p class="text-muted">Select a goal to see detailed information about its objectives and measurements.</p>';
+            document.getElementById('compatibilityMatrix').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

@@ -96,11 +96,22 @@ async def fertilizer_strategy_page(request: Request):
     else:
         return HTMLResponse("<h1>Fertilizer Strategy - Coming Soon</h1>")
 
+@app.get("/goal-prioritization", response_class=HTMLResponse)
+async def goal_prioritization_page(request: Request):
+    """Goal prioritization interface page"""
+    if templates:
+        return templates.TemplateResponse("goal_prioritization.html", {
+            "request": request,
+            "title": "Goal Prioritization"
+        })
+    else:
+        return HTMLResponse("<h1>Goal Prioritization - Coming Soon</h1>")
+
 @app.get("/crop-rotation-goals", response_class=HTMLResponse)
 async def crop_rotation_goals_page(request: Request):
-    """Crop rotation goal prioritization page"""
+    """Crop rotation goal prioritization page (redirect to new interface)"""
     if templates:
-        return templates.TemplateResponse("crop_rotation_goals.html", {
+        return templates.TemplateResponse("goal_prioritization.html", {
             "request": request,
             "title": "Crop Rotation Goal Prioritization"
         })
@@ -117,6 +128,17 @@ async def climate_zone_selection_page(request: Request):
         })
     else:
         return HTMLResponse("<h1>Climate Zone Selection - Coming Soon</h1>")
+
+@app.get("/ph-management", response_class=HTMLResponse)
+async def ph_management_page(request: Request):
+    """Comprehensive pH management page"""
+    if templates:
+        return templates.TemplateResponse("ph_management.html", {
+            "request": request,
+            "title": "Soil pH Management"
+        })
+    else:
+        return HTMLResponse("<h1>pH Management - Coming Soon</h1>")
 
 @app.post("/api/ask-question")
 async def ask_question(
@@ -593,6 +615,226 @@ async def validate_zone_selection(
         logger.error(f"Request error: {e}")
         raise HTTPException(status_code=503, detail="Service temporarily unavailable")
 
+
+@app.post("/api/climate/validate-consistency")
+async def validate_climate_zone_consistency(
+    latitude: float = Form(...),
+    longitude: float = Form(...),
+    check_neighboring: bool = Form(True),
+    check_temporal: bool = Form(True)
+):
+    """Validate climate zone consistency across multiple dimensions"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{DATA_INTEGRATION_URL}/api/v1/climate/validate-consistency",
+                json={
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "check_neighboring": check_neighboring,
+                    "check_temporal": check_temporal
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Consistency validation error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to validate climate zone consistency")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+
+# pH Management API Endpoints
+@app.post("/api/ph/analyze")
+async def analyze_ph_levels(
+    farm_id: str = Form(...),
+    field_id: str = Form(...),
+    crop_type: str = Form(...),
+    ph: float = Form(...),
+    organic_matter: Optional[float] = Form(None),
+    phosphorus: Optional[float] = Form(None),
+    potassium: Optional[float] = Form(None),
+    cec: Optional[float] = Form(None)
+):
+    """Analyze soil pH levels through recommendation engine"""
+    try:
+        # Prepare soil test data
+        soil_test_data = {
+            "ph": ph,
+            "organic_matter_percent": organic_matter or 3.0,
+            "phosphorus_ppm": phosphorus or 25,
+            "potassium_ppm": potassium or 150,
+            "cec_meq_per_100g": cec or 12.0,
+            "test_date": datetime.now().date().isoformat()
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{RECOMMENDATION_ENGINE_URL}/api/v1/ph/analyze",
+                json={
+                    "farm_id": farm_id,
+                    "field_id": field_id,
+                    "crop_type": crop_type,
+                    "soil_test_data": soil_test_data
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"pH analysis error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to analyze pH")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/ph/lime-calculator")
+async def calculate_lime_requirements(
+    current_ph: float = Form(...),
+    target_ph: float = Form(...),
+    buffer_ph: Optional[float] = Form(None),
+    soil_texture: str = Form(...),
+    organic_matter_percent: float = Form(...),
+    field_size_acres: float = Form(...)
+):
+    """Calculate lime requirements through recommendation engine"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{RECOMMENDATION_ENGINE_URL}/api/v1/ph/lime-calculator",
+                json={
+                    "current_ph": current_ph,
+                    "target_ph": target_ph,
+                    "buffer_ph": buffer_ph,
+                    "soil_texture": soil_texture,
+                    "organic_matter_percent": organic_matter_percent,
+                    "field_size_acres": field_size_acres
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Lime calculator error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to calculate lime requirements")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.get("/api/ph/crop-requirements")
+async def get_crop_ph_requirements(
+    crop_types: str = Query(..., description="Comma-separated list of crop types")
+):
+    """Get crop pH requirements through recommendation engine"""
+    try:
+        crop_list = [crop.strip() for crop in crop_types.split(",")]
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{RECOMMENDATION_ENGINE_URL}/api/v1/ph/crop-requirements",
+                params={"crop_types": crop_list},
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Crop requirements error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to get crop requirements")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.post("/api/ph/monitor")
+async def setup_ph_monitoring(
+    farm_id: str = Form(...),
+    field_id: str = Form(...),
+    monitoring_frequency: str = Form(...),
+    alert_thresholds: str = Form(...)
+):
+    """Setup pH monitoring through recommendation engine"""
+    try:
+        import json
+        thresholds = json.loads(alert_thresholds)
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{RECOMMENDATION_ENGINE_URL}/api/v1/ph/monitor",
+                json={
+                    "farm_id": farm_id,
+                    "field_id": field_id,
+                    "monitoring_frequency": monitoring_frequency,
+                    "alert_thresholds": thresholds
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"pH monitoring setup error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to setup pH monitoring")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.get("/api/ph/dashboard")
+async def get_ph_dashboard(
+    farm_id: str = Query(..., description="Farm identifier")
+):
+    """Get pH dashboard data through recommendation engine"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{RECOMMENDATION_ENGINE_URL}/api/v1/ph/dashboard",
+                params={"farm_id": farm_id},
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"pH dashboard error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to get pH dashboard")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+@app.get("/api/ph/trends")
+async def get_ph_trends(
+    farm_id: str = Query(..., description="Farm identifier"),
+    field_id: str = Query(..., description="Field identifier")
+):
+    """Get pH trends through recommendation engine"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{RECOMMENDATION_ENGINE_URL}/api/v1/ph/trends",
+                params={"farm_id": farm_id, "field_id": field_id},
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"pH trends error: {response.status_code}")
+                raise HTTPException(status_code=500, detail="Failed to get pH trends")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
 @app.post("/api/climate/zone-override")
 async def submit_zone_override(request: dict):
     """Submit a climate zone override for logging and analysis"""
@@ -643,7 +885,19 @@ async def health_check():
         "backend_services": {
             "question_router": QUESTION_ROUTER_URL,
             "recommendation_engine": RECOMMENDATION_ENGINE_URL,
-            "user_management": USER_MANAGEMENT_URL
+            "user_management": USER_MANAGEMENT_URL,
+            "data_integration": DATA_INTEGRATION_URL
+        },
+        "ph_management": {
+            "status": "integrated",
+            "endpoints": [
+                "/api/ph/analyze",
+                "/api/ph/lime-calculator",
+                "/api/ph/crop-requirements",
+                "/api/ph/monitor",
+                "/api/ph/dashboard",
+                "/api/ph/trends"
+            ]
         }
     }
 

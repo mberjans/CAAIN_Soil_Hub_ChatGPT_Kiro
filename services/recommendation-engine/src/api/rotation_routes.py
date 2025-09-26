@@ -15,12 +15,17 @@ from ..models.rotation_models import (
     RotationPlanUpdateRequest
 )
 from ..services.field_history_service import field_history_service
-from ..services.rotation_optimization_engine import rotation_optimization_engine
+from ..services.rotation_optimization_engine import RotationOptimizationEngine
 from ..services.rotation_storage_service import rotation_storage_service
+from ..services.rotation_goal_service import RotationGoalService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/rotations", tags=["crop-rotation"])
+
+# Initialize services
+goal_service = RotationGoalService()
+rotation_optimization_engine = RotationOptimizationEngine()
 
 
 # Additional request/response models
@@ -50,6 +55,24 @@ class RotationComparisonRequest(BaseModel):
     rotation_scenarios: List[List[str]]
     goals: List[RotationGoalRequest]
     constraints: List[RotationConstraintRequest] = []
+
+
+class GoalPrioritizationRequest(BaseModel):
+    """Request for goal prioritization."""
+    goals: List[Dict[str, Any]]
+    strategy: str = "weighted_average"
+    farmer_preferences: Optional[Dict[str, float]] = None
+
+
+class GoalTemplateResponse(BaseModel):
+    """Response for goal templates."""
+    templates: Dict[str, Dict[str, Any]]
+    compatibility_matrix: Dict[str, Dict[str, float]]
+
+
+class GoalConflictAnalysisRequest(BaseModel):
+    """Request for goal conflict analysis."""
+    goals: List[Dict[str, Any]]
 
 
 # Field History Management Endpoints
@@ -628,6 +651,180 @@ async def get_crop_sequence_analysis(field_id: str, years: int = Query(10, ge=1,
     except Exception as e:
         logger.error(f"Error analyzing crop sequence: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Sequence analysis failed: {str(e)}")
+
+
+# Goal Prioritization Endpoints
+
+@router.get("/goal-templates", response_model=GoalTemplateResponse)
+async def get_goal_templates():
+    """Get available goal templates and compatibility matrix."""
+    try:
+        templates = goal_service.goal_templates
+        compatibility_matrix = goal_service.goal_compatibility_matrix
+        
+        return GoalTemplateResponse(
+            templates=templates,
+            compatibility_matrix=compatibility_matrix
+        )
+    except Exception as e:
+        logger.error(f"Error retrieving goal templates: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve goal templates: {str(e)}")
+
+
+@router.post("/prioritize-goals")
+async def prioritize_goals(request: GoalPrioritizationRequest):
+    """Prioritize rotation goals using specified strategy."""
+    try:
+        # Convert dict goals to RotationGoal objects
+        from ..models.rotation_models import RotationGoal, RotationGoalType
+        
+        rotation_goals = []
+        for goal_dict in request.goals:
+            goal = RotationGoal(
+                goal_id=goal_dict.get('goal_id', goal_dict.get('type', 'unknown')),
+                goal_type=RotationGoalType(goal_dict.get('type', 'SOIL_HEALTH')),
+                description=goal_dict.get('description', ''),
+                priority=goal_dict.get('priority', 1.0),
+                weight=goal_dict.get('weight', 0.5),
+                target_value=goal_dict.get('target_value', 0.0),
+                measurement_criteria=goal_dict.get('measurement_criteria', [])
+            )
+            rotation_goals.append(goal)
+        
+        # Import strategy enum
+        from ..services.rotation_goal_service import GoalPriorityStrategy
+        strategy_enum = GoalPriorityStrategy(request.strategy)
+        
+        # Prioritize goals
+        prioritized_goals = await goal_service.prioritize_goals(
+            goals=rotation_goals,
+            strategy=strategy_enum,
+            farmer_preferences=request.farmer_preferences
+        )
+        
+        # Convert back to dict format
+        result = []
+        for goal in prioritized_goals:
+            goal_dict = {
+                'goal_id': goal.goal_id,
+                'type': goal.goal_type.value,
+                'description': goal.description,
+                'priority': goal.priority,
+                'weight': goal.weight,
+                'target_value': goal.target_value,
+                'measurement_criteria': goal.measurement_criteria,
+                'composite_score': getattr(goal, 'composite_score', None)
+            }
+            result.append(goal_dict)
+        
+        return {
+            "prioritized_goals": result,
+            "strategy_used": request.strategy,
+            "total_goals": len(result)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error prioritizing goals: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to prioritize goals: {str(e)}")
+
+
+@router.post("/analyze-goal-conflicts")
+async def analyze_goal_conflicts(request: GoalConflictAnalysisRequest):
+    """Analyze conflicts between rotation goals."""
+    try:
+        # Convert dict goals to RotationGoal objects
+        from ..models.rotation_models import RotationGoal, RotationGoalType
+        
+        rotation_goals = []
+        for goal_dict in request.goals:
+            goal = RotationGoal(
+                goal_id=goal_dict.get('goal_id', goal_dict.get('type', 'unknown')),
+                goal_type=RotationGoalType(goal_dict.get('type', 'SOIL_HEALTH')),
+                description=goal_dict.get('description', ''),
+                priority=goal_dict.get('priority', 1.0),
+                weight=goal_dict.get('weight', 0.5),
+                target_value=goal_dict.get('target_value', 0.0),
+                measurement_criteria=goal_dict.get('measurement_criteria', [])
+            )
+            rotation_goals.append(goal)
+        
+        # Analyze conflicts
+        conflicts = await goal_service.analyze_goal_conflicts(rotation_goals)
+        
+        # Convert conflicts to dict format
+        result = []
+        for conflict in conflicts:
+            conflict_dict = {
+                'conflicting_goals': conflict.conflicting_goals,
+                'resolution_strategy': conflict.resolution_strategy,
+                'weight_adjustments': conflict.weight_adjustments,
+                'explanation': conflict.explanation
+            }
+            result.append(conflict_dict)
+        
+        return {
+            "conflicts": result,
+            "total_conflicts": len(result),
+            "analysis_timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing goal conflicts: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze goal conflicts: {str(e)}")
+
+
+@router.post("/validate-constraints")
+async def validate_constraints(field_id: str, constraints: List[Dict[str, Any]]):
+    """Validate rotation constraints for feasibility."""
+    try:
+        # Convert dict constraints to RotationConstraint objects
+        from ..models.rotation_models import RotationConstraint, ConstraintType
+        
+        rotation_constraints = []
+        for constraint_dict in constraints:
+            constraint = RotationConstraint(
+                constraint_id=constraint_dict.get('constraint_id', constraint_dict.get('type', 'unknown')),
+                constraint_type=ConstraintType(constraint_dict.get('type', 'REQUIRED_CROP')),
+                description=constraint_dict.get('description', ''),
+                parameters=constraint_dict.get('parameters', {}),
+                is_hard_constraint=constraint_dict.get('is_hard_constraint', True)
+            )
+            rotation_constraints.append(constraint)
+        
+        # Get field profile for validation
+        field_profile = field_history_service.field_profiles.get(field_id)
+        if not field_profile:
+            raise HTTPException(status_code=404, detail=f"Field {field_id} not found")
+        
+        # Available crops (simplified list for validation)
+        available_crops = ['corn', 'soybean', 'wheat', 'oats', 'alfalfa', 'barley', 'canola', 'sunflower']
+        
+        # Validate constraints
+        validation_results = await goal_service.validate_constraints(rotation_constraints, field_profile, available_crops)
+        
+        # Convert validation results to dict format
+        result = []
+        for validation in validation_results:
+            validation_dict = {
+                'constraint_id': validation.constraint_id,
+                'is_feasible': validation.is_feasible,
+                'conflicts': validation.conflicts,
+                'suggestions': validation.suggestions,
+                'impact_assessment': validation.impact_assessment
+            }
+            result.append(validation_dict)
+        
+        return {
+            "validation_results": result,
+            "field_id": field_id,
+            "total_constraints": len(result),
+            "feasible_constraints": sum(1 for r in result if r['is_feasible']),
+            "validation_timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error validating constraints: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to validate constraints: {str(e)}")
 
 
 # Health check endpoint
