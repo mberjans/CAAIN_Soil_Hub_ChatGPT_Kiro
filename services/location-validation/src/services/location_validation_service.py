@@ -18,6 +18,9 @@ import json
 import aiohttp
 from datetime import datetime, timedelta
 
+# Initialize logger first
+logger = logging.getLogger(__name__)
+
 # Import the Pydantic models
 import sys
 import os
@@ -27,7 +30,25 @@ from location_models import (
     ValidationResult, GeographicInfo, LocationError, LOCATION_ERRORS
 )
 
-logger = logging.getLogger(__name__)
+# Import enhanced weather service for climate zone integration
+# Calculate path to data integration service
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.abspath(os.path.join(current_dir, '../../../../'))
+data_integration_path = os.path.join(project_root, 'services', 'data-integration', 'src')
+
+if os.path.exists(data_integration_path) and data_integration_path not in sys.path:
+    sys.path.insert(0, data_integration_path)
+
+try:
+    from services.weather_service import WeatherService
+    from services.coordinate_climate_detector import CoordinateClimateDetector
+    WEATHER_SERVICE_AVAILABLE = True
+    logger.info("Enhanced weather service successfully imported for climate zone integration")
+except ImportError as e:
+    logger.warning(f"Enhanced weather service not available: {e}")
+    logger.debug(f"Attempted import from: {data_integration_path}")
+    logger.debug(f"Path exists: {os.path.exists(data_integration_path)}")
+    WEATHER_SERVICE_AVAILABLE = False
 
 
 class ValidationSeverity(str, Enum):
@@ -70,13 +91,22 @@ class LocationValidationService:
         # County/state boundary data
         self.geographic_boundaries = self._load_geographic_boundaries()
         
+        # Enhanced weather service integration for climate zone detection
+        if WEATHER_SERVICE_AVAILABLE:
+            self.weather_service = WeatherService()
+            self.climate_detector = CoordinateClimateDetector()
+        else:
+            self.weather_service = None
+            self.climate_detector = None
+        
         # Validation thresholds
         self.validation_config = {
             'coordinate_precision': 6,  # Decimal places for coordinates
             'max_accuracy_meters': 10000,  # Maximum GPS accuracy to accept
             'agricultural_confidence_threshold': 0.7,
             'ocean_detection_enabled': True,
-            'urban_area_warnings': True
+            'urban_area_warnings': True,
+            'use_enhanced_climate_detection': WEATHER_SERVICE_AVAILABLE
         }
     
     async def validate_coordinates(self, latitude: float, longitude: float) -> ValidationResult:
@@ -205,7 +235,7 @@ class LocationValidationService:
                 ]
             ))
         
-        # Climate zone validation
+        # Enhanced climate zone validation with detailed analysis
         climate_validation = await self._validate_climate_zone(latitude, longitude)
         if climate_validation['warnings']:
             for warning in climate_validation['warnings']:
@@ -214,6 +244,25 @@ class LocationValidationService:
                     message=warning,
                     agricultural_context="Climate conditions may limit crop options and growing practices"
                 ))
+        
+        # Add comprehensive climate analysis to geographic info if enhanced detection is available
+        if self.validation_config.get('use_enhanced_climate_detection'):
+            try:
+                climate_analysis = await self.get_comprehensive_climate_analysis(latitude, longitude)
+                if climate_analysis.get('agricultural_assessment'):
+                    assessment = climate_analysis['agricultural_assessment']
+                    if assessment['category'] in ['Challenging', 'Difficult']:
+                        issues.append(ValidationIssue(
+                            severity=ValidationSeverity.WARNING,
+                            message=f"Climate assessment: {assessment['category']} agricultural conditions",
+                            agricultural_context=f"Suitability score: {assessment['suitability_score']}",
+                            suggested_actions=assessment.get('recommendations', [])
+                        ))
+                    # Store climate analysis in geographic info for later use
+                    if geographic_info:
+                        geographic_info.climate_analysis = climate_analysis
+            except Exception as e:
+                self.logger.warning(f"Climate analysis integration failed: {e}")
         
         # Soil region analysis
         soil_region = await self._get_soil_region_info(latitude, longitude)
@@ -352,12 +401,31 @@ class LocationValidationService:
         """
         Get USDA hardiness zone for coordinates.
         
-        Simplified implementation based on latitude. In production, this would
-        use actual USDA hardiness zone data.
+        Uses enhanced weather service integration when available for more accurate
+        climate zone detection based on historical weather data.
         """
-        # Simplified zone mapping based on latitude
-        # This is a rough approximation and should be replaced with actual data
+        # Use enhanced weather service if available
+        if self.validation_config.get('use_enhanced_climate_detection') and self.weather_service:
+            try:
+                # Get comprehensive climate zone data from weather service
+                climate_data = await self.weather_service.get_climate_zone_data(latitude, longitude)
+                if climate_data and climate_data.usda_zone:
+                    self.logger.info(f"Enhanced climate zone detection: {climate_data.usda_zone} "
+                                   f"(Köppen: {climate_data.koppen_classification})")
+                    return climate_data.usda_zone
+                
+                # Fallback to coordinate climate detector
+                if self.climate_detector:
+                    climate_result = await self.climate_detector.detect_climate_from_coordinates(latitude, longitude)
+                    if climate_result and climate_result.usda_zone:
+                        self.logger.info(f"Coordinate-based climate detection: {climate_result.usda_zone.zone}")
+                        return climate_result.usda_zone.zone
+                        
+            except Exception as e:
+                self.logger.warning(f"Enhanced climate detection failed, falling back to simple method: {e}")
         
+        # Fallback to simplified zone mapping based on latitude
+        # This is a rough approximation and should be replaced with actual data
         if latitude >= 48:
             return "3a-4b"
         elif latitude >= 45:
@@ -528,8 +596,43 @@ class LocationValidationService:
         """Validate climate zone and return warnings if needed."""
         climate_zone = await self._get_climate_zone(latitude, longitude)
         warnings = []
+        climate_details = {}
         
-        if climate_zone:
+        # Get enhanced climate data if available
+        if self.validation_config.get('use_enhanced_climate_detection') and self.weather_service:
+            try:
+                climate_data = await self.weather_service.get_climate_zone_data(latitude, longitude)
+                if climate_data:
+                    climate_details = {
+                        'usda_zone': climate_data.usda_zone,
+                        'koppen_classification': climate_data.koppen_classification,
+                        'average_min_temp_f': climate_data.average_min_temp_f,
+                        'average_max_temp_f': climate_data.average_max_temp_f,
+                        'annual_precipitation_inches': climate_data.annual_precipitation_inches,
+                        'growing_season_length': climate_data.growing_season_length,
+                        'last_frost_date': climate_data.last_frost_date,
+                        'first_frost_date': climate_data.first_frost_date
+                    }
+                    
+                    # Enhanced warnings based on detailed climate data
+                    if climate_data.growing_season_length < 120:
+                        warnings.append(f"Short growing season ({climate_data.growing_season_length} days) - limited crop options")
+                    
+                    if climate_data.average_min_temp_f < -10:
+                        warnings.append("Extremely cold winter temperatures may require cold-hardy varieties")
+                    
+                    if climate_data.annual_precipitation_inches < 20:
+                        warnings.append("Low annual precipitation - irrigation may be required")
+                    elif climate_data.annual_precipitation_inches > 60:
+                        warnings.append("High annual precipitation - drainage considerations important")
+                    
+                    if climate_data.koppen_classification.startswith('Df'):
+                        warnings.append("Continental climate with cold winters - season length considerations important")
+            except Exception as e:
+                self.logger.warning(f"Enhanced climate validation failed: {e}")
+        
+        # Fallback warnings based on basic climate zone
+        if climate_zone and not warnings:
             if climate_zone.startswith("3") or climate_zone.startswith("4"):
                 warnings.append("Very cold climate zone - limited growing season and crop options")
             elif climate_zone.startswith("10"):
@@ -537,8 +640,155 @@ class LocationValidationService:
         
         return {
             'climate_zone': climate_zone,
+            'climate_details': climate_details,
             'warnings': warnings
         }
+    
+    async def get_comprehensive_climate_analysis(self, latitude: float, longitude: float) -> Dict:
+        """
+        Get comprehensive climate analysis for a location.
+        
+        This method provides detailed climate information including:
+        - USDA Hardiness Zone
+        - Köppen climate classification  
+        - Growing season details
+        - Temperature and precipitation patterns
+        - Agricultural suitability assessment
+        """
+        if not self.validation_config.get('use_enhanced_climate_detection') or not self.weather_service:
+            return {
+                'error': 'Enhanced climate detection not available',
+                'basic_zone': await self._get_climate_zone(latitude, longitude)
+            }
+        
+        try:
+            # Get comprehensive climate data
+            climate_data = await self.weather_service.get_climate_zone_data(latitude, longitude)
+            
+            if not climate_data:
+                return {
+                    'error': 'Climate data not available for location',
+                    'basic_zone': await self._get_climate_zone(latitude, longitude)
+                }
+            
+            # Calculate agricultural suitability based on climate
+            agricultural_suitability = self._assess_climate_agricultural_suitability(climate_data)
+            
+            # Get coordinate-based climate detection as supplementary data
+            coordinate_climate = {}
+            if self.climate_detector:
+                try:
+                    coord_result = await self.climate_detector.detect_climate_from_coordinates(latitude, longitude)
+                    if coord_result:
+                        coordinate_climate = {
+                            'usda_zone': coord_result.usda_zone.zone if coord_result.usda_zone else None,
+                            'koppen_analysis': coord_result.koppen_analysis.classification if coord_result.koppen_analysis else None,
+                            'elevation_ft': coord_result.elevation_data.elevation_ft if coord_result.elevation_data else None,
+                            'confidence_factors': coord_result.confidence_factors
+                        }
+                except Exception as e:
+                    self.logger.warning(f"Coordinate climate detection failed: {e}")
+            
+            return {
+                'usda_zone': climate_data.usda_zone,
+                'koppen_classification': climate_data.koppen_classification,
+                'temperature_profile': {
+                    'average_min_temp_f': climate_data.average_min_temp_f,
+                    'average_max_temp_f': climate_data.average_max_temp_f,
+                    'temperature_range_f': climate_data.average_max_temp_f - climate_data.average_min_temp_f
+                },
+                'precipitation_profile': {
+                    'annual_precipitation_inches': climate_data.annual_precipitation_inches,
+                    'precipitation_category': self._categorize_precipitation(climate_data.annual_precipitation_inches)
+                },
+                'growing_season': {
+                    'length_days': climate_data.growing_season_length,
+                    'last_frost_date': climate_data.last_frost_date,
+                    'first_frost_date': climate_data.first_frost_date,
+                    'frost_free_period': climate_data.growing_season_length
+                },
+                'agricultural_assessment': agricultural_suitability,
+                'coordinate_based_climate': coordinate_climate,
+                'data_source': 'enhanced_weather_service'
+            }
+            
+        except Exception as e:
+            self.logger.error(f"Comprehensive climate analysis failed: {e}")
+            return {
+                'error': f'Climate analysis failed: {str(e)}',
+                'basic_zone': await self._get_climate_zone(latitude, longitude)
+            }
+    
+    def _assess_climate_agricultural_suitability(self, climate_data) -> Dict:
+        """Assess agricultural suitability based on climate data."""
+        suitability_score = 1.0
+        limiting_factors = []
+        recommendations = []
+        
+        # Growing season length assessment
+        if climate_data.growing_season_length < 90:
+            suitability_score *= 0.3
+            limiting_factors.append("Very short growing season")
+            recommendations.append("Consider cold-hardy, fast-maturing crop varieties")
+        elif climate_data.growing_season_length < 120:
+            suitability_score *= 0.6
+            limiting_factors.append("Short growing season")
+            recommendations.append("Focus on early-maturing varieties")
+        
+        # Temperature assessment
+        if climate_data.average_min_temp_f < -20:
+            suitability_score *= 0.4
+            limiting_factors.append("Extremely cold winter temperatures")
+            recommendations.append("Ensure adequate winter protection for perennial crops")
+        elif climate_data.average_min_temp_f < 0:
+            suitability_score *= 0.7
+            limiting_factors.append("Cold winter temperatures")
+        
+        # Precipitation assessment
+        if climate_data.annual_precipitation_inches < 15:
+            suitability_score *= 0.5
+            limiting_factors.append("Very low precipitation")
+            recommendations.append("Irrigation system essential")
+        elif climate_data.annual_precipitation_inches < 25:
+            suitability_score *= 0.8
+            limiting_factors.append("Low precipitation")
+            recommendations.append("Consider drought-tolerant varieties and irrigation")
+        elif climate_data.annual_precipitation_inches > 60:
+            suitability_score *= 0.9
+            limiting_factors.append("High precipitation")
+            recommendations.append("Ensure good drainage systems")
+        
+        # Determine overall category
+        if suitability_score >= 0.8:
+            category = "Excellent"
+        elif suitability_score >= 0.6:
+            category = "Good"
+        elif suitability_score >= 0.4:
+            category = "Moderate"
+        elif suitability_score >= 0.2:
+            category = "Challenging" 
+        else:
+            category = "Difficult"
+        
+        return {
+            'suitability_score': round(suitability_score, 2),
+            'category': category,
+            'limiting_factors': limiting_factors,
+            'recommendations': recommendations
+        }
+    
+    def _categorize_precipitation(self, annual_precipitation: float) -> str:
+        """Categorize annual precipitation levels."""
+        if annual_precipitation < 10:
+            return "Arid"
+        elif annual_precipitation < 20:
+            return "Semi-arid"
+        elif annual_precipitation < 40:
+            return "Moderate"
+        elif annual_precipitation < 60:
+            return "Humid"
+        else:
+            return "Very humid"
     
     async def _get_soil_region_info(self, latitude: float, longitude: float) -> Optional[Dict]:
         """
