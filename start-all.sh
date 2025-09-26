@@ -84,6 +84,23 @@ USER_MANAGEMENT_PID=$!
 print_status "User Management started on port 8005 (PID: $USER_MANAGEMENT_PID)"
 deactivate
 
+# Cover Crop Selection (Python)
+cd ../cover-crop-selection
+source venv/bin/activate 2>/dev/null || python -m venv venv && source venv/bin/activate
+pip install -r requirements.txt >/dev/null 2>&1 || true
+uvicorn src.main:app --host 0.0.0.0 --port 8006 --reload &
+COVER_CROP_PID=$!
+print_status "Cover Crop Selection started on port 8006 (PID: $COVER_CROP_PID)"
+deactivate
+
+# Frontend (Python)
+cd ../frontend
+source venv/bin/activate
+uvicorn src.main:app --host 0.0.0.0 --port 3000 --reload &
+FRONTEND_PID=$!
+print_status "Frontend started on port 3000 (PID: $FRONTEND_PID)"
+deactivate
+
 cd ../..
 
 # Save PIDs for cleanup
@@ -93,6 +110,8 @@ echo $AI_AGENT_PID >> .pids
 echo $DATA_INTEGRATION_PID >> .pids
 echo $IMAGE_ANALYSIS_PID >> .pids
 echo $USER_MANAGEMENT_PID >> .pids
+echo $COVER_CROP_PID >> .pids
+echo $FRONTEND_PID >> .pids
 
 print_success "🎉 All AFAS services are running!"
 echo ""
@@ -103,6 +122,8 @@ echo "  • AI Agent:             http://localhost:8002/health"
 echo "  • Data Integration:     http://localhost:8003/health"
 echo "  • Image Analysis:       http://localhost:8004/health"
 echo "  • User Management:      http://localhost:8005/health"
+echo "  • Cover Crop Selection:  http://localhost:8006/health"
+echo "  • Frontend:             http://localhost:3000"
 echo ""
 echo "🛑 To stop all services, run: ./stop-all.sh"
 echo "📊 To check service status: curl http://localhost:8000/health"
