@@ -28,10 +28,16 @@ try:
         CropTimingWindow,
         RotationBenefitAnalysis,
         GoalBasedObjectives,
-        GoalBasedRecommendation
+        GoalBasedRecommendation,
+        TimingRecommendationRequest,
+        TimingRecommendationResponse,
+        PlantingTimingWindow,
+        TerminationTimingWindow,
+        TerminationMethod
     )
     from .main_crop_integration_service import MainCropIntegrationService
     from .goal_based_recommendation_service import GoalBasedRecommendationService
+    from .timing_service import CoverCropTimingService
 except ImportError:
     from models.cover_crop_models import (
         CoverCropSelectionRequest,
@@ -48,10 +54,16 @@ except ImportError:
         CropTimingWindow,
         RotationBenefitAnalysis,
         GoalBasedObjectives,
-        GoalBasedRecommendation
+        GoalBasedRecommendation,
+        TimingRecommendationRequest,
+        TimingRecommendationResponse,
+        PlantingTimingWindow,
+        TerminationTimingWindow,
+        TerminationMethod
     )
     from services.main_crop_integration_service import MainCropIntegrationService
     from services.goal_based_recommendation_service import GoalBasedRecommendationService
+    from services.timing_service import CoverCropTimingService
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +78,7 @@ class CoverCropSelectionService:
         self.climate_service_url = "http://localhost:8003"  # Data integration service
         self.main_crop_integration_service = MainCropIntegrationService()
         self.goal_based_service = GoalBasedRecommendationService()
+        self.timing_service = CoverCropTimingService()
         self.initialized = False
         
     async def initialize(self):
@@ -74,6 +87,7 @@ class CoverCropSelectionService:
             await self._load_cover_crop_database()
             await self._load_mixture_database()
             await self.main_crop_integration_service.initialize()
+            await self.timing_service.initialize()
             self.initialized = True
             logger.info("Cover Crop Selection Service initialized successfully")
         except Exception as e:
@@ -2760,4 +2774,190 @@ class CoverCropSelectionService:
             
         except Exception as e:
             logger.error(f"Error getting goal categories: {e}")
+            raise
+    
+    # Timing System Integration Methods
+    
+    async def get_timing_recommendations(
+        self, 
+        request: TimingRecommendationRequest
+    ) -> TimingRecommendationResponse:
+        """
+        Get comprehensive timing recommendations for cover crop planting and termination.
+        
+        Args:
+            request: Timing recommendation request with species, location, and constraints
+            
+        Returns:
+            TimingRecommendationResponse with planting and termination timing recommendations
+        """
+        try:
+            if not self.initialized:
+                raise ValueError("Service not initialized")
+                
+            return await self.timing_service.generate_comprehensive_timing_recommendation(request)
+            
+        except Exception as e:
+            logger.error(f"Error generating timing recommendations: {e}")
+            raise
+    
+    async def get_planting_window(
+        self,
+        species_id: str,
+        location: Dict[str, Any],
+        main_crop_schedule: Optional[Dict[str, Any]] = None,
+        target_season: Optional[GrowingSeason] = None
+    ) -> PlantingTimingWindow:
+        """
+        Get planting timing window for a specific cover crop species.
+        
+        Args:
+            species_id: Cover crop species identifier
+            location: Geographic location details
+            main_crop_schedule: Optional main crop timing constraints
+            target_season: Optional target growing season
+            
+        Returns:
+            PlantingTimingWindow with optimal planting timing
+        """
+        try:
+            if not self.initialized:
+                raise ValueError("Service not initialized")
+                
+            return await self.timing_service.calculate_planting_window(
+                species_id, location, main_crop_schedule, target_season
+            )
+            
+        except Exception as e:
+            logger.error(f"Error calculating planting window: {e}")
+            raise
+    
+    async def get_termination_windows(
+        self,
+        species_id: str,
+        planting_date: date,
+        location: Dict[str, Any],
+        main_crop_schedule: Optional[Dict[str, Any]] = None,
+        preferred_methods: Optional[List[TerminationMethod]] = None
+    ) -> List[TerminationTimingWindow]:
+        """
+        Get termination timing windows for different methods.
+        
+        Args:
+            species_id: Cover crop species identifier
+            planting_date: Actual or planned planting date
+            location: Geographic location details
+            main_crop_schedule: Optional main crop timing constraints
+            preferred_methods: Optional list of preferred termination methods
+            
+        Returns:
+            List of TerminationTimingWindow for different methods
+        """
+        try:
+            if not self.initialized:
+                raise ValueError("Service not initialized")
+                
+            return await self.timing_service.calculate_termination_windows(
+                species_id, planting_date, location, main_crop_schedule, preferred_methods
+            )
+            
+        except Exception as e:
+            logger.error(f"Error calculating termination windows: {e}")
+            raise
+    
+    async def get_seasonal_timing_strategy(
+        self,
+        species_id: str,
+        location: Dict[str, Any],
+        target_season: GrowingSeason,
+        management_goals: List[str]
+    ) -> Dict[str, Any]:
+        """
+        Get comprehensive seasonal timing strategy for cover crop management.
+        
+        Args:
+            species_id: Cover crop species identifier
+            location: Geographic location details
+            target_season: Target growing season
+            management_goals: Primary management objectives
+            
+        Returns:
+            Dictionary with seasonal timing strategy and recommendations
+        """
+        try:
+            if not self.initialized:
+                raise ValueError("Service not initialized")
+                
+            # Create timing request
+            timing_request = TimingRecommendationRequest(
+                species_id=species_id,
+                location=location,
+                main_crop_schedule={},
+                management_goals=management_goals
+            )
+            
+            # Get comprehensive recommendations
+            timing_response = await self.timing_service.generate_comprehensive_timing_recommendation(
+                timing_request
+            )
+            
+            return {
+                "seasonal_strategy": timing_response.seasonal_strategy.dict(),
+                "planting_window": timing_response.recommended_planting.dict(),
+                "termination_options": [tw.dict() for tw in timing_response.recommended_termination],
+                "establishment_success_probability": timing_response.expected_establishment_success,
+                "timing_risks": timing_response.timing_risks,
+                "recommendation_summary": timing_response.recommendation_summary
+            }
+            
+        except Exception as e:
+            logger.error(f"Error generating seasonal timing strategy: {e}")
+            raise
+    
+    async def get_species_timing_flexibility(
+        self,
+        species_id: str,
+        location: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """
+        Get timing flexibility information for a cover crop species.
+        
+        Args:
+            species_id: Cover crop species identifier
+            location: Geographic location details
+            
+        Returns:
+            Dictionary with timing flexibility and constraint information
+        """
+        try:
+            if not self.initialized:
+                raise ValueError("Service not initialized")
+                
+            if species_id not in self.timing_service.species_timing_data:
+                raise ValueError(f"Species {species_id} not found in timing database")
+                
+            species_timing = self.timing_service.species_timing_data[species_id]
+            climate_data = await self.timing_service.get_climate_data(location)
+            
+            return {
+                "species_id": species_id,
+                "available_seasons": species_timing["planting_seasons"],
+                "optimal_planting_months": species_timing["optimal_planting_months"],
+                "frost_tolerance": species_timing["frost_tolerance"],
+                "minimum_soil_temperature_f": species_timing["min_soil_temp_f"],
+                "days_to_establishment": species_timing["days_to_establishment"],
+                "minimum_growing_days": species_timing["minimum_growing_days"],
+                "optimal_growing_days": species_timing["optimal_growing_days"],
+                "available_termination_methods": species_timing["termination_methods"],
+                "winter_hardy": species_timing["winter_hardy"],
+                "seed_production_risk": species_timing["seed_production_risk"],
+                "climate_constraints": {
+                    "last_frost_estimate": climate_data.average_last_frost.isoformat() if climate_data.average_last_frost else None,
+                    "first_frost_estimate": climate_data.average_first_frost.isoformat() if climate_data.average_first_frost else None,
+                    "soil_temperature_by_month": climate_data.average_soil_temp_by_month
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error getting species timing flexibility: {e}")
             raise

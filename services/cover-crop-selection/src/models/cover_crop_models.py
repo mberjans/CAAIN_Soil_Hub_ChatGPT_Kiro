@@ -508,3 +508,194 @@ class RotationBenefitAnalysis(BaseModel):
     implementation_risks: List[str] = Field(default_factory=list, description="Implementation risks")
     mitigation_strategies: List[str] = Field(default_factory=list, description="Risk mitigation strategies")
     confidence_level: float = Field(default=0.7, ge=0.0, le=1.0, description="Analysis confidence level")
+
+
+# Planting and Termination Timing System Models
+
+class TimingFactorType(str, Enum):
+    """Types of factors affecting timing decisions."""
+    CLIMATE = "climate"
+    SOIL_CONDITION = "soil_condition"
+    SPECIES_CHARACTERISTIC = "species_characteristic"
+    MAIN_CROP_SCHEDULE = "main_crop_schedule"
+    MANAGEMENT_GOAL = "management_goal"
+    WEATHER_PATTERN = "weather_pattern"
+
+
+class TerminationMethod(str, Enum):
+    """Available termination methods."""
+    HERBICIDE = "herbicide"
+    MECHANICAL_TILLAGE = "mechanical_tillage"
+    MOWING = "mowing"
+    ROLLING_CRIMPING = "rolling_crimping"
+    GRAZING = "grazing"
+    WINTER_KILL = "winter_kill"
+    INCORPORATION = "incorporation"
+    BURNING = "burning"
+
+
+class TimingRecommendationConfidence(str, Enum):
+    """Confidence levels for timing recommendations."""
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+    UNCERTAIN = "uncertain"
+
+
+class PlantingTimingWindow(BaseModel):
+    """Comprehensive planting timing window for cover crops."""
+    
+    species_id: str = Field(..., description="Cover crop species identifier")
+    location: Dict[str, Any] = Field(..., description="Geographic location details")
+    climate_zone: Optional[str] = Field(None, description="Climate zone")
+    
+    # Primary timing window
+    optimal_planting_start: date = Field(..., description="Optimal planting window start")
+    optimal_planting_end: date = Field(..., description="Optimal planting window end")
+    acceptable_early_date: Optional[date] = Field(None, description="Earliest acceptable planting date")
+    acceptable_late_date: Optional[date] = Field(None, description="Latest acceptable planting date")
+    
+    # Timing factors and constraints
+    primary_limiting_factors: List[TimingFactorType] = Field(..., description="Primary factors limiting timing")
+    climate_constraints: Dict[str, Any] = Field(default_factory=dict, description="Climate-based constraints")
+    soil_temperature_requirements: Dict[str, float] = Field(default_factory=dict, description="Soil temp requirements")
+    frost_considerations: Dict[str, Any] = Field(default_factory=dict, description="Frost timing considerations")
+    
+    # Integration with main crops
+    pre_main_crop_window: Optional[Dict[str, date]] = Field(None, description="Pre-main crop timing")
+    post_harvest_window: Optional[Dict[str, date]] = Field(None, description="Post-harvest timing")
+    inter_row_establishment: Optional[Dict[str, date]] = Field(None, description="Inter-row establishment timing")
+    
+    # Establishment factors
+    days_to_establishment: int = Field(..., ge=0, description="Days required for establishment")
+    minimum_growing_days: int = Field(..., ge=0, description="Minimum growing days for benefits")
+    optimal_growing_days: int = Field(..., ge=0, description="Optimal growing period")
+    
+    # Weather and environmental factors
+    precipitation_requirements: Dict[str, float] = Field(default_factory=dict, description="Precipitation needs")
+    daylight_sensitivity: Optional[str] = Field(None, description="Photoperiod sensitivity")
+    temperature_thresholds: Dict[str, float] = Field(default_factory=dict, description="Critical temperatures")
+    
+    confidence_level: TimingRecommendationConfidence = Field(default=TimingRecommendationConfidence.MEDIUM)
+    recommendation_notes: List[str] = Field(default_factory=list, description="Additional timing notes")
+
+
+class TerminationTimingWindow(BaseModel):
+    """Comprehensive termination timing window for cover crops."""
+    
+    species_id: str = Field(..., description="Cover crop species identifier")
+    termination_method: TerminationMethod = Field(..., description="Termination method")
+    location: Dict[str, Any] = Field(..., description="Geographic location details")
+    
+    # Primary termination timing
+    optimal_termination_start: date = Field(..., description="Optimal termination window start")
+    optimal_termination_end: date = Field(..., description="Optimal termination window end")
+    latest_safe_termination: date = Field(..., description="Latest safe termination date")
+    earliest_effective_termination: Optional[date] = Field(None, description="Earliest effective date")
+    
+    # Method-specific constraints
+    weather_requirements: Dict[str, Any] = Field(default_factory=dict, description="Weather needed for method")
+    equipment_requirements: List[str] = Field(default_factory=list, description="Equipment needed")
+    timing_flexibility_days: int = Field(default=7, ge=0, description="Flexibility in days")
+    
+    # Biological factors
+    growth_stage_targets: List[str] = Field(default_factory=list, description="Target growth stages")
+    seed_production_risk: str = Field(default="low", description="Risk of seed production")
+    regrowth_potential: str = Field(default="low", description="Potential for regrowth")
+    
+    # Main crop integration
+    pre_planting_clearance_days: int = Field(default=14, ge=0, description="Days before main crop planting")
+    residue_decomposition_time: int = Field(default=30, ge=0, description="Days for residue breakdown")
+    allelopathic_considerations: Optional[Dict[str, Any]] = Field(None, description="Allelopathic effects")
+    
+    # Effectiveness factors
+    biomass_production_at_termination: Dict[str, float] = Field(default_factory=dict, description="Expected biomass")
+    nutrient_release_timing: Dict[str, int] = Field(default_factory=dict, description="Nutrient release schedule")
+    soil_protection_duration: int = Field(default=60, ge=0, description="Days of soil protection post-termination")
+    
+    confidence_level: TimingRecommendationConfidence = Field(default=TimingRecommendationConfidence.MEDIUM)
+    method_specific_notes: List[str] = Field(default_factory=list, description="Method-specific guidance")
+
+
+class SeasonalTimingStrategy(BaseModel):
+    """Seasonal strategy for cover crop timing."""
+    
+    strategy_id: str = Field(..., description="Unique strategy identifier")
+    target_season: GrowingSeason = Field(..., description="Target growing season")
+    species_recommendations: List[str] = Field(..., description="Recommended species for season")
+    
+    # Seasonal windows
+    planting_strategies: List[PlantingTimingWindow] = Field(..., description="Planting timing options")
+    termination_strategies: List[TerminationTimingWindow] = Field(..., description="Termination timing options")
+    
+    # Seasonal considerations
+    weather_pattern_alignment: Dict[str, Any] = Field(default_factory=dict, description="Weather pattern considerations")
+    main_crop_rotation_fit: Dict[str, Any] = Field(default_factory=dict, description="Rotation integration")
+    resource_utilization: Dict[str, float] = Field(default_factory=dict, description="Resource utilization efficiency")
+    
+    # Risk management
+    backup_species: List[str] = Field(default_factory=list, description="Backup species options")
+    contingency_plans: List[Dict[str, Any]] = Field(default_factory=list, description="Contingency strategies")
+    weather_risk_mitigation: List[str] = Field(default_factory=list, description="Weather risk strategies")
+    
+    # Performance expectations
+    expected_benefits: Dict[SoilBenefit, float] = Field(default_factory=dict, description="Expected benefit levels")
+    success_probability: float = Field(default=0.8, ge=0.0, le=1.0, description="Strategy success probability")
+    optimization_score: float = Field(default=0.7, ge=0.0, le=1.0, description="Overall optimization score")
+
+
+class TimingRecommendationRequest(BaseModel):
+    """Request for timing recommendations."""
+    
+    species_id: str = Field(..., description="Cover crop species identifier")
+    location: Dict[str, Any] = Field(..., description="Farm location details")
+    main_crop_schedule: Dict[str, Any] = Field(..., description="Main crop timing")
+    management_goals: List[str] = Field(..., description="Primary management objectives")
+    
+    # Constraints and preferences
+    preferred_termination_methods: List[TerminationMethod] = Field(default_factory=list)
+    equipment_availability: List[str] = Field(default_factory=list, description="Available equipment")
+    labor_constraints: Optional[Dict[str, Any]] = Field(None, description="Labor availability")
+    
+    # Environmental factors
+    historical_weather_data: Optional[Dict[str, Any]] = Field(None, description="Historical weather patterns")
+    soil_conditions: Optional[Dict[str, Any]] = Field(None, description="Current soil conditions")
+    irrigation_availability: bool = Field(default=False, description="Irrigation system available")
+    
+    # Risk tolerance
+    risk_tolerance: str = Field(default="medium", description="Risk tolerance level")
+    backup_plan_required: bool = Field(default=True, description="Require backup strategies")
+
+
+class TimingRecommendationResponse(BaseModel):
+    """Comprehensive timing recommendation response."""
+    
+    request_id: str = Field(..., description="Request identifier")
+    species_id: str = Field(..., description="Cover crop species")
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    # Primary recommendations
+    recommended_planting: PlantingTimingWindow = Field(..., description="Primary planting recommendation")
+    recommended_termination: List[TerminationTimingWindow] = Field(..., description="Termination options")
+    seasonal_strategy: SeasonalTimingStrategy = Field(..., description="Overall seasonal strategy")
+    
+    # Alternative strategies
+    alternative_planting_windows: List[PlantingTimingWindow] = Field(default_factory=list)
+    backup_strategies: List[SeasonalTimingStrategy] = Field(default_factory=list)
+    
+    # Risk assessment
+    timing_risks: List[Dict[str, Any]] = Field(default_factory=list, description="Identified timing risks")
+    risk_mitigation_strategies: List[str] = Field(default_factory=list, description="Risk mitigation approaches")
+    
+    # Performance predictions
+    expected_establishment_success: float = Field(default=0.8, ge=0.0, le=1.0)
+    expected_benefit_realization: Dict[str, float] = Field(default_factory=dict)
+    integration_success_probability: float = Field(default=0.8, ge=0.0, le=1.0)
+    
+    # Supporting information
+    critical_decision_points: List[Dict[str, Any]] = Field(default_factory=list)
+    monitoring_recommendations: List[str] = Field(default_factory=list)
+    adjustment_triggers: List[str] = Field(default_factory=list)
+    
+    overall_confidence: TimingRecommendationConfidence = Field(default=TimingRecommendationConfidence.MEDIUM)
+    recommendation_summary: str = Field(..., description="Executive summary of timing recommendations")
