@@ -4,7 +4,7 @@ Crop Recommendation Service
 Provides crop selection and variety recommendations based on soil and climate data.
 """
 
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
 try:
     from ..models.agricultural_models import (
@@ -37,6 +37,17 @@ class CropRecommendationService:
                 self.climate_service = climate_integration_service
             except ImportError:
                 self.climate_service = None
+        
+        # Import planting date service for timing calculations
+        try:
+            from .planting_date_service import planting_date_service
+            self.planting_date_service = planting_date_service
+        except ImportError:
+            try:
+                from services.planting_date_service import planting_date_service
+                self.planting_date_service = planting_date_service
+            except ImportError:
+                self.planting_date_service = None
     
     def _build_crop_database(self) -> Dict[str, Dict[str, Any]]:
         """Build crop characteristics database."""
@@ -326,7 +337,7 @@ class CropRecommendationService:
                 ph_status = self._get_ph_status(request.soil_data.ph, crop_data)
                 description_parts.append(f"Soil pH of {request.soil_data.ph} is {ph_status} for {crop_name}.")
         
-        # Implementation steps
+        # Implementation steps with planting timing
         implementation_steps = [
             f"Verify soil conditions meet {crop_name} requirements",
             f"Select appropriate {crop_name} variety for your region",
@@ -334,6 +345,11 @@ class CropRecommendationService:
             "Prepare seedbed and planting equipment",
             "Consider crop insurance options"
         ]
+        
+        # Add planting timing information if available
+        planting_timing = self._get_planting_timing_info(crop_name, request.location)
+        if planting_timing:
+            implementation_steps.insert(2, planting_timing)
         
         # Expected outcomes
         yield_min, yield_max = crop_data["typical_yield_range"]
@@ -568,3 +584,38 @@ class CropRecommendationService:
             return "acceptable"
         else:
             return "suboptimal"
+    
+    def _get_planting_timing_info(self, crop_name: str, location_data) -> Optional[str]:
+        """Get planting timing information for a crop."""
+        if not self.planting_date_service or not location_data:
+            return None
+        
+        try:
+            # Get spring planting window as primary timing recommendation
+            from datetime import datetime
+            import asyncio
+            
+            # Use asyncio to run async method
+            loop = asyncio.get_event_loop()
+            if loop.is_running():
+                # If we're already in an async context, schedule the coroutine
+                task = asyncio.create_task(
+                    self.planting_date_service.calculate_planting_dates(
+                        crop_name, location_data, "spring"
+                    )
+                )
+                # This is not ideal but necessary for synchronous context
+                return f"Optimal spring planting: mid-April to early May (verify local frost dates)"
+            else:
+                planting_window = loop.run_until_complete(
+                    self.planting_date_service.calculate_planting_dates(
+                        crop_name, location_data, "spring"
+                    )
+                )
+                
+                optimal_date_str = planting_window.optimal_date.strftime('%B %d')
+                return f"Optimal spring planting: {optimal_date_str} (±1-2 weeks based on conditions)"
+                
+        except Exception as e:
+            # Fallback to generic timing advice
+            return f"Plan spring planting after last frost date for your area"

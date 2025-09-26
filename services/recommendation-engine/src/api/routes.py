@@ -8,6 +8,8 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 import logging
 
+logger = logging.getLogger(__name__)
+
 try:
     from ..models.agricultural_models import (
         RecommendationRequest,
@@ -16,8 +18,6 @@ try:
         ConfidenceFactors
     )
     from ..services.recommendation_engine import RecommendationEngine
-    from .fertilizer_type_selection_routes import router as fertilizer_router
-    from .market_price_routes import router as market_price_router
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
@@ -26,10 +26,28 @@ except ImportError:
         ConfidenceFactors
     )
     from services.recommendation_engine import RecommendationEngine
-    from fertilizer_type_selection_routes import router as fertilizer_router
-    from market_price_routes import router as market_price_router
 
 logger = logging.getLogger(__name__)
+
+# Import sub-routers with error handling
+try:
+    from .fertilizer_type_selection_routes import router as fertilizer_router
+except ImportError:
+    try:
+        from fertilizer_type_selection_routes import router as fertilizer_router
+    except ImportError:
+        logger.warning("Fertilizer type selection routes not available")
+        fertilizer_router = None
+
+try:
+    from .market_price_routes import router as market_price_router
+except ImportError:
+    try:
+        from market_price_routes import router as market_price_router
+    except ImportError:
+        logger.warning("Market price routes not available")
+        market_price_router = None
+
 router = APIRouter(prefix="/api/v1", tags=["recommendation-engine"])
 
 # Central recommendation engine
@@ -229,7 +247,16 @@ async def generate_recommendations(request: RecommendationRequest):
 
 
 # Include fertilizer type selection routes
-router.include_router(fertilizer_router)
+if fertilizer_router:
+    router.include_router(fertilizer_router)
 
 # Include market price routes
-router.include_router(market_price_router)
+if market_price_router:
+    router.include_router(market_price_router)
+
+# Include planting date routes
+try:
+    from .planting_date_routes import router as planting_router
+    router.include_router(planting_router)
+except ImportError:
+    logger.warning("Planting date routes not available")
