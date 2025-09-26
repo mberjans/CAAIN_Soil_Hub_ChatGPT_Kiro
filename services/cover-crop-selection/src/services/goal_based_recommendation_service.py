@@ -10,11 +10,18 @@ from typing import List, Dict, Optional, Tuple, Any
 from datetime import date
 import math
 
-from ..models.cover_crop_models import (
-    CoverCropSpecies, GoalBasedObjectives, SpecificGoal, GoalBasedSpeciesRecommendation,
-    GoalAchievementMetrics, FarmerGoalCategory, GoalPriority, SoilBenefit,
-    SoilConditions, ClimateData
-)
+try:
+    from ..models.cover_crop_models import (
+        CoverCropSpecies, GoalBasedObjectives, SpecificGoal, GoalBasedSpeciesRecommendation,
+        GoalAchievementMetrics, FarmerGoalCategory, GoalPriority, SoilBenefit,
+        SoilConditions, ClimateData
+    )
+except ImportError:
+    from models.cover_crop_models import (
+        CoverCropSpecies, GoalBasedObjectives, SpecificGoal, GoalBasedSpeciesRecommendation,
+        GoalAchievementMetrics, FarmerGoalCategory, GoalPriority, SoilBenefit,
+        SoilConditions, ClimateData
+    )
 
 logger = logging.getLogger(__name__)
 

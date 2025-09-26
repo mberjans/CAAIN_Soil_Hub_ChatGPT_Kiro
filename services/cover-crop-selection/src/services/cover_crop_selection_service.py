@@ -1423,22 +1423,39 @@ class CoverCropSelectionService:
             # Call climate service to get zone information
             async with httpx.AsyncClient() as client:
                 climate_response = await client.post(
-                    f"{self.climate_service_url}/api/v1/climate/zone-lookup",
+                    f"{self.climate_service_url}/api/v1/climate/detect-zone",
                     json={
                         "latitude": request.location.get("latitude"),
-                        "longitude": request.location.get("longitude")
+                        "longitude": request.location.get("longitude"),
+                        "elevation_ft": request.location.get("elevation_ft") if request.location else None
                     }
                 )
                 
                 if climate_response.status_code == 200:
                     climate_data = climate_response.json()
-                    # Update request with climate information
+                    # Extract zone information from the response
+                    primary_zone = climate_data.get("primary_zone", {})
+                    zone_id = primary_zone.get("zone_id", "7a")
+                    
+                    # Update request with enhanced climate information
                     if not request.climate_data:
                         request.climate_data = ClimateData(
-                            hardiness_zone=climate_data.get("zone_id", "7a")
+                            hardiness_zone=zone_id,
+                            min_temp_f=primary_zone.get("min_temp_f"),
+                            max_temp_f=primary_zone.get("max_temp_f"),
+                            growing_season_length=primary_zone.get("growing_season_days"),
+                            average_annual_precipitation=climate_data.get("precipitation_inches")
                         )
                     else:
-                        request.climate_data.hardiness_zone = climate_data.get("zone_id", "7a")
+                        request.climate_data.hardiness_zone = zone_id
+                        if not request.climate_data.min_temp_f:
+                            request.climate_data.min_temp_f = primary_zone.get("min_temp_f")
+                        if not request.climate_data.max_temp_f:
+                            request.climate_data.max_temp_f = primary_zone.get("max_temp_f")
+                        if not request.climate_data.growing_season_length:
+                            request.climate_data.growing_season_length = primary_zone.get("growing_season_days")
+                        if not request.climate_data.average_annual_precipitation:
+                            request.climate_data.average_annual_precipitation = climate_data.get("precipitation_inches")
         
         except Exception as e:
             logger.warning(f"Could not enrich climate data: {e}")
@@ -1507,34 +1524,70 @@ class CoverCropSelectionService:
         return suitable_species
     
     async def _is_species_suitable(self, species: CoverCropSpecies, request: CoverCropSelectionRequest) -> bool:
-        """Check if a species is suitable for the given conditions."""
-        # Check hardiness zone compatibility
+        """Check if a species is suitable for the given conditions with enhanced climate and soil matching."""
+        # Enhanced hardiness zone compatibility
         if request.climate_data and request.climate_data.hardiness_zone:
             if request.climate_data.hardiness_zone not in species.hardiness_zones:
                 return False
         
-        # Check pH tolerance
+        # Enhanced temperature tolerance check
+        if request.climate_data:
+            # Check minimum temperature tolerance
+            if (request.climate_data.min_temp_f is not None and 
+                species.min_temp_f is not None and
+                request.climate_data.min_temp_f < species.min_temp_f):
+                return False
+            
+            # Check maximum temperature tolerance  
+            if (request.climate_data.max_temp_f is not None and
+                species.max_temp_f is not None and
+                request.climate_data.max_temp_f > species.max_temp_f):
+                return False
+        
+        # Enhanced soil pH compatibility with tolerance buffer
         soil_ph = request.soil_conditions.ph
-        if not (species.ph_range["min"] <= soil_ph <= species.ph_range["max"]):
+        ph_buffer = 0.2  # Allow slight pH tolerance beyond stated range
+        if not (species.ph_range["min"] - ph_buffer <= soil_ph <= species.ph_range["max"] + ph_buffer):
             return False
         
-        # Check drainage compatibility
+        # Enhanced drainage compatibility
         if request.soil_conditions.drainage_class not in species.drainage_tolerance:
             return False
         
-        # Check planting window compatibility
+        # Enhanced salt tolerance check
+        if (hasattr(request.soil_conditions, 'salinity_level') and 
+            request.soil_conditions.salinity_level and
+            species.salt_tolerance):
+            salinity_level = request.soil_conditions.salinity_level.lower()
+            species_tolerance = species.salt_tolerance.lower()
+            
+            # Basic salinity compatibility mapping
+            salinity_order = ['low', 'moderate', 'high']
+            if (salinity_level in salinity_order and 
+                species_tolerance in salinity_order and
+                salinity_order.index(salinity_level) > salinity_order.index(species_tolerance)):
+                return False
+        
+        # Enhanced planting window compatibility
         planting_start = request.planting_window.get("start")
         planting_end = request.planting_window.get("end")
         
         if planting_start and planting_end:
-            # Basic seasonal compatibility check
             plant_month = planting_start.month
             
-            if species.growing_season == GrowingSeason.WINTER and plant_month not in [9, 10, 11]:
+            # More flexible seasonal compatibility
+            winter_months = [9, 10, 11, 12, 1, 2]
+            summer_months = [3, 4, 5, 6, 7, 8]
+            fall_months = [7, 8, 9, 10]
+            spring_months = [3, 4, 5, 6]
+            
+            if species.growing_season == GrowingSeason.WINTER and plant_month not in winter_months:
                 return False
-            elif species.growing_season == GrowingSeason.SUMMER and plant_month not in [4, 5, 6]:
+            elif species.growing_season == GrowingSeason.SUMMER and plant_month not in summer_months:
                 return False
-            elif species.growing_season == GrowingSeason.FALL and plant_month not in [7, 8, 9]:
+            elif species.growing_season == GrowingSeason.FALL and plant_month not in fall_months:
+                return False
+            elif species.growing_season == GrowingSeason.SPRING and plant_month not in spring_months:
                 return False
         
         return True
@@ -1553,39 +1606,98 @@ class CoverCropSelectionService:
         return scored_species
     
     async def _calculate_species_score(self, species: CoverCropSpecies, request: CoverCropSelectionRequest) -> float:
-        """Calculate suitability score for a species."""
-        score = 0.0
+        """Calculate comprehensive suitability score for a species."""
+        # Get climate and soil compatibility score (50% of total score)
+        climate_soil_score = await self._calculate_climate_soil_compatibility_score(species, request)
+        total_score = climate_soil_score * 0.5
         
-        # Base score for meeting basic requirements
-        score += 0.3
-        
-        # Objective alignment (40% of score)
+        # Objective alignment score (30% of total score)
         objective_score = 0.0
-        total_objectives = len(request.objectives.primary_goals)
+        if request.objectives and request.objectives.primary_goals:
+            total_objectives = len(request.objectives.primary_goals)
+            for goal in request.objectives.primary_goals:
+                if goal in species.primary_benefits:
+                    objective_score += 1.0 / total_objectives
+        else:
+            # Default objective score if no specific objectives
+            objective_score = 0.7
         
-        for goal in request.objectives.primary_goals:
-            if goal in species.primary_benefits:
-                objective_score += 1.0 / total_objectives
+        total_score += objective_score * 0.3
         
-        score += objective_score * 0.4
+        # Economic feasibility score (10% of total score)
+        economic_score = 1.0  # Default to good economic feasibility
+        if request.objectives and request.objectives.budget_per_acre:
+            if species.establishment_cost_per_acre:
+                cost_ratio = species.establishment_cost_per_acre / request.objectives.budget_per_acre
+                if cost_ratio <= 1.0:
+                    economic_score = 1.0
+                elif cost_ratio <= 1.5:
+                    economic_score = 0.8
+                else:
+                    economic_score = 0.4  # Expensive but potentially viable
         
-        # pH compatibility (10% of score)
-        soil_ph = request.soil_conditions.ph
-        ph_optimal_range = (species.ph_range["min"] + species.ph_range["max"]) / 2
-        ph_distance = abs(soil_ph - ph_optimal_range)
-        ph_score = max(0, 1.0 - (ph_distance / 2.0))  # Penalty for pH distance
-        score += ph_score * 0.1
+        total_score += economic_score * 0.1
         
-        # Economic considerations (10% of score)
-        if request.objectives.budget_per_acre:
-            if species.establishment_cost_per_acre and species.establishment_cost_per_acre <= request.objectives.budget_per_acre:
-                score += 0.1
-            elif species.establishment_cost_per_acre and species.establishment_cost_per_acre > request.objectives.budget_per_acre * 1.5:
-                score -= 0.05  # Penalty for high cost
+        # Management complexity adjustment (5% of total score)
+        management_score = self._calculate_management_score(species, request)
+        total_score += management_score * 0.05
         
-        # Bonus for special benefits
-        if request.objectives.nitrogen_needs and SoilBenefit.NITROGEN_FIXATION in species.primary_benefits:
+        # Special benefits bonus (5% of total score)
+        bonus_score = self._calculate_special_benefits_bonus(species, request)
+        total_score += bonus_score * 0.05
+        
+        return min(1.0, total_score)  # Cap at 1.0
+    
+    def _calculate_management_score(self, species: CoverCropSpecies, request: CoverCropSelectionRequest) -> float:
+        """Calculate management complexity score."""
+        score = 1.0
+        
+        # Simple termination methods are preferred
+        easy_termination = ['winter_kill', 'herbicide', 'mowing']
+        if any(method in species.termination_methods for method in easy_termination):
+            score = 1.0
+        elif 'mechanical' in species.termination_methods:
+            score = 0.8
+        else:
+            score = 0.6
+        
+        # Quick establishment is preferred
+        if species.days_to_establishment <= 10:
+            score += 0.2
+        elif species.days_to_establishment <= 20:
             score += 0.1
+        
+        return min(1.0, score)
+    
+    def _calculate_special_benefits_bonus(self, species: CoverCropSpecies, request: CoverCropSelectionRequest) -> float:
+        """Calculate bonus score for special benefits."""
+        bonus = 0.0
+        
+        # Nitrogen fixation bonus
+        if (request.objectives and request.objectives.nitrogen_needs and 
+            SoilBenefit.NITROGEN_FIXATION in species.primary_benefits):
+            bonus += 0.3
+        
+        # Soil health bonus
+        soil_health_benefits = [
+            SoilBenefit.ORGANIC_MATTER,
+            SoilBenefit.SOIL_STRUCTURE,
+            SoilBenefit.EROSION_CONTROL
+        ]
+        
+        matching_benefits = sum(1 for benefit in soil_health_benefits 
+                              if benefit in species.primary_benefits)
+        bonus += matching_benefits * 0.1
+        
+        # Pest/disease management bonus
+        if SoilBenefit.PEST_SUPPRESSION in species.primary_benefits:
+            bonus += 0.2
+        
+        return min(1.0, bonus)
+    
+    async def _calculate_management_complexity_score(self, species: CoverCropSpecies, request: CoverCropSelectionRequest) -> float:
+        """Calculate score based on management complexity."""
+        score = 0.5  # Base score
         
         if request.soil_conditions.compaction_issues and SoilBenefit.COMPACTION_RELIEF in species.primary_benefits:
             score += 0.1
@@ -1706,13 +1818,273 @@ class CoverCropSelectionService:
         
         return suitable_mixtures if suitable_mixtures else None
     
-    async def _assess_climate_suitability(self, request: CoverCropSelectionRequest) -> Dict[str, Any]:
-        """Assess climate suitability for cover crops."""
-        return {
-            "hardiness_zone": request.climate_data.hardiness_zone if request.climate_data else "Unknown",
-            "suitability": "Good" if request.climate_data else "Unknown",
-            "considerations": ["Verify local frost dates", "Monitor weather patterns"]
+    async def _calculate_climate_soil_compatibility_score(self, species: CoverCropSpecies, request: CoverCropSelectionRequest) -> float:
+        """Calculate comprehensive climate and soil compatibility score for a species."""
+        total_score = 0.0
+        weight_sum = 0.0
+        
+        # Hardiness zone compatibility (weight: 25%)
+        zone_weight = 0.25
+        if request.climate_data and request.climate_data.hardiness_zone:
+            if request.climate_data.hardiness_zone in species.hardiness_zones:
+                zone_score = 1.0
+            else:
+                # Calculate proximity score for nearby zones
+                zone_score = self._calculate_zone_proximity_score(
+                    request.climate_data.hardiness_zone, 
+                    species.hardiness_zones
+                )
+            total_score += zone_score * zone_weight
+            weight_sum += zone_weight
+        
+        # Temperature tolerance (weight: 20%)
+        temp_weight = 0.20
+        if request.climate_data and species.min_temp_f is not None and species.max_temp_f is not None:
+            temp_score = 1.0
+            
+            # Check minimum temperature tolerance
+            if (request.climate_data.min_temp_f is not None and 
+                request.climate_data.min_temp_f < species.min_temp_f):
+                temp_deficit = species.min_temp_f - request.climate_data.min_temp_f
+                temp_score *= max(0.0, 1.0 - (temp_deficit / 20.0))  # Gradual penalty
+            
+            # Check maximum temperature tolerance
+            if (request.climate_data.max_temp_f is not None and
+                request.climate_data.max_temp_f > species.max_temp_f):
+                temp_excess = request.climate_data.max_temp_f - species.max_temp_f
+                temp_score *= max(0.0, 1.0 - (temp_excess / 15.0))  # Gradual penalty
+            
+            total_score += temp_score * temp_weight
+            weight_sum += temp_weight
+        
+        # Soil pH compatibility (weight: 20%)
+        ph_weight = 0.20
+        soil_ph = request.soil_conditions.ph
+        ph_min, ph_max = species.ph_range["min"], species.ph_range["max"]
+        
+        if ph_min <= soil_ph <= ph_max:
+            ph_score = 1.0
+        else:
+            # Calculate distance from acceptable range
+            if soil_ph < ph_min:
+                ph_distance = ph_min - soil_ph
+            else:
+                ph_distance = soil_ph - ph_max
+            
+            # Gradual penalty based on pH distance
+            ph_score = max(0.0, 1.0 - (ph_distance / 1.5))
+        
+        total_score += ph_score * ph_weight
+        weight_sum += ph_weight
+        
+        # Drainage compatibility (weight: 15%)
+        drainage_weight = 0.15
+        if request.soil_conditions.drainage_class in species.drainage_tolerance:
+            drainage_score = 1.0
+        else:
+            # Partial score for compatible drainage types
+            drainage_score = self._calculate_drainage_compatibility_score(
+                request.soil_conditions.drainage_class,
+                species.drainage_tolerance
+            )
+        
+        total_score += drainage_score * drainage_weight
+        weight_sum += drainage_weight
+        
+        # Growing season compatibility (weight: 15%)
+        season_weight = 0.15
+        planting_start = request.planting_window.get("start")
+        if planting_start:
+            season_score = self._calculate_seasonal_compatibility_score(
+                planting_start.month, species.growing_season
+            )
+            total_score += season_score * season_weight
+            weight_sum += season_weight
+        
+        # Salt tolerance (weight: 5%) - if applicable
+        salt_weight = 0.05
+        if (hasattr(request.soil_conditions, 'salinity_level') and 
+            request.soil_conditions.salinity_level and
+            species.salt_tolerance):
+            salt_score = self._calculate_salt_tolerance_score(
+                request.soil_conditions.salinity_level,
+                species.salt_tolerance
+            )
+            total_score += salt_score * salt_weight
+            weight_sum += salt_weight
+        
+        # Return normalized score
+        return total_score / weight_sum if weight_sum > 0 else 0.0
+    
+    def _calculate_zone_proximity_score(self, target_zone: str, species_zones: List[str]) -> float:
+        """Calculate proximity score for hardiness zones."""
+        # Extract numeric part of target zone (e.g., "7a" -> 7)
+        try:
+            target_num = int(target_zone[0])
+        except (ValueError, IndexError):
+            return 0.0
+        
+        # Find closest zone match
+        min_distance = float('inf')
+        for zone in species_zones:
+            try:
+                zone_num = int(zone[0])
+                distance = abs(target_num - zone_num)
+                min_distance = min(min_distance, distance)
+            except (ValueError, IndexError):
+                continue
+        
+        # Convert distance to score (1 zone difference = 0.8, 2 zones = 0.6, etc.)
+        if min_distance == 0:
+            return 1.0
+        elif min_distance == 1:
+            return 0.8
+        elif min_distance == 2:
+            return 0.6
+        elif min_distance == 3:
+            return 0.4
+        else:
+            return 0.2
+    
+    def _calculate_drainage_compatibility_score(self, soil_drainage: str, species_tolerance: List[str]) -> float:
+        """Calculate drainage compatibility score."""
+        # Define drainage compatibility matrix
+        drainage_order = [
+            "very_poorly_drained",
+            "poorly_drained", 
+            "somewhat_poorly_drained",
+            "moderately_well_drained",
+            "well_drained",
+            "somewhat_excessively_drained",
+            "excessively_drained"
+        ]
+        
+        try:
+            soil_index = drainage_order.index(soil_drainage)
+        except ValueError:
+            return 0.0
+        
+        # Calculate compatibility based on proximity to acceptable drainage types
+        best_score = 0.0
+        for acceptable_drainage in species_tolerance:
+            try:
+                acceptable_index = drainage_order.index(acceptable_drainage)
+                distance = abs(soil_index - acceptable_index)
+                
+                if distance == 0:
+                    score = 1.0
+                elif distance == 1:
+                    score = 0.8
+                elif distance == 2:
+                    score = 0.6
+                else:
+                    score = 0.3
+                
+                best_score = max(best_score, score)
+            except ValueError:
+                continue
+        
+        return best_score
+    
+    def _calculate_seasonal_compatibility_score(self, planting_month: int, growing_season: GrowingSeason) -> float:
+        """Calculate seasonal compatibility score."""
+        # Define optimal planting months for each season
+        season_months = {
+            GrowingSeason.WINTER: [9, 10, 11],
+            GrowingSeason.SUMMER: [4, 5, 6],
+            GrowingSeason.FALL: [7, 8, 9],
+            GrowingSeason.SPRING: [3, 4, 5]
         }
+        
+        optimal_months = season_months.get(growing_season, [])
+        
+        if planting_month in optimal_months:
+            return 1.0
+        
+        # Calculate proximity to optimal months
+        min_distance = min(
+            min(abs(planting_month - opt_month), 12 - abs(planting_month - opt_month))
+            for opt_month in optimal_months
+        ) if optimal_months else 6
+        
+        if min_distance <= 1:
+            return 0.8
+        elif min_distance <= 2:
+            return 0.6
+        elif min_distance <= 3:
+            return 0.4
+        else:
+            return 0.2
+    
+    def _calculate_salt_tolerance_score(self, soil_salinity: str, species_tolerance: str) -> float:
+        """Calculate salt tolerance compatibility score."""
+        salinity_levels = {'low': 0, 'moderate': 1, 'high': 2}
+        
+        try:
+            soil_level = salinity_levels[soil_salinity.lower()]
+            species_level = salinity_levels[species_tolerance.lower()]
+            
+            if species_level >= soil_level:
+                return 1.0
+            else:
+                # Penalty for insufficient salt tolerance
+                difference = soil_level - species_level
+                return max(0.0, 1.0 - (difference * 0.4))
+        except KeyError:
+            return 0.5  # Default score for unknown salinity levels
+
+    async def _assess_climate_suitability(self, request: CoverCropSelectionRequest) -> Dict[str, Any]:
+        """Assess climate suitability for cover crops with enhanced analysis."""
+        suitability_data = {
+            "hardiness_zone": request.climate_data.hardiness_zone if request.climate_data else "Unknown",
+            "suitability": "Unknown",
+            "considerations": []
+        }
+        
+        if request.climate_data:
+            zone = request.climate_data.hardiness_zone
+            considerations = ["Verify local frost dates", "Monitor weather patterns"]
+            
+            # Enhanced climate analysis
+            if request.climate_data.min_temp_f is not None:
+                if request.climate_data.min_temp_f < -10:
+                    considerations.append("Extremely cold temperatures - select cold-hardy species")
+                    suitability_data["suitability"] = "Challenging"
+                elif request.climate_data.min_temp_f > 25:
+                    considerations.append("Mild winters - good for cool-season species")
+                    suitability_data["suitability"] = "Good"
+            
+            if request.climate_data.max_temp_f is not None:
+                if request.climate_data.max_temp_f > 90:
+                    considerations.append("High summer temperatures - ensure heat tolerance")
+                elif request.climate_data.max_temp_f < 70:
+                    considerations.append("Cool summers - excellent for cool-season crops")
+            
+            if request.climate_data.growing_season_length:
+                if request.climate_data.growing_season_length > 200:
+                    considerations.append("Long growing season - multiple planting options")
+                    suitability_data["suitability"] = "Excellent"
+                elif request.climate_data.growing_season_length < 120:
+                    considerations.append("Short growing season - select quick-establishing species")
+            
+            if request.climate_data.average_annual_precipitation:
+                if request.climate_data.average_annual_precipitation < 20:
+                    considerations.append("Low precipitation - prioritize drought-tolerant species")
+                elif request.climate_data.average_annual_precipitation > 50:
+                    considerations.append("High precipitation - ensure good drainage tolerance")
+            
+            suitability_data["considerations"] = considerations
+            
+            # Set default suitability if not already determined
+            if suitability_data["suitability"] == "Unknown":
+                suitability_data["suitability"] = "Good"
+        else:
+            suitability_data["considerations"] = [
+                "Climate data unavailable - verify local conditions",
+                "Consult local extension services for planting guidance"
+            ]
+        
+        return suitability_data
     
     async def _get_seasonal_considerations(self, request: CoverCropSelectionRequest) -> List[str]:
         """Get seasonal considerations for cover crop establishment."""
