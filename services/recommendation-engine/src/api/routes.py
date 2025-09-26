@@ -48,12 +48,30 @@ async def get_crop_recommendations(request: RecommendationRequest):
     - Matches crop requirements to soil pH, drainage, and fertility
     - Considers climate zone, frost dates, and precipitation
     - Ranks varieties by suitability score and yield potential
+    - Auto-detects climate zone if not provided in request
     """
     try:
         logger.info(f"Processing crop selection request: {request.request_id}")
+        
+        # Validate location data for climate zone detection
+        if not request.location:
+            raise HTTPException(
+                status_code=400,
+                detail="Location data is required for crop selection recommendations"
+            )
+        
+        # Log climate zone if available
+        climate_zone = getattr(request.location, 'climate_zone', None)
+        if climate_zone:
+            logger.info(f"Request includes climate zone: {climate_zone}")
+        else:
+            logger.info("Climate zone will be auto-detected from coordinates")
+        
         request.question_type = "crop_selection"
         return await recommendation_engine.generate_recommendations(request)
         
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error generating crop recommendations: {str(e)}")
         raise HTTPException(

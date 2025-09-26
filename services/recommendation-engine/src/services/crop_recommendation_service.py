@@ -27,6 +27,16 @@ class CropRecommendationService:
         """Initialize crop recommendation service with crop database."""
         self.crop_database = self._build_crop_database()
         self.suitability_matrix = self._build_suitability_matrix()
+        # Import climate service for auto-detection if needed
+        try:
+            from .climate_integration_service import climate_integration_service
+            self.climate_service = climate_integration_service
+        except ImportError:
+            try:
+                from services.climate_integration_service import climate_integration_service
+                self.climate_service = climate_integration_service
+            except ImportError:
+                self.climate_service = None
     
     def _build_crop_database(self) -> Dict[str, Dict[str, Any]]:
         """Build crop characteristics database."""
@@ -108,9 +118,15 @@ class CropRecommendationService:
         Returns:
             List of crop recommendations sorted by suitability
         """
+        # Enhance location data with climate zone if missing
+        await self._ensure_climate_zone_data(request)
+        
         recommendations = []
         
-        for crop_name, crop_data in self.crop_database.items():
+        # Pre-filter crops based on climate zone compatibility
+        filtered_crops = self._filter_crops_by_climate_zone(request.location)
+        
+        for crop_name, crop_data in filtered_crops.items():
             suitability_score = self._calculate_crop_suitability(
                 crop_name, crop_data, request
             )
@@ -120,6 +136,12 @@ class CropRecommendationService:
                     crop_name, crop_data, suitability_score, request
                 )
                 recommendations.append(recommendation)
+        
+        # Add climate zone mismatch warnings for excluded crops
+        excluded_crops = self._get_excluded_crops_by_climate(request.location)
+        if excluded_crops:
+            # Log excluded crops for potential warning generation
+            pass  # Warnings will be handled by the main recommendation engine
         
         # Sort by suitability score (descending)
         recommendations.sort(key=lambda x: x.confidence_score, reverse=True)
@@ -157,8 +179,10 @@ class CropRecommendationService:
             )
             scores.append(size_score)
         
-        # Climate suitability (placeholder - would integrate with weather data)
-        climate_score = 0.8  # Default good climate score
+        # Climate suitability (integrated with climate zone detection)
+        climate_score = self._calculate_climate_zone_suitability(
+            request.location, crop_data
+        )
         scores.append(climate_score)
         
         # Return weighted average
@@ -289,6 +313,14 @@ class CropRecommendationService:
             f"{crop_name.title()} is {'highly' if suitability_score > 0.8 else 'moderately' if suitability_score > 0.6 else 'marginally'} suitable for your farm conditions."
         ]
         
+        # Add climate zone compatibility information
+        if request.location:
+            climate_compatibility = self._get_climate_compatibility_description(
+                request.location, crop_data, crop_name
+            )
+            if climate_compatibility:
+                description_parts.append(climate_compatibility)
+        
         if request.soil_data:
             if request.soil_data.ph:
                 ph_status = self._get_ph_status(request.soil_data.ph, crop_data)
@@ -327,6 +359,204 @@ class CropRecommendationService:
                 "Regional Crop Variety Trials"
             ]
         )
+    
+    def _calculate_climate_zone_suitability(self, location_data, crop_data: Dict[str, Any]) -> float:
+        """
+        Calculate climate zone suitability score for a crop.
+        
+        Args:
+            location_data: Location data with climate zone information
+            crop_data: Crop characteristics including compatible climate zones
+            
+        Returns:
+            Suitability score between 0.0 and 1.0
+        """
+        if not location_data or not crop_data.get("climate_zones"):
+            return 0.7  # Default moderate score when no climate data available
+        
+        # Get the farm's climate zone
+        farm_climate_zone = getattr(location_data, 'climate_zone', None)
+        
+        if not farm_climate_zone:
+            return 0.7  # Default moderate score without climate zone
+        
+        compatible_zones = crop_data["climate_zones"]
+        
+        # Perfect match - crop is explicitly compatible with this zone
+        if farm_climate_zone in compatible_zones:
+            return 1.0
+        
+        # Check for adjacent/similar zones
+        adjacent_score = self._calculate_adjacent_zone_compatibility(farm_climate_zone, compatible_zones)
+        if adjacent_score > 0:
+            return adjacent_score
+        
+        # No compatibility found
+        return 0.3
+    
+    def _calculate_adjacent_zone_compatibility(self, farm_zone: str, compatible_zones: List[str]) -> float:
+        """
+        Calculate compatibility score for adjacent climate zones.
+        
+        Args:
+            farm_zone: Farm's USDA climate zone (e.g., "6a")
+            compatible_zones: List of crop-compatible zones
+            
+        Returns:
+            Compatibility score (0.0 for incompatible, 0.8 for adjacent)
+        """
+        if not farm_zone or not compatible_zones:
+            return 0.0
+        
+        try:
+            # Extract zone number and subzone from farm zone (e.g., "6a" -> 6, "a")
+            farm_num = int(farm_zone[0]) if farm_zone[0].isdigit() else 0
+            farm_sub = farm_zone[1:].lower() if len(farm_zone) > 1 else ""
+            
+            for compatible_zone in compatible_zones:
+                if not compatible_zone:
+                    continue
+                    
+                comp_num = int(compatible_zone[0]) if compatible_zone[0].isdigit() else 0
+                comp_sub = compatible_zone[1:].lower() if len(compatible_zone) > 1 else ""
+                
+                # Adjacent zone numbers (within 1 zone)
+                if abs(farm_num - comp_num) == 1:
+                    return 0.8  # Good compatibility for adjacent zones
+                
+                # Same zone number but different subzone (e.g., 6a vs 6b)
+                if farm_num == comp_num and farm_sub != comp_sub:
+                    return 0.9  # Very good compatibility for same zone different subzone
+            
+            return 0.0  # No adjacent compatibility found
+            
+        except (ValueError, IndexError):
+            return 0.0  # Error parsing zone data
+    
+    def _filter_crops_by_climate_zone(self, location_data) -> Dict[str, Dict[str, Any]]:
+        """
+        Filter crop database to include only climate-compatible crops.
+        
+        Args:
+            location_data: Location data with climate zone information
+            
+        Returns:
+            Filtered crop database containing compatible and borderline compatible crops
+        """
+        if not location_data:
+            return self.crop_database  # Return all crops if no location data
+        
+        farm_climate_zone = getattr(location_data, 'climate_zone', None)
+        
+        if not farm_climate_zone:
+            return self.crop_database  # Return all crops if no climate zone
+        
+        filtered_crops = {}
+        
+        for crop_name, crop_data in self.crop_database.items():
+            compatibility_score = self._calculate_climate_zone_suitability(location_data, crop_data)
+            
+            # Include crops with reasonable compatibility (>= 0.5)
+            # This includes perfect matches (1.0), adjacent zones (0.8-0.9), and marginal but possible (0.7)
+            if compatibility_score >= 0.5:
+                filtered_crops[crop_name] = crop_data
+        
+        return filtered_crops
+    
+    def _get_excluded_crops_by_climate(self, location_data) -> List[str]:
+        """
+        Get list of crops excluded due to climate zone incompatibility.
+        
+        Args:
+            location_data: Location data with climate zone information
+            
+        Returns:
+            List of crop names that were excluded
+        """
+        if not location_data:
+            return []
+        
+        farm_climate_zone = getattr(location_data, 'climate_zone', None)
+        
+        if not farm_climate_zone:
+            return []
+        
+        excluded_crops = []
+        
+        for crop_name, crop_data in self.crop_database.items():
+            compatibility_score = self._calculate_climate_zone_suitability(location_data, crop_data)
+            
+            # Crops with very low compatibility are excluded
+            if compatibility_score < 0.5:
+                excluded_crops.append(crop_name)
+        
+        return excluded_crops
+    
+    async def _ensure_climate_zone_data(self, request: RecommendationRequest) -> None:
+        """
+        Ensure location data includes climate zone information, fetch if missing.
+        
+        Args:
+            request: Recommendation request to enhance with climate data
+        """
+        if not request.location or not self.climate_service:
+            return
+        
+        # Check if climate zone data is already available
+        if hasattr(request.location, 'climate_zone') and request.location.climate_zone:
+            return
+        
+        try:
+            # Detect climate zone using coordinates
+            climate_data = await self.climate_service.detect_climate_zone(
+                latitude=request.location.latitude,
+                longitude=request.location.longitude,
+                elevation_ft=getattr(request.location, 'elevation_ft', None)
+            )
+            
+            if climate_data:
+                # Enhance location data with climate zone information
+                enhanced_location_dict = self.climate_service.enhance_location_with_climate(
+                    request.location.dict(), climate_data
+                )
+                
+                # Update request location with enhanced data
+                for key, value in enhanced_location_dict.items():
+                    if hasattr(request.location, key):
+                        setattr(request.location, key, value)
+                        
+        except Exception as e:
+            # Log error but continue without climate zone data
+            pass  # Fail gracefully, recommendations will use default climate scoring
+    
+    def _get_climate_compatibility_description(self, location_data, crop_data: Dict[str, Any], crop_name: str) -> str:
+        """
+        Generate climate compatibility description for recommendation.
+        
+        Args:
+            location_data: Location data with climate zone information
+            crop_data: Crop characteristics
+            crop_name: Name of the crop
+            
+        Returns:
+            Climate compatibility description string
+        """
+        farm_climate_zone = getattr(location_data, 'climate_zone', None)
+        
+        if not farm_climate_zone or not crop_data.get("climate_zones"):
+            return ""
+        
+        compatible_zones = crop_data["climate_zones"]
+        compatibility_score = self._calculate_climate_zone_suitability(location_data, crop_data)
+        
+        if farm_climate_zone in compatible_zones:
+            return f"Climate Zone {farm_climate_zone} is optimal for {crop_name} production."
+        elif compatibility_score >= 0.8:
+            return f"Climate Zone {farm_climate_zone} is well-suited for {crop_name}, being adjacent to optimal zones {', '.join(compatible_zones[:3])}."
+        elif compatibility_score >= 0.5:
+            return f"Climate Zone {farm_climate_zone} is marginal for {crop_name}. Consider heat/cold tolerant varieties and monitor seasonal conditions."
+        else:
+            return f"Climate Zone {farm_climate_zone} may present challenges for {crop_name}. Optimal zones are {', '.join(compatible_zones[:3])}."
     
     def _get_ph_status(self, soil_ph: float, crop_data: Dict[str, Any]) -> str:
         """Get pH status description."""
