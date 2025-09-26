@@ -383,3 +383,203 @@ async def get_soil_benefits():
             for benefit in SoilBenefit
         ]
     }
+
+
+# New rotation integration endpoints
+@router.post("/rotation-integration", response_model=CoverCropSelectionResponse)
+async def get_rotation_integration_recommendations_advanced(
+    rotation_name: str = Query(..., description="Name of the rotation system"),
+    request: CoverCropSelectionRequest = None,
+    objectives: Optional[List[str]] = Query(None, description="Specific integration objectives")
+):
+    """
+    Get advanced cover crop recommendations for specific rotation integration.
+    
+    This endpoint provides specialized recommendations that are optimized for 
+    integration with existing crop rotation systems. It considers:
+    
+    Agricultural Logic:
+    - Main crop compatibility and nutrient cycling
+    - Timing coordination with rotation schedule
+    - Pest and disease management within rotation
+    - Economic benefits across the rotation system
+    - Soil health improvements that benefit subsequent crops
+    
+    Args:
+        rotation_name: Name/identifier of the rotation system
+        request: Standard cover crop selection request
+        objectives: Additional rotation-specific objectives
+    """
+    try:
+        logger.info(f"Processing advanced rotation integration request for: {rotation_name}")
+        
+        if not request:
+            raise HTTPException(
+                status_code=400,
+                detail="Cover crop selection request is required"
+            )
+        
+        # Validate rotation name
+        if not rotation_name or len(rotation_name.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Rotation name is required and cannot be empty"
+            )
+        
+        # Get rotation-specific recommendations
+        response = await cover_crop_service.get_rotation_integration_recommendations(
+            rotation_name=rotation_name.strip(),
+            request=request,
+            objectives=objectives
+        )
+        
+        logger.info(f"Successfully generated rotation integration recommendations for: {rotation_name}")
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in rotation integration recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating rotation integration recommendations: {str(e)}"
+        )
+
+
+@router.get("/main-crop-compatibility/{crop_name}")
+async def get_main_crop_compatibility_analysis(
+    crop_name: str,
+    cover_crop_species_id: str = Query(..., description="Cover crop species identifier"),
+    position: str = Query("before", description="Position relative to main crop (before/after/between)")
+):
+    """
+    Analyze compatibility between specific cover crop and main crop.
+    
+    This endpoint provides detailed analysis of how well a specific cover crop
+    species will work with a particular main crop in different rotation positions.
+    
+    Agricultural Logic:
+    - Nutrient cycling compatibility (N-fixation for corn, etc.)
+    - Pest and disease management considerations
+    - Soil condition improvements that benefit main crop
+    - Timing coordination for planting and termination
+    - Economic analysis of integration benefits
+    
+    Args:
+        crop_name: Name of the main crop (corn, soybean, wheat, etc.)
+        cover_crop_species_id: Identifier for the cover crop species
+        position: Rotation position (before, after, between)
+    """
+    try:
+        logger.info(f"Analyzing compatibility: {cover_crop_species_id} {position} {crop_name}")
+        
+        # Validate inputs
+        if not crop_name or len(crop_name.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Main crop name is required"
+            )
+        
+        if not cover_crop_species_id or len(cover_crop_species_id.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Cover crop species ID is required"
+            )
+        
+        if position not in ["before", "after", "between"]:
+            raise HTTPException(
+                status_code=400,
+                detail="Position must be one of: before, after, between"
+            )
+        
+        # Verify species exists
+        if cover_crop_species_id not in cover_crop_service.species_database:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cover crop species '{cover_crop_species_id}' not found"
+            )
+        
+        # Get compatibility analysis
+        analysis = await cover_crop_service.get_main_crop_compatibility_analysis(
+            cover_crop_species_id=cover_crop_species_id.strip(),
+            main_crop=crop_name.strip(),
+            position=position
+        )
+        
+        logger.info(f"Successfully analyzed compatibility for {cover_crop_species_id} with {crop_name}")
+        return analysis
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in compatibility analysis: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error analyzing main crop compatibility: {str(e)}"
+        )
+
+
+@router.post("/rotation-position/{position_id}", response_model=CoverCropSelectionResponse)
+async def get_rotation_position_recommendations(
+    position_id: str,
+    rotation_name: str = Query(..., description="Name of the rotation system"),
+    request: CoverCropSelectionRequest = None
+):
+    """
+    Get cover crop recommendations for specific position in rotation.
+    
+    This endpoint provides recommendations optimized for a specific position
+    within a rotation sequence, considering the preceding and following crops.
+    
+    Agricultural Logic:
+    - Position-specific soil conditions and requirements
+    - Timing windows based on rotation schedule
+    - Complementary relationships with adjacent crops
+    - Position-specific objectives (N-fixation before corn, structure before soybeans)
+    - Management considerations for rotation transitions
+    
+    Args:
+        position_id: Identifier for the specific position in rotation
+        rotation_name: Name of the rotation system
+        request: Cover crop selection request with field conditions
+    """
+    try:
+        logger.info(f"Processing position-specific request: {rotation_name} position {position_id}")
+        
+        if not request:
+            raise HTTPException(
+                status_code=400,
+                detail="Cover crop selection request is required"
+            )
+        
+        # Validate inputs
+        if not position_id or len(position_id.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Position ID is required"
+            )
+        
+        if not rotation_name or len(rotation_name.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Rotation name is required"
+            )
+        
+        # Get position-specific recommendations
+        response = await cover_crop_service.get_rotation_position_recommendations(
+            rotation_name=rotation_name.strip(),
+            position_id=position_id.strip(),
+            request=request
+        )
+        
+        logger.info(f"Successfully generated position-specific recommendations for {position_id}")
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in position-specific recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating rotation position recommendations: {str(e)}"
+        )

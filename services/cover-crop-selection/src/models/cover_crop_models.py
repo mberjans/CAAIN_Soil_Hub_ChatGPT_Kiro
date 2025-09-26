@@ -232,3 +232,114 @@ class SpeciesLookupResponse(BaseModel):
     species_count: int = Field(..., description="Number of species returned")
     species_list: List[CoverCropSpecies] = Field(..., description="Matching species")
     filter_summary: Dict[str, Any] = Field(..., description="Applied filters summary")
+
+
+# New models for main crop and rotation integration
+
+class MainCropRotationPlan(BaseModel):
+    """Represents a main crop rotation sequence."""
+    
+    rotation_id: str = Field(..., description="Unique rotation identifier")
+    rotation_name: str = Field(..., description="Rotation system name")
+    sequence: List[str] = Field(..., description="Crop sequence in rotation")
+    duration_years: int = Field(..., ge=1, le=10, description="Rotation cycle length in years")
+    region_suitability: List[str] = Field(..., description="Suitable regions/zones")
+    
+    # Rotation characteristics
+    primary_benefits: List[str] = Field(..., description="Main rotation benefits")
+    sustainability_rating: float = Field(..., ge=0.0, le=10.0, description="Sustainability score out of 10")
+    complexity_level: str = Field(..., description="Management complexity (simple, moderate, complex)")
+    
+    # Economic data
+    economic_performance: str = Field(..., description="Economic performance rating")
+    risk_level: str = Field(default="moderate", description="Risk assessment")
+    
+    # Timing information
+    typical_planting_dates: Dict[str, Dict[str, str]] = Field(..., description="Typical planting dates by crop")
+    harvest_windows: Dict[str, Dict[str, str]] = Field(..., description="Harvest timing by crop")
+
+
+class CoverCropRotationIntegration(BaseModel):
+    """Links cover crops to rotation positions."""
+    
+    integration_id: str = Field(..., description="Unique integration identifier")
+    rotation_plan: MainCropRotationPlan = Field(..., description="Associated rotation plan")
+    cover_crop_positions: List[Dict[str, Any]] = Field(..., description="Cover crop integration points")
+    
+    # Integration analysis
+    nitrogen_cycling_benefits: Dict[str, float] = Field(..., description="N cycling benefits by position")
+    pest_management_benefits: List[str] = Field(..., description="Pest management advantages")
+    soil_health_improvements: List[str] = Field(..., description="Soil health benefits")
+    
+    # Compatibility scores
+    compatibility_scores: Dict[str, float] = Field(..., description="Compatibility scores by position")
+    risk_factors: List[str] = Field(default_factory=list, description="Potential risks or challenges")
+    
+    # Economic impact
+    estimated_cost_impact: float = Field(default=0.0, description="Cost impact per acre")
+    estimated_benefit_value: float = Field(default=0.0, description="Estimated benefits value per acre")
+
+
+class CropTimingWindow(BaseModel):
+    """Represents planting/harvest timing constraints."""
+    
+    window_id: str = Field(..., description="Unique timing window identifier")
+    crop_name: str = Field(..., description="Crop name")
+    window_type: str = Field(..., description="Window type (planting, harvest, termination)")
+    
+    # Timing constraints
+    earliest_date: Optional[date] = Field(None, description="Earliest allowable date")
+    optimal_start: date = Field(..., description="Optimal window start")
+    optimal_end: date = Field(..., description="Optimal window end")
+    latest_date: Optional[date] = Field(None, description="Latest allowable date")
+    
+    # Context information
+    region: Optional[str] = Field(None, description="Geographic region")
+    climate_zone: Optional[str] = Field(None, description="Climate zone")
+    soil_conditions: Optional[str] = Field(None, description="Specific soil requirements")
+    
+    # Flexibility and constraints
+    flexibility_days: int = Field(default=14, description="Flexibility in days")
+    critical_factors: List[str] = Field(default_factory=list, description="Critical timing factors")
+    weather_dependencies: List[str] = Field(default_factory=list, description="Weather-dependent factors")
+    
+    @validator('optimal_start', 'optimal_end')
+    def validate_dates(cls, v):
+        """Validate date fields."""
+        if v and v.year < 2020:
+            raise ValueError("Dates should be reasonable agricultural planning dates")
+        return v
+
+
+class RotationBenefitAnalysis(BaseModel):
+    """Analyzes benefits of cover crops in rotation."""
+    
+    analysis_id: str = Field(..., description="Unique analysis identifier")
+    rotation_plan: MainCropRotationPlan = Field(..., description="Analyzed rotation")
+    cover_crop_integration: CoverCropRotationIntegration = Field(..., description="Integration plan")
+    
+    # Quantified benefits
+    nitrogen_fixation_value: float = Field(default=0.0, ge=0.0, description="N fixation value (lbs N/acre)")
+    erosion_prevention_value: float = Field(default=0.0, ge=0.0, description="Erosion prevention value ($)")
+    organic_matter_improvement: float = Field(default=0.0, ge=0.0, description="OM improvement percentage")
+    weed_suppression_value: float = Field(default=0.0, ge=0.0, description="Weed suppression value ($)")
+    
+    # Pest and disease management
+    pest_pressure_reduction: Dict[str, float] = Field(default_factory=dict, description="Pest reduction by type")
+    disease_break_effectiveness: Dict[str, float] = Field(default_factory=dict, description="Disease break effectiveness")
+    beneficial_insect_support: float = Field(default=0.0, ge=0.0, le=1.0, description="Beneficial insect support score")
+    
+    # Long-term impacts
+    soil_health_trajectory: Dict[str, float] = Field(default_factory=dict, description="Soil health trends")
+    yield_impact_projections: Dict[str, float] = Field(default_factory=dict, description="Yield impact by crop")
+    sustainability_improvements: List[str] = Field(default_factory=list, description="Sustainability benefits")
+    
+    # Economic analysis
+    total_benefit_value: float = Field(default=0.0, description="Total benefit value per acre")
+    cost_benefit_ratio: float = Field(default=1.0, ge=0.0, description="Benefit-to-cost ratio")
+    payback_period_years: Optional[float] = Field(None, description="Investment payback period")
+    
+    # Risk assessment
+    implementation_risks: List[str] = Field(default_factory=list, description="Implementation risks")
+    mitigation_strategies: List[str] = Field(default_factory=list, description="Risk mitigation strategies")
+    confidence_level: float = Field(default=0.7, ge=0.0, le=1.0, description="Analysis confidence level")
