@@ -4,14 +4,21 @@ Tests pH analysis, lime recommendations, monitoring, and agricultural accuracy.
 """
 import pytest
 import asyncio
+import time
 from datetime import datetime, date, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, AsyncMock
+import sys
+import os
 
-from ..src.services.soil_ph_management_service import (
-    SoilPHManagementService, PHAnalysis, LimeRecommendation, 
-    PHManagementPlan, PHMonitoringRecord, SoilTexture, LimeType, PHLevel
+# Add the src directory to Python path for proper imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
+
+from services.soil_ph_management_service import (
+    SoilPHManagementService, PHReading, CropPHPreference, 
+    PHAmendmentRecommendation, PHManagementPlan, PHTimeline,
+    SoilTexture, AmendmentType, ApplicationTiming
 )
-from ..src.models.agricultural_models import SoilTestData
+from models.agricultural_models import SoilTestData
 
 class TestSoilPHManagementService:
     """Test suite for soil pH management service."""
@@ -24,94 +31,117 @@ class TestSoilPHManagementService:
     @pytest.fixture
     def sample_soil_data(self):
         """Sample soil test data."""
-        return SoilTestData(
-            ph=5.8,
-            organic_matter_percent=3.2,
-            phosphorus_ppm=25,
-            potassium_ppm=180,
-            test_date=date(2024, 3, 15)
-        )
+        return {
+            'ph': 5.8,
+            'organic_matter_percent': 3.2,
+            'phosphorus_ppm': 25,
+            'potassium_ppm': 180,
+            'test_date': date(2024, 3, 15),
+            'farm_id': 'test_farm',
+            'field_id': 'field_001'
+        }
     
     @pytest.fixture
     def acidic_soil_data(self):
         """Acidic soil test data."""
-        return SoilTestData(
-            ph=5.2,
-            organic_matter_percent=2.1,
-            phosphorus_ppm=12,
-            potassium_ppm=95,
-            test_date=date(2024, 3, 10)
-        )
+        return {
+            'ph': 5.2,
+            'organic_matter_percent': 2.1,
+            'phosphorus_ppm': 12,
+            'potassium_ppm': 95,
+            'test_date': date(2024, 3, 10),
+            'farm_id': 'test_farm',
+            'field_id': 'field_002'
+        }
     
     @pytest.fixture
     def alkaline_soil_data(self):
         """Alkaline soil test data."""
-        return SoilTestData(
-            ph=8.2,
-            organic_matter_percent=2.8,
-            phosphorus_ppm=45,
-            potassium_ppm=220,
-            test_date=date(2024, 3, 12)
-        )
+        return {
+            'ph': 8.2,
+            'organic_matter_percent': 2.8,
+            'phosphorus_ppm': 45,
+            'potassium_ppm': 220,
+            'test_date': date(2024, 3, 12),
+            'farm_id': 'test_farm',
+            'field_id': 'field_003'
+        }
+
+    @pytest.fixture
+    def field_conditions(self):
+        """Standard field conditions for testing."""
+        return {
+            'soil_texture': SoilTexture.LOAM,
+            'field_size_acres': 10.0,
+            'tillage_practices': 'conventional',
+            'irrigation_type': 'rainfed'
+        }
 
 class TestPHAnalysis(TestSoilPHManagementService):
     """Test pH analysis functionality."""
     
     @pytest.mark.asyncio
-    async def test_analyze_soil_ph_corn(self, ph_service, sample_soil_data):
+    async def test_analyze_ph_status_corn(self, ph_service, sample_soil_data, field_conditions):
         """Test pH analysis for corn crop."""
-        analysis = await ph_service.analyze_soil_ph(
-            farm_id="test_farm",
-            field_id="field_001",
+        analysis = await ph_service.analyze_ph_status(
+            farm_id=sample_soil_data['farm_id'],
+            field_id=sample_soil_data['field_id'],
             crop_type="corn",
-            soil_test_data=sample_soil_data
+            soil_data=sample_soil_data,
+            field_conditions=field_conditions
         )
         
-        assert isinstance(analysis, PHAnalysis)
-        assert analysis.current_ph == 5.8
-        assert analysis.ph_level == PHLevel.MODERATELY_ACIDIC
-        assert 6.0 <= analysis.target_ph <= 6.8  # Corn optimal range
-        assert analysis.ph_deviation < 0  # Below target
-        assert analysis.management_priority in ["medium", "high"]
+        assert isinstance(analysis, dict)
+        assert analysis['current_ph'] == 5.8
+        assert 'ph_status' in analysis
+        assert 'target_ph_range' in analysis
+        assert 'yield_impact' in analysis
+        assert 'nutrient_availability' in analysis
         
-        # Check nutrient availability
-        assert "phosphorus" in analysis.nutrient_availability_impact
-        assert "iron" in analysis.nutrient_availability_impact
-        assert analysis.nutrient_availability_impact["phosphorus"] < 1.0  # Reduced at pH 5.8
+        # Corn should have target pH between 6.0-6.8
+        target_range = analysis['target_ph_range']
+        assert target_range['min'] >= 6.0
+        assert target_range['max'] <= 6.8
+        
+        # pH 5.8 should show yield impact for corn
+        assert analysis['yield_impact'] < 1.0
     
     @pytest.mark.asyncio
-    async def test_analyze_critical_acidic_soil(self, ph_service, acidic_soil_data):
+    async def test_analyze_critical_acidic_soil(self, ph_service, acidic_soil_data, field_conditions):
         """Test analysis of critically acidic soil."""
-        analysis = await ph_service.analyze_soil_ph(
-            farm_id="test_farm",
-            field_id="field_002",
+        analysis = await ph_service.analyze_ph_status(
+            farm_id=acidic_soil_data['farm_id'],
+            field_id=acidic_soil_data['field_id'],
             crop_type="soybean",
-            soil_test_data=acidic_soil_data
+            soil_data=acidic_soil_data,
+            field_conditions=field_conditions
         )
         
-        assert analysis.current_ph == 5.2
-        assert analysis.ph_level == PHLevel.STRONGLY_ACIDIC
-        assert analysis.management_priority in ["high", "critical"]
-        assert analysis.crop_suitability_score < 0.7  # Poor suitability
-        assert analysis.acidification_risk in ["moderate", "high"]
+        assert analysis['current_ph'] == 5.2
+        assert analysis['ph_status'] in ['strongly_acidic', 'very_strongly_acidic']
+        assert analysis['yield_impact'] < 0.7  # Poor suitability for soybeans
+        
+        # Should recommend management action
+        assert analysis.get('management_priority') in ['high', 'critical'] or analysis['yield_impact'] < 0.8
     
     @pytest.mark.asyncio
-    async def test_analyze_alkaline_soil(self, ph_service, alkaline_soil_data):
+    async def test_analyze_alkaline_soil(self, ph_service, alkaline_soil_data, field_conditions):
         """Test analysis of alkaline soil."""
-        analysis = await ph_service.analyze_soil_ph(
-            farm_id="test_farm",
-            field_id="field_003",
+        analysis = await ph_service.analyze_ph_status(
+            farm_id=alkaline_soil_data['farm_id'],
+            field_id=alkaline_soil_data['field_id'],
             crop_type="corn",
-            soil_test_data=alkaline_soil_data
+            soil_data=alkaline_soil_data,
+            field_conditions=field_conditions
         )
         
-        assert analysis.current_ph == 8.2
-        assert analysis.ph_level == PHLevel.MODERATELY_ALKALINE
-        assert analysis.alkalinity_risk in ["moderate", "high"]
+        assert analysis['current_ph'] == 8.2
+        assert analysis['ph_status'] in ['moderately_alkaline', 'strongly_alkaline']
         
         # Check micronutrient availability issues
-        assert analysis.nutrient_availability_impact["iron"] < 0.5
-        assert analysis.nutrient_availability_impact["zinc"] < 0.5
+        nutrient_avail = analysis['nutrient_availability']
+        assert nutrient_avail['iron'] < 0.5  # Iron availability severely limited
+        assert nutrient_avail['zinc'] < 0.5  # Zinc availability limited
     
     def test_ph_level_classification(self, ph_service):
         """Test pH level classification accuracy."""

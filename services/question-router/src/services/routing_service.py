@@ -70,8 +70,8 @@ class QuestionRoutingService:
                 "estimated_time": 5
             },
             QuestionType.COVER_CROPS: {
-                "primary": "recommendation-engine",
-                "secondary": ["data-integration", "ai-agent"],
+                "primary": "cover-crop-selection",
+                "secondary": ["recommendation-engine", "data-integration", "ai-agent"],
                 "priority": 2,
                 "estimated_time": 4
             },

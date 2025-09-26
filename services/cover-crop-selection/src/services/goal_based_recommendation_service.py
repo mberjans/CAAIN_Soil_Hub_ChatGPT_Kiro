@@ -11,7 +11,7 @@ from datetime import date
 import math
 
 try:
-    from ..models.cover_crop_models import (
+    from models.cover_crop_models import (
         CoverCropSpecies, GoalBasedObjectives, SpecificGoal, GoalBasedSpeciesRecommendation,
         GoalAchievementMetrics, FarmerGoalCategory, GoalPriority, SoilBenefit,
         SoilConditions, ClimateData
@@ -835,20 +835,25 @@ class GoalBasedRecommendationService:
                 'objectives': GoalBasedObjectives(
                     specific_goals=[
                         SpecificGoal(
-                            goal_name="increase_organic_matter",
-                            target_value=0.5,  # 0.5% increase
+                            goal_id="increase_organic_matter",
+                            category=FarmerGoalCategory.SOIL_HEALTH,
                             priority=GoalPriority.HIGH,
-                            goal_category=FarmerGoalCategory.SOIL_HEALTH,
-                            weight=0.6
+                            weight=0.6,
+                            target_benefit=SoilBenefit.ORGANIC_MATTER,
+                            quantitative_target=0.5,  # 0.5% increase
+                            target_unit="percent"
                         ),
                         SpecificGoal(
-                            goal_name="prevent_erosion",
-                            target_value=90.0,  # 90% erosion reduction
+                            goal_id="prevent_erosion",
+                            category=FarmerGoalCategory.EROSION_CONTROL,
                             priority=GoalPriority.MEDIUM,
-                            goal_category=FarmerGoalCategory.EROSION_CONTROL,
-                            weight=0.4
+                            weight=0.4,
+                            target_benefit=SoilBenefit.EROSION_CONTROL,
+                            quantitative_target=90.0,  # 90% erosion reduction
+                            target_unit="percent"
                         )
-                    ]
+                    ],
+                    primary_focus=FarmerGoalCategory.SOIL_HEALTH
                 ),
                 'expected_outcomes': [
                     'Improved soil structure and water holding capacity',
@@ -862,20 +867,25 @@ class GoalBasedRecommendationService:
                 'objectives': GoalBasedObjectives(
                     specific_goals=[
                         SpecificGoal(
-                            goal_name="maximize_nitrogen_fixation",
-                            target_value=150.0,  # 150 lbs N/acre
+                            goal_id="maximize_nitrogen_fixation",
+                            category=FarmerGoalCategory.NUTRIENT_MANAGEMENT,
                             priority=GoalPriority.HIGH,
-                            goal_category=FarmerGoalCategory.NUTRIENT_MANAGEMENT,
-                            weight=0.8
+                            weight=0.8,
+                            target_benefit=SoilBenefit.NITROGEN_FIXATION,
+                            quantitative_target=150.0,  # 150 lbs N/acre
+                            target_unit="lbs_per_acre"
                         ),
                         SpecificGoal(
-                            goal_name="improve_soil_biology",
-                            target_value=25.0,  # 25% increase in biological activity
+                            goal_id="improve_soil_biology",
+                            category=FarmerGoalCategory.SOIL_HEALTH,
                             priority=GoalPriority.MEDIUM,
-                            goal_category=FarmerGoalCategory.SOIL_HEALTH,
-                            weight=0.2
+                            weight=0.2,
+                            target_benefit=SoilBenefit.ORGANIC_MATTER,
+                            quantitative_target=25.0,  # 25% increase in biological activity
+                            target_unit="percent"
                         )
-                    ]
+                    ],
+                    primary_focus=FarmerGoalCategory.NUTRIENT_MANAGEMENT
                 ),
                 'expected_outcomes': [
                     'Significant reduction in nitrogen fertilizer needs',
@@ -889,27 +899,34 @@ class GoalBasedRecommendationService:
                 'objectives': GoalBasedObjectives(
                     specific_goals=[
                         SpecificGoal(
-                            goal_name="prevent_topsoil_loss",
-                            target_value=95.0,  # 95% reduction in soil loss
+                            goal_id="prevent_topsoil_loss",
+                            category=FarmerGoalCategory.EROSION_CONTROL,
                             priority=GoalPriority.HIGH,
-                            goal_category=FarmerGoalCategory.EROSION_CONTROL,
-                            weight=0.5
+                            weight=0.5,
+                            target_benefit=SoilBenefit.EROSION_CONTROL,
+                            quantitative_target=95.0,  # 95% reduction in soil loss
+                            target_unit="percent"
                         ),
                         SpecificGoal(
-                            goal_name="improve_water_infiltration",
-                            target_value=40.0,  # 40% improvement in infiltration
+                            goal_id="improve_water_infiltration",
+                            category=FarmerGoalCategory.WATER_MANAGEMENT,
                             priority=GoalPriority.HIGH,
-                            goal_category=FarmerGoalCategory.WATER_MANAGEMENT,
-                            weight=0.3
+                            weight=0.3,
+                            target_benefit=SoilBenefit.SOIL_STRUCTURE,
+                            quantitative_target=40.0,  # 40% improvement in infiltration
+                            target_unit="percent"
                         ),
                         SpecificGoal(
-                            goal_name="reduce_nutrient_runoff",
-                            target_value=80.0,  # 80% reduction in nutrient loss
+                            goal_id="reduce_nutrient_runoff",
+                            category=FarmerGoalCategory.NUTRIENT_MANAGEMENT,
                             priority=GoalPriority.MEDIUM,
-                            goal_category=FarmerGoalCategory.NUTRIENT_MANAGEMENT,
-                            weight=0.2
+                            weight=0.2,
+                            target_benefit=SoilBenefit.NUTRIENT_SCAVENGING,
+                            quantitative_target=80.0,  # 80% reduction in nutrient loss
+                            target_unit="percent"
                         )
-                    ]
+                    ],
+                    primary_focus=FarmerGoalCategory.EROSION_CONTROL
                 ),
                 'expected_outcomes': [
                     'Dramatic reduction in soil erosion',
@@ -923,27 +940,34 @@ class GoalBasedRecommendationService:
                 'objectives': GoalBasedObjectives(
                     specific_goals=[
                         SpecificGoal(
-                            goal_name="suppress_annual_weeds",
-                            target_value=70.0,  # 70% weed suppression
+                            goal_id="suppress_annual_weeds",
+                            category=FarmerGoalCategory.WEED_MANAGEMENT,
                             priority=GoalPriority.HIGH,
-                            goal_category=FarmerGoalCategory.WEED_MANAGEMENT,
-                            weight=0.4
+                            weight=0.4,
+                            target_benefit=SoilBenefit.WEED_SUPPRESSION,
+                            quantitative_target=70.0,  # 70% weed suppression
+                            target_unit="percent"
                         ),
                         SpecificGoal(
-                            goal_name="attract_beneficial_insects",
-                            target_value=200.0,  # 200% increase in beneficials
+                            goal_id="attract_beneficial_insects",
+                            category=FarmerGoalCategory.PEST_DISEASE_CONTROL,
                             priority=GoalPriority.MEDIUM,
-                            goal_category=FarmerGoalCategory.PEST_DISEASE_CONTROL,
-                            weight=0.3
+                            weight=0.3,
+                            target_benefit=SoilBenefit.PEST_MANAGEMENT,
+                            quantitative_target=200.0,  # 200% increase in beneficials
+                            target_unit="percent"
                         ),
                         SpecificGoal(
-                            goal_name="break_pest_cycles",
-                            target_value=60.0,  # 60% reduction in pest pressure
+                            goal_id="break_pest_cycles",
+                            category=FarmerGoalCategory.PEST_DISEASE_CONTROL,
                             priority=GoalPriority.MEDIUM,
-                            goal_category=FarmerGoalCategory.PEST_DISEASE_CONTROL,
-                            weight=0.3
+                            weight=0.3,
+                            target_benefit=SoilBenefit.PEST_MANAGEMENT,
+                            quantitative_target=60.0,  # 60% reduction in pest pressure
+                            target_unit="percent"
                         )
-                    ]
+                    ],
+                    primary_focus=FarmerGoalCategory.WEED_MANAGEMENT
                 ),
                 'expected_outcomes': [
                     'Reduced herbicide and pesticide applications',
@@ -957,41 +981,52 @@ class GoalBasedRecommendationService:
                 'objectives': GoalBasedObjectives(
                     specific_goals=[
                         SpecificGoal(
-                            goal_name="maximize_nitrogen_fixation",
-                            target_value=180.0,  # 180 lbs N/acre
+                            goal_id="maximize_nitrogen_fixation",
+                            category=FarmerGoalCategory.NUTRIENT_MANAGEMENT,
                             priority=GoalPriority.HIGH,
-                            goal_category=FarmerGoalCategory.NUTRIENT_MANAGEMENT,
-                            weight=0.25
+                            weight=0.25,
+                            target_benefit=SoilBenefit.NITROGEN_FIXATION,
+                            quantitative_target=180.0,  # 180 lbs N/acre
+                            target_unit="lbs_per_acre"
                         ),
                         SpecificGoal(
-                            goal_name="increase_organic_matter",
-                            target_value=0.8,  # 0.8% increase
+                            goal_id="increase_organic_matter",
+                            category=FarmerGoalCategory.SOIL_HEALTH,
                             priority=GoalPriority.HIGH,
-                            goal_category=FarmerGoalCategory.SOIL_HEALTH,
-                            weight=0.25
+                            weight=0.25,
+                            target_benefit=SoilBenefit.ORGANIC_MATTER,
+                            quantitative_target=0.8,  # 0.8% increase
+                            target_unit="percent"
                         ),
                         SpecificGoal(
-                            goal_name="prevent_erosion",
-                            target_value=95.0,  # 95% erosion control
+                            goal_id="prevent_erosion",
+                            category=FarmerGoalCategory.EROSION_CONTROL,
                             priority=GoalPriority.MEDIUM,
-                            goal_category=FarmerGoalCategory.EROSION_CONTROL,
-                            weight=0.2
+                            weight=0.2,
+                            target_benefit=SoilBenefit.EROSION_CONTROL,
+                            quantitative_target=95.0,  # 95% erosion control
+                            target_unit="percent"
                         ),
                         SpecificGoal(
-                            goal_name="suppress_weeds",
-                            target_value=75.0,  # 75% weed suppression
+                            goal_id="suppress_weeds",
+                            category=FarmerGoalCategory.WEED_MANAGEMENT,
                             priority=GoalPriority.MEDIUM,
-                            goal_category=FarmerGoalCategory.WEED_MANAGEMENT,
-                            weight=0.15
+                            weight=0.15,
+                            target_benefit=SoilBenefit.WEED_SUPPRESSION,
+                            quantitative_target=75.0,  # 75% weed suppression
+                            target_unit="percent"
                         ),
                         SpecificGoal(
-                            goal_name="improve_water_retention",
-                            target_value=50.0,  # 50% improvement
+                            goal_id="improve_water_retention",
+                            category=FarmerGoalCategory.WATER_MANAGEMENT,
                             priority=GoalPriority.LOW,
-                            goal_category=FarmerGoalCategory.WATER_MANAGEMENT,
-                            weight=0.15
+                            weight=0.15,
+                            target_benefit=SoilBenefit.SOIL_STRUCTURE,
+                            quantitative_target=50.0,  # 50% improvement
+                            target_unit="percent"
                         )
-                    ]
+                    ],
+                    primary_focus=FarmerGoalCategory.NUTRIENT_MANAGEMENT
                 ),
                 'expected_outcomes': [
                     'Comprehensive soil health improvement',

@@ -110,6 +110,16 @@ class SoilConditions(BaseModel):
     previous_cover_crop: Optional[str] = Field(None, description="Previous cover crop")
 
 
+class Location(BaseModel):
+    """Geographic location with validated coordinates."""
+    
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude in decimal degrees")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude in decimal degrees")
+    address: Optional[str] = Field(None, description="Human-readable address")
+    state: Optional[str] = Field(None, description="State/province")
+    country: Optional[str] = Field(None, description="Country")
+
+
 class ClimateData(BaseModel):
     """Climate data for cover crop selection."""
     
@@ -120,6 +130,8 @@ class ClimateData(BaseModel):
     first_frost_date: Optional[date] = Field(None, description="Average first frost date")
     drought_risk: Optional[str] = Field(None, description="Drought risk level")
     heat_stress_risk: Optional[str] = Field(None, description="Heat stress risk")
+    min_temp_f: Optional[float] = Field(None, description="Minimum winter temperature (°F)")
+    max_temp_f: Optional[float] = Field(None, description="Maximum summer temperature (°F)")
 
 
 class FarmerGoalCategory(str, Enum):
@@ -298,7 +310,7 @@ class CoverCropSelectionRequest(BaseModel):
     """Request for cover crop selection."""
     
     request_id: str = Field(..., description="Unique request identifier")
-    location: Dict[str, Any] = Field(..., description="Location data with coordinates")
+    location: Location = Field(..., description="Location data with coordinates")
     soil_conditions: SoilConditions = Field(..., description="Current soil conditions")
     climate_data: Optional[ClimateData] = Field(None, description="Climate information")
     objectives: CoverCropObjectives = Field(..., description="Cover crop objectives")
@@ -697,5 +709,215 @@ class TimingRecommendationResponse(BaseModel):
     monitoring_recommendations: List[str] = Field(default_factory=list)
     adjustment_triggers: List[str] = Field(default_factory=list)
     
+    # Summary
+    recommendation_summary: str = Field(default="", description="Human-readable summary of timing recommendations")
+    
     overall_confidence: TimingRecommendationConfidence = Field(default=TimingRecommendationConfidence.MEDIUM)
+
+
+# Benefit Quantification and Tracking System Models
+
+class BenefitMeasurementMethod(str, Enum):
+    """Methods for measuring and quantifying benefits."""
+    SOIL_SAMPLING = "soil_sampling"
+    BIOMASS_MEASUREMENT = "biomass_measurement"
+    YIELD_COMPARISON = "yield_comparison" 
+    EROSION_MONITORING = "erosion_monitoring"
+    WATER_INFILTRATION_TEST = "water_infiltration_test"
+    NITRATE_LEACHING_TEST = "nitrate_leaching_test"
+    WEED_DENSITY_COUNT = "weed_density_count"
+    PEST_MONITORING = "pest_monitoring"
+    ECONOMIC_ANALYSIS = "economic_analysis"
+    FIELD_OBSERVATION = "field_observation"
+    SATELLITE_IMAGERY = "satellite_imagery"
+    LABORATORY_ANALYSIS = "laboratory_analysis"
+
+
+class BenefitQuantificationStatus(str, Enum):
+    """Status of benefit quantification process."""
+    PREDICTED = "predicted"
+    MEASURING = "measuring"
+    MEASURED = "measured"
+    VALIDATED = "validated"
+    EXPIRED = "expired"
+
+
+class BenefitMeasurementRecord(BaseModel):
+    """Individual measurement record for a specific benefit."""
+    
+    record_id: str = Field(..., description="Unique measurement record ID")
+    measurement_date: datetime = Field(default_factory=datetime.utcnow)
+    measurement_method: BenefitMeasurementMethod = Field(..., description="How benefit was measured")
+    
+    # Measurement details
+    measured_value: float = Field(..., description="Quantified measurement value")
+    measurement_unit: str = Field(..., description="Unit of measurement")
+    measurement_accuracy: float = Field(default=0.95, ge=0.0, le=1.0, description="Measurement accuracy score")
+    
+    # Context and conditions
+    measurement_conditions: Dict[str, Any] = Field(default_factory=dict, description="Environmental conditions during measurement")
+    sample_size: Optional[int] = Field(None, description="Sample size for measurement")
+    location_details: Dict[str, Any] = Field(default_factory=dict, description="Specific measurement locations")
+    
+    # Quality control
+    validated: bool = Field(default=False, description="Measurement validated by expert")
+    validator_id: Optional[str] = Field(None, description="ID of validator")
+    validation_notes: Optional[str] = Field(None, description="Validation notes")
+    
+    # Metadata
+    measurement_protocol: Optional[str] = Field(None, description="Measurement protocol used")
+    equipment_used: List[str] = Field(default_factory=list, description="Equipment/tools used")
+    technician_notes: Optional[str] = Field(None, description="Technician observations")
+
+
+class BenefitQuantificationEntry(BaseModel):
+    """Comprehensive benefit quantification with tracking."""
+    
+    entry_id: str = Field(..., description="Unique quantification entry ID")
+    farm_id: str = Field(..., description="Farm identifier")
+    field_id: str = Field(..., description="Field identifier")
+    cover_crop_implementation_id: str = Field(..., description="Cover crop implementation ID")
+    
+    # Benefit identification
+    benefit_type: SoilBenefit = Field(..., description="Type of benefit being quantified")
+    benefit_category: str = Field(..., description="Category (economic, environmental, agronomic)")
+    
+    # Timing and status
+    prediction_date: datetime = Field(default_factory=datetime.utcnow)
+    status: BenefitQuantificationStatus = Field(default=BenefitQuantificationStatus.PREDICTED)
+    
+    # Predicted vs. actual values
+    predicted_value: float = Field(..., description="Initially predicted benefit value")
+    predicted_unit: str = Field(..., description="Unit for predicted value")
+    predicted_confidence: float = Field(default=0.7, ge=0.0, le=1.0, description="Prediction confidence")
+    
+    actual_measurements: List[BenefitMeasurementRecord] = Field(default_factory=list, description="Actual measurement records")
+    validated_value: Optional[float] = Field(None, description="Final validated benefit value")
+    measurement_variance: Optional[float] = Field(None, description="Variance in measurements")
+    
+    # Economic quantification
+    economic_value_predicted: Optional[float] = Field(None, description="Predicted economic value ($)")
+    economic_value_actual: Optional[float] = Field(None, description="Actual economic value ($)")
+    cost_savings: Optional[float] = Field(None, description="Cost savings realized ($)")
+    
+    # Temporal tracking
+    measurement_start_date: Optional[datetime] = Field(None, description="When measurements began")
+    measurement_end_date: Optional[datetime] = Field(None, description="When measurements completed")
+    benefit_realization_timeline: List[Dict[str, Any]] = Field(default_factory=list, description="Timeline of benefit realization")
+    
+    # Accuracy and validation
+    prediction_accuracy: Optional[float] = Field(None, description="How accurate was prediction")
+    validation_status: str = Field(default="pending", description="Validation status")
+    expert_validation_notes: Optional[str] = Field(None, description="Expert validation comments")
+
+
+class BenefitTrackingField(BaseModel):
+    """Field-level benefit tracking aggregation."""
+    
+    tracking_id: str = Field(..., description="Unique tracking identifier")
+    farm_id: str = Field(..., description="Farm identifier")
+    field_id: str = Field(..., description="Field identifier")
+    field_size_acres: float = Field(..., gt=0.0, description="Field size in acres")
+    
+    # Implementation details
+    cover_crop_species: List[str] = Field(..., description="Cover crop species implemented")
+    implementation_year: int = Field(..., ge=2020, description="Year of implementation")
+    implementation_season: str = Field(..., description="Season of implementation")
+    
+    # Aggregated benefits
+    tracked_benefits: List[BenefitQuantificationEntry] = Field(default_factory=list, description="All benefit tracking entries")
+    total_predicted_value: float = Field(default=0.0, description="Total predicted benefit value ($)")
+    total_realized_value: Optional[float] = Field(None, description="Total realized benefit value ($)")
+    
+    # Performance metrics
+    overall_prediction_accuracy: Optional[float] = Field(None, description="Overall prediction accuracy")
+    roi_predicted: Optional[float] = Field(None, description="Predicted return on investment")
+    roi_actual: Optional[float] = Field(None, description="Actual return on investment")
+    
+    # Historical comparison
+    baseline_measurements: Dict[str, float] = Field(default_factory=dict, description="Pre-cover crop baseline measurements")
+    improvement_metrics: Dict[str, float] = Field(default_factory=dict, description="Improvement from baseline")
+    
+    # Tracking metadata
+    tracking_started: datetime = Field(default_factory=datetime.utcnow)
+    last_updated: datetime = Field(default_factory=datetime.utcnow)
+    tracking_duration_months: Optional[int] = Field(None, description="Duration of tracking in months")
+    
+    @validator('last_updated', always=True)
+    def update_timestamp(cls, v):
+        return datetime.utcnow()
+
+
+class BenefitValidationProtocol(BaseModel):
+    """Protocol for validating benefit measurements."""
+    
+    protocol_id: str = Field(..., description="Unique protocol identifier")
+    protocol_name: str = Field(..., description="Protocol name")
+    benefit_type: SoilBenefit = Field(..., description="Benefit type this protocol validates")
+    
+    # Validation requirements
+    minimum_measurements: int = Field(default=3, ge=1, description="Minimum number of measurements required")
+    measurement_frequency: str = Field(..., description="How often to measure")
+    measurement_duration_months: int = Field(default=12, ge=1, description="Duration of measurement period")
+    
+    # Quality standards
+    required_accuracy: float = Field(default=0.90, ge=0.0, le=1.0, description="Required measurement accuracy")
+    acceptable_variance: float = Field(default=0.15, ge=0.0, description="Acceptable variance between measurements")
+    expert_validation_required: bool = Field(default=True, description="Requires expert validation")
+    
+    # Measurement specifications
+    preferred_methods: List[BenefitMeasurementMethod] = Field(..., description="Preferred measurement methods")
+    required_equipment: List[str] = Field(default_factory=list, description="Required equipment/tools")
+    sampling_requirements: Dict[str, Any] = Field(default_factory=dict, description="Sampling specifications")
+    
+    # Environmental considerations
+    measurement_season_constraints: List[str] = Field(default_factory=list, description="When measurements can be taken")
+    weather_constraints: Dict[str, Any] = Field(default_factory=dict, description="Weather constraints for measurement")
+    
+    # Documentation requirements
+    required_documentation: List[str] = Field(default_factory=list, description="Required documentation")
+    photo_documentation_required: bool = Field(default=True, description="Photo documentation required")
+    
+
+class BenefitTrackingAnalytics(BaseModel):
+    """Analytics and insights from benefit tracking data."""
+    
+    analytics_id: str = Field(..., description="Unique analytics identifier")
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    analysis_period_start: datetime = Field(..., description="Start of analysis period")
+    analysis_period_end: datetime = Field(..., description="End of analysis period")
+    
+    # Farm/field scope
+    farm_ids: List[str] = Field(..., description="Farms included in analysis")
+    field_count: int = Field(..., ge=0, description="Number of fields analyzed")
+    total_acres_analyzed: float = Field(..., ge=0.0, description="Total acres in analysis")
+    
+    # Benefit performance summary
+    benefit_accuracy_by_type: Dict[SoilBenefit, float] = Field(default_factory=dict, description="Prediction accuracy by benefit type")
+    top_performing_benefits: List[Dict[str, Any]] = Field(default_factory=list, description="Best performing benefits")
+    underperforming_benefits: List[Dict[str, Any]] = Field(default_factory=list, description="Benefits needing improvement")
+    
+    # Economic insights
+    total_predicted_value: float = Field(default=0.0, description="Total predicted economic value")
+    total_realized_value: float = Field(default=0.0, description="Total realized economic value")
+    average_roi: float = Field(default=0.0, description="Average return on investment")
+    cost_benefit_distribution: Dict[str, float] = Field(default_factory=dict, description="Distribution of cost-benefit ratios")
+    
+    # Species performance
+    species_performance_ranking: List[Dict[str, Any]] = Field(default_factory=list, description="Species ranked by benefit realization")
+    species_benefit_specialization: Dict[str, List[SoilBenefit]] = Field(default_factory=dict, description="Which benefits each species delivers best")
+    
+    # Timing and seasonal insights
+    seasonal_benefit_patterns: Dict[str, Dict[str, float]] = Field(default_factory=dict, description="Benefit patterns by season")
+    optimal_measurement_timing: Dict[SoilBenefit, str] = Field(default_factory=dict, description="Optimal timing for measuring each benefit")
+    
+    # Recommendations
+    measurement_protocol_improvements: List[str] = Field(default_factory=list, description="Suggested protocol improvements")
+    prediction_model_refinements: List[str] = Field(default_factory=list, description="Suggested model improvements")
+    farmer_recommendations: List[str] = Field(default_factory=list, description="Recommendations for farmers")
+    
+    # Quality metrics
+    overall_data_quality_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall data quality")
+    measurement_completion_rate: float = Field(default=0.0, ge=0.0, le=1.0, description="Rate of completed measurements")
+    validation_completion_rate: float = Field(default=0.0, ge=0.0, le=1.0, description="Rate of validated measurements")
     recommendation_summary: str = Field(..., description="Executive summary of timing recommendations")

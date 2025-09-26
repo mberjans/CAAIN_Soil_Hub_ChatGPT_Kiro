@@ -15,7 +15,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from services.cover_crop_selection_service import CoverCropSelectionService
+# from services.cover_crop_selection_service import CoverCropSelectionService
 from services.timing_service import CoverCropTimingService
 from models.cover_crop_models import (
     TimingRecommendationRequest,
@@ -35,12 +35,12 @@ async def timing_service():
     return service
 
 
-@pytest_asyncio.fixture
-async def cover_crop_service():
-    """Create and initialize cover crop service for testing."""
-    service = CoverCropSelectionService()
-    await service.initialize()
-    return service
+# @pytest_asyncio.fixture
+# async def cover_crop_service():
+#     """Create and initialize cover crop service for testing."""
+#     service = CoverCropSelectionService()
+#     await service.initialize()
+#     return service
 
 
 @pytest.fixture

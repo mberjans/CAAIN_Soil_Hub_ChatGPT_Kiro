@@ -360,6 +360,87 @@ async def validate_zone_selection(request: ZoneValidationRequest):
         raise HTTPException(status_code=500, detail=f"Zone validation failed: {str(e)}")
 
 
+class ConsistencyValidationRequest(BaseModel):
+    """Climate zone consistency validation request."""
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude coordinate")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude coordinate")
+    check_neighboring: bool = Field(True, description="Check spatial consistency with neighboring locations")
+    check_temporal: bool = Field(True, description="Check temporal consistency over time")
+
+
+class ConsistencyValidationResponse(BaseModel):
+    """Climate zone consistency validation response."""
+    overall_consistent: bool = Field(..., description="Overall consistency status")
+    confidence: float = Field(..., ge=0, le=1, description="Confidence score for consistency")
+    checks_performed: List[str] = Field(..., description="List of validation checks performed")
+    warnings: List[str] = Field(..., description="Any consistency warnings")
+    cross_reference_check: Dict = Field(..., description="Cross-reference validation results")
+    spatial_check: Dict = Field(..., description="Spatial consistency validation results")
+    temporal_check: Dict = Field(..., description="Temporal consistency validation results")
+
+
+class ClimateZoneChangeRequest(BaseModel):
+    """Climate zone change detection request."""
+    latitude: float = Field(..., ge=-90, le=90, description="Latitude coordinate")
+    longitude: float = Field(..., ge=-180, le=180, description="Longitude coordinate")
+    analyze_historical: bool = Field(True, description="Whether to analyze historical data")
+    years_to_analyze: int = Field(10, ge=1, le=50, description="Number of years to analyze")
+
+
+class HistoricalRecord(BaseModel):
+    """Historical climate zone record."""
+    zone_id: str = Field(..., description="Climate zone ID")
+    detection_date: datetime = Field(..., description="Date of detection")
+    confidence_score: float = Field(..., ge=0, le=1, description="Detection confidence")
+    source: str = Field(..., description="Data source")
+
+
+class ClimateZoneChangeResponse(BaseModel):
+    """Climate zone change detection response."""
+    current_zone: Dict = Field(..., description="Current climate zone information")
+    previous_zone: Optional[Dict] = Field(None, description="Previous climate zone if available")
+    change_detected: bool = Field(..., description="Whether a significant change was detected")
+    change_confidence: float = Field(..., ge=0, le=1, description="Confidence in change detection")
+    change_date: Optional[datetime] = Field(None, description="Estimated date of change")
+    change_direction: str = Field(..., description="Direction of change: warmer, cooler, or stable")
+    zones_affected: List[str] = Field(..., description="List of zones involved in transitions")
+    trend_analysis: Dict = Field(..., description="Detailed trend analysis")
+    time_series_data: List[HistoricalRecord] = Field(..., description="Historical data points")
+    recommendations: List[str] = Field(..., description="Agricultural adaptation recommendations")
+
+
+@router.post("/validate-consistency", response_model=ConsistencyValidationResponse)
+async def validate_climate_zone_consistency(request: ConsistencyValidationRequest):
+    """
+    Validate climate zone consistency across multiple dimensions:
+    - Cross-reference consistency between USDA and Köppen zones
+    - Spatial consistency with neighboring locations  
+    - Temporal consistency over time
+    """
+    try:
+        # Perform comprehensive consistency validation
+        consistency_result = await climate_zone_service.validate_zone_consistency(
+            latitude=request.latitude,
+            longitude=request.longitude,
+            check_neighboring=request.check_neighboring,
+            check_temporal=request.check_temporal
+        )
+        
+        return ConsistencyValidationResponse(
+            overall_consistent=consistency_result["overall_consistent"],
+            confidence=consistency_result["confidence"],
+            checks_performed=consistency_result["checks_performed"],
+            warnings=consistency_result["warnings"],
+            cross_reference_check=consistency_result["cross_reference_check"],
+            spatial_check=consistency_result["spatial_check"],
+            temporal_check=consistency_result["temporal_check"]
+        )
+        
+    except Exception as e:
+        logger.error(f"Error validating climate zone consistency: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Consistency validation failed: {str(e)}")
+
+
 @router.get("/usda-zones")
 async def get_usda_zones():
     """
@@ -576,6 +657,121 @@ async def get_zone_characteristics(
     except Exception as e:
         logger.error(f"Error getting zone characteristics: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get zone characteristics: {str(e)}")
+
+
+@router.post("/detect-changes", response_model=ClimateZoneChangeResponse)
+async def detect_climate_zone_changes(request: ClimateZoneChangeRequest):
+    """
+    Detect climate zone changes over time for a specific location.
+    
+    This endpoint analyzes historical climate zone data to detect transitions
+    (e.g., zone 6a -> 6b) that may indicate climate change impacts.
+    Provides confidence scoring and timing analysis for detected changes.
+    """
+    try:
+        # Perform climate zone change detection
+        change_detection = await climate_zone_service.detect_climate_zone_changes(
+            latitude=request.latitude,
+            longitude=request.longitude,
+            analyze_historical=request.analyze_historical,
+            years_to_analyze=request.years_to_analyze
+        )
+        
+        # Convert historical records to API format
+        historical_records = [
+            HistoricalRecord(
+                zone_id=record.zone_id,
+                detection_date=record.detection_date,
+                confidence_score=record.confidence_score,
+                source=record.source
+            )
+            for record in change_detection.time_series_data
+        ]
+        
+        # Generate agricultural recommendations based on changes
+        recommendations = _generate_adaptation_recommendations(change_detection)
+        
+        # Format current and previous zone information
+        current_zone_info = {
+            "zone_id": change_detection.current_zone.zone_id,
+            "name": change_detection.current_zone.name,
+            "description": change_detection.current_zone.description,
+            "min_temp_f": change_detection.current_zone.min_temp_f,
+            "max_temp_f": change_detection.current_zone.max_temp_f
+        }
+        
+        previous_zone_info = None
+        if change_detection.previous_zone:
+            previous_zone_info = {
+                "zone_id": change_detection.previous_zone.zone_id,
+                "name": change_detection.previous_zone.name,
+                "description": change_detection.previous_zone.description,
+                "min_temp_f": change_detection.previous_zone.min_temp_f,
+                "max_temp_f": change_detection.previous_zone.max_temp_f
+            }
+        
+        return ClimateZoneChangeResponse(
+            current_zone=current_zone_info,
+            previous_zone=previous_zone_info,
+            change_detected=change_detection.change_detected,
+            change_confidence=change_detection.change_confidence,
+            change_date=change_detection.change_date,
+            change_direction=change_detection.change_direction,
+            zones_affected=change_detection.zones_affected,
+            trend_analysis=change_detection.trend_analysis,
+            time_series_data=historical_records,
+            recommendations=recommendations
+        )
+        
+    except Exception as e:
+        logger.error(f"Error detecting climate zone changes: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Change detection failed: {str(e)}")
+
+
+def _generate_adaptation_recommendations(change_detection) -> List[str]:
+    """Generate agricultural adaptation recommendations based on detected changes."""
+    
+    recommendations = []
+    
+    if change_detection.change_detected:
+        if change_detection.change_direction == "warmer":
+            recommendations.extend([
+                "Consider heat-tolerant crop varieties for future plantings",
+                "Implement water conservation strategies due to increased evapotranspiration",
+                "Adjust planting dates to account for longer growing seasons",
+                "Monitor for new pest and disease pressures from warmer climates",
+                "Consider drought-resistant crops if warming continues"
+            ])
+        elif change_detection.change_direction == "cooler":
+            recommendations.extend([
+                "Select shorter-season crop varieties to ensure maturity before frost",
+                "Consider cold-tolerant varieties of existing crops",
+                "Implement season extension techniques (row covers, greenhouses)",
+                "Monitor soil temperature and adjust planting schedules",
+                "Plan for potential shorter growing seasons"
+            ])
+        
+        # High confidence changes need more immediate action
+        if change_detection.change_confidence > 0.8:
+            recommendations.append("High confidence in climate shift - consider major adaptation strategies")
+        else:
+            recommendations.append("Monitor trends closely - prepare contingency plans")
+    
+    else:
+        recommendations.extend([
+            "Climate zone appears stable - continue current practices",
+            "Monitor for gradual changes in temperature and precipitation patterns",
+            "Maintain flexible cropping systems to adapt to future changes"
+        ])
+    
+    # Add zone-specific recommendations
+    current_zone = change_detection.current_zone.zone_id
+    if current_zone.startswith(('6', '7', '8')):
+        recommendations.append("Zone suitable for diverse crop rotation - maximize soil health benefits")
+    elif current_zone.startswith(('3', '4', '5')):
+        recommendations.append("Focus on cold-hardy crops and efficient nutrient management")
+    
+    return recommendations[:6]  # Limit to 6 most relevant recommendations
 
 
 # Health check endpoint

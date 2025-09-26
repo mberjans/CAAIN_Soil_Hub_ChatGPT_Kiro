@@ -13,7 +13,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 try:
-    from ..models.cover_crop_models import (
+    from models.cover_crop_models import (
         CoverCropSpecies,
         MainCropRotationPlan,
         CoverCropRotationIntegration,

@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cover Crop Selection - AFAS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .agricultural-card {
+            border-left: 4px solid #28a745;
+            transition: transform 0.2s;
+        }
+        .agricultural-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .species-card {
+            border: 1px solid #dee2e6;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .species-card.selected {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #e8f5e8, #f8fff8);
+        }
+        .species-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .benefit-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            margin: 2px;
+            border-radius: 15px;
+            font-size: 0.75em;
+            font-weight: 500;
+        }
+        .benefit-nitrogen { background-color: #e3f2fd; color: #1976d2; }
+        .benefit-erosion { background-color: #f3e5f5; color: #7b1fa2; }
+        .benefit-organic { background-color: #e8f5e9; color: #388e3c; }
+        .benefit-weed { background-color: #fff3e0; color: #f57c00; }
+        .benefit-pest { background-color: #fce4ec; color: #c2185b; }
+        .benefit-structure { background-color: #e0f2f1; color: #00796b; }
+        .benefit-scavenging { background-color: #f1f8e9; color: #689f38; }
+        
+        .goal-form {
+            background: linear-gradient(135deg, #e3f2fd, #ffffff);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .recommendation-card {
+            background: white;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+        }
+        .recommendation-card.high-score {
+            border-color: #28a745;
+        }
+        .recommendation-card.medium-score {
+            border-color: #ffc107;
+        }
+        .recommendation-card.low-score {
+            border-color: #dc3545;
+        }
+        .compatibility-score {
+            font-size: 1.5em;
+            font-weight: bold;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .score-high { background-color: #28a745; }
+        .score-medium { background-color: #ffc107; color: #000; }
+        .score-low { background-color: #dc3545; }
+        
+        .timing-timeline {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .timing-event {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .search-filters {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .species-type-badge {
+            font-size: 0.8em;
+            padding: 3px 8px;
+        }
+        .legume { background-color: #e8f5e9; color: #2e7d32; }
+        .grass { background-color: #fff8e1; color: #f57f17; }
+        .brassica { background-color: #f3e5f5; color: #7b1fa2; }
+        .other { background-color: #e3f2fd; color: #1976d2; }
+        
+        .benefit-tracking {
+            background: linear-gradient(135deg, #e8f5e9, #ffffff);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .benefit-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .benefit-metric:last-child {
+            border-bottom: none;
+        }
+        .metric-value {
+            font-weight: bold;
+            color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i> AFAS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/cover-crop-selection">Cover Crop Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/rotation-planning">Rotation Planning</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/goal-prioritization">Goal Prioritization</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="text-center text-white">
+            <div class="spinner-border mb-3" role="status"></div>
+            <p>Processing cover crop recommendations...</p>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-leaf"></i> Cover Crop Selection</h1>
+                <p class="lead">Find optimal cover crops for your field conditions and farming objectives</p>
+            </div>
+        </div>
+        
+        <!-- Search and Filter Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-success text-white">
+                        <h5><i class="fas fa-search"></i> Species Search & Filters</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="search-filters">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Search Species</label>
+                                    <input type="text" class="form-control" id="speciesSearch" placeholder="Enter species name...">
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Type</label>
+                                    <select class="form-control" id="coverCropType">
+                                        <option value="">All Types</option>
+                                        <option value="legume">Legume</option>
+                                        <option value="grass">Grass</option>
+                                        <option value="brassica">Brassica</option>
+                                        <option value="other">Other</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Season</label>
+                                    <select class="form-control" id="growingSeason">
+                                        <option value="">All Seasons</option>
+                                        <option value="spring">Spring</option>
+                                        <option value="summer">Summer</option>
+                                        <option value="fall">Fall</option>
+                                        <option value="winter">Winter</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-3">
+                                    <label class="form-label">Primary Benefit</label>
+                                    <select class="form-control" id="primaryBenefit">
+                                        <option value="">All Benefits</option>
+                                        <option value="nitrogen_fixation">Nitrogen Fixation</option>
+                                        <option value="erosion_control">Erosion Control</option>
+                                        <option value="organic_matter">Organic Matter</option>
+                                        <option value="weed_suppression">Weed Suppression</option>
+                                        <option value="pest_management">Pest Management</option>
+                                        <option value="soil_structure">Soil Structure</option>
+                                        <option value="nutrient_scavenging">Nutrient Scavenging</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-2 mb-3 d-flex align-items-end">
+                                    <button class="btn btn-primary w-100" onclick="searchSpecies()">
+                                        <i class="fas fa-search"></i> Search
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Species Results -->
+                        <div id="speciesResults">
+                            <!-- Species cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Goal-Based Selection Section -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-bullseye"></i> Goal-Based Selection</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="goal-form">
+                            <h6>Define Your Farming Objectives</h6>
+                            <form id="goalsForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Primary Goal Category</label>
+                                        <select class="form-control" id="primaryGoalCategory" required>
+                                            <option value="">Select primary goal...</option>
+                                            <option value="nutrient_management">Nutrient Management</option>
+                                            <option value="soil_health">Soil Health Improvement</option>
+                                            <option value="erosion_control">Erosion Control</option>
+                                            <option value="water_management">Water Management</option>
+                                            <option value="weed_management">Weed Management</option>
+                                            <option value="economic_optimization">Economic Optimization</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Priority Level</label>
+                                        <select class="form-control" id="goalPriority" required>
+                                            <option value="high">High Priority</option>
+                                            <option value="medium" selected>Medium Priority</option>
+                                            <option value="low">Low Priority</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Target Benefit</label>
+                                        <select class="form-control" id="targetBenefit" required>
+                                            <option value="nitrogen_fixation">Nitrogen Fixation</option>
+                                            <option value="erosion_control">Erosion Control</option>
+                                            <option value="organic_matter">Organic Matter Addition</option>
+                                            <option value="weed_suppression">Weed Suppression</option>
+                                            <option value="pest_management">Pest Management</option>
+                                            <option value="soil_structure">Soil Structure Improvement</option>
+                                            <option value="nutrient_scavenging">Nutrient Scavenging</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Budget per Acre ($)</label>
+                                        <input type="number" class="form-control" id="budgetPerAcre" min="0" step="1" placeholder="e.g., 150">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Management Capacity</label>
+                                        <select class="form-control" id="managementCapacity">
+                                            <option value="low">Low - Minimal intervention</option>
+                                            <option value="moderate" selected>Moderate - Standard practices</option>
+                                            <option value="high">High - Intensive management</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Risk Tolerance</label>
+                                        <select class="form-control" id="riskTolerance">
+                                            <option value="low">Low - Conservative approach</option>
+                                            <option value="moderate" selected>Moderate - Balanced risk</option>
+                                            <option value="high">High - Willing to experiment</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Additional Goals (Optional)</label>
+                                    <textarea class="form-control" id="additionalGoals" rows="2" placeholder="Describe any additional objectives or constraints..."></textarea>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Field Conditions -->
+            <div class="col-lg-4">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-info text-white">
+                        <h5><i class="fas fa-map-marker-alt"></i> Field Conditions</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="fieldConditionsForm">
+                            <div class="mb-3">
+                                <label class="form-label">Location</label>
+                                <input type="text" class="form-control" id="fieldLocation" placeholder="City, State or Coordinates" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Field Size (acres)</label>
+                                <input type="number" class="form-control" id="fieldSize" min="0.1" step="0.1" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Soil pH</label>
+                                <input type="number" class="form-control" id="soilPH" min="4.0" max="9.0" step="0.1" placeholder="e.g., 6.5">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Soil Type</label>
+                                <select class="form-control" id="soilType">
+                                    <option value="">Select soil type...</option>
+                                    <option value="clay">Clay</option>
+                                    <option value="loam">Loam</option>
+                                    <option value="sandy">Sandy</option>
+                                    <option value="silty">Silty</option>
+                                    <option value="clayey_loam">Clayey Loam</option>
+                                    <option value="sandy_loam">Sandy Loam</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Drainage Class</label>
+                                <select class="form-control" id="drainageClass">
+                                    <option value="">Select drainage...</option>
+                                    <option value="well_drained">Well Drained</option>
+                                    <option value="moderately_drained">Moderately Drained</option>
+                                    <option value="poorly_drained">Poorly Drained</option>
+                                    <option value="somewhat_poorly_drained">Somewhat Poorly Drained</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Planting Window Start</label>
+                                <input type="date" class="form-control" id="plantingStart" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Planting Window End</label>
+                                <input type="date" class="form-control" id="plantingEnd">
+                            </div>
+                        </form>
+                        
+                        <button class="btn btn-success w-100 mt-3" onclick="getRecommendations()">
+                            <i class="fas fa-magic"></i> Get Recommendations
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Recommendations Section -->
+        <div class="row" id="recommendationsSection" style="display: none;">
+            <div class="col-12">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-warning text-white d-flex justify-content-between align-items-center">
+                        <h5><i class="fas fa-star"></i> Cover Crop Recommendations</h5>
+                        <div>
+                            <button class="btn btn-light btn-sm" onclick="compareOptions()">
+                                <i class="fas fa-balance-scale"></i> Compare
+                            </button>
+                            <button class="btn btn-light btn-sm" onclick="getTimingRecommendations()">
+                                <i class="fas fa-calendar"></i> Timing
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="recommendationsList">
+                            <!-- Recommendation cards will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Timing Recommendations Section -->
+        <div class="row" id="timingSection" style="display: none;">
+            <div class="col-12">
+                <div class="card agricultural-card">
+                    <div class="card-header bg-secondary text-white">
+                        <h5><i class="fas fa-calendar-alt"></i> Planting & Management Timeline</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timing-timeline" id="timingTimeline">
+                            <!-- Timing recommendations will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Benefit Tracking Section -->
+        <div class="row" id="benefitTrackingSection" style="display: none;">
+            <div class="col-md-6">
+                <div class="benefit-tracking">
+                    <h5><i class="fas fa-chart-line"></i> Expected Benefits</h5>
+                    <div id="benefitPredictions">
+                        <!-- Benefit predictions will be populated here -->
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="benefit-tracking">
+                    <h5><i class="fas fa-dollar-sign"></i> Economic Analysis</h5>
+                    <div id="economicAnalysis">
+                        <!-- Economic analysis will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentSpecies = [];
+        let currentRecommendations = [];
+        let selectedGoals = {};
+        let fieldConditions = {};
+        
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadInitialData();
+            setupEventListeners();
+            setDefaultDates();
+        });
+        
+        function setupEventListeners() {
+            // Search input with debounce
+            let searchTimeout;
+            document.getElementById('speciesSearch').addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(searchSpecies, 300);
+            });
+            
+            // Filter change listeners
+            ['coverCropType', 'growingSeason', 'primaryBenefit'].forEach(id => {
+                document.getElementById(id).addEventListener('change', searchSpecies);
+            });
+        }
+        
+        function setDefaultDates() {
+            const today = new Date();
+            const nextMonth = new Date(today);
+            nextMonth.setMonth(today.getMonth() + 1);
+            
+            document.getElementById('plantingStart').value = today.toISOString().split('T')[0];
+            document.getElementById('plantingEnd').value = nextMonth.toISOString().split('T')[0];
+        }
+        
+        async function loadInitialData() {
+            try {
+                showLoading(true);
+                await searchSpecies(); // Load all species initially
+            } catch (error) {
+                console.error('Error loading initial data:', error);
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        async function searchSpecies() {
+            try {
+                const params = new URLSearchParams();
+                
+                const speciesName = document.getElementById('speciesSearch').value.trim();
+                const coverCropType = document.getElementById('coverCropType').value;
+                const growingSeason = document.getElementById('growingSeason').value;
+                const primaryBenefit = document.getElementById('primaryBenefit').value;
+                
+                if (speciesName) params.append('species_name', speciesName);
+                if (coverCropType) params.append('cover_crop_type', coverCropType);
+                if (growingSeason) params.append('growing_season', growingSeason);
+                if (primaryBenefit) params.append('primary_benefit', primaryBenefit);
+                
+                const response = await fetch(`/api/cover-crops/species?${params.toString()}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                currentSpecies = data.species || [];
+                displaySpecies(currentSpecies);
+                
+            } catch (error) {
+                console.error('Error searching species:', error);
+                document.getElementById('speciesResults').innerHTML = `
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Error loading species data. Please try again.
+                    </div>
+                `;
+            }
+        }
+        
+        function displaySpecies(species) {
+            const container = document.getElementById('speciesResults');
+            
+            if (species.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-leaf fa-3x mb-3"></i>
+                        <p>No cover crop species found matching your criteria.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            species.forEach(spec => {
+                const speciesCard = document.createElement('div');
+                speciesCard.className = 'species-card';
+                speciesCard.onclick = () => selectSpecies(spec);
+                
+                const benefits = spec.soil_benefits || [];
+                const benefitBadges = benefits.map(benefit => {
+                    const className = `benefit-${benefit.replace('_', '')}`;
+                    return `<span class="benefit-badge ${className}">${formatBenefit(benefit)}</span>`;
+                }).join('');
+                
+                speciesCard.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center mb-2">
+                                <h6 class="mb-0 me-2">${spec.common_name}</h6>
+                                <span class="badge species-type-badge ${spec.cover_crop_type || 'other'}">${formatType(spec.cover_crop_type)}</span>
+                            </div>
+                            <p class="text-muted small mb-2">
+                                <em>${spec.scientific_name || 'Scientific name not available'}</em>
+                            </p>
+                            <div class="mb-2">
+                                ${benefitBadges}
+                            </div>
+                            <div class="small text-muted">
+                                <i class="fas fa-thermometer-half"></i> ${spec.hardiness_zones || 'Various zones'} |
+                                <i class="fas fa-calendar"></i> ${formatSeason(spec.growing_season)} |
+                                <i class="fas fa-tint"></i> ${spec.water_requirements || 'Moderate'} water
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <small class="text-muted">${spec.species_id || 'ID: N/A'}</small>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(speciesCard);
+            });
+        }
+        
+        function selectSpecies(species) {
+            // Update UI to show selected species
+            document.querySelectorAll('.species-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.currentTarget.classList.add('selected');
+            
+            // Auto-fill some form fields based on species
+            const season = species.growing_season;
+            if (season) {
+                document.getElementById('growingSeason').value = season;
+            }
+            
+            const primaryBenefit = species.soil_benefits ? species.soil_benefits[0] : '';
+            if (primaryBenefit) {
+                document.getElementById('primaryBenefit').value = primaryBenefit;
+                document.getElementById('targetBenefit').value = primaryBenefit;
+            }
+        }
+        
+        async function getRecommendations() {
+            try {
+                showLoading(true);
+                
+                // Collect form data
+                const fieldData = collectFieldData();
+                const goalData = collectGoalData();
+                
+                if (!validateFormData(fieldData, goalData)) {
+                    return;
+                }
+                
+                // Build request payload
+                const requestPayload = {
+                    request_id: `cover_crop_${Date.now()}`,
+                    location: {
+                        latitude: fieldData.latitude || 40.0, // Default coordinates
+                        longitude: fieldData.longitude || -95.0,
+                        address: fieldData.location
+                    },
+                    field_size_acres: fieldData.size,
+                    soil_conditions: {
+                        ph: fieldData.ph,
+                        type: fieldData.soilType,
+                        drainage_class: fieldData.drainageClass,
+                        organic_matter_percent: 3.0 // Default
+                    },
+                    planting_window: {
+                        start: fieldData.plantingStart,
+                        end: fieldData.plantingEnd
+                    },
+                    objectives: {
+                        farmer_goals: [{
+                            goal_id: "primary_goal_1",
+                            category: goalData.primaryCategory,
+                            priority: goalData.priority,
+                            priority_weight: getPriorityWeight(goalData.priority),
+                            target_benefit: goalData.targetBenefit,
+                            quantitative_target: goalData.budgetPerAcre
+                        }],
+                        overall_strategy: "balanced",
+                        total_budget_per_acre: goalData.budgetPerAcre,
+                        management_capacity: goalData.managementCapacity,
+                        risk_tolerance: goalData.riskTolerance
+                    }
+                };
+                
+                // Call goal-based recommendations API
+                const response = await fetch('/api/cover-crops/goal-based-recommendations', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestPayload)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const recommendations = await response.json();
+                currentRecommendations = recommendations;
+                
+                displayRecommendations(recommendations);
+                document.getElementById('recommendationsSection').style.display = 'block';
+                
+                // Also get benefit predictions
+                await getBenefitPredictions(requestPayload);
+                
+            } catch (error) {
+                console.error('Error getting recommendations:', error);
+                alert('Error getting recommendations. Please check your input and try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function collectFieldData() {
+            const location = document.getElementById('fieldLocation').value.trim();
+            return {
+                location: location,
+                latitude: null, // Would normally geocode this
+                longitude: null,
+                size: parseFloat(document.getElementById('fieldSize').value),
+                ph: parseFloat(document.getElementById('soilPH').value) || 6.5,
+                soilType: document.getElementById('soilType').value,
+                drainageClass: document.getElementById('drainageClass').value,
+                plantingStart: document.getElementById('plantingStart').value,
+                plantingEnd: document.getElementById('plantingEnd').value
+            };
+        }
+        
+        function collectGoalData() {
+            return {
+                primaryCategory: document.getElementById('primaryGoalCategory').value,
+                priority: document.getElementById('goalPriority').value,
+                targetBenefit: document.getElementById('targetBenefit').value,
+                budgetPerAcre: parseFloat(document.getElementById('budgetPerAcre').value) || 100,
+                managementCapacity: document.getElementById('managementCapacity').value,
+                riskTolerance: document.getElementById('riskTolerance').value,
+                additionalGoals: document.getElementById('additionalGoals').value.trim()
+            };
+        }
+        
+        function validateFormData(fieldData, goalData) {
+            if (!fieldData.location) {
+                alert('Please enter a location for the field.');
+                return false;
+            }
+            
+            if (!fieldData.size || fieldData.size <= 0) {
+                alert('Please enter a valid field size.');
+                return false;
+            }
+            
+            if (!goalData.primaryCategory) {
+                alert('Please select a primary goal category.');
+                return false;
+            }
+            
+            if (!fieldData.plantingStart) {
+                alert('Please select a planting start date.');
+                return false;
+            }
+            
+            return true;
+        }
+        
+        function getPriorityWeight(priority) {
+            switch (priority) {
+                case 'high': return 0.8;
+                case 'medium': return 0.5;
+                case 'low': return 0.2;
+                default: return 0.5;
+            }
+        }
+        
+        function displayRecommendations(recommendations) {
+            const container = document.getElementById('recommendationsList');
+            
+            if (!recommendations.recommended_species || recommendations.recommended_species.length === 0) {
+                container.innerHTML = `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        No specific recommendations generated. Try adjusting your criteria.
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            recommendations.recommended_species.forEach((rec, index) => {
+                const scoreClass = getScoreClass(rec.compatibility_score);
+                const card = document.createElement('div');
+                card.className = `recommendation-card ${scoreClass}`;
+                
+                const benefits = rec.species?.soil_benefits || [];
+                const benefitBadges = benefits.map(benefit => {
+                    const className = `benefit-${benefit.replace('_', '')}`;
+                    return `<span class="benefit-badge ${className}">${formatBenefit(benefit)}</span>`;
+                }).join('');
+                
+                card.innerHTML = `
+                    <div class="card-body">
+                        <div class="d-flex align-items-start">
+                            <div class="compatibility-score ${getScoreColorClass(rec.compatibility_score)} me-3">
+                                ${Math.round(rec.compatibility_score)}
+                            </div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h5 class="mb-1">${rec.species?.common_name || 'Unknown Species'}</h5>
+                                        <p class="text-muted small mb-1">
+                                            <em>${rec.species?.scientific_name || ''}</em>
+                                        </p>
+                                    </div>
+                                    <span class="badge species-type-badge ${rec.species?.cover_crop_type || 'other'}">
+                                        ${formatType(rec.species?.cover_crop_type)}
+                                    </span>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    ${benefitBadges}
+                                </div>
+                                
+                                <div class="row small">
+                                    <div class="col-md-6">
+                                        <strong>Planting Rate:</strong> ${rec.planting_rate || 'Standard'}<br>
+                                        <strong>Seeding Depth:</strong> ${rec.seeding_depth || 'Standard'}<br>
+                                        <strong>Cost per Acre:</strong> $${rec.estimated_cost_per_acre || '50-100'}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Growth Habit:</strong> ${rec.species?.growth_habit || 'Various'}<br>
+                                        <strong>Maturity:</strong> ${rec.species?.maturity_days || 'Variable'} days<br>
+                                        <strong>Winter Hardy:</strong> ${rec.species?.winter_hardy ? 'Yes' : 'No'}
+                                    </div>
+                                </div>
+                                
+                                ${rec.implementation_notes ? 
+                                    `<div class="mt-3 p-2 bg-light rounded">
+                                        <small><strong>Implementation Notes:</strong> ${rec.implementation_notes}</small>
+                                    </div>` : ''
+                                }
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                container.appendChild(card);
+            });
+        }
+        
+        async function getBenefitPredictions(requestPayload) {
+            try {
+                const response = await fetch('/api/cover-crops/benefits/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestPayload)
+                });
+                
+                if (response.ok) {
+                    const predictions = await response.json();
+                    displayBenefitPredictions(predictions);
+                    document.getElementById('benefitTrackingSection').style.display = 'block';
+                }
+            } catch (error) {
+                console.error('Error getting benefit predictions:', error);
+            }
+        }
+        
+        function displayBenefitPredictions(predictions) {
+            const benefitContainer = document.getElementById('benefitPredictions');
+            const economicContainer = document.getElementById('economicAnalysis');
+            
+            // Display benefit predictions
+            if (predictions.predicted_benefits) {
+                let benefitHTML = '';
+                Object.entries(predictions.predicted_benefits).forEach(([benefit, value]) => {
+                    benefitHTML += `
+                        <div class="benefit-metric">
+                            <span>${formatBenefit(benefit)}</span>
+                            <span class="metric-value">${formatBenefitValue(benefit, value)}</span>
+                        </div>
+                    `;
+                });
+                benefitContainer.innerHTML = benefitHTML;
+            }
+            
+            // Display economic analysis
+            const economic = predictions.economic_analysis || {};
+            economicContainer.innerHTML = `
+                <div class="benefit-metric">
+                    <span>Implementation Cost</span>
+                    <span class="metric-value">$${economic.total_cost || '75'}/acre</span>
+                </div>
+                <div class="benefit-metric">
+                    <span>Expected Savings</span>
+                    <span class="metric-value">$${economic.expected_savings || '125'}/acre</span>
+                </div>
+                <div class="benefit-metric">
+                    <span>Net Benefit</span>
+                    <span class="metric-value">$${economic.net_benefit || '50'}/acre</span>
+                </div>
+                <div class="benefit-metric">
+                    <span>ROI</span>
+                    <span class="metric-value">${economic.roi || '67'}%</span>
+                </div>
+            `;
+        }
+        
+        async function getTimingRecommendations() {
+            try {
+                showLoading(true);
+                
+                const fieldData = collectFieldData();
+                const requestPayload = {
+                    location: {
+                        latitude: 40.0,
+                        longitude: -95.0,
+                        address: fieldData.location
+                    },
+                    planting_window: {
+                        start: fieldData.plantingStart,
+                        end: fieldData.plantingEnd
+                    },
+                    cover_crop_species: currentRecommendations.recommended_species?.[0]?.species?.common_name || "Mixed Cover Crops",
+                    field_conditions: {
+                        soil_type: fieldData.soilType,
+                        drainage_class: fieldData.drainageClass
+                    }
+                };
+                
+                const response = await fetch('/api/cover-crops/timing', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestPayload)
+                });
+                
+                if (response.ok) {
+                    const timing = await response.json();
+                    displayTimingRecommendations(timing);
+                    document.getElementById('timingSection').style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('Error getting timing recommendations:', error);
+                alert('Error getting timing recommendations. Please try again.');
+            } finally {
+                showLoading(false);
+            }
+        }
+        
+        function displayTimingRecommendations(timing) {
+            const container = document.getElementById('timingTimeline');
+            
+            const events = [
+                { date: timing.optimal_planting_date || 'TBD', event: 'Optimal Planting Date', icon: 'fa-seedling', color: '#28a745' },
+                { date: timing.latest_planting_date || 'TBD', event: 'Latest Planting Date', icon: 'fa-calendar-times', color: '#ffc107' },
+                { date: timing.termination_window?.start || 'TBD', event: 'Termination Window Start', icon: 'fa-stop-circle', color: '#dc3545' },
+                { date: timing.termination_window?.end || 'TBD', event: 'Termination Window End', icon: 'fa-stop-circle', color: '#dc3545' }
+            ];
+            
+            container.innerHTML = events.map(event => `
+                <div class="timing-event" style="border-left-color: ${event.color}">
+                    <div class="d-flex align-items-center">
+                        <i class="fas ${event.icon} me-3" style="color: ${event.color}"></i>
+                        <div class="flex-grow-1">
+                            <strong>${event.event}</strong>
+                            <div class="text-muted small">${event.date}</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            if (timing.management_recommendations) {
+                container.innerHTML += `
+                    <div class="mt-3 p-3 bg-light rounded">
+                        <h6><i class="fas fa-lightbulb"></i> Management Recommendations</h6>
+                        <ul class="small mb-0">
+                            ${timing.management_recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+        }
+        
+        function compareOptions() {
+            if (!currentRecommendations.recommended_species || currentRecommendations.recommended_species.length < 2) {
+                alert('Need at least 2 recommendations to compare. Try adjusting your criteria to get more options.');
+                return;
+            }
+            
+            // Create comparison modal or section
+            alert('Comparison feature would show detailed side-by-side analysis of recommended cover crop options including costs, benefits, and compatibility scores.');
+        }
+        
+        // Utility functions
+        function formatType(type) {
+            if (!type) return 'Other';
+            return type.charAt(0).toUpperCase() + type.slice(1);
+        }
+        
+        function formatSeason(season) {
+            if (!season) return 'Variable';
+            return season.charAt(0).toUpperCase() + season.slice(1);
+        }
+        
+        function formatBenefit(benefit) {
+            if (!benefit) return '';
+            return benefit.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+        
+        function formatBenefitValue(benefit, value) {
+            switch (benefit) {
+                case 'nitrogen_fixation':
+                    return `${value} lbs N/acre`;
+                case 'organic_matter':
+                    return `+${value}%`;
+                case 'erosion_control':
+                    return `${value}% reduction`;
+                case 'weed_suppression':
+                    return `${value}% control`;
+                default:
+                    return value.toString();
+            }
+        }
+        
+        function getScoreClass(score) {
+            if (score >= 80) return 'high-score';
+            if (score >= 60) return 'medium-score';
+            return 'low-score';
+        }
+        
+        function getScoreColorClass(score) {
+            if (score >= 80) return 'score-high';
+            if (score >= 60) return 'score-medium';
+            return 'score-low';
+        }
+        
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.display = show ? 'flex' : 'none';
+        }
+    </script>
+</body>
+</html>

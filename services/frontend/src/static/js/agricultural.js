@@ -309,10 +309,259 @@ const agCalculator = new AgriculturalCalculator();
 const agUtils = new AgriculturalUtils();
 const agValidator = new AgriculturalFormValidator();
 
+// pH-Specific Calculation Functions
+class PHCalculations {
+    static calculateLimeRequirement(currentPh, targetPh, soilTexture, organicMatter, fieldSize) {
+        // Buffer pH estimation if not provided
+        const bufferPh = this.estimateBufferPh(currentPh, soilTexture, organicMatter);
+        
+        // Calculate ENR (Effective Neutralizing Requirement)
+        const phDifference = targetPh - currentPh;
+        let baseRate = 0;
+        
+        // Base lime rate calculation using buffer pH method
+        if (bufferPh <= 6.0) {
+            baseRate = 3.0; // tons per acre
+        } else if (bufferPh <= 6.5) {
+            baseRate = 2.0;
+        } else if (bufferPh <= 7.0) {
+            baseRate = 1.0;
+        } else {
+            baseRate = 0.5;
+        }
+        
+        // Adjust for soil texture
+        const textureMultiplier = this.getTextureMultiplier(soilTexture);
+        baseRate *= textureMultiplier;
+        
+        // Adjust for organic matter
+        const omMultiplier = this.getOrganicMatterMultiplier(organicMatter);
+        baseRate *= omMultiplier;
+        
+        // Adjust for pH difference
+        baseRate *= Math.max(phDifference / 1.0, 0.5);
+        
+        const totalTons = baseRate * fieldSize;
+        
+        return {
+            ratePerAcre: Math.round(baseRate * 10) / 10,
+            totalTons: Math.round(totalTons * 10) / 10,
+            bufferPh: bufferPh
+        };
+    }
+
+    static estimateBufferPh(currentPh, soilTexture, organicMatter) {
+        // Simplified buffer pH estimation
+        let bufferPh = currentPh - 0.5;
+        
+        // Adjust based on soil texture (clay holds more buffer)
+        if (['clay', 'clay_loam'].includes(soilTexture)) {
+            bufferPh -= 0.2;
+        } else if (['sand', 'loamy_sand'].includes(soilTexture)) {
+            bufferPh += 0.2;
+        }
+        
+        // Adjust based on organic matter
+        if (organicMatter > 4.0) {
+            bufferPh -= 0.3;
+        } else if (organicMatter < 2.0) {
+            bufferPh += 0.2;
+        }
+        
+        return Math.max(Math.min(bufferPh, 7.5), 4.0);
+    }
+
+    static getTextureMultiplier(soilTexture) {
+        const multipliers = {
+            'sand': 0.8,
+            'loamy_sand': 0.9,
+            'sandy_loam': 1.0,
+            'loam': 1.1,
+            'silt_loam': 1.2,
+            'clay_loam': 1.3,
+            'clay': 1.4
+        };
+        return multipliers[soilTexture] || 1.0;
+    }
+
+    static getOrganicMatterMultiplier(organicMatter) {
+        if (organicMatter > 5.0) return 1.3;
+        if (organicMatter > 3.0) return 1.1;
+        if (organicMatter > 2.0) return 1.0;
+        return 0.9;
+    }
+
+    static classifyPhStatus(phValue, cropType = null) {
+        const optimal = this.getCropOptimalPh(cropType);
+        
+        if (phValue >= optimal.min && phValue <= optimal.max) {
+            return { status: 'optimal', description: 'Optimal pH range for crop production' };
+        } else if (phValue < 4.5) {
+            return { status: 'critical', description: 'Extremely acidic - immediate lime application needed' };
+        } else if (phValue < 5.5) {
+            return { status: 'acidic', description: 'Acidic soil - lime application recommended' };
+        } else if (phValue > 8.5) {
+            return { status: 'critical', description: 'Very alkaline - may require soil amendment' };
+        } else if (phValue > 7.5) {
+            return { status: 'alkaline', description: 'Alkaline soil - monitor nutrient availability' };
+        } else {
+            return { status: 'good', description: 'Acceptable pH range' };
+        }
+    }
+
+    static getCropOptimalPh(cropType) {
+        const cropRanges = {
+            'corn': { min: 6.0, max: 7.0 },
+            'soybean': { min: 6.0, max: 7.0 },
+            'wheat': { min: 6.0, max: 7.5 },
+            'alfalfa': { min: 6.8, max: 7.5 },
+            'canola': { min: 6.0, max: 7.0 },
+            'barley': { min: 6.5, max: 7.5 },
+            'oats': { min: 6.0, max: 7.0 },
+            'peas': { min: 6.0, max: 7.5 },
+            'potatoes': { min: 5.8, max: 6.5 },
+            'blueberries': { min: 4.5, max: 5.5 }
+        };
+        
+        return cropRanges[cropType] || { min: 6.0, max: 7.0 };
+    }
+
+    static calculateNutrientAvailability(phValue) {
+        const nutrients = {
+            nitrogen: this.getNutrientAvailability(phValue, [6.0, 8.0]),
+            phosphorus: this.getNutrientAvailability(phValue, [6.5, 7.5]),
+            potassium: this.getNutrientAvailability(phValue, [6.0, 8.5]),
+            calcium: this.getNutrientAvailability(phValue, [6.5, 8.5]),
+            magnesium: this.getNutrientAvailability(phValue, [6.0, 8.5]),
+            sulfur: this.getNutrientAvailability(phValue, [6.0, 8.0]),
+            iron: this.getNutrientAvailability(phValue, [4.0, 6.5]),
+            manganese: this.getNutrientAvailability(phValue, [5.0, 6.5]),
+            zinc: this.getNutrientAvailability(phValue, [5.0, 7.0]),
+            copper: this.getNutrientAvailability(phValue, [5.0, 7.0]),
+            boron: this.getNutrientAvailability(phValue, [5.0, 7.5]),
+            molybdenum: this.getNutrientAvailability(phValue, [6.5, 8.5])
+        };
+        
+        return nutrients;
+    }
+
+    static getNutrientAvailability(phValue, optimalRange) {
+        const [min, max] = optimalRange;
+        
+        if (phValue >= min && phValue <= max) {
+            return { level: 'high', percentage: 90, description: 'Optimal availability' };
+        } else if (phValue >= min - 0.5 && phValue <= max + 0.5) {
+            return { level: 'medium', percentage: 70, description: 'Good availability' };
+        } else if (phValue >= min - 1.0 && phValue <= max + 1.0) {
+            return { level: 'low', percentage: 50, description: 'Reduced availability' };
+        } else {
+            return { level: 'very_low', percentage: 30, description: 'Poor availability' };
+        }
+    }
+
+    static generatePhRecommendations(phValue, cropType, soilTexture, organicMatter) {
+        const recommendations = [];
+        const status = this.classifyPhStatus(phValue, cropType);
+        const optimal = this.getCropOptimalPh(cropType);
+        
+        if (status.status === 'critical' && phValue < 5.0) {
+            recommendations.push('Immediate lime application required - soil is extremely acidic');
+            recommendations.push('Consider split lime application over 2 seasons');
+            recommendations.push('Retest soil in 6 months after lime application');
+        } else if (status.status === 'acidic') {
+            const limeReq = this.calculateLimeRequirement(phValue, optimal.min, soilTexture, organicMatter, 1);
+            recommendations.push(`Apply ${limeReq.ratePerAcre} tons of agricultural lime per acre`);
+            recommendations.push('Incorporate lime within 2 weeks of application');
+        } else if (status.status === 'alkaline') {
+            recommendations.push('Monitor iron and zinc availability in crops');
+            recommendations.push('Consider sulfur application to lower pH gradually');
+            recommendations.push('Use acidifying fertilizers (ammonium sulfate)');
+        } else if (status.status === 'critical' && phValue > 8.5) {
+            recommendations.push('Severe alkalinity - consult soil specialist');
+            recommendations.push('Consider gypsum application for calcium without raising pH');
+            recommendations.push('Use chelated micronutrients for deficiency prevention');
+        } else if (status.status === 'optimal') {
+            recommendations.push('pH is in optimal range - maintain current practices');
+            recommendations.push('Continue regular soil testing every 2-3 years');
+        }
+        
+        // Additional organic matter recommendations
+        if (organicMatter < 3.0) {
+            recommendations.push('Increase organic matter with cover crops or compost');
+        }
+        
+        return recommendations;
+    }
+}
+
+// pH-Specific Validation Functions
+class PHValidation {
+    static validatePhInput(phValue) {
+        const ph = parseFloat(phValue);
+        
+        if (isNaN(ph)) {
+            return { valid: false, message: 'pH must be a valid number' };
+        }
+        
+        if (ph < 3.0 || ph > 12.0) {
+            return { valid: false, message: 'pH must be between 3.0 and 12.0' };
+        }
+        
+        if (ph < 4.0) {
+            return { valid: true, warning: 'Extremely low pH - verify measurement' };
+        }
+        
+        if (ph > 9.0) {
+            return { valid: true, warning: 'Very high pH - verify measurement' };
+        }
+        
+        return { valid: true };
+    }
+
+    static validateLimeCalculationInputs(data) {
+        const errors = [];
+        
+        // Validate current pH
+        const phValidation = this.validatePhInput(data.currentPh);
+        if (!phValidation.valid) {
+            errors.push('Current pH: ' + phValidation.message);
+        }
+        
+        // Validate target pH
+        const targetPhValidation = this.validatePhInput(data.targetPh);
+        if (!targetPhValidation.valid) {
+            errors.push('Target pH: ' + targetPhValidation.message);
+        }
+        
+        // Check if target pH is higher than current
+        if (data.targetPh <= data.currentPh) {
+            errors.push('Target pH must be higher than current pH');
+        }
+        
+        // Validate field size
+        if (!data.fieldSize || data.fieldSize <= 0) {
+            errors.push('Field size must be greater than 0');
+        }
+        
+        // Validate organic matter
+        if (data.organicMatter < 0 || data.organicMatter > 15) {
+            errors.push('Organic matter must be between 0% and 15%');
+        }
+        
+        return { valid: errors.length === 0, errors };
+    }
+}
+
+// Add pH calculations to existing utils
+AgriculturalUtils.PHCalculations = PHCalculations;
+AgriculturalUtils.PHValidation = PHValidation;
+
 // Export for use in other scripts
 window.AgriculturalCalculator = AgriculturalCalculator;
 window.AgriculturalUtils = AgriculturalUtils;
 window.AgriculturalFormValidator = AgriculturalFormValidator;
+window.PHCalculations = PHCalculations;
+window.PHValidation = PHValidation;
 window.agCalculator = agCalculator;
 window.agUtils = agUtils;
 window.agValidator = agValidator;

@@ -12,6 +12,7 @@ import aiohttp
 from datetime import datetime, timedelta
 import json
 import math
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,33 @@ class ClimateDetectionResult:
     elevation_ft: Optional[float] = None
 
 
+@dataclass
+class ClimateZoneHistoricalRecord:
+    """Historical climate zone record for change tracking."""
+    zone_id: str
+    zone_type: ClimateZoneType
+    detection_date: datetime
+    confidence_score: float
+    coordinates: Tuple[float, float]
+    elevation_ft: Optional[float] = None
+    temperature_data: Optional[Dict] = None
+    source: str = "automated_detection"
+
+
+@dataclass
+class ClimateZoneChangeDetection:
+    """Result of climate zone change analysis."""
+    current_zone: ClimateZone
+    previous_zone: Optional[ClimateZone]
+    change_detected: bool
+    change_confidence: float
+    change_date: Optional[datetime]
+    change_direction: str  # "warmer", "cooler", "stable"
+    zones_affected: List[str]
+    trend_analysis: Dict
+    time_series_data: List[ClimateZoneHistoricalRecord]
+
+
 class ClimateZoneService:
     """Service for climate zone detection and management."""
     
@@ -58,6 +86,8 @@ class ClimateZoneService:
         self.agricultural_zones = self._initialize_agricultural_zones()
         self._cache = {}
         self._cache_ttl = timedelta(hours=24)
+        self._historical_data = {}  # In-memory storage for demo (production would use database)
+        self._change_detection_threshold = 0.7  # Confidence threshold for change detection
     
     def _initialize_usda_zones(self) -> Dict[str, ClimateZone]:
         """Initialize USDA Hardiness Zone data."""
@@ -623,6 +653,650 @@ class ClimateZoneService:
         else:
             return (f"Specified zone {specified_zone.zone_id} differs from detected zone "
                    f"{detected_zone.zone_id}. Consider using the detected zone for better accuracy.")
+
+    async def detect_climate_zone_changes(
+        self, 
+        latitude: float, 
+        longitude: float,
+        analyze_historical: bool = True,
+        years_to_analyze: int = 10
+    ) -> ClimateZoneChangeDetection:
+        """
+        Detect climate zone changes over time for a specific location.
+        
+        Args:
+            latitude: Latitude coordinate
+            longitude: Longitude coordinate
+            analyze_historical: Whether to analyze historical data
+            years_to_analyze: Number of years to look back
+            
+        Returns:
+            ClimateZoneChangeDetection with change analysis
+        """
+        # Validate coordinates first, before try block
+        if not (-90 <= latitude <= 90):
+            raise ValueError(f"Invalid latitude: {latitude}. Must be between -90 and 90 degrees.")
+        if not (-180 <= longitude <= 180):
+            raise ValueError(f"Invalid longitude: {longitude}. Must be between -180 and 180 degrees.")
+        if not (1 <= years_to_analyze <= 50):
+            raise ValueError(f"Invalid years_to_analyze: {years_to_analyze}. Must be between 1 and 50 years.")
+        
+        try:
+            # Get current climate zone
+            current_detection = await self.detect_climate_zone(latitude, longitude)
+            current_zone = current_detection.primary_zone
+            
+            # Get historical data for this location
+            location_key = f"{latitude:.4f},{longitude:.4f}"
+            historical_records = self._get_historical_records(
+                location_key, 
+                years_to_analyze
+            )
+            
+            # Add current detection to historical records if not duplicate
+            await self._store_historical_record(
+                location_key,
+                ClimateZoneHistoricalRecord(
+                    zone_id=current_zone.zone_id,
+                    zone_type=current_zone.zone_type,
+                    detection_date=datetime.now(),
+                    confidence_score=current_detection.confidence_score,
+                    coordinates=(latitude, longitude),
+                    elevation_ft=current_detection.elevation_ft,
+                    source="current_detection"
+                )
+            )
+            
+            # Analyze changes if we have historical data
+            if len(historical_records) >= 2:
+                change_analysis = await self._analyze_zone_changes(
+                    current_zone, 
+                    historical_records
+                )
+            else:
+                # No sufficient historical data - generate synthetic for demo
+                change_analysis = self._generate_demo_change_analysis(
+                    current_zone, 
+                    latitude, 
+                    longitude
+                )
+            
+            return change_analysis
+            
+        except Exception as e:
+            logger.error(f"Error detecting climate zone changes: {str(e)}")
+            # Return minimal change detection result with fallback zone
+            fallback_zone = self.usda_zones.get("6a")  # Use default zone as fallback
+            return ClimateZoneChangeDetection(
+                current_zone=fallback_zone,
+                previous_zone=None,
+                change_detected=False,
+                change_confidence=0.0,
+                change_date=None,
+                change_direction="unknown",
+                zones_affected=[],
+                trend_analysis={},
+                time_series_data=[]
+            )
+    
+    async def _analyze_zone_changes(
+        self, 
+        current_zone: ClimateZone, 
+        historical_records: List[ClimateZoneHistoricalRecord]
+    ) -> ClimateZoneChangeDetection:
+        """Analyze climate zone changes from historical records."""
+        
+        # Sort records by date
+        sorted_records = sorted(historical_records, key=lambda x: x.detection_date)
+        
+        # Check for zone transitions
+        zone_transitions = []
+        previous_zone_id = None
+        
+        for record in sorted_records:
+            if previous_zone_id and record.zone_id != previous_zone_id:
+                zone_transitions.append({
+                    'from_zone': previous_zone_id,
+                    'to_zone': record.zone_id,
+                    'date': record.detection_date,
+                    'confidence': record.confidence_score
+                })
+            previous_zone_id = record.zone_id
+        
+        # Calculate trend analysis
+        trend_analysis = await self._calculate_zone_trend(sorted_records)
+        
+        # Determine if significant change occurred
+        change_detected = len(zone_transitions) > 0
+        change_confidence = 0.0
+        change_date = None
+        change_direction = "stable"
+        
+        if zone_transitions:
+            latest_transition = zone_transitions[-1]
+            change_confidence = self._calculate_change_confidence(
+                latest_transition, 
+                trend_analysis
+            )
+            change_date = latest_transition['date']
+            change_direction = self._determine_change_direction(
+                latest_transition['from_zone'], 
+                latest_transition['to_zone']
+            )
+        
+        # Get previous zone if available
+        previous_zone = None
+        if len(sorted_records) >= 2:
+            prev_zone_id = sorted_records[-2].zone_id
+            previous_zone = self.usda_zones.get(prev_zone_id)
+        
+        return ClimateZoneChangeDetection(
+            current_zone=current_zone,
+            previous_zone=previous_zone,
+            change_detected=change_detected and change_confidence >= self._change_detection_threshold,
+            change_confidence=change_confidence,
+            change_date=change_date,
+            change_direction=change_direction,
+            zones_affected=[t['from_zone'] for t in zone_transitions] + [t['to_zone'] for t in zone_transitions],
+            trend_analysis=trend_analysis,
+            time_series_data=sorted_records
+        )
+    
+    def _generate_demo_change_analysis(
+        self, 
+        current_zone: ClimateZone, 
+        latitude: float, 
+        longitude: float
+    ) -> ClimateZoneChangeDetection:
+        """Generate demonstration change analysis when no historical data exists."""
+        
+        # Generate synthetic historical data for demo purposes
+        base_date = datetime.now() - timedelta(days=365 * 5)  # 5 years back
+        demo_records = []
+        
+        current_zone_num = int(current_zone.zone_id[0])
+        
+        # Simulate gradual warming trend for certain latitudes
+        if 35 < latitude < 55:  # Mid-latitude regions more prone to change
+            # Simulate transition from cooler to warmer zone
+            previous_zone_id = f"{max(1, current_zone_num - 1)}{current_zone.zone_id[1]}"
+            
+            # Create historical records showing transition
+            for i in range(4):
+                date = base_date + timedelta(days=365 * i)
+                zone_id = previous_zone_id if i < 2 else current_zone.zone_id
+                
+                demo_records.append(ClimateZoneHistoricalRecord(
+                    zone_id=zone_id,
+                    zone_type=ClimateZoneType.USDA_HARDINESS,
+                    detection_date=date,
+                    confidence_score=0.8 + (i * 0.05),
+                    coordinates=(latitude, longitude),
+                    source="demo_data"
+                ))
+            
+            previous_zone = self.usda_zones.get(previous_zone_id)
+            change_detected = True
+            change_confidence = 0.85
+            change_date = base_date + timedelta(days=365 * 2)
+            change_direction = "warmer"
+            zones_affected = [previous_zone_id, current_zone.zone_id]
+            
+        else:
+            # Stable zone
+            previous_zone = current_zone
+            change_detected = False
+            change_confidence = 0.3
+            change_date = None
+            change_direction = "stable"
+            zones_affected = [current_zone.zone_id]
+        
+        trend_analysis = {
+            "trend_direction": change_direction,
+            "confidence": change_confidence,
+            "rate_of_change_per_year": 0.1 if change_detected else 0.0,
+            "projected_zone_1yr": current_zone.zone_id,
+            "projected_zone_5yr": self._project_future_zone(current_zone.zone_id, change_direction)
+        }
+        
+        return ClimateZoneChangeDetection(
+            current_zone=current_zone,
+            previous_zone=previous_zone,
+            change_detected=change_detected,
+            change_confidence=change_confidence,
+            change_date=change_date,
+            change_direction=change_direction,
+            zones_affected=zones_affected,
+            trend_analysis=trend_analysis,
+            time_series_data=demo_records
+        )
+    
+    async def _calculate_zone_trend(
+        self, 
+        historical_records: List[ClimateZoneHistoricalRecord]
+    ) -> Dict:
+        """Calculate climate zone trend analysis from historical data."""
+        
+        if len(historical_records) < 3:
+            return {"trend_direction": "insufficient_data", "confidence": 0.0}
+        
+        # Convert zone IDs to numeric values for trend analysis
+        zone_values = []
+        dates = []
+        
+        for record in historical_records:
+            try:
+                zone_num = int(record.zone_id[0])
+                zone_sub = 0.5 if len(record.zone_id) > 1 and record.zone_id[1] == 'b' else 0.0
+                zone_value = zone_num + zone_sub
+                
+                zone_values.append(zone_value)
+                dates.append(record.detection_date)
+            except (ValueError, IndexError):
+                continue
+        
+        if len(zone_values) < 3:
+            return {"trend_direction": "insufficient_data", "confidence": 0.0}
+        
+        # Convert dates to years for regression
+        base_date = dates[0]
+        years = [(date - base_date).days / 365.25 for date in dates]
+        
+        # Calculate linear regression
+        try:
+            coefficients = np.polyfit(years, zone_values, 1)
+            slope = coefficients[0]  # Rate of change per year
+            
+            # Calculate R-squared for confidence
+            y_pred = np.polyval(coefficients, years)
+            ss_res = np.sum((np.array(zone_values) - y_pred) ** 2)
+            ss_tot = np.sum((np.array(zone_values) - np.mean(zone_values)) ** 2)
+            r_squared = 1 - (ss_res / ss_tot) if ss_tot != 0 else 0
+            
+            # Determine trend direction
+            if abs(slope) < 0.05:  # Threshold for stability
+                trend_direction = 'stable'
+            elif slope > 0:
+                trend_direction = 'warmer'
+            else:
+                trend_direction = 'cooler'
+            
+            # Project future zones
+            current_zone_value = zone_values[-1]
+            projected_1yr = current_zone_value + slope
+            projected_5yr = current_zone_value + (slope * 5)
+            
+            return {
+                "trend_direction": trend_direction,
+                "confidence": max(0.0, min(1.0, r_squared)),
+                "rate_of_change_per_year": slope,
+                "current_zone_value": current_zone_value,
+                "projected_zone_1yr": self._zone_value_to_id(projected_1yr),
+                "projected_zone_5yr": self._zone_value_to_id(projected_5yr)
+            }
+            
+        except Exception as e:
+            logger.error(f"Error calculating zone trend: {str(e)}")
+            return {"trend_direction": "error", "confidence": 0.0}
+    
+    def _zone_value_to_id(self, zone_value: float) -> str:
+        """Convert numeric zone value back to zone ID."""
+        zone_num = int(round(zone_value))
+        zone_sub = 'b' if (zone_value - int(zone_value)) >= 0.25 else 'a'
+        return f"{max(1, min(13, zone_num))}{zone_sub}"
+    
+    def _calculate_change_confidence(
+        self, 
+        transition: Dict, 
+        trend_analysis: Dict
+    ) -> float:
+        """Calculate confidence score for detected change."""
+        
+        base_confidence = transition.get('confidence', 0.5)
+        trend_confidence = trend_analysis.get('confidence', 0.0)
+        
+        # Higher confidence if trend supports the transition
+        if trend_analysis.get('trend_direction') in ['warmer', 'cooler']:
+            base_confidence += 0.2
+        
+        # Consider trend consistency
+        combined_confidence = (base_confidence + trend_confidence) / 2
+        
+        return max(0.0, min(1.0, combined_confidence))
+    
+    def _determine_change_direction(self, from_zone: str, to_zone: str) -> str:
+        """Determine the direction of climate zone change."""
+        
+        try:
+            from_num = int(from_zone[0])
+            to_num = int(to_zone[0])
+            
+            if to_num > from_num:
+                return "warmer"
+            elif to_num < from_num:
+                return "cooler"
+            else:
+                # Same number, check sub-zone
+                from_sub = from_zone[1] if len(from_zone) > 1 else 'a'
+                to_sub = to_zone[1] if len(to_zone) > 1 else 'a'
+                
+                if from_sub == 'a' and to_sub == 'b':
+                    return "warmer"
+                elif from_sub == 'b' and to_sub == 'a':
+                    return "cooler"
+                else:
+                    return "stable"
+        except (ValueError, IndexError):
+            return "unknown"
+    
+    def _project_future_zone(self, current_zone_id: str, trend_direction: str) -> str:
+        """Project future zone based on current trends."""
+        
+        if trend_direction == "stable":
+            return current_zone_id
+        
+        try:
+            zone_num = int(current_zone_id[0])
+            zone_sub = current_zone_id[1] if len(current_zone_id) > 1 else 'a'
+            
+            if trend_direction == "warmer":
+                if zone_sub == 'a':
+                    return f"{zone_num}b"
+                else:
+                    return f"{min(13, zone_num + 1)}a"
+            elif trend_direction == "cooler":
+                if zone_sub == 'b':
+                    return f"{zone_num}a"
+                else:
+                    return f"{max(1, zone_num - 1)}b"
+        except (ValueError, IndexError):
+            pass
+        
+        return current_zone_id
+    
+    def _get_historical_records(
+        self, 
+        location_key: str, 
+        years_to_analyze: int
+    ) -> List[ClimateZoneHistoricalRecord]:
+        """Get historical climate zone records for a location."""
+        
+        if location_key not in self._historical_data:
+            return []
+        
+        cutoff_date = datetime.now() - timedelta(days=365 * years_to_analyze)
+        records = self._historical_data[location_key]
+        
+        return [record for record in records if record.detection_date >= cutoff_date]
+    
+    async def _store_historical_record(
+        self, 
+        location_key: str, 
+        record: ClimateZoneHistoricalRecord
+    ):
+        """Store a historical climate zone record."""
+        
+        if location_key not in self._historical_data:
+            self._historical_data[location_key] = []
+        
+        # Check if we already have a recent record for this location
+        recent_records = [
+            r for r in self._historical_data[location_key] 
+            if abs((r.detection_date - record.detection_date).days) < 30
+        ]
+        
+        # Only store if no recent duplicate
+        if not recent_records:
+            self._historical_data[location_key].append(record)
+            
+            # Limit storage to last 50 records per location
+            if len(self._historical_data[location_key]) > 50:
+                self._historical_data[location_key] = self._historical_data[location_key][-50:]
+
+    async def validate_zone_consistency(
+        self, 
+        latitude: float, 
+        longitude: float,
+        check_neighboring: bool = True,
+        check_temporal: bool = True
+    ) -> Dict:
+        """
+        Validate climate zone consistency across multiple dimensions:
+        - Cross-reference consistency between USDA and Köppen zones
+        - Spatial consistency with neighboring locations
+        - Temporal consistency over time (if enabled)
+        """
+        
+        # Get primary climate zone detection
+        detected = await self.detect_climate_zone(latitude, longitude)
+        
+        consistency_results = {
+            "overall_consistent": True,
+            "confidence": 1.0,
+            "checks_performed": [],
+            "warnings": [],
+            "cross_reference_check": {},
+            "spatial_check": {},
+            "temporal_check": {}
+        }
+        
+        # 1. Cross-reference consistency check between USDA and Köppen
+        try:
+            usda_zone = detected.primary_zone
+            koppen_alternatives = [zone for zone in detected.alternative_zones 
+                                 if hasattr(zone, 'classification') and 'koppen' in zone.classification.lower()]
+            
+            if koppen_alternatives:
+                koppen_zone = koppen_alternatives[0]
+                cross_ref_consistency = self._validate_usda_koppen_consistency(usda_zone, koppen_zone)
+                consistency_results["cross_reference_check"] = cross_ref_consistency
+                consistency_results["checks_performed"].append("cross_reference")
+                
+                if not cross_ref_consistency["consistent"]:
+                    consistency_results["overall_consistent"] = False
+                    consistency_results["warnings"].append(cross_ref_consistency["warning"])
+                    consistency_results["confidence"] *= 0.8
+            else:
+                consistency_results["warnings"].append("Köppen zone not available for cross-reference validation")
+                consistency_results["confidence"] *= 0.9
+                
+        except Exception as e:
+            consistency_results["warnings"].append(f"Cross-reference check failed: {str(e)}")
+            consistency_results["confidence"] *= 0.8
+        
+        # 2. Spatial consistency check with neighboring locations
+        if check_neighboring:
+            try:
+                spatial_consistency = await self._validate_spatial_consistency(latitude, longitude, detected.primary_zone)
+                consistency_results["spatial_check"] = spatial_consistency
+                consistency_results["checks_performed"].append("spatial")
+                
+                if not spatial_consistency["consistent"]:
+                    consistency_results["overall_consistent"] = False
+                    consistency_results["warnings"].append(spatial_consistency["warning"])
+                    consistency_results["confidence"] *= 0.85
+                    
+            except Exception as e:
+                consistency_results["warnings"].append(f"Spatial consistency check failed: {str(e)}")
+                consistency_results["confidence"] *= 0.9
+        
+        # 3. Temporal consistency check (simplified - would need historical data in production)
+        if check_temporal:
+            try:
+                temporal_consistency = self._validate_temporal_consistency(detected.primary_zone)
+                consistency_results["temporal_check"] = temporal_consistency
+                consistency_results["checks_performed"].append("temporal")
+                
+                if not temporal_consistency["consistent"]:
+                    consistency_results["warnings"].append(temporal_consistency["warning"])
+                    consistency_results["confidence"] *= 0.9
+                    
+            except Exception as e:
+                consistency_results["warnings"].append(f"Temporal consistency check failed: {str(e)}")
+                consistency_results["confidence"] *= 0.95
+        
+        return consistency_results
+    
+    def _validate_usda_koppen_consistency(self, usda_zone, koppen_zone) -> Dict:
+        """Validate consistency between USDA and Köppen climate zones."""
+        
+        # Known consistent mappings (simplified - would be more comprehensive in production)
+        usda_koppen_mappings = {
+            "3a": ["Dfb", "Dfa"], "3b": ["Dfb", "Dfa"],
+            "4a": ["Dfb", "Dfa", "Cfa"], "4b": ["Dfb", "Dfa"],
+            "5a": ["Dfb", "Dfa", "Cfa"], "5b": ["Dfb", "Dfa", "Cfa"],
+            "6a": ["Cfa", "Cfb", "Dfa"], "6b": ["Cfa", "Cfb"],
+            "7a": ["Cfa", "Cfb"], "7b": ["Cfa", "Cfb"],
+            "8a": ["Cfa", "Csa"], "8b": ["Cfa", "Csa"],
+            "9a": ["Cfa", "Csa", "Csb"], "9b": ["Cfa", "Csa"],
+            "10a": ["Csa", "Csb"], "10b": ["Csa", "Csb"],
+            "11": ["BSk", "BWh", "Csa"]
+        }
+        
+        usda_id = usda_zone.zone_id
+        koppen_id = getattr(koppen_zone, 'zone_id', 'unknown')
+        
+        expected_koppen = usda_koppen_mappings.get(usda_id, [])
+        
+        if koppen_id in expected_koppen:
+            return {
+                "consistent": True,
+                "confidence": 0.95,
+                "message": f"USDA zone {usda_id} is consistent with Köppen {koppen_id}"
+            }
+        elif expected_koppen:
+            return {
+                "consistent": False,
+                "confidence": 0.6,
+                "warning": f"USDA zone {usda_id} typically corresponds to Köppen {expected_koppen}, but detected {koppen_id}",
+                "message": "Climate zone systems show potential inconsistency"
+            }
+        else:
+            return {
+                "consistent": True,
+                "confidence": 0.7,
+                "message": f"No established mapping for USDA {usda_id}, accepting Köppen {koppen_id}"
+            }
+    
+    async def _validate_spatial_consistency(self, latitude: float, longitude: float, detected_zone) -> Dict:
+        """Validate spatial consistency with neighboring locations."""
+        
+        # Check neighboring locations (offset by ~0.1 degree ~6 miles)
+        neighbor_offsets = [
+            (0.1, 0), (-0.1, 0), (0, 0.1), (0, -0.1),  # N, S, E, W
+            (0.05, 0.05), (-0.05, -0.05)  # NE, SW diagonals
+        ]
+        
+        consistent_neighbors = 0
+        total_neighbors = 0
+        zone_differences = []
+        
+        for lat_offset, lon_offset in neighbor_offsets:
+            try:
+                neighbor_lat = latitude + lat_offset
+                neighbor_lon = longitude + lon_offset
+                
+                # Validate coordinates are still reasonable
+                if -90 <= neighbor_lat <= 90 and -180 <= neighbor_lon <= 180:
+                    neighbor_detection = await self.detect_climate_zone(neighbor_lat, neighbor_lon)
+                    neighbor_zone = neighbor_detection.primary_zone.zone_id
+                    current_zone = detected_zone.zone_id
+                    
+                    total_neighbors += 1
+                    
+                    # Check if zones are same or adjacent (allowing 1 zone difference)
+                    if self._are_zones_spatially_consistent(current_zone, neighbor_zone):
+                        consistent_neighbors += 1
+                    else:
+                        zone_differences.append(f"{current_zone} vs {neighbor_zone}")
+                        
+            except Exception:
+                # Skip failed neighbor checks
+                continue
+        
+        if total_neighbors == 0:
+            return {
+                "consistent": True,
+                "confidence": 0.5,
+                "message": "No neighboring locations could be validated"
+            }
+        
+        consistency_ratio = consistent_neighbors / total_neighbors
+        
+        if consistency_ratio >= 0.7:
+            return {
+                "consistent": True,
+                "confidence": min(0.95, 0.7 + (consistency_ratio * 0.25)),
+                "message": f"Spatial consistency good: {consistent_neighbors}/{total_neighbors} neighbors consistent"
+            }
+        else:
+            return {
+                "consistent": False,
+                "confidence": 0.5,
+                "warning": f"Spatial consistency concerns: only {consistent_neighbors}/{total_neighbors} neighbors consistent",
+                "differences": zone_differences[:3]  # Show first 3 differences
+            }
+    
+    def _are_zones_spatially_consistent(self, zone1: str, zone2: str) -> bool:
+        """Check if two zones are spatially consistent (same or adjacent)."""
+        
+        if zone1 == zone2:
+            return True
+        
+        # Extract numeric parts for comparison
+        try:
+            import re
+            zone1_match = re.match(r'(\d+)([ab]?)', zone1)
+            zone2_match = re.match(r'(\d+)([ab]?)', zone2)
+            
+            if zone1_match and zone2_match:
+                num1, sub1 = int(zone1_match.group(1)), zone1_match.group(2)
+                num2, sub2 = int(zone2_match.group(1)), zone2_match.group(2)
+                
+                # Adjacent zones (within 1 number)
+                if abs(num1 - num2) <= 1:
+                    return True
+                
+                # Same number, different subzone (4a vs 4b)
+                if num1 == num2:
+                    return True
+        except:
+            pass
+        
+        return False
+    
+    def _validate_temporal_consistency(self, detected_zone) -> Dict:
+        """Validate temporal consistency (simplified without historical data)."""
+        
+        # In production, this would check against historical climate zone data
+        # For now, provide basic temporal validation based on zone stability
+        
+        zone_id = detected_zone.zone_id
+        
+        # Zones known to be more stable over time
+        stable_zones = ["5a", "5b", "6a", "6b", "7a", "7b"]
+        # Zones more susceptible to climate change
+        transitional_zones = ["3a", "3b", "4a", "4b", "8a", "8b", "9a", "9b"]
+        
+        if zone_id in stable_zones:
+            return {
+                "consistent": True,
+                "confidence": 0.9,
+                "message": f"Zone {zone_id} is historically stable"
+            }
+        elif zone_id in transitional_zones:
+            return {
+                "consistent": True,
+                "confidence": 0.7,
+                "warning": f"Zone {zone_id} may be subject to climate transitions - monitor for changes",
+                "message": "Zone in potentially transitional climate area"
+            }
+        else:
+            return {
+                "consistent": True,
+                "confidence": 0.8,
+                "message": f"Zone {zone_id} temporal consistency assumed based on typical patterns"
+            }
 
 
 # Global service instance

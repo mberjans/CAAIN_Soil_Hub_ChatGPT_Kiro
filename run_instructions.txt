@@ -1,0 +1,50 @@
+Always create and use local Python envrioment via venv. Read the following files docs/checklist.md, docs/plan.md and docs/tickets.md, if they exists.
+
+IMPORTANT: Before creating any new code, always check the existing codebase thoroughly for existing functions, classes, utilities, or patterns that can be reused or extended to complete the task. Use the codebase-retrieval tool to search for relevant existing code. Only create new code when existing code cannot be adapted or reused for the current task.
+If task has already been completed previously or have existinal codeg functional code, add explamation sign "!" between brackets of the checkbox in docs/checklist.md.
+For unchecked tasks on the checklists, write the program one task of one ticket at a time. Once task is finshed, check it on the docs/checklist.md, add all changed files to the git using a separate git add command, commit changes with commit message that you generate yourself using individual git commit command, push changes to the git repository with indvidual git push command, and switch to the next task. Once you complete tasks on one ticket, add all changed files to the git using a separate git add command, commit changes with commit message that you generate yourself using individual git commit command, push changes to the git repository with indvidual git push command, switch to the next ticket. After the push, update the momety bank if it exists. Never chain multiple shell command together with & sign. Never use list comprehension in python. Avoid using regular expression for pattern matching. Instead create special pattern matching function to pattern matching. Work until all bugs are fixed. Please do not ask me for conformation whether I want you to proceedto the next ticket. Just keep working until completing the last ticket.
+
+CURRENT TASK TO COMPLETE:
+TICKET-013_cover-crop-selection-14.1 Integrate with existing systems
+
+CONTEXT:
+- Project directory: /Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro
+- You are working through a checklist systematically
+- Focus on completing the current task above
+- IMPORTANT: After completing the task, update docs/checklist.md to mark the task as complete by changing [ ] to [x]
+
+REMAINING UNCHECKED TASKS (497 total):
+→ CURRENT TICKET-001_climate-zone-detection-4.1 Extend weather service with climate zone data - OPENCODE FAILED, RETURN LATER
+  2. TICKET-013_cover-crop-selection-14.1 Integrate with existing systems
+  3. TICKET-012_crop-rotation-planning-6.2 Implement rotation modification tools
+  4. TICKET-012_crop-rotation-planning-6.3 Create rotation impact visualization
+  5. TICKET-012_crop-rotation-planning-8.2.3 PUT /api/v1/fields/{field_id}/history/{year} - Update history
+  6. TICKET-012_crop-rotation-planning-8.2.4 DELETE /api/v1/fields/{field_id}/history/{year} - Delete history
+  7. TICKET-012_crop-rotation-planning-8.3 Add rotation analysis endpoints
+  8. TICKET-012_crop-rotation-planning-8.3.1 POST /api/v1/rotations/analyze-benefits - Analyze rotation benefits
+  9. TICKET-012_crop-rotation-planning-8.3.2 POST /api/v1/rotations/economic-analysis - Get economic analysis
+  10. TICKET-012_crop-rotation-planning-8.3.3 POST /api/v1/rotations/sustainability-score - Get sustainability score
+  ... and 487 more tasks
+
+CRITICAL INSTRUCTIONS:
+1. Read docs/checklist.md, docs/plan.md, and docs/tickets.md for context
+2. Focus ONLY on completing the current task: TICKET-013_cover-crop-selection-14.1 Integrate with existing systems
+4. Create to-do list of smaller subtasks
+5. Assign task to software-engeneer subagent. Give subagent only information it needs for the task. You can also give subagent ticket-specific information extracted from docs/tickets.md as well as task specific information extracted from docs/checklist.md 
+6. Ask software-engeneer subagent to design unit tests for the subtask if appropriate
+7. Ask software-engeneer subagent to implement the code for the subtask
+8. Ask software-engeneer subagent to refactor the code for the subtask if necessary
+9. Ask software-engeneer subagent to test the code for the subtask  if appropriate
+10. If software-engeneer subagent reports failure, ask software-engeneer subagent to create a to-do list of sub-subtasks and try again. Do this up-to 5 times.
+10a. If software-engeneer subagent reports success, add all changed files to git: git add [files], then commit changes: git commit -m "descriptive message" and then push changes: git push
+10b. If software-engeneer subagent reports failure on the fifth attempt, mark the sub-task as failed and move on to the next sub-task. 
+11. Repeat steps 5-10 for each subtask
+12. Test your implementation for the whole task if applicable
+13. Add all changed files to git: git add [files]
+14. Commit changes: git commit -m "descriptive message"
+15. Push changes: git push
+16a. IMPORTANT: If all subtasks have been completed, update docs/checklist.md to mark the current task as complete: change [ ] to [x] for the current task
+16b. IMPORTANT: If some subtasks have been completed, update docs/checklist.md to append "PARTIALLY COMPLETED" to the current task description.
+16b. IMPORTANT: If all subtasks have failed, update docs/checklist.md to append "FAILED" to the current task description.
+17. Provide a summary of what you accomplished
+18. IMPORTANT: Avoid using regular expressions for pattern matching - create special pattern matching functions instead

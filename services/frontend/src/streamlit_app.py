@@ -6,6 +6,161 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import numpy as np
 import time
+import json
+from typing import Dict, List, Any
+
+# API Configuration
+API_BASE_URL = "http://localhost:8001/api/v1"
+PLANTING_API_URL = f"{API_BASE_URL}/planting"
+
+# API Helper Functions
+def get_planting_dates(crop_name: str, location_data: Dict[str, Any], season: str = "spring") -> Dict[str, Any]:
+    """Get planting dates for a specific crop and location."""
+    try:
+        payload = {
+            "crop_name": crop_name.lower(),
+            "location": {
+                "latitude": location_data.get("latitude", 42.0),
+                "longitude": location_data.get("longitude", -93.0),
+                "elevation_ft": location_data.get("elevation_ft", 1000),
+                "address": location_data.get("address", "Farm Location"),
+                "state": location_data.get("state", "Iowa"),
+                "county": location_data.get("county", "Story"),
+                "climate_zone": location_data.get("climate_zone", "5b"),
+                "climate_zone_name": location_data.get("climate_zone_name", "USDA Zone 5b"),
+                "temperature_range_f": location_data.get("temperature_range_f", {"min": -15, "max": -10}),
+                "climate_confidence": location_data.get("climate_confidence", 0.85)
+            },
+            "planting_season": season
+        }
+        
+        response = requests.post(f"{PLANTING_API_URL}/calculate-dates", json=payload, timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+    except Exception as e:
+        st.warning(f"Could not fetch planting dates: {str(e)}")
+        return None
+
+def get_frost_dates(location_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Get frost date information for a location.""" 
+    try:
+        payload = {
+            "location": {
+                "latitude": location_data.get("latitude", 42.0),
+                "longitude": location_data.get("longitude", -93.0),
+                "elevation_ft": location_data.get("elevation_ft", 1000),
+                "address": location_data.get("address", "Farm Location"),
+                "state": location_data.get("state", "Iowa"),
+                "county": location_data.get("county", "Story"),
+                "climate_zone": location_data.get("climate_zone", "5b"),
+                "climate_zone_name": location_data.get("climate_zone_name", "USDA Zone 5b"),
+                "temperature_range_f": location_data.get("temperature_range_f", {"min": -15, "max": -10}),
+                "climate_confidence": location_data.get("climate_confidence", 0.85)
+            }
+        }
+        
+        response = requests.post(f"{PLANTING_API_URL}/frost-dates", json=payload, timeout=10)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return None
+    except Exception as e:
+        st.warning(f"Could not fetch frost dates: {str(e)}")
+        return None
+
+def get_available_crops() -> List[str]:
+    """Get list of available crops for planting date calculations."""
+    try:
+        response = requests.get(f"{PLANTING_API_URL}/available-crops", timeout=10)
+        if response.status_code == 200:
+            crops_data = response.json()
+            return [crop["name"] for crop in crops_data]
+        else:
+            return ["corn", "soybean", "wheat", "peas", "lettuce", "spinach", "tomato", "potato", "onion"]
+    except Exception as e:
+        # Fallback to default crops if API is unavailable
+        return ["corn", "soybean", "wheat", "peas", "lettuce", "spinach", "tomato", "potato", "onion"]
+
+def format_planting_date(date_str: str) -> str:
+    """Format date string for display."""
+    try:
+        if isinstance(date_str, str):
+            date_obj = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+            return date_obj.strftime("%B %d, %Y")
+        return date_str
+    except:
+        return date_str
+
+# Helper functions for agricultural climate zone mapping
+def get_agricultural_zone_data() -> Dict[str, Any]:
+    """
+    Comprehensive agricultural zone data for climate zone mapping.
+    In production, this would connect to a database or API.
+    """
+    return {
+        "5b_iowa_agricultural": {
+            "zone_id": "5b_iowa_agricultural",
+            "climate_zone": "5b", 
+            "agricultural_classification": "intensive_cropping",
+            "crop_suitability": {
+                "corn": {"rating": 9.2, "yield_potential": "180 bu/acre", "risk_level": "low"},
+                "soybeans": {"rating": 8.8, "yield_potential": "55 bu/acre", "risk_level": "low"},
+                "wheat": {"rating": 7.5, "yield_potential": "65 bu/acre", "risk_level": "medium"},
+                "oats": {"rating": 8.0, "yield_potential": "80 bu/acre", "risk_level": "low"},
+                "alfalfa": {"rating": 8.3, "yield_potential": "6 ton/acre", "risk_level": "low"}
+            },
+            "growing_season": {
+                "frost_free_days": 180,
+                "planting_window": "April 15 - May 15",
+                "harvest_window": "September 15 - November 1",
+                "optimal_planting": "May 1",
+                "growing_degree_days": 3100
+            },
+            "agricultural_risks": ["late_spring_frost", "drought_potential", "wet_spring_delays"],
+            "soil_types": ["prairie_soils", "glacial_till", "mollisols"],
+            "productivity_index": 8.7,
+            "farm_enterprises": ["row_crops", "livestock", "dairy", "grain_storage"],
+            "economic_factors": {
+                "production_cost_index": 85,
+                "market_access": "excellent",
+                "elevator_distance": "5-10 miles"
+            }
+        }
+        # Additional zones would be added here in production
+    }
+
+def calculate_risk_score(risks: List[str]) -> float:
+    """Calculate overall risk score based on identified risks."""
+    risk_weights = {
+        "late_spring_frost": 0.3,
+        "drought_potential": 0.4, 
+        "wet_spring_delays": 0.2,
+        "disease_pressure": 0.4,
+        "pest_pressure": 0.3,
+        "market_volatility": 0.6,
+        "equipment_risk": 0.2
+    }
+    
+    total_risk = sum(risk_weights.get(risk, 0.3) for risk in risks)
+    return min(total_risk / len(risks), 1.0) if risks else 0.2
+
+def format_agricultural_recommendation(zone_data: Dict[str, Any]) -> str:
+    """Generate formatted agricultural recommendation text."""
+    top_crop = max(zone_data['crop_suitability'].items(), 
+                  key=lambda x: x[1]['rating'])
+    
+    return f"""
+    **Zone {zone_data['climate_zone']} Agricultural Recommendations:**
+    
+    🌽 **Top Crop:** {top_crop[0].title()} (Rating: {top_crop[1]['rating']}/10)
+    📊 **Productivity Index:** {zone_data['productivity_index']}/10
+    🗓️ **Growing Season:** {zone_data['growing_season']['frost_free_days']} frost-free days
+    🏛️ **Best Enterprise:** {zone_data['farm_enterprises'][0].replace('_', ' ').title()}
+    
+    This zone offers excellent conditions for {zone_data['agricultural_classification'].replace('_', ' ')}.
+    """
 
 # Configure page
 st.set_page_config(
@@ -102,6 +257,35 @@ st.markdown("""
         background: #d4edda;
         border-left-color: #28a745;
         color: #155724;
+    }
+    .crop-card {
+        background: #f8f9fa;
+        padding: 0.5rem;
+        margin: 0.2rem 0;
+        border-radius: 4px;
+        border-left: 3px solid #28a745;
+    }
+    .enterprise-card {
+        background: #f8f9fa;
+        padding: 0.8rem;
+        margin: 0.5rem 0;
+        border-radius: 6px;
+        border-left: 3px solid #28a745;
+    }
+    .agricultural-zone-header {
+        background: linear-gradient(90deg, #28a745, #20c997);
+        padding: 1rem;
+        border-radius: 10px;
+        color: white;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+    .risk-card {
+        background: #fff3cd;
+        padding: 0.6rem;
+        margin: 0.3rem 0;
+        border-radius: 4px;
+        border-left: 3px solid #ffc107;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -218,11 +402,12 @@ with st.sidebar:
         
         states_df['Color'] = states_df['Zone'].map(zone_colors)
         states_df['Current_Location'] = states_df['State'] == 'Iowa'  # Highlight Iowa as current location
+        states_df['Marker_Size'] = states_df['Current_Location'].apply(lambda x: 15 if x else 8)
         
         fig_map = px.scatter(states_df, 
                            x='Longitude', y='Latitude',
                            color='Zone',
-                           size='Current_Location',
+                           size='Marker_Size',
                            size_max=15,
                            hover_data=['State', 'Min_Temp'],
                            title="USDA Hardiness Zones - Midwest Region",
@@ -443,6 +628,533 @@ with st.sidebar:
         st.dataframe(comparison_styled, use_container_width=True, hide_index=True)
         
         st.info("💡 **Analysis**: Zone 5b offers excellent agricultural conditions with optimal balance of temperature, moisture, and growing season length.")
+    
+    # ============================================================================
+    # 🌾 AGRICULTURAL CLIMATE ZONE MAPPING SYSTEM
+    # Enhanced agricultural mapping with farming-specific data and insights
+    # ============================================================================
+    
+    st.subheader("🌾 Agricultural Climate Zone Mapping")
+    st.markdown("**Comprehensive agricultural zone analysis with crop suitability, growing seasons, and farm enterprise recommendations**")
+    
+    # Load agricultural zone data
+    try:
+        agricultural_zones = get_agricultural_zone_data()
+        
+        # Add additional zones for comprehensive mapping
+        agricultural_zones.update({
+            "6a_illinois_agricultural": {
+                "zone_id": "6a_illinois_agricultural", 
+                "climate_zone": "6a",
+                "agricultural_classification": "intensive_cropping",
+                "crop_suitability": {
+                    "corn": {"rating": 9.4, "yield_potential": "190 bu/acre", "risk_level": "low"},
+                    "soybeans": {"rating": 9.0, "yield_potential": "58 bu/acre", "risk_level": "low"},
+                    "wheat": {"rating": 8.0, "yield_potential": "70 bu/acre", "risk_level": "low"}
+                },
+                "growing_season": {
+                    "frost_free_days": 200,
+                    "planting_window": "April 10 - May 10",
+                    "harvest_window": "September 20 - November 10", 
+                    "optimal_planting": "April 25",
+                    "growing_degree_days": 3400
+                },
+                "agricultural_risks": ["excess_moisture", "disease_pressure"],
+                "soil_types": ["prairie_soils", "alfisols"],
+                "productivity_index": 9.1,
+                "farm_enterprises": ["row_crops", "specialty_grains", "livestock"],
+                "economic_factors": {
+                    "production_cost_index": 88,
+                    "market_access": "excellent", 
+                    "elevator_distance": "3-8 miles"
+                }
+            },
+            "4b_minnesota_agricultural": {
+                "zone_id": "4b_minnesota_agricultural",
+                "climate_zone": "4b", 
+                "agricultural_classification": "short_season_cropping",
+                "crop_suitability": {
+                    "corn": {"rating": 7.8, "yield_potential": "160 bu/acre", "risk_level": "medium"},
+                    "soybeans": {"rating": 8.2, "yield_potential": "50 bu/acre", "risk_level": "medium"},
+                    "wheat": {"rating": 8.8, "yield_potential": "60 bu/acre", "risk_level": "low"},
+                    "oats": {"rating": 9.0, "yield_potential": "85 bu/acre", "risk_level": "low"},
+                    "barley": {"rating": 8.5, "yield_potential": "70 bu/acre", "risk_level": "low"}
+                },
+                "growing_season": {
+                    "frost_free_days": 140,
+                    "planting_window": "May 1 - May 20",
+                    "harvest_window": "September 1 - October 15",
+                    "optimal_planting": "May 10",
+                    "growing_degree_days": 2500
+                },
+                "agricultural_risks": ["early_frost", "short_season", "cold_springs"],
+                "soil_types": ["mollisols", "glacial_soils"],
+                "productivity_index": 7.5,
+                "farm_enterprises": ["short_season_crops", "livestock", "dairy", "specialty_grains"],
+                "economic_factors": {
+                    "production_cost_index": 82,
+                    "market_access": "good",
+                    "elevator_distance": "10-15 miles"
+                }
+            },
+            "6b_missouri_agricultural": {
+                "zone_id": "6b_missouri_agricultural",
+                "climate_zone": "6b",
+                "agricultural_classification": "extended_season_cropping", 
+                "crop_suitability": {
+                    "corn": {"rating": 8.6, "yield_potential": "175 bu/acre", "risk_level": "low"},
+                    "soybeans": {"rating": 8.9, "yield_potential": "56 bu/acre", "risk_level": "low"},
+                    "wheat": {"rating": 9.2, "yield_potential": "75 bu/acre", "risk_level": "low"},
+                    "cotton": {"rating": 7.0, "yield_potential": "1200 lb/acre", "risk_level": "medium"},
+                    "rice": {"rating": 8.0, "yield_potential": "150 bu/acre", "risk_level": "medium"}
+                },
+                "growing_season": {
+                    "frost_free_days": 210,
+                    "planting_window": "April 1 - May 1", 
+                    "harvest_window": "September 25 - November 15",
+                    "optimal_planting": "April 15",
+                    "growing_degree_days": 3600
+                },
+                "agricultural_risks": ["heat_stress", "variable_precipitation", "disease_pressure"],
+                "soil_types": ["alfisols", "ultisols", "alluvial_soils"],
+                "productivity_index": 8.3,
+                "farm_enterprises": ["row_crops", "livestock", "specialty_crops", "double_cropping"],
+                "economic_factors": {
+                    "production_cost_index": 86,
+                    "market_access": "very_good",
+                    "elevator_distance": "5-12 miles"
+                }
+            }
+        })
+        
+    except Exception as e:
+        st.error(f"Error loading agricultural zone data: {e}")
+        agricultural_zones = {}
+    
+    # Current zone data (defaulting to Iowa 5b)
+    current_zone = agricultural_zones["5b_iowa_agricultural"]
+    
+    # 1. Agricultural Productivity Map
+    with st.expander("🗺️ Agricultural Productivity Map", expanded=True):
+        st.markdown("**Regional Agricultural Suitability & Productivity Index**")
+        
+        # Create agricultural productivity data
+        productivity_data = {
+            'State': ['Iowa', 'Illinois', 'Indiana', 'Minnesota', 'Wisconsin', 'Michigan', 'Ohio', 'Missouri', 'Kansas', 'Nebraska'],
+            'Zone': ['5b', '6a', '6a', '4b', '4b', '5a', '6a', '6b', '6a', '5a'],
+            'Productivity_Index': [8.7, 9.1, 8.9, 7.5, 7.8, 8.2, 8.8, 8.3, 8.4, 8.5],
+            'Primary_Crop': ['Corn/Soy', 'Corn/Soy', 'Corn/Soy', 'Wheat/Soy', 'Dairy/Corn', 'Corn/Soy', 'Corn/Soy', 'Corn/Soy/Wheat', 'Wheat/Corn', 'Corn/Soy'],
+            'Latitude': [41.8, 40.0, 39.8, 45.0, 44.3, 44.3, 40.4, 38.4, 38.5, 41.1],
+            'Longitude': [-93.1, -89.0, -86.1, -93.2, -89.6, -84.5, -82.7, -92.2, -96.7, -98.0],
+            'Classification': ['Intensive Cropping', 'Intensive Cropping', 'Intensive Cropping', 
+                             'Short Season', 'Short Season', 'Moderate Season', 'Intensive Cropping', 
+                             'Extended Season', 'Moderate Season', 'Moderate Season']
+        }
+        
+        productivity_df = pd.DataFrame(productivity_data)
+        productivity_df['Current_Location'] = productivity_df['State'] == 'Iowa'
+        productivity_df['Size'] = productivity_df['Current_Location'].apply(lambda x: 20 if x else 10)
+        
+        # Create productivity map with color scale
+        fig_productivity = px.scatter(productivity_df,
+                                    x='Longitude', y='Latitude',
+                                    color='Productivity_Index',
+                                    size='Size',
+                                    size_max=20,
+                                    color_continuous_scale='RdYlGn',
+                                    hover_data=['State', 'Zone', 'Primary_Crop', 'Classification'],
+                                    title="Agricultural Productivity Index by Climate Zone",
+                                    labels={'Productivity_Index': 'Productivity Index (1-10)'})
+        
+        fig_productivity.update_layout(
+            height=500,
+            coloraxis_colorbar=dict(
+                title="Agricultural<br>Productivity",
+                tickvals=[7, 8, 9],
+                ticktext=['Good', 'Very Good', 'Excellent']
+            )
+        )
+        
+        fig_productivity.update_traces(marker=dict(line=dict(width=2, color='DarkSlateGrey')))
+        st.plotly_chart(fig_productivity, use_container_width=True)
+        
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            st.metric("Your Zone Productivity", f"{current_zone['productivity_index']}/10", "Excellent")
+        with col2:
+            st.metric("Regional Ranking", "Top 15%", "Above average")
+        with col3:
+            st.metric("Classification", current_zone['agricultural_classification'].title().replace('_', ' '))
+    
+    # 2. Crop Suitability Analysis
+    with st.expander("🌽 Crop Suitability Analysis", expanded=True):
+        st.markdown("**Detailed Crop Recommendations for Your Climate Zone**")
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            # Crop suitability chart
+            crop_data = current_zone['crop_suitability']
+            crops = list(crop_data.keys())
+            ratings = [crop_data[crop]['rating'] for crop in crops]
+            yields = [crop_data[crop]['yield_potential'] for crop in crops]
+            risks = [crop_data[crop]['risk_level'] for crop in crops]
+            
+            # Color mapping for risk levels
+            risk_colors = {'low': '#28a745', 'medium': '#ffc107', 'high': '#dc3545'}
+            colors = [risk_colors[risk] for risk in risks]
+            
+            fig_crops = go.Figure(data=[
+                go.Bar(x=crops, y=ratings, marker_color=colors, 
+                      text=[f"{rating}/10<br>{yield_val}" for rating, yield_val in zip(ratings, yields)],
+                      textposition='auto')
+            ])
+            
+            fig_crops.update_layout(
+                title="Crop Suitability Ratings for Zone 5b",
+                xaxis_title="Crops",
+                yaxis_title="Suitability Rating (1-10)",
+                height=400,
+                yaxis=dict(range=[0, 10])
+            )
+            
+            st.plotly_chart(fig_crops, use_container_width=True)
+        
+        with col2:
+            st.markdown("**Crop Performance Summary**")
+            for crop, data in crop_data.items():
+                risk_emoji = {'low': '🟢', 'medium': '🟡', 'high': '🔴'}
+                st.markdown(f"""
+                <div class="crop-card" style="background: #f8f9fa; padding: 0.5rem; margin: 0.2rem 0; border-radius: 4px; border-left: 3px solid {risk_colors[data['risk_level']]};">
+                    <strong>{crop.title()}</strong><br>
+                    Rating: {data['rating']}/10<br>
+                    Yield: {data['yield_potential']}<br>
+                    Risk: {risk_emoji[data['risk_level']]} {data['risk_level'].title()}
+                </div>
+                """, unsafe_allow_html=True)
+            
+            st.markdown("**Legend:**")
+            st.markdown("🟢 Low Risk | 🟡 Medium Risk | 🔴 High Risk")
+    
+    # 3. Growing Season Planning
+    with st.expander("📅 Growing Season Planning & Calendar", expanded=True):
+        st.markdown("**Interactive Agricultural Calendar for Optimal Planning**")
+        
+        col1, col2 = st.columns([3, 1])
+        
+        with col1:
+            # Growing season timeline
+            season_events = {
+                'Event': ['Soil Preparation', 'Planting Window Opens', 'Optimal Planting', 
+                         'Cultivation Period', 'Mid-Season Care', 'Harvest Begins', 'Harvest Ends', 'Field Prep for Winter'],
+                'Start_Date': ['April 1', 'April 15', 'May 1', 'May 15', 'July 1', 'September 15', 'October 15', 'November 1'],
+                'End_Date': ['April 15', 'May 15', 'May 1', 'July 1', 'August 31', 'October 15', 'November 1', 'November 15'],
+                'Day_Start': [91, 105, 121, 135, 182, 258, 288, 305],
+                'Day_End': [105, 135, 121, 182, 243, 288, 305, 319],
+                'Category': ['Prep', 'Planting', 'Planting', 'Growing', 'Growing', 'Harvest', 'Harvest', 'Prep'],
+                'Priority': ['High', 'Critical', 'Critical', 'Medium', 'High', 'Critical', 'Critical', 'Medium']
+            }
+            
+            season_df = pd.DataFrame(season_events)
+            
+            # Create Gantt-style chart
+            fig_season = go.Figure()
+            
+            category_colors = {
+                'Prep': '#6c757d',
+                'Planting': '#28a745', 
+                'Growing': '#20c997',
+                'Harvest': '#fd7e14'
+            }
+            
+            for i, row in season_df.iterrows():
+                fig_season.add_trace(go.Scatter(
+                    x=[row['Day_Start'], row['Day_End'], row['Day_End'], row['Day_Start'], row['Day_Start']],
+                    y=[i, i, i+0.8, i+0.8, i],
+                    fill='toself',
+                    fillcolor=category_colors[row['Category']],
+                    line=dict(color=category_colors[row['Category']], width=2),
+                    name=row['Category'],
+                    text=row['Event'],
+                    hovertemplate=f"<b>{row['Event']}</b><br>Period: {row['Start_Date']} - {row['End_Date']}<br>Priority: {row['Priority']}<extra></extra>",
+                    showlegend=i==0 or row['Category'] not in [season_df.loc[j, 'Category'] for j in range(i)]
+                ))
+            
+            fig_season.update_layout(
+                title="Agricultural Calendar - Growing Season Timeline",
+                xaxis=dict(
+                    title="Day of Year",
+                    tickmode='array',
+                    tickvals=[91, 121, 152, 182, 213, 244, 274, 305],
+                    ticktext=['Apr 1', 'May 1', 'Jun 1', 'Jul 1', 'Aug 1', 'Sep 1', 'Oct 1', 'Nov 1']
+                ),
+                yaxis=dict(
+                    title="Agricultural Activities",
+                    tickmode='array',
+                    tickvals=list(range(len(season_df))),
+                    ticktext=season_df['Event'].tolist()
+                ),
+                height=400,
+                showlegend=True
+            )
+            
+            # Add frost lines
+            fig_season.add_vline(x=105, line_dash="dash", line_color="blue", annotation_text="Last Frost")
+            fig_season.add_vline(x=285, line_dash="dash", line_color="blue", annotation_text="First Frost") 
+            
+            st.plotly_chart(fig_season, use_container_width=True)
+        
+        with col2:
+            st.markdown("**Growing Season Metrics**")
+            
+            growing_season = current_zone['growing_season']
+            
+            st.metric("Frost-Free Days", growing_season['frost_free_days'], "days")
+            st.metric("Growing Degree Days", growing_season['growing_degree_days'], "GDD")
+            
+            st.markdown("**Key Dates:**")
+            st.info(f"🌱 Planting: {growing_season['planting_window']}")
+            st.info(f"🌾 Harvest: {growing_season['harvest_window']}")
+            st.success(f"🎯 Optimal: {growing_season['optimal_planting']}")
+            
+            st.markdown("**Weather Considerations:**")
+            st.warning("⚠️ Monitor late spring frosts")
+            st.info("ℹ️ Plan for potential wet springs")
+            st.success("✅ Excellent growing conditions expected")
+    
+    # 4. Agricultural Risk Assessment
+    with st.expander("⚠️ Agricultural Risk Assessment", expanded=True):
+        st.markdown("**Risk Analysis & Mitigation Strategies for Your Zone**")
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            # Risk assessment radar chart
+            risk_categories = {
+                'Weather Risks': 0.3,
+                'Pest Pressure': 0.4,
+                'Disease Risk': 0.35,
+                'Market Volatility': 0.6,
+                'Input Cost Risk': 0.5,
+                'Equipment Risk': 0.2
+            }
+            
+            categories = list(risk_categories.keys())
+            values = list(risk_categories.values())
+            
+            fig_risk = go.Figure()
+            
+            fig_risk.add_trace(go.Scatterpolar(
+                r=values,
+                theta=categories,
+                fill='toself',
+                name='Risk Level',
+                line_color='#dc3545',
+                fillcolor='rgba(220, 53, 69, 0.2)'
+            ))
+            
+            fig_risk.update_layout(
+                polar=dict(
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, 1],
+                        tickformat='.0%',
+                        tickmode='array',
+                        tickvals=[0.2, 0.4, 0.6, 0.8, 1.0],
+                        ticktext=['Low', 'Moderate', 'Medium', 'High', 'Critical']
+                    )
+                ),
+                title="Agricultural Risk Assessment Profile",
+                height=400
+            )
+            
+            st.plotly_chart(fig_risk, use_container_width=True)
+        
+        with col2:
+            st.markdown("**Identified Risks:**")
+            
+            for risk in current_zone['agricultural_risks']:
+                risk_display = risk.replace('_', ' ').title()
+                if 'frost' in risk.lower():
+                    st.warning(f"❄️ {risk_display}")
+                elif 'drought' in risk.lower():
+                    st.error(f"🌵 {risk_display}")
+                elif 'wet' in risk.lower():
+                    st.info(f"🌧️ {risk_display}")
+                else:
+                    st.warning(f"⚠️ {risk_display}")
+            
+            st.markdown("**Risk Mitigation:**")
+            st.success("🛡️ Crop insurance available")
+            st.info("📊 Weather monitoring systems")
+            st.success("🌾 Diverse crop rotation")
+            st.info("💧 Drainage management")
+            
+            st.markdown("**Overall Risk Level:**")
+            overall_risk = sum(risk_categories.values()) / len(risk_categories)
+            if overall_risk <= 0.3:
+                st.success(f"🟢 Low Risk ({overall_risk*100:.0f}%)")
+            elif overall_risk <= 0.6:
+                st.warning(f"🟡 Moderate Risk ({overall_risk*100:.0f}%)")
+            else:
+                st.error(f"🔴 High Risk ({overall_risk*100:.0f}%)")
+    
+    # 5. Farm Enterprise Recommendations
+    with st.expander("🏛️ Farm Enterprise Recommendations", expanded=True):
+        st.markdown("**Recommended Farm Types & Enterprises for Your Climate Zone**")
+        
+        col1, col2 = st.columns([2, 1])
+        
+        with col1:
+            # Enterprise suitability analysis
+            enterprises = current_zone['farm_enterprises']
+            
+            enterprise_data = {
+                'row_crops': {'suitability': 9.5, 'investment': 'High', 'roi': 'High', 'labor': 'Seasonal'},
+                'livestock': {'suitability': 8.2, 'investment': 'High', 'roi': 'Medium', 'labor': 'Year-round'},
+                'dairy': {'suitability': 7.8, 'investment': 'Very High', 'roi': 'Medium', 'labor': 'Intensive'},
+                'grain_storage': {'suitability': 9.0, 'investment': 'Medium', 'roi': 'Medium', 'labor': 'Low'},
+                'specialty_grains': {'suitability': 6.5, 'investment': 'Medium', 'roi': 'Variable', 'labor': 'Medium'},
+                'specialty_crops': {'suitability': 5.8, 'investment': 'Medium', 'roi': 'High', 'labor': 'High'}
+            }
+            
+            # Filter to recommended enterprises
+            recommended_enterprises = {k: enterprise_data[k] for k in enterprises if k in enterprise_data}
+            
+            enterprise_names = list(recommended_enterprises.keys())
+            suitability_scores = [recommended_enterprises[e]['suitability'] for e in enterprise_names]
+            
+            # Create enterprise comparison chart
+            fig_enterprises = go.Figure(data=[
+                go.Bar(x=enterprise_names, y=suitability_scores, 
+                      marker_color=['#28a745', '#17a2b8', '#ffc107', '#20c997'][:len(enterprise_names)],
+                      text=[f"{score}/10" for score in suitability_scores],
+                      textposition='auto')
+            ])
+            
+            fig_enterprises.update_layout(
+                title="Farm Enterprise Suitability Scores",
+                xaxis_title="Enterprise Type",
+                yaxis_title="Suitability Score (1-10)",
+                height=400,
+                yaxis=dict(range=[0, 10])
+            )
+            
+            st.plotly_chart(fig_enterprises, use_container_width=True)
+            
+            # Economic factors
+            st.markdown("**Economic Environment:**")
+            econ = current_zone['economic_factors']
+            
+            col_a, col_b, col_c = st.columns(3)
+            with col_a:
+                st.metric("Production Cost Index", econ['production_cost_index'], "Below national avg")
+            with col_b:
+                st.metric("Market Access", econ['market_access'].title(), "Multiple elevators")
+            with col_c:
+                st.metric("Elevator Distance", econ['elevator_distance'], "Good access")
+        
+        with col2:
+            st.markdown("**Enterprise Details:**")
+            
+            for enterprise in enterprises:
+                if enterprise in enterprise_data:
+                    data = enterprise_data[enterprise]
+                    enterprise_name = enterprise.replace('_', ' ').title()
+                    
+                    st.markdown(f"""
+                    <div class="enterprise-card" style="background: #f8f9fa; padding: 0.8rem; margin: 0.5rem 0; border-radius: 6px; border-left: 3px solid #28a745;">
+                        <strong>{enterprise_name}</strong><br>
+                        Suitability: {data['suitability']}/10<br>
+                        Investment: {data['investment']}<br>
+                        ROI Potential: {data['roi']}<br>
+                        Labor Needs: {data['labor']}
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            st.markdown("**Success Examples:**")
+            st.success("🌽 Johnson Farm: 1,200 acres corn/soy")
+            st.success("🐄 Wilson Ranch: 200 head cattle")
+            st.success("🏬 Miller Grain: On-farm storage")
+            
+            st.markdown("**Extension Resources:**")
+            st.info("📞 County Extension: (515) 555-0123")
+            st.info("🌐 Iowa State University")
+            st.info("📧 Farm Business Planning")
+    
+    # 6. Zone Comparison Tool
+    with st.expander("🔍 Agricultural Zone Comparison Tool", expanded=False):
+        st.markdown("**Compare Multiple Agricultural Climate Zones**")
+        
+        # Zone selection for comparison
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            compare_zones = st.multiselect(
+                "Select zones to compare:",
+                options=list(agricultural_zones.keys()),
+                default=["5b_iowa_agricultural", "6a_illinois_agricultural"],
+                format_func=lambda x: f"{agricultural_zones[x]['climate_zone']} - {agricultural_zones[x]['agricultural_classification'].replace('_', ' ').title()}"
+            )
+        
+        with col2:
+            comparison_metric = st.selectbox(
+                "Primary comparison metric:",
+                ["productivity_index", "growing_season", "crop_suitability", "economic_factors"]
+            )
+        
+        if len(compare_zones) >= 2:
+            # Create comparison data
+            comparison_data = []
+            
+            for zone_id in compare_zones:
+                zone = agricultural_zones[zone_id]
+                
+                if comparison_metric == "crop_suitability":
+                    # Average crop ratings
+                    avg_rating = sum([crop['rating'] for crop in zone['crop_suitability'].values()]) / len(zone['crop_suitability'])
+                    comparison_data.append({
+                        'Zone': zone['climate_zone'],
+                        'Classification': zone['agricultural_classification'].replace('_', ' ').title(),
+                        'Avg_Crop_Rating': avg_rating,
+                        'Productivity_Index': zone['productivity_index'],
+                        'Frost_Free_Days': zone['growing_season']['frost_free_days']
+                    })
+                
+            comp_df = pd.DataFrame(comparison_data)
+            
+            # Multi-metric comparison chart
+            fig_comparison = go.Figure()
+            
+            metrics_to_plot = ['Avg_Crop_Rating', 'Productivity_Index', 'Frost_Free_Days']
+            
+            for zone in comp_df['Zone']:
+                zone_data = comp_df[comp_df['Zone'] == zone].iloc[0]
+                
+                fig_comparison.add_trace(go.Scatterpolar(
+                    r=[zone_data['Avg_Crop_Rating'], zone_data['Productivity_Index'], zone_data['Frost_Free_Days']/200*10],
+                    theta=['Avg Crop Rating', 'Productivity Index', 'Growing Season (scaled)'],
+                    fill='toself',
+                    name=f"Zone {zone}"
+                ))
+            
+            fig_comparison.update_layout(
+                polar=dict(
+                    radialaxis=dict(
+                        visible=True,
+                        range=[0, 10]
+                    )
+                ),
+                showlegend=True,
+                title="Multi-Metric Zone Comparison",
+                height=400
+            )
+            
+            st.plotly_chart(fig_comparison, use_container_width=True)
+            
+            # Detailed comparison table
+            st.markdown("**Detailed Zone Comparison:**")
+            st.dataframe(comp_df, use_container_width=True, hide_index=True)
     
     # Climate Zone Validation Feedback System
     st.subheader("🔍 Climate Zone Validation Dashboard")
@@ -773,6 +1485,74 @@ with st.sidebar:
                 import time
                 time.sleep(2)
                 st.success("✅ Zone re-validation completed! All systems nominal.")
+        
+        if st.button("🔍 Check Zone Consistency", help="Validate climate zone consistency across multiple dimensions"):
+            with st.spinner("Validating climate zone consistency..."):
+                # Mock consistency validation data (in production would call actual API)
+                consistency_data = {
+                    "overall_consistent": True,
+                    "confidence": 0.87,
+                    "checks_performed": ["cross_reference", "spatial", "temporal"],
+                    "warnings": [
+                        "Köppen zone Dfa/Dfb slightly inconsistent with USDA 5b - within acceptable range",
+                        "Northern neighbors show 5a zones - gradual transition detected"
+                    ],
+                    "cross_reference_check": {
+                        "consistent": True,
+                        "confidence": 0.82,
+                        "message": "USDA zone 5b is generally consistent with Köppen Dfa"
+                    },
+                    "spatial_check": {
+                        "consistent": True,
+                        "confidence": 0.85,
+                        "message": "Spatial consistency good: 5/6 neighbors consistent"
+                    },
+                    "temporal_check": {
+                        "consistent": True,
+                        "confidence": 0.93,
+                        "message": "Zone 5b is historically stable"
+                    }
+                }
+                
+                # Display consistency results
+                if consistency_data["overall_consistent"]:
+                    st.success(f"✅ Climate zone consistency validated! (Confidence: {consistency_data['confidence']:.1%})")
+                else:
+                    st.warning(f"⚠️ Some consistency issues detected (Confidence: {consistency_data['confidence']:.1%})")
+                
+                # Show detailed results
+                with st.expander("📋 Detailed Consistency Results", expanded=True):
+                    col_a, col_b, col_c = st.columns(3)
+                    
+                    with col_a:
+                        st.markdown("**Cross-Reference Check**")
+                        ref_check = consistency_data["cross_reference_check"]
+                        status_icon = "✅" if ref_check["consistent"] else "❌"
+                        st.markdown(f"{status_icon} {ref_check['message']}")
+                        st.caption(f"Confidence: {ref_check['confidence']:.1%}")
+                    
+                    with col_b:
+                        st.markdown("**Spatial Check**")
+                        spatial_check = consistency_data["spatial_check"]
+                        status_icon = "✅" if spatial_check["consistent"] else "❌"
+                        st.markdown(f"{status_icon} {spatial_check['message']}")
+                        st.caption(f"Confidence: {spatial_check['confidence']:.1%}")
+                    
+                    with col_c:
+                        st.markdown("**Temporal Check**")
+                        temporal_check = consistency_data["temporal_check"]
+                        status_icon = "✅" if temporal_check["consistent"] else "❌"
+                        st.markdown(f"{status_icon} {temporal_check['message']}")
+                        st.caption(f"Confidence: {temporal_check['confidence']:.1%}")
+                    
+                    # Show warnings if any
+                    if consistency_data["warnings"]:
+                        st.markdown("**⚠️ Consistency Warnings:**")
+                        for warning in consistency_data["warnings"]:
+                            st.warning(f"• {warning}")
+                
+                time.sleep(1)
+                st.success("🔍 Consistency validation completed!")
     
     with col2:
         if st.button("📊 Generate Validation Report", help="Create detailed validation report"):
@@ -791,8 +1571,193 @@ with st.sidebar:
     st.metric("Last Soil Test", "Mar 2024", "")
     st.metric("Recommendations", "12", "3")
 
+# Agricultural Zone Summary Section
+st.markdown("""
+<div class="agricultural-zone-header">
+    <h2>🌾 Agricultural Climate Zone Summary</h2>
+    <p>Your location has been classified as <strong>Zone 5b - Intensive Cropping Region</strong></p>
+</div>
+""", unsafe_allow_html=True)
+
+col1, col2, col3, col4, col5 = st.columns(5)
+
+with col1:
+    st.metric(
+        "Agricultural Productivity", 
+        "8.7/10", 
+        "Excellent",
+        help="Overall agricultural suitability combining climate, soil, and economic factors"
+    )
+
+with col2:
+    st.metric(
+        "Top Crop", 
+        "Corn", 
+        "9.2/10 rating",
+        help="Highest rated crop for your climate zone with yield potential"
+    )
+
+with col3:
+    st.metric(
+        "Growing Season", 
+        "180 days", 
+        "Apr 15 - Oct 12",
+        help="Frost-free growing period for crop production"
+    )
+
+with col4:
+    st.metric(
+        "Risk Level", 
+        "Low", 
+        "Manageable",
+        help="Overall agricultural risk assessment for your zone"
+    )
+
+with col5:
+    st.metric(
+        "Best Enterprise", 
+        "Row Crops", 
+        "9.5/10 fit",
+        help="Most suitable farm enterprise type for your climate zone"
+    )
+
+# Quick agricultural insights
+st.markdown("""
+**🎯 Key Agricultural Insights for Zone 5b:**
+- **Premium corn and soybean production** with yield potential of 180+ bu/acre for corn and 55+ bu/acre for soybeans
+- **Excellent soil conditions** with prairie soils and optimal moisture retention
+- **Strong economic environment** with good market access and below-average production costs
+- **Manageable risk profile** with primary concerns being late spring frost and occasional drought
+- **Multiple enterprise options** including row crops, livestock, dairy, and grain storage operations
+""")
+
+# Climate Zone Change Detection Section
+st.markdown("""
+<div class="change-detection-header">
+    <h3>📈 Climate Zone Change Detection</h3>
+    <p>Track climate zone transitions over time to anticipate agricultural impacts</p>
+</div>
+""", unsafe_allow_html=True)
+
+col1, col2 = st.columns([2, 1])
+
+with col1:
+    if st.button("🔍 Analyze Zone Changes", help="Detect climate zone transitions over time"):
+        with st.spinner("Analyzing climate zone changes..."):
+            # Mock climate zone change data (in production would call actual API)
+            change_data = {
+                "current_zone": {
+                    "zone_id": "6a",
+                    "name": "USDA Zone 6a",
+                    "description": "Moderate (-10°F to -5°F)",
+                    "min_temp_f": -10,
+                    "max_temp_f": -5
+                },
+                "previous_zone": {
+                    "zone_id": "5b", 
+                    "name": "USDA Zone 5b",
+                    "description": "Cool (-15°F to -10°F)",
+                    "min_temp_f": -15,
+                    "max_temp_f": -10
+                },
+                "change_detected": True,
+                "change_confidence": 0.85,
+                "change_date": "2019-03-15T00:00:00",
+                "change_direction": "warmer",
+                "zones_affected": ["5b", "6a"],
+                "trend_analysis": {
+                    "trend_direction": "warmer",
+                    "confidence": 0.87,
+                    "rate_of_change_per_year": 0.12,
+                    "projected_zone_1yr": "6a",
+                    "projected_zone_5yr": "6b"
+                },
+                "recommendations": [
+                    "Consider heat-tolerant crop varieties for future plantings",
+                    "Implement water conservation strategies due to increased evapotranspiration",
+                    "Adjust planting dates to account for longer growing seasons",
+                    "Monitor for new pest and disease pressures from warmer climates",
+                    "High confidence in climate shift - consider major adaptation strategies"
+                ]
+            }
+            
+            # Display change detection results
+            if change_data["change_detected"]:
+                st.success(f"🌡️ Climate zone change detected! (Confidence: {change_data['change_confidence']:.1%})")
+                
+                col_a, col_b = st.columns(2)
+                
+                with col_a:
+                    st.markdown("**Previous Zone**")
+                    prev_zone = change_data["previous_zone"]
+                    st.info(f"**{prev_zone['zone_id']}** - {prev_zone['description']}")
+                    
+                with col_b:
+                    st.markdown("**Current Zone**")  
+                    curr_zone = change_data["current_zone"]
+                    st.success(f"**{curr_zone['zone_id']}** - {curr_zone['description']}")
+                
+                # Change metrics
+                st.markdown("**📊 Change Analysis**")
+                col_x, col_y, col_z = st.columns(3)
+                
+                with col_x:
+                    st.metric(
+                        "Change Direction",
+                        change_data["change_direction"].title(),
+                        f"{change_data['trend_analysis']['rate_of_change_per_year']:.2f}°F/year"
+                    )
+                
+                with col_y:
+                    change_date = datetime.fromisoformat(change_data["change_date"].replace("Z", "+00:00"))
+                    years_ago = (datetime.now().replace(tzinfo=None) - change_date.replace(tzinfo=None)).days // 365
+                    st.metric(
+                        "Transition Date",
+                        f"{years_ago} years ago",
+                        change_date.strftime("%Y")
+                    )
+                
+                with col_z:
+                    projected_zone = change_data["trend_analysis"]["projected_zone_5yr"]
+                    st.metric(
+                        "5-Year Projection", 
+                        f"Zone {projected_zone}",
+                        "Continued warming"
+                    )
+                
+            else:
+                st.info("📊 Climate zone appears stable - no significant changes detected")
+            
+            # Show adaptation recommendations
+            st.markdown("**🌾 Adaptation Recommendations**")
+            for i, rec in enumerate(change_data["recommendations"], 1):
+                if "High confidence" in rec:
+                    st.warning(f"**{i}.** {rec}")
+                else:
+                    st.info(f"**{i}.** {rec}")
+
+with col2:
+    if st.button("📊 View Time Series", help="View detailed historical data"):
+        st.markdown("**Historical Zone Data**")
+        # Mock time series data
+        time_series = [
+            {"year": "2015", "zone": "5b", "confidence": "82%"},
+            {"year": "2017", "zone": "5b", "confidence": "79%"},
+            {"year": "2019", "zone": "6a", "confidence": "85%"},
+            {"year": "2021", "zone": "6a", "confidence": "88%"},
+            {"year": "2024", "zone": "6a", "confidence": "92%"}
+        ]
+        
+        for entry in time_series:
+            if entry["zone"] == "6a":
+                st.success(f"**{entry['year']}**: Zone {entry['zone']} ({entry['confidence']})")
+            else:
+                st.info(f"**{entry['year']}**: Zone {entry['zone']} ({entry['confidence']})")
+
+st.divider()
+
 # Main content tabs
-tab1, tab2, tab3, tab4 = st.tabs(["🏠 Dashboard", "🌱 Crop Selection", "🏔️ Soil Health", "🧪 Fertilizer Strategy"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🏠 Dashboard", "🌱 Crop Selection", "🏔️ Soil Health", "🧪 Fertilizer Strategy", "🌾 Zone Analysis"])
 
 with tab1:
     # Dashboard content
@@ -871,48 +1836,275 @@ with tab1:
         st.plotly_chart(fig_conf, use_container_width=True)
 
 with tab2:
-    # Crop Selection tab
-    st.subheader("🌱 Crop Selection Recommendations")
+    # Crop Selection tab with Planting Date Integration
+    st.subheader("🌱 Crop Selection & Planting Timeline")
     
-    col1, col2 = st.columns(2)
+    # Create tabs within the crop selection
+    crop_tab1, crop_tab2, crop_tab3 = st.tabs(["📊 Recommendations", "📅 Planting Calendar", "🌡️ Frost Analysis"])
     
-    with col1:
-        st.write("**Location & Farm Information**")
-        crop_location = st.text_input("Location", value=location, key="crop_location")
-        crop_farm_size = st.number_input("Farm Size (acres)", value=farm_size, key="crop_farm_size")
-        irrigation = st.checkbox("Irrigation Available")
+    with crop_tab1:
+        col1, col2 = st.columns(2)
         
-        st.write("**Soil Test Data**")
-        soil_ph = st.slider("Soil pH", 3.0, 10.0, 6.5, 0.1)
-        organic_matter = st.slider("Organic Matter (%)", 0.0, 15.0, 3.5, 0.1)
-        phosphorus = st.number_input("Phosphorus (ppm)", 0, 200, 25)
-        potassium = st.number_input("Potassium (ppm)", 0, 800, 180)
+        with col1:
+            st.write("**Location & Farm Information**")
+            crop_location = st.text_input("Location", value=location, key="crop_location")
+            crop_farm_size = st.number_input("Farm Size (acres)", value=farm_size, key="crop_farm_size")
+            irrigation = st.checkbox("Irrigation Available")
+            
+            st.write("**Soil Test Data**")
+            soil_ph = st.slider("Soil pH", 3.0, 10.0, 6.5, 0.1)
+            organic_matter = st.slider("Organic Matter (%)", 0.0, 15.0, 3.5, 0.1)
+            phosphorus = st.number_input("Phosphorus (ppm)", 0, 200, 25)
+            potassium = st.number_input("Potassium (ppm)", 0, 800, 180)
+        
+        with col2:
+            if st.button("🔍 Get Crop Recommendations with Planting Dates", key="crop_rec"):
+                with st.spinner("Calculating optimal planting dates..."):
+                    # Prepare location data for API calls
+                    location_data = {
+                        "latitude": 42.0,  # Default to Iowa coordinates
+                        "longitude": -93.0,
+                        "elevation_ft": 1000,
+                        "address": crop_location or "Farm Location",
+                        "state": "Iowa",
+                        "county": "Story", 
+                        "climate_zone": "5b",
+                        "climate_zone_name": "USDA Zone 5b",
+                        "temperature_range_f": {"min": -15, "max": -10},
+                        "climate_confidence": 0.85
+                    }
+                    
+                    st.write("**🌟 Recommended Crops with Planting Timing:**")
+                    
+                    # Enhanced recommendations with planting dates
+                    recommendations = [
+                        {"crop": "corn", "variety": "Pioneer P1197AM", "confidence": 92, "yield": "185 bu/acre"},
+                        {"crop": "soybean", "variety": "Asgrow AG2834", "confidence": 88, "yield": "58 bu/acre"},
+                        {"crop": "wheat", "variety": "AgriPro SY Monument", "confidence": 75, "yield": "65 bu/acre"}
+                    ]
+                    
+                    for i, rec in enumerate(recommendations):
+                        with st.container():
+                            # Get planting dates for this crop
+                            planting_data = get_planting_dates(rec["crop"], location_data, "spring")
+                            
+                            col_a, col_b, col_c, col_d = st.columns([2, 1, 1, 1.5])
+                            with col_a:
+                                st.write(f"**{rec['crop'].title()}** - {rec['variety']}")
+                                
+                            with col_b:
+                                st.metric("Confidence", f"{rec['confidence']}%")
+                                
+                            with col_c:
+                                st.metric("Yield Potential", rec['yield'])
+                                
+                            with col_d:
+                                if planting_data and planting_data.get('success'):
+                                    optimal_date = planting_data.get('optimal_date')
+                                    if optimal_date:
+                                        formatted_date = format_planting_date(optimal_date)
+                                        st.metric("🗓️ Plant By", formatted_date)
+                                        
+                                        # Show planting window
+                                        earliest = planting_data.get('earliest_safe_date')
+                                        latest = planting_data.get('latest_safe_date')
+                                        if earliest and latest:
+                                            earliest_fmt = format_planting_date(earliest)
+                                            latest_fmt = format_planting_date(latest)
+                                            st.caption(f"Window: {earliest_fmt} - {latest_fmt}")
+                                    else:
+                                        st.caption("Planting date unavailable")
+                                else:
+                                    st.caption("⚠️ API unavailable - using defaults")
+                                    # Show default planting recommendations
+                                    default_dates = {
+                                        "corn": "May 1 - May 15",
+                                        "soybean": "May 10 - May 25", 
+                                        "wheat": "September 15 - October 1"
+                                    }
+                                    st.metric("🗓️ Plant By", default_dates.get(rec["crop"], "Spring"))
+                            
+                            # Show additional planting information
+                            if planting_data and planting_data.get('success'):
+                                considerations = planting_data.get('frost_considerations', [])
+                                if considerations:
+                                    st.info(f"💡 **Tip:** {considerations[0]}")
+                                    
+                                warnings = planting_data.get('climate_warnings', [])
+                                if warnings:
+                                    st.warning(f"⚠️ **Warning:** {warnings[0]}")
+                            
+                            if i == 0:  # Highlight top recommendation
+                                st.success("🏆 Top recommendation based on your soil conditions and climate")
+                            
+                            st.divider()
     
-    with col2:
-        if st.button("🔍 Get Crop Recommendations", key="crop_rec"):
-            # Display mock recommendations
-            st.write("**Recommended Crops:**")
-            
-            recommendations = [
-                {"crop": "Corn", "variety": "Pioneer P1197AM", "confidence": 92, "yield": "185 bu/acre"},
-                {"crop": "Soybean", "variety": "Asgrow AG2834", "confidence": 88, "yield": "58 bu/acre"},
-                {"crop": "Winter Wheat", "variety": "AgriPro SY Monument", "confidence": 75, "yield": "65 bu/acre"}
-            ]
-            
-            for i, rec in enumerate(recommendations):
-                with st.container():
-                    col_a, col_b, col_c = st.columns([2, 1, 1])
-                    with col_a:
-                        st.write(f"**{rec['crop']}** - {rec['variety']}")
-                    with col_b:
-                        st.metric("Confidence", f"{rec['confidence']}%")
-                    with col_c:
-                        st.metric("Yield Potential", rec['yield'])
+    with crop_tab2:
+        st.write("**🗓️ Planting Calendar for Available Crops**")
+        
+        # Location input for calendar
+        cal_location = st.text_input("Location for Calendar", value=location, key="cal_location")
+        
+        if st.button("Generate Planting Calendar", key="gen_calendar"):
+            with st.spinner("Generating planting calendar..."):
+                # Prepare location data
+                location_data = {
+                    "latitude": 42.0,
+                    "longitude": -93.0,
+                    "elevation_ft": 1000,
+                    "address": cal_location or "Farm Location",
+                    "state": "Iowa",
+                    "county": "Story",
+                    "climate_zone": "5b",
+                    "climate_zone_name": "USDA Zone 5b",
+                    "temperature_range_f": {"min": -15, "max": -10},
+                    "climate_confidence": 0.85
+                }
+                
+                # Get available crops
+                available_crops = get_available_crops()
+                
+                st.write("**Spring Planting Timeline:**")
+                
+                # Create calendar data
+                calendar_data = []
+                for crop in available_crops[:6]:  # Limit to first 6 crops for display
+                    planting_info = get_planting_dates(crop, location_data, "spring")
                     
-                    if i == 0:  # Highlight top recommendation
-                        st.success("🏆 Top recommendation based on your soil conditions")
+                    if planting_info and planting_info.get('success'):
+                        calendar_data.append({
+                            "Crop": crop.title(),
+                            "Optimal Date": format_planting_date(planting_info.get('optimal_date', '')),
+                            "Earliest Safe": format_planting_date(planting_info.get('earliest_safe_date', '')),
+                            "Latest Safe": format_planting_date(planting_info.get('latest_safe_date', '')),
+                            "Season Length": f"{planting_info.get('days_to_maturity', 0)} days"
+                        })
+                    else:
+                        # Fallback data
+                        default_calendar = {
+                            "corn": {"optimal": "May 5", "earliest": "April 20", "latest": "May 20", "days": 110},
+                            "soybean": {"optimal": "May 15", "earliest": "May 1", "latest": "June 1", "days": 105},
+                            "wheat": {"optimal": "September 25", "earliest": "September 15", "latest": "October 5", "days": 240},
+                            "lettuce": {"optimal": "April 1", "earliest": "March 15", "latest": "April 15", "days": 65},
+                            "tomato": {"optimal": "May 20", "earliest": "May 10", "latest": "June 1", "days": 85},
+                            "potato": {"optimal": "April 15", "earliest": "April 1", "latest": "May 1", "days": 90}
+                        }
+                        
+                        crop_data = default_calendar.get(crop, {"optimal": "Spring", "earliest": "Early Spring", "latest": "Late Spring", "days": 90})
+                        calendar_data.append({
+                            "Crop": crop.title(),
+                            "Optimal Date": crop_data["optimal"],
+                            "Earliest Safe": crop_data["earliest"],
+                            "Latest Safe": crop_data["latest"],
+                            "Season Length": f"{crop_data['days']} days"
+                        })
+                
+                if calendar_data:
+                    df = pd.DataFrame(calendar_data)
+                    st.dataframe(df, use_container_width=True)
                     
-                    st.divider()
+                    # Show as chart
+                    st.write("**📊 Planting Timeline Visualization:**")
+                    
+                    # Create a simple timeline chart
+                    months = ['Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct']
+                    month_positions = {month: i for i, month in enumerate(months)}
+                    
+                    chart_data = []
+                    for _, row in df.iterrows():
+                        try:
+                            optimal_month = row['Optimal Date'].split()[0][:3]
+                            if optimal_month in month_positions:
+                                chart_data.append({
+                                    'Crop': row['Crop'],
+                                    'Month': optimal_month,
+                                    'Position': month_positions[optimal_month]
+                                })
+                        except:
+                            pass
+                    
+                    if chart_data:
+                        chart_df = pd.DataFrame(chart_data)
+                        fig = px.scatter(chart_df, x='Position', y='Crop', 
+                                       title='Optimal Planting Times by Crop',
+                                       labels={'Position': 'Month'})
+                        fig.update_xaxis(tickvals=list(range(len(months))), ticktext=months)
+                        st.plotly_chart(fig, use_container_width=True)
+    
+    with crop_tab3:
+        st.write("**🌡️ Frost Date Analysis for Your Location**")
+        
+        frost_location = st.text_input("Location for Frost Analysis", value=location, key="frost_location")
+        
+        if st.button("Get Frost Date Analysis", key="frost_analysis"):
+            with st.spinner("Analyzing frost dates..."):
+                location_data = {
+                    "latitude": 42.0,
+                    "longitude": -93.0,
+                    "elevation_ft": 1000,
+                    "address": frost_location or "Farm Location",
+                    "state": "Iowa",
+                    "county": "Story",
+                    "climate_zone": "5b",
+                    "climate_zone_name": "USDA Zone 5b",
+                    "temperature_range_f": {"min": -15, "max": -10},
+                    "climate_confidence": 0.85
+                }
+                
+                frost_data = get_frost_dates(location_data)
+                
+                if frost_data and frost_data.get('success'):
+                    col1, col2, col3 = st.columns(3)
+                    
+                    with col1:
+                        last_frost = frost_data.get('last_frost_date')
+                        if last_frost:
+                            st.metric("🌸 Last Spring Frost", format_planting_date(last_frost))
+                        else:
+                            st.metric("🌸 Last Spring Frost", "April 15 (estimated)")
+                    
+                    with col2:
+                        first_frost = frost_data.get('first_frost_date')
+                        if first_frost:
+                            st.metric("🍂 First Fall Frost", format_planting_date(first_frost))
+                        else:
+                            st.metric("🍂 First Fall Frost", "October 15 (estimated)")
+                    
+                    with col3:
+                        season_length = frost_data.get('growing_season_length', 183)
+                        st.metric("📏 Growing Season", f"{season_length} days")
+                    
+                    confidence = frost_data.get('confidence_level', 'estimated')
+                    if confidence == 'historical':
+                        st.success("✅ Based on historical weather data")
+                    elif confidence == 'estimated':
+                        st.info("ℹ️ Based on climate zone estimation")
+                    else:
+                        st.warning("⚠️ Using default values")
+                        
+                    # Frost safety recommendations
+                    st.write("**🛡️ Frost Protection Recommendations:**")
+                    frost_tips = [
+                        "Plant warm-season crops 2 weeks after last frost date",
+                        "Use row covers or cold frames for early season protection", 
+                        "Monitor soil temperature - should be 50°F+ for most crops",
+                        "Cool-season crops can be planted 2-4 weeks before last frost"
+                    ]
+                    
+                    for tip in frost_tips:
+                        st.write(f"• {tip}")
+                        
+                else:
+                    # Show default frost information
+                    st.warning("⚠️ API unavailable - showing default frost information for Zone 5b")
+                    
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("🌸 Last Spring Frost", "April 15 (estimated)")
+                    with col2:
+                        st.metric("🍂 First Fall Frost", "October 15 (estimated)")
+                    with col3:
+                        st.metric("📏 Growing Season", "183 days")
 
 with tab3:
     # Soil Health tab
@@ -1054,6 +2246,260 @@ with tab4:
             ))
             fig.update_layout(title="Fertilizer Cost Breakdown", height=300)
             st.plotly_chart(fig, use_container_width=True)
+
+with tab5:
+    # Agricultural Zone Analysis tab
+    st.subheader("🌾 Comprehensive Agricultural Zone Analysis")
+    
+    # Zone overview
+    st.markdown("""
+    **Climate Zone 5b Agricultural Profile:**
+    This analysis provides detailed agricultural insights for your specific climate zone, 
+    combining climate data with farming-specific information to support optimal agricultural decision-making.
+    """)
+    
+    # Agricultural zone metrics
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.markdown("### 📊 Zone Characteristics")
+        st.info("**USDA Zone:** 5b (-15°F to -10°F)")
+        st.info("**Classification:** Intensive Cropping")
+        st.info("**Frost-Free Days:** 180 days")
+        st.info("**Growing Degree Days:** 3,100 GDD")
+        
+    with col2:
+        st.markdown("### 🌽 Top Crops")
+        zone_crops = [
+            ("Corn", "9.2/10", "180 bu/acre"),
+            ("Soybeans", "8.8/10", "55 bu/acre"), 
+            ("Alfalfa", "8.3/10", "6 ton/acre"),
+            ("Oats", "8.0/10", "80 bu/acre"),
+            ("Wheat", "7.5/10", "65 bu/acre")
+        ]
+        
+        for crop, rating, yield_est in zone_crops:
+            st.success(f"**{crop}:** {rating} - {yield_est}")
+            
+    with col3:
+        st.markdown("### 🏛️ Farm Enterprises")
+        enterprises = [
+            ("Row Crops", "9.5/10", "Excellent fit"),
+            ("Grain Storage", "9.0/10", "High demand"),
+            ("Livestock", "8.2/10", "Good potential"),
+            ("Dairy", "7.8/10", "Viable option")
+        ]
+        
+        for enterprise, score, note in enterprises:
+            st.info(f"**{enterprise}:** {score} - {note}")
+    
+    st.divider()
+    
+    # Detailed agricultural calendar
+    st.markdown("### 📅 Detailed Agricultural Calendar")
+    
+    # Create comprehensive agricultural timeline
+    agricultural_calendar = {
+        "Month": ["March", "April", "May", "June", "July", "August", "September", "October", "November"],
+        "Key_Activities": [
+            "Equipment prep, soil testing",
+            "Field prep, early planting",
+            "Main planting season",
+            "Cultivation, pest monitoring", 
+            "Crop monitoring, spraying",
+            "Late season care",
+            "Early harvest, grain handling",
+            "Main harvest season",
+            "Field cleanup, storage management"
+        ],
+        "Weather_Focus": [
+            "Soil conditions",
+            "Frost risk",
+            "Planting conditions", 
+            "Moisture levels",
+            "Heat stress",
+            "Disease pressure",
+            "Harvest weather",
+            "Frost risk",
+            "Winter prep"
+        ],
+        "Risk_Level": [2, 4, 3, 2, 3, 2, 3, 4, 2]
+    }
+    
+    cal_df = pd.DataFrame(agricultural_calendar)
+    
+    # Risk level visualization
+    risk_colors = {1: '#28a745', 2: '#20c997', 3: '#ffc107', 4: '#fd7e14', 5: '#dc3545'}
+    cal_df['Color'] = cal_df['Risk_Level'].map(risk_colors)
+    
+    fig_calendar = px.bar(cal_df, x='Month', y='Risk_Level',
+                         color='Risk_Level', 
+                         color_continuous_scale='RdYlGn_r',
+                         title="Monthly Agricultural Risk & Activity Level",
+                         hover_data=['Key_Activities', 'Weather_Focus'])
+    
+    fig_calendar.update_layout(height=400)
+    st.plotly_chart(fig_calendar, use_container_width=True)
+    
+    # Monthly breakdown
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("### 🌡️ Critical Weather Periods")
+        
+        critical_periods = [
+            ("Late April", "Last frost risk", "Monitor planting timing", "warning"),
+            ("May 1-15", "Optimal planting window", "Ideal conditions for corn/soy", "success"),
+            ("July-August", "Peak growing season", "Monitor heat stress & moisture", "info"),
+            ("Early October", "First frost risk", "Plan harvest acceleration", "warning"),
+            ("October 15+", "Harvest window closing", "Complete grain harvest", "error")
+        ]
+        
+        for period, event, action, alert_type in critical_periods:
+            if alert_type == "success":
+                st.success(f"**{period}:** {event} - {action}")
+            elif alert_type == "warning":
+                st.warning(f"**{period}:** {event} - {action}")
+            elif alert_type == "info":
+                st.info(f"**{period}:** {event} - {action}")
+            elif alert_type == "error":
+                st.error(f"**{period}:** {event} - {action}")
+    
+    with col2:
+        st.markdown("### 💰 Economic Considerations")
+        
+        economic_factors = [
+            ("Production Costs", "15% below national avg", "Competitive advantage"),
+            ("Market Access", "Excellent", "Multiple elevators 5-10 miles"),
+            ("Land Values", "Stable/increasing", "Strong agricultural economy"),
+            ("Input Availability", "Good", "Multiple supplier options"),
+            ("Crop Insurance", "Available", "Strong participation rates")
+        ]
+        
+        for factor, status, note in economic_factors:
+            st.info(f"**{factor}:** {status}")
+            st.caption(note)
+    
+    st.divider()
+    
+    # Zone comparison with neighbors
+    st.markdown("### 🗺️ Regional Zone Comparison")
+    
+    neighbor_zones = {
+        "Zone": ["4b (Minnesota)", "5a (Nebraska)", "5b (Iowa - You)", "6a (Illinois)", "6b (Missouri)"],
+        "Frost_Free_Days": [140, 160, 180, 200, 210],
+        "Corn_Rating": [7.8, 8.5, 9.2, 9.4, 8.6],
+        "Soy_Rating": [8.2, 8.0, 8.8, 9.0, 8.9],
+        "Risk_Level": [3.2, 2.8, 2.5, 2.3, 2.7]
+    }
+    
+    comparison_df = pd.DataFrame(neighbor_zones)
+    comparison_df['Your_Zone'] = comparison_df['Zone'].str.contains('You')
+    
+    # Multi-metric comparison
+    fig_multi = go.Figure()
+    
+    for i, zone in enumerate(comparison_df['Zone']):
+        is_current = 'You' in zone
+        line_width = 4 if is_current else 2
+        marker_size = 15 if is_current else 10
+        
+        fig_multi.add_trace(go.Scatter(
+            x=comparison_df.loc[i, 'Frost_Free_Days'],
+            y=comparison_df.loc[i, 'Corn_Rating'],
+            mode='markers+text',
+            marker=dict(
+                size=marker_size,
+                color='red' if is_current else 'blue',
+                line=dict(width=line_width, color='darkblue')
+            ),
+            text=zone.split(' ')[0],
+            textposition='top center',
+            name=zone,
+            hovertemplate=f"<b>{zone}</b><br>" +
+                         f"Frost-Free Days: {comparison_df.loc[i, 'Frost_Free_Days']}<br>" +
+                         f"Corn Rating: {comparison_df.loc[i, 'Corn_Rating']}<br>" +
+                         f"Soy Rating: {comparison_df.loc[i, 'Soy_Rating']}<br>" +
+                         f"Risk Level: {comparison_df.loc[i, 'Risk_Level']}<extra></extra>"
+        ))
+    
+    fig_multi.update_layout(
+        title="Zone Comparison: Growing Season vs Crop Suitability",
+        xaxis_title="Frost-Free Days",
+        yaxis_title="Corn Suitability Rating (1-10)",
+        height=400,
+        showlegend=False
+    )
+    
+    st.plotly_chart(fig_multi, use_container_width=True)
+    
+    # Summary insights
+    st.markdown("### 🎯 Zone Analysis Summary")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Competitive Advantages:**")
+        st.success("✅ Optimal climate for major row crops")
+        st.success("✅ Excellent soil resources") 
+        st.success("✅ Strong agricultural infrastructure")
+        st.success("✅ Favorable economics")
+        st.success("✅ Manageable risk profile")
+        
+    with col2:
+        st.markdown("**Areas for Attention:**")
+        st.warning("⚠️ Monitor spring frost timing")
+        st.info("ℹ️ Diversify crop rotation options")
+        st.warning("⚠️ Plan for occasional droughts")
+        st.info("ℹ️ Consider specialty crop opportunities")
+        st.info("ℹ️ Optimize harvest timing")
+    
+    # Action recommendations
+    st.markdown("### 📋 Actionable Recommendations")
+    
+    recommendations = [
+        {
+            "category": "Crop Selection",
+            "recommendations": [
+                "Focus on corn and soybean as primary crops (9+ ratings)",
+                "Consider adding alfalfa for livestock feed and soil health",
+                "Evaluate winter wheat as a third crop for rotation",
+                "Test specialty corn varieties for premium markets"
+            ]
+        },
+        {
+            "category": "Risk Management", 
+            "recommendations": [
+                "Implement comprehensive crop insurance coverage",
+                "Develop frost protection strategies for early/late season",
+                "Install weather monitoring equipment",
+                "Create drought contingency plans"
+            ]
+        },
+        {
+            "category": "Infrastructure",
+            "recommendations": [
+                "Invest in on-farm grain storage (9.0/10 suitability)",
+                "Upgrade field drainage systems for wet springs", 
+                "Consider livestock facilities for diversification",
+                "Improve machinery for efficient harvest timing"
+            ]
+        },
+        {
+            "category": "Economic Optimization",
+            "recommendations": [
+                "Leverage below-average production costs",
+                "Explore premium grain marketing contracts",
+                "Consider vertical integration opportunities",
+                "Evaluate land expansion possibilities"
+            ]
+        }
+    ]
+    
+    for rec_category in recommendations:
+        with st.expander(f"🎯 {rec_category['category']} Recommendations", expanded=False):
+            for rec in rec_category['recommendations']:
+                st.write(f"• {rec}")
 
 # Footer
 st.markdown("---")

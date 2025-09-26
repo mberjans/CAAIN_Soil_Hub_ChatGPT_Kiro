@@ -10,19 +10,23 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, AsyncMock
 from datetime import date
 import json
+import sys
+from pathlib import Path
 
-from src.main import app
-from src.models.cover_crop_models import (
+# Add the src directory to the path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
+
+from main import app
+from models.cover_crop_models import (
     CoverCropSelectionRequest,
     CoverCropSpecies,
+    CoverCropType,
     SoilConditions,
     CoverCropObjectives,
     SoilBenefit,
-    GrowingSeason
-)
-from src.models.goal_models import (
+    GrowingSeason,
     GoalBasedObjectives,
-    GoalCategory,
+    FarmerGoalCategory,
     SpecificGoal,
     GoalPriority,
     GoalBasedRecommendation
@@ -39,45 +43,48 @@ def client():
 def sample_goal_based_request():
     """Sample goal-based recommendation request."""
     return {
-        "request_id": "test_goal_api_001",
-        "location": {
-            "latitude": 40.0,
-            "longitude": -85.0
-        },
-        "soil_conditions": {
-            "ph": 6.5,
-            "organic_matter_percent": 2.5,
-            "drainage_class": "moderately_well_drained",
-            "erosion_risk": "moderate"
+        "request": {
+            "request_id": "test_goal_api_001",
+            "location": {
+                "latitude": 40.0,
+                "longitude": -85.0
+            },
+            "soil_conditions": {
+                "ph": 6.5,
+                "organic_matter_percent": 2.5,
+                "drainage_class": "moderately_well_drained",
+                "erosion_risk": "moderate"
+            },
+            "objectives": {
+                "primary_goals": ["nitrogen_fixation", "erosion_control"],
+                "nitrogen_needs": True,
+                "erosion_control_priority": True
+            },
+            "planting_window": {
+                "start": "2024-09-15",
+                "end": "2024-10-15"
+            },
+            "field_size_acres": 50.0
         },
         "objectives": {
-            "primary_goals": ["nitrogen_fixation", "erosion_control"],
-            "nitrogen_needs": True,
-            "erosion_control_priority": True
-        },
-        "planting_window": {
-            "start": "2024-09-15",
-            "end": "2024-10-15"
-        },
-        "field_size_acres": 50.0,
-        "farmer_goals": {
-            "goal_categories": [
+            "farmer_goals": [
                 {
-                    "category_name": "nitrogen_management",
-                    "specific_goals": [
-                        {
-                            "goal_name": "maximize_nitrogen_fixation",
-                            "target_value": 150.0,
-                            "priority": "high",
-                            "weight": 0.6
-                        },
-                        {
-                            "goal_name": "reduce_fertilizer_costs",
-                            "target_value": 40.0,
-                            "priority": "high",
-                            "weight": 0.4
-                        }
-                    ]
+                    "goal_id": "maximize_nitrogen_fixation",
+                    "category": "production",
+                    "priority": "high",
+                    "priority_weight": 0.6,
+                    "target_benefit": "nitrogen_fixation",
+                    "quantitative_target": 150.0,
+                    "target_unit": "lbs/acre"
+                },
+                {
+                    "goal_id": "reduce_fertilizer_costs", 
+                    "category": "economic",
+                    "priority": "high",
+                    "priority_weight": 0.4,
+                    "target_benefit": "cost_reduction",
+                    "quantitative_target": 40.0,
+                    "target_unit": "percent"
                 }
             ]
         }
@@ -88,45 +95,48 @@ def sample_goal_based_request():
 def sample_erosion_control_request():
     """Sample erosion control focused request."""
     return {
-        "request_id": "test_erosion_api_001",
-        "location": {
-            "latitude": 42.0,
-            "longitude": -87.0
-        },
-        "soil_conditions": {
-            "ph": 6.8,
-            "organic_matter_percent": 3.2,
-            "drainage_class": "well_drained",
-            "erosion_risk": "high"
+        "request": {
+            "request_id": "test_erosion_api_001",
+            "location": {
+                "latitude": 42.0,
+                "longitude": -87.0
+            },
+            "soil_conditions": {
+                "ph": 6.8,
+                "organic_matter_percent": 3.2,
+                "drainage_class": "well_drained",
+                "erosion_risk": "high"
+            },
+            "objectives": {
+                "primary_goals": ["erosion_control", "weed_suppression"],
+                "nitrogen_needs": False,
+                "erosion_control_priority": True
+            },
+            "planting_window": {
+                "start": "2024-08-20",
+                "end": "2024-09-20"
+            },
+            "field_size_acres": 75.0
         },
         "objectives": {
-            "primary_goals": ["erosion_control", "weed_suppression"],
-            "nitrogen_needs": False,
-            "erosion_control_priority": True
-        },
-        "planting_window": {
-            "start": "2024-08-20",
-            "end": "2024-09-20"
-        },
-        "field_size_acres": 75.0,
-        "farmer_goals": {
-            "goal_categories": [
+            "farmer_goals": [
                 {
-                    "category_name": "erosion_control",
-                    "specific_goals": [
-                        {
-                            "goal_name": "minimize_soil_loss",
-                            "target_value": 2.0,
-                            "priority": "high",
-                            "weight": 0.7
-                        },
-                        {
-                            "goal_name": "maximize_ground_cover",
-                            "target_value": 85.0,
-                            "priority": "high",
-                            "weight": 0.3
-                        }
-                    ]
+                    "goal_id": "minimize_soil_loss",
+                    "category": "environmental",
+                    "priority": "high",
+                    "priority_weight": 0.7,
+                    "target_benefit": "erosion_control",
+                    "quantitative_target": 2.0,
+                    "target_unit": "tons/acre/year"
+                },
+                {
+                    "goal_id": "maximize_ground_cover",
+                    "category": "environmental",
+                    "priority": "high",
+                    "priority_weight": 0.3,
+                    "target_benefit": "erosion_control",
+                    "quantitative_target": 85.0,
+                    "target_unit": "percent"
                 }
             ]
         }
@@ -139,41 +149,41 @@ def mock_goal_based_recommendation():
     return GoalBasedRecommendation(
         request_id="test_goal_api_001",
         farmer_goals=GoalBasedObjectives(
-            goal_categories=[
-                GoalCategory(
-                    category_name="nitrogen_management",
-                    specific_goals=[
-                        SpecificGoal(
-                            goal_name="maximize_nitrogen_fixation",
-                            target_value=150.0,
-                            priority=GoalPriority.HIGH,
-                            weight=0.6
-                        )
-                    ]
+            specific_goals=[
+                SpecificGoal(
+                    goal_id="maximize_nitrogen_fixation",
+                    category=FarmerGoalCategory.NUTRIENT_MANAGEMENT,
+                    priority=GoalPriority.HIGH,
+                    weight=0.6,
+                    target_benefit=SoilBenefit.NITROGEN_FIXATION,
+                    quantitative_target=150.0,
+                    target_unit="lbs/acre"
                 )
-            ]
+            ],
+            primary_focus=FarmerGoalCategory.NUTRIENT_MANAGEMENT
         ),
-        recommended_species=[
-            CoverCropSpecies(
-                species_id="CC001",
-                common_name="Crimson Clover",
-                scientific_name="Trifolium incarnatum",
-                cover_crop_type="legume",
-                primary_benefits=[SoilBenefit.NITROGEN_FIXATION],
-                secondary_benefits=[SoilBenefit.EROSION_CONTROL],
-                hardiness_zones=["6a", "7a"],
-                growing_season=GrowingSeason.WINTER,
-                seeding_rate_lbs_per_acre=15.0,
-                seeding_depth_inches=0.25,
-                days_to_establishment=21,
-                nitrogen_fixation_lbs_per_acre=120,
-                erosion_control_rating=7,
-                weed_suppression_rating=6,
-                drought_tolerance_rating=5,
-                cold_tolerance_rating=8,
-                cost_per_lb=2.50
-            )
-        ],
+            recommended_species=[
+                CoverCropSpecies(
+                    species_id="CC001",
+                    common_name="Crimson Clover",
+                    scientific_name="Trifolium incarnatum",
+                    cover_crop_type=CoverCropType.LEGUME,
+                    hardiness_zones=["6a", "7a"],
+                    growing_season=GrowingSeason.WINTER,
+                    ph_range={"min": 6.0, "max": 7.5},
+                    drainage_tolerance=["well_drained", "moderately_well_drained"],
+                    seeding_rate_lbs_acre={"broadcast": 15.0, "drilled": 12.0},
+                    planting_depth_inches=0.25,
+                    days_to_establishment=21,
+                    biomass_production="high",
+                    primary_benefits=[SoilBenefit.NITROGEN_FIXATION],
+                    nitrogen_fixation_lbs_acre=120,
+                    root_depth_feet=2.0,
+                    termination_methods=["mowing", "herbicide", "frost"],
+                    cash_crop_compatibility=["corn", "soybeans", "cotton"],
+                    seed_cost_per_acre=52.5
+                )
+            ],
         goal_achievement_scores={"nitrogen_management": 0.85},
         optimized_seeding_rates={"CC001": 15.0},
         goal_focused_management={
@@ -208,7 +218,7 @@ class TestGoalBasedRecommendationsEndpoint:
         mock_goal_based_recommendation
     ):
         """Test successful goal-based recommendations request."""
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.get_goal_based_recommendations',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.get_goal_based_recommendations',
                    new_callable=AsyncMock, return_value=mock_goal_based_recommendation):
             
             response = client.post(
@@ -256,58 +266,54 @@ class TestGoalBasedRecommendationsEndpoint:
     ):
         """Test goal-based recommendations with multiple goal categories."""
         multi_category_request = {
-            "request_id": "test_multi_goal_001",
-            "location": {"latitude": 40.0, "longitude": -85.0},
-            "soil_conditions": {
-                "ph": 6.5,
-                "organic_matter_percent": 2.5,
-                "drainage_class": "moderately_well_drained",
-                "erosion_risk": "moderate"
+            "request": {
+                "request_id": "test_multi_goal_001",
+                "location": {"latitude": 40.0, "longitude": -85.0},
+                "soil_conditions": {
+                    "ph": 6.5,
+                    "organic_matter_percent": 2.5,
+                    "drainage_class": "moderately_well_drained",
+                    "erosion_risk": "moderate"
+                },
+                "objectives": {
+                    "primary_goals": ["nitrogen_fixation", "erosion_control", "organic_matter"],
+                    "nitrogen_needs": True,
+                    "erosion_control_priority": True
+                },
+                "planting_window": {
+                    "start": "2024-09-15",
+                    "end": "2024-10-15"
+                },
+                "field_size_acres": 50.0
             },
             "objectives": {
-                "primary_goals": ["nitrogen_fixation", "erosion_control", "organic_matter"],
-                "nitrogen_needs": True,
-                "erosion_control_priority": True
-            },
-            "planting_window": {
-                "start": "2024-09-15",
-                "end": "2024-10-15"
-            },
-            "field_size_acres": 50.0,
-            "farmer_goals": {
-                "goal_categories": [
+                "farmer_goals": [
                     {
-                        "category_name": "nitrogen_management",
-                        "specific_goals": [
-                            {
-                                "goal_name": "maximize_nitrogen_fixation",
-                                "target_value": 150.0,
-                                "priority": "high",
-                                "weight": 0.4
-                            }
-                        ]
+                        "goal_id": "maximize_nitrogen_fixation",
+                        "category": "production",
+                        "priority": "high",
+                        "priority_weight": 0.4,
+                        "target_benefit": "nitrogen_fixation",
+                        "quantitative_target": 150.0,
+                        "target_unit": "lbs/acre"
                     },
                     {
-                        "category_name": "soil_health",
-                        "specific_goals": [
-                            {
-                                "goal_name": "increase_organic_matter",
-                                "target_value": 0.5,
-                                "priority": "medium",
-                                "weight": 0.3
-                            }
-                        ]
+                        "goal_id": "increase_organic_matter",
+                        "category": "environmental",
+                        "priority": "medium", 
+                        "priority_weight": 0.3,
+                        "target_benefit": "organic_matter",
+                        "quantitative_target": 0.5,
+                        "target_unit": "percent"
                     },
                     {
-                        "category_name": "erosion_control",
-                        "specific_goals": [
-                            {
-                                "goal_name": "minimize_soil_loss",
-                                "target_value": 2.0,
-                                "priority": "high",
-                                "weight": 0.3
-                            }
-                        ]
+                        "goal_id": "minimize_soil_loss",
+                        "category": "environmental",
+                        "priority": "high",
+                        "priority_weight": 0.3,
+                        "target_benefit": "erosion_control",
+                        "quantitative_target": 2.0,
+                        "target_unit": "tons/acre/year"
                     }
                 ]
             }
@@ -321,7 +327,7 @@ class TestGoalBasedRecommendationsEndpoint:
             "erosion_control": 0.78
         }
 
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.get_goal_based_recommendations',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.get_goal_based_recommendations',
                    new_callable=AsyncMock, return_value=mock_multi_response):
             
             response = client.post(
@@ -341,7 +347,7 @@ class TestGoalBasedRecommendationsEndpoint:
 
     def test_goal_based_recommendations_service_error(self, client, sample_goal_based_request):
         """Test handling of service errors."""
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.get_goal_based_recommendations',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.get_goal_based_recommendations',
                    new_callable=AsyncMock, side_effect=Exception("Service unavailable")):
             
             response = client.post(
@@ -388,7 +394,7 @@ class TestGoalAnalysisEndpoint:
             ]
         }
 
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.analyze_goal_feasibility',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.analyze_goal_feasibility',
                    new_callable=AsyncMock, return_value=mock_analysis):
             
             response = client.post(
@@ -445,7 +451,7 @@ class TestGoalAnalysisEndpoint:
             ]
         }
 
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.analyze_goal_feasibility',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.analyze_goal_feasibility',
                    new_callable=AsyncMock, return_value=mock_low_feasibility):
             
             response = client.post(
@@ -511,7 +517,7 @@ class TestGoalCategoriesEndpoint:
             ]
         }
 
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.get_goal_categories_and_options',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.get_goal_categories_and_options',
                    new_callable=AsyncMock, return_value=mock_categories):
             
             response = client.get("/api/v1/cover-crops/goal-categories")
@@ -534,7 +540,7 @@ class TestGoalCategoriesEndpoint:
 
     def test_goal_categories_service_error(self, client):
         """Test handling of service errors in goal categories."""
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.get_goal_categories_and_options',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.get_goal_categories_and_options',
                    new_callable=AsyncMock, side_effect=Exception("Database error")):
             
             response = client.get("/api/v1/cover-crops/goal-categories")
@@ -619,8 +625,8 @@ class TestGoalExamplesEndpoint:
             ]
         }
 
-        with patch('src.services.goal_based_service.GoalBasedService.get_example_goal_scenarios',
-                   new_callable=AsyncMock, return_value=mock_examples):
+        with patch('services.goal_based_recommendation_service.GoalBasedRecommendationService.get_example_goal_scenarios',
+                   return_value=mock_examples):
             
             response = client.get("/api/v1/cover-crops/goal-examples")
 
@@ -651,8 +657,8 @@ class TestGoalExamplesEndpoint:
 
     def test_goal_examples_service_error(self, client):
         """Test handling of service errors in goal examples."""
-        with patch('src.services.goal_based_service.GoalBasedService.get_example_goal_scenarios',
-                   new_callable=AsyncMock, side_effect=Exception("Service error")):
+        with patch('services.goal_based_recommendation_service.GoalBasedRecommendationService.get_example_goal_scenarios',
+                   side_effect=Exception("Service error")):
             
             response = client.get("/api/v1/cover-crops/goal-examples")
 
@@ -679,7 +685,7 @@ class TestGoalBasedAPIIntegration:
             "example_scenarios": []
         }
         
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.get_goal_categories_and_options',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.get_goal_categories_and_options',
                    new_callable=AsyncMock, return_value=mock_categories):
             
             categories_response = client.get("/api/v1/cover-crops/goal-categories")
@@ -693,7 +699,7 @@ class TestGoalBasedAPIIntegration:
             "alternative_strategies": []
         }
         
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.analyze_goal_feasibility',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.analyze_goal_feasibility',
                    new_callable=AsyncMock, return_value=mock_analysis):
             
             analysis_response = client.post(
@@ -703,7 +709,7 @@ class TestGoalBasedAPIIntegration:
             assert analysis_response.status_code == 200
 
         # Step 3: Get goal-based recommendations
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.get_goal_based_recommendations',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.get_goal_based_recommendations',
                    new_callable=AsyncMock, return_value=mock_goal_based_recommendation):
             
             recommendations_response = client.post(
@@ -735,7 +741,7 @@ class TestGoalBasedAPIIntegration:
             "example_scenarios": []
         }
         
-        with patch('src.services.cover_crop_selection_service.CoverCropSelectionService.get_goal_categories_and_options',
+        with patch('services.cover_crop_selection_service.CoverCropSelectionService.get_goal_categories_and_options',
                    new_callable=AsyncMock, return_value=mock_categories):
             
             response = client.get("/api/v1/cover-crops/goal-categories")

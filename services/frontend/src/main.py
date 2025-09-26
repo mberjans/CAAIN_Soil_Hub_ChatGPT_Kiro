@@ -49,6 +49,7 @@ else:
 # Backend service URLs
 QUESTION_ROUTER_URL = os.getenv("QUESTION_ROUTER_URL", "http://localhost:8000")
 RECOMMENDATION_ENGINE_URL = os.getenv("RECOMMENDATION_ENGINE_URL", "http://localhost:8001")
+COVER_CROP_SERVICE_URL = os.getenv("COVER_CROP_SERVICE_URL", "http://localhost:8001")
 USER_MANAGEMENT_URL = os.getenv("USER_MANAGEMENT_URL", "http://localhost:8005")
 DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003")
 
@@ -107,6 +108,17 @@ async def goal_prioritization_page(request: Request):
     else:
         return HTMLResponse("<h1>Goal Prioritization - Coming Soon</h1>")
 
+@app.get("/rotation-planning", response_class=HTMLResponse)
+async def rotation_planning_page(request: Request):
+    """Crop rotation planning dashboard page"""
+    if templates:
+        return templates.TemplateResponse("rotation_planning.html", {
+            "request": request,
+            "title": "Crop Rotation Planning"
+        })
+    else:
+        return HTMLResponse("<h1>Rotation Planning - Coming Soon</h1>")
+
 @app.get("/crop-rotation-goals", response_class=HTMLResponse)
 async def crop_rotation_goals_page(request: Request):
     """Crop rotation goal prioritization page (redirect to new interface)"""
@@ -128,6 +140,17 @@ async def climate_zone_selection_page(request: Request):
         })
     else:
         return HTMLResponse("<h1>Climate Zone Selection - Coming Soon</h1>")
+
+@app.get("/cover-crop-selection", response_class=HTMLResponse)
+async def cover_crop_selection_page(request: Request):
+    """Cover crop selection and recommendation page"""
+    if templates:
+        return templates.TemplateResponse("cover_crop_selection.html", {
+            "request": request,
+            "title": "Cover Crop Selection"
+        })
+    else:
+        return HTMLResponse("<h1>Cover Crop Selection - Coming Soon</h1>")
 
 @app.get("/ph-management", response_class=HTMLResponse)
 async def ph_management_page(request: Request):
@@ -452,6 +475,58 @@ async def prioritize_rotation_goals(
     except httpx.RequestError as e:
         logger.error(f"Request error: {e}")
         raise HTTPException(status_code=503, detail="Service temporarily unavailable")
+
+# Rotation Planning API Proxy Endpoints
+
+@app.api_route("/api/v1/rotations/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_rotation_api(path: str, request: Request):
+    """Proxy requests to the rotation planning API"""
+    try:
+        # Get the request method and prepare the data
+        method = request.method
+        
+        # Prepare headers
+        headers = {
+            "content-type": request.headers.get("content-type", "application/json")
+        }
+        
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+        
+        # Forward the request to the recommendation engine
+        async with httpx.AsyncClient() as client:
+            url = f"{RECOMMENDATION_ENGINE_URL}/api/v1/rotations/{path}"
+            
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+            
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+                
+    except httpx.RequestError as e:
+        logger.error(f"Rotation API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Rotation service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Rotation API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 @app.post("/api/climate/detect-zone")
 async def detect_climate_zone(
@@ -875,6 +950,363 @@ async def submit_zone_override(request: dict):
             "fallback": "Override saved locally only"
         }
 
+# Cover Crop Selection API Proxy Routes
+
+@app.post("/api/cover-crops/select")
+async def proxy_cover_crop_selection(request: Request):
+    """Proxy cover crop selection requests to backend service"""
+    try:
+        request_data = await request.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/select",
+                json=request_data,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Cover crop selection error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Cover crop selection failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.post("/api/cover-crops/seasonal")
+async def proxy_seasonal_recommendations(
+    latitude: float = Query(..., ge=-90, le=90),
+    longitude: float = Query(..., ge=-180, le=180),
+    target_season: str = Query(...),
+    field_size_acres: float = Query(..., gt=0)
+):
+    """Proxy seasonal cover crop recommendation requests to backend service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/seasonal",
+                params={
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "target_season": target_season,
+                    "field_size_acres": field_size_acres
+                },
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Seasonal recommendations error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Seasonal recommendations failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.post("/api/cover-crops/goal-analysis")
+async def proxy_goal_analysis(request: Request):
+    """Proxy goal analysis requests to backend service"""
+    try:
+        request_data = await request.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/goal-analysis",
+                json=request_data,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Goal analysis error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Goal analysis failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.get("/api/cover-crops/goal-categories")
+async def proxy_goal_categories():
+    """Proxy goal categories requests to backend service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/goal-categories",
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Goal categories error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Goal categories lookup failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.get("/api/cover-crops/goal-examples")
+async def proxy_goal_examples():
+    """Proxy goal examples requests to backend service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/goal-examples",
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Goal examples error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Goal examples lookup failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.get("/api/cover-crops/species")
+async def proxy_species_lookup(
+    species_name: Optional[str] = Query(None),
+    cover_crop_type: Optional[str] = Query(None),
+    hardiness_zone: Optional[str] = Query(None),
+    growing_season: Optional[str] = Query(None),
+    primary_benefit: Optional[str] = Query(None)
+):
+    """Proxy species lookup requests to backend service"""
+    try:
+        params = {}
+        if species_name:
+            params["species_name"] = species_name
+        if cover_crop_type:
+            params["cover_crop_type"] = cover_crop_type
+        if hardiness_zone:
+            params["hardiness_zone"] = hardiness_zone
+        if growing_season:
+            params["growing_season"] = growing_season
+        if primary_benefit:
+            params["primary_benefit"] = primary_benefit
+            
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/species",
+                params=params,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Species lookup error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Species lookup failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.get("/api/cover-crops/species/{species_id}")
+async def proxy_species_detail(species_id: str):
+    """Proxy species detail requests to backend service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/species/{species_id}",
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Species detail error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Species detail lookup failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.post("/api/cover-crops/goal-based-recommendations")
+async def proxy_goal_based_recommendations(request: Request):
+    """Proxy goal-based recommendation requests to backend service"""
+    try:
+        request_data = await request.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/goal-based-recommendations",
+                json=request_data,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Goal-based recommendations error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Goal-based recommendations failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.post("/api/cover-crops/benefits/predict")
+async def proxy_benefit_predictions(request: Request):
+    """Proxy benefit prediction requests to backend service"""
+    try:
+        request_data = await request.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/benefits/predict",
+                json=request_data,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Benefit predictions error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Benefit predictions failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.post("/api/cover-crops/timing")
+async def proxy_timing_recommendations(request: Request):
+    """Proxy timing recommendation requests to backend service"""
+    try:
+        request_data = await request.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/timing",
+                json=request_data,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Timing recommendations error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Timing recommendations failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.get("/api/cover-crops/types")
+async def proxy_cover_crop_types():
+    """Proxy cover crop types requests to backend service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/types",
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Cover crop types error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Cover crop types lookup failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.get("/api/cover-crops/seasons")
+async def proxy_growing_seasons():
+    """Proxy growing seasons requests to backend service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/seasons",
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Growing seasons error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Growing seasons lookup failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.get("/api/cover-crops/benefits")
+async def proxy_soil_benefits():
+    """Proxy soil benefits requests to backend service"""
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/benefits",
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Soil benefits error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Soil benefits lookup failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.post("/api/cover-crops/benefits/track")
+async def proxy_benefit_tracking(request: Request):
+    """Proxy benefit tracking requests to backend service"""
+    try:
+        request_data = await request.json()
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/benefits/track",
+                json=request_data,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Benefit tracking error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Benefit tracking failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
+@app.get("/api/cover-crops/benefits/analytics")
+async def proxy_benefit_analytics(
+    field_id: Optional[str] = Query(None),
+    farm_id: Optional[str] = Query(None),
+    time_range: Optional[str] = Query(None)
+):
+    """Proxy benefit analytics requests to backend service"""
+    try:
+        params = {}
+        if field_id:
+            params["field_id"] = field_id
+        if farm_id:
+            params["farm_id"] = farm_id
+        if time_range:
+            params["time_range"] = time_range
+            
+        async with httpx.AsyncClient() as client:
+            response = await client.get(
+                f"{COVER_CROP_SERVICE_URL}/api/v1/cover-crops/benefits/analytics",
+                params=params,
+                timeout=30.0
+            )
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                logger.error(f"Benefit analytics error: {response.status_code}")
+                raise HTTPException(status_code=response.status_code, detail="Benefit analytics failed")
+                
+    except httpx.RequestError as e:
+        logger.error(f"Request error: {e}")
+        raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -885,8 +1317,24 @@ async def health_check():
         "backend_services": {
             "question_router": QUESTION_ROUTER_URL,
             "recommendation_engine": RECOMMENDATION_ENGINE_URL,
+            "cover_crop_service": COVER_CROP_SERVICE_URL,
             "user_management": USER_MANAGEMENT_URL,
             "data_integration": DATA_INTEGRATION_URL
+        },
+        "cover_crop_selection": {
+            "status": "integrated",
+            "endpoints": [
+                "/api/cover-crops/select",
+                "/api/cover-crops/species",
+                "/api/cover-crops/goal-based-recommendations",
+                "/api/cover-crops/benefits/predict",
+                "/api/cover-crops/timing",
+                "/api/cover-crops/types",
+                "/api/cover-crops/seasons",
+                "/api/cover-crops/benefits",
+                "/api/cover-crops/benefits/track",
+                "/api/cover-crops/benefits/analytics"
+            ]
         },
         "ph_management": {
             "status": "integrated",

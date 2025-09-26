@@ -5,12 +5,12 @@ FastAPI routes for cover crop selection and species lookup endpoints.
 """
 
 from fastapi import APIRouter, HTTPException, Query
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
 
 try:
-    from ..models.cover_crop_models import (
+    from models.cover_crop_models import (
         CoverCropSelectionRequest,
         CoverCropSelectionResponse,
         SpeciesLookupRequest,
@@ -23,10 +23,17 @@ try:
         GoalBasedRecommendation,
         FarmerGoalCategory,
         GoalPriority,
-        SpecificGoal
+        SpecificGoal,
+        BenefitQuantificationEntry,
+        BenefitMeasurementRecord,
+        BenefitTrackingField,
+        BenefitTrackingAnalytics,
+        TimingRecommendationRequest,
+        TimingRecommendationResponse
     )
-    from ..services.cover_crop_selection_service import CoverCropSelectionService
-    from ..services.goal_based_recommendation_service import GoalBasedRecommendationService
+    from services.cover_crop_selection_service import CoverCropSelectionService
+    from services.goal_based_recommendation_service import GoalBasedRecommendationService
+    from services.benefit_tracking_service import BenefitQuantificationService
 except ImportError:
     from models.cover_crop_models import (
         CoverCropSelectionRequest,
@@ -41,17 +48,109 @@ except ImportError:
         GoalBasedRecommendation,
         FarmerGoalCategory,
         GoalPriority,
-        SpecificGoal
+        SpecificGoal,
+        BenefitQuantificationEntry,
+        BenefitMeasurementRecord,
+        BenefitTrackingField,
+        BenefitTrackingAnalytics,
+        TimingRecommendationRequest,
+        TimingRecommendationResponse
     )
     from services.cover_crop_selection_service import CoverCropSelectionService
     from services.goal_based_recommendation_service import GoalBasedRecommendationService
+    from services.benefit_tracking_service import BenefitQuantificationService
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/cover-crops", tags=["cover-crop-selection"])
 
-# Service instance
+# Service instances
 cover_crop_service = CoverCropSelectionService()
+benefit_tracking_service = BenefitQuantificationService()
+
+
+def convert_objectives_data_to_goal_based_objectives(objectives_data: Dict[str, Any]) -> GoalBasedObjectives:
+    """
+    Helper function to convert input objectives data to GoalBasedObjectives model.
+    
+    This handles the format conversion from API input format to internal model format,
+    including proper enum mapping and field name conversion.
+    
+    Args:
+        objectives_data: Raw objectives data from API request
+        
+    Returns:
+        GoalBasedObjectives: Properly formatted objectives object
+        
+    Raises:
+        ValueError: If required data is missing or invalid
+    """
+    # Check if we have farmer_goals in the input (new format)
+    if "farmer_goals" in objectives_data:
+        farmer_goals_data = objectives_data["farmer_goals"]
+        
+        # Convert farmer goals to SpecificGoal objects
+        specific_goals = []
+        
+        for goal_data in farmer_goals_data:
+            # Map input category to FarmerGoalCategory enum
+            input_category = goal_data.get("category", "production")
+            category_mapping = {
+                "production": FarmerGoalCategory.NUTRIENT_MANAGEMENT,
+                "economic": FarmerGoalCategory.ECONOMIC_OPTIMIZATION,
+                "environmental": FarmerGoalCategory.SOIL_HEALTH,
+                "soil_health": FarmerGoalCategory.SOIL_HEALTH,
+                "nutrient_management": FarmerGoalCategory.NUTRIENT_MANAGEMENT,
+                "erosion_control": FarmerGoalCategory.EROSION_CONTROL,
+                "water_management": FarmerGoalCategory.WATER_MANAGEMENT,
+                "weed_management": FarmerGoalCategory.WEED_MANAGEMENT
+            }
+            category = category_mapping.get(input_category, FarmerGoalCategory.NUTRIENT_MANAGEMENT)
+            
+            # Map input target_benefit to SoilBenefit enum
+            input_benefit = goal_data.get("target_benefit", "nitrogen_fixation")
+            benefit_mapping = {
+                "cost_reduction": SoilBenefit.NITROGEN_FIXATION,  # Cost reduction usually comes from N fixation
+                "nitrogen_fixation": SoilBenefit.NITROGEN_FIXATION,
+                "erosion_control": SoilBenefit.EROSION_CONTROL,
+                "organic_matter": SoilBenefit.ORGANIC_MATTER,
+                "weed_suppression": SoilBenefit.WEED_SUPPRESSION,
+                "pest_management": SoilBenefit.PEST_MANAGEMENT,
+                "soil_structure": SoilBenefit.SOIL_STRUCTURE,
+                "nutrient_scavenging": SoilBenefit.NUTRIENT_SCAVENGING
+            }
+            target_benefit = benefit_mapping.get(input_benefit, SoilBenefit.NITROGEN_FIXATION)
+            
+            # Map input fields to SpecificGoal fields
+            specific_goal = SpecificGoal(
+                goal_id=goal_data.get("goal_id", f"goal_{len(specific_goals) + 1}"),
+                category=category,
+                priority=GoalPriority(goal_data.get("priority", "medium")),
+                weight=goal_data.get("priority_weight", 0.5),
+                target_benefit=target_benefit,
+                quantitative_target=goal_data.get("quantitative_target"),
+                target_unit=goal_data.get("target_unit")
+            )
+            specific_goals.append(specific_goal)
+        
+        # Determine primary focus from the highest weighted goal
+        if specific_goals:
+            primary_focus = max(specific_goals, key=lambda g: g.weight).category
+        else:
+            primary_focus = FarmerGoalCategory.PRODUCTION  # Default
+        
+        # Create GoalBasedObjectives with converted data
+        return GoalBasedObjectives(
+            specific_goals=specific_goals,
+            primary_focus=primary_focus,
+            overall_strategy=objectives_data.get("overall_strategy", "balanced"),
+            total_budget_per_acre=objectives_data.get("total_budget_per_acre"),
+            management_capacity=objectives_data.get("management_capacity", "moderate"),
+            risk_tolerance=objectives_data.get("risk_tolerance", "moderate")
+        )
+    else:
+        # Try to create directly (for backward compatibility)
+        return GoalBasedObjectives(**objectives_data)
 
 
 @router.on_event("startup")
@@ -83,7 +182,7 @@ async def select_cover_crops(request: CoverCropSelectionRequest):
         logger.info(f"Processing cover crop selection request: {request.request_id}")
         
         # Validate location data
-        if not request.location or "latitude" not in request.location or "longitude" not in request.location:
+        if not request.location:
             raise HTTPException(
                 status_code=400,
                 detail="Location data with latitude and longitude is required"
@@ -116,6 +215,17 @@ async def select_cover_crops(request: CoverCropSelectionRequest):
             status_code=500,
             detail=f"Error generating cover crop recommendations: {str(e)}"
         )
+
+
+@router.post("/selection", response_model=CoverCropSelectionResponse)
+async def select_cover_crops_selection(request: CoverCropSelectionRequest):
+    """
+    Alias endpoint for cover crop selection (matches API specification requirement).
+    
+    This endpoint provides the same functionality as the /select endpoint
+    to ensure compatibility with API specification requirements.
+    """
+    return await select_cover_crops(request)
 
 
 @router.get("/species", response_model=SpeciesLookupResponse)
@@ -217,7 +327,7 @@ async def get_seasonal_recommendations(
         
         # Create a simplified request
         from datetime import date, timedelta
-        from ..models.cover_crop_models import (
+        from models.cover_crop_models import (
             SoilConditions, 
             CoverCropObjectives, 
             SoilBenefit
@@ -600,8 +710,7 @@ async def get_rotation_position_recommendations(
 # Goal-Based Cover Crop Selection Endpoints
 @router.post("/goal-based-recommendations", response_model=GoalBasedRecommendation)
 async def get_goal_based_recommendations(
-    request: CoverCropSelectionRequest,
-    objectives: GoalBasedObjectives
+    data: Dict[str, Any]
 ):
     """
     Get goal-based cover crop recommendations with farmer priority optimization.
@@ -630,10 +739,27 @@ async def get_goal_based_recommendations(
         objectives: Goal-based objectives with farmer priorities and specific goals
     """
     try:
+        # Extract request and objectives from nested data
+        if "request" not in data or "objectives" not in data:
+            raise HTTPException(
+                status_code=422,
+                detail="Both 'request' and 'objectives' fields are required"
+            )
+        
+        # Parse request data
+        request_data = data["request"]
+        objectives_data = data["objectives"]
+        
+        # Create request object
+        request = CoverCropSelectionRequest(**request_data)
+        
+        # Convert objectives data using helper function
+        objectives = convert_objectives_data_to_goal_based_objectives(objectives_data)
+        
         logger.info(f"Processing goal-based recommendation request: {request.request_id}")
         
         # Validate request data
-        if not request.location or "latitude" not in request.location or "longitude" not in request.location:
+        if not request.location:
             raise HTTPException(
                 status_code=400,
                 detail="Location data with latitude and longitude is required"
@@ -652,14 +778,14 @@ async def get_goal_based_recommendations(
             )
         
         # Validate goal-based objectives
-        if not objectives.farmer_goals:
+        if not objectives.specific_goals:
             raise HTTPException(
                 status_code=400,
                 detail="At least one farmer goal must be specified"
             )
         
         # Validate priorities sum to reasonable values
-        total_priority = sum(goal.priority_weight for goal in objectives.farmer_goals)
+        total_priority = sum(goal.weight for goal in objectives.specific_goals)
         if total_priority <= 0:
             raise HTTPException(
                 status_code=400,
@@ -687,8 +813,7 @@ async def get_goal_based_recommendations(
 
 @router.post("/goal-analysis")
 async def analyze_goal_feasibility(
-    request: CoverCropSelectionRequest,
-    objectives: GoalBasedObjectives
+    data: Dict[str, Any]
 ):
     """
     Analyze feasibility of achieving specified farmer goals.
@@ -710,6 +835,21 @@ async def analyze_goal_feasibility(
         objectives: Goal-based objectives to analyze for feasibility
     """
     try:
+        # Extract request and objectives from nested data
+        if "request" not in data or "objectives" not in data:
+            raise HTTPException(
+                status_code=422,
+                detail="Both 'request' and 'objectives' fields are required"
+            )
+        
+        # Parse request data
+        request_data = data["request"]
+        objectives_data = data["objectives"]
+        
+        # Create request object
+        request = CoverCropSelectionRequest(**request_data)
+        objectives = convert_objectives_data_to_goal_based_objectives(objectives_data)
+        
         logger.info(f"Analyzing goal feasibility for request: {request.request_id}")
         
         # Validate request data
@@ -719,7 +859,7 @@ async def analyze_goal_feasibility(
                 detail="Location data is required for goal feasibility analysis"
             )
         
-        if not objectives.farmer_goals:
+        if not objectives.specific_goals:
             raise HTTPException(
                 status_code=400,
                 detail="At least one farmer goal must be specified for analysis"
@@ -811,4 +951,460 @@ async def get_goal_based_examples():
         raise HTTPException(
             status_code=500,
             detail=f"Error retrieving goal-based examples: {str(e)}"
+        )
+
+
+# === BENEFIT TRACKING AND QUANTIFICATION ENDPOINTS ===
+
+@router.post("/select-with-benefit-tracking", response_model=CoverCropSelectionResponse)
+async def select_cover_crops_with_benefit_tracking(request: CoverCropSelectionRequest):
+    """
+    Enhanced cover crop selection with integrated benefit tracking and quantification.
+    
+    This endpoint provides the same recommendations as the standard selection endpoint
+    but additionally includes comprehensive benefit predictions, economic analysis,
+    and sets up tracking infrastructure for monitoring actual performance.
+    
+    Features:
+    - Complete benefit quantification for all recommendations
+    - Economic value calculations (nitrogen fixation savings, erosion prevention, etc.)
+    - Benefit tracking setup for field-level monitoring
+    - Performance prediction confidence scores
+    - ROI analysis and cost-benefit projections
+    
+    Args:
+        request: Cover crop selection request with field conditions and objectives
+    
+    Returns:
+        Enhanced response with benefit predictions and tracking setup
+    """
+    try:
+        logger.info(f"Processing enhanced selection with benefit tracking: {request.request_id}")
+        
+        # Validate request (same validation as standard endpoint)
+        if not request.location:
+            raise HTTPException(
+                status_code=400,
+                detail="Location data with latitude and longitude is required"
+            )
+        
+        if not request.planting_window or "start" not in request.planting_window:
+            raise HTTPException(
+                status_code=400,
+                detail="Planting window with start date is required"
+            )
+        
+        if request.field_size_acres <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Field size must be greater than 0 acres"
+            )
+        
+        # Get enhanced recommendations with benefit tracking
+        response, benefit_data = await cover_crop_service.select_cover_crops_with_benefit_tracking(
+            request=request,
+            enable_benefit_tracking=True
+        )
+        
+        # Add benefit tracking data to response
+        if benefit_data:
+            response.benefit_tracking_data = benefit_data
+        
+        logger.info(f"Successfully generated enhanced recommendations with benefit tracking: {request.request_id}")
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in enhanced cover crop selection: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating enhanced cover crop recommendations: {str(e)}"
+        )
+
+
+@router.post("/benefits/predict")
+async def predict_benefits(
+    data: Dict[str, Any]
+):
+    """
+    Predict quantified benefits for specific cover crop species.
+    
+    This endpoint provides detailed benefit predictions for given species
+    under specific field conditions, including confidence scores and
+    environmental adjustment factors.
+    
+    Args:
+        species_ids: List of cover crop species identifiers
+        field_conditions: Field conditions (soil, climate, management)
+        field_size_acres: Field size for economic calculations
+    
+    Returns:
+        Detailed benefit predictions with confidence scores
+    """
+    try:
+        # Extract required fields from data
+        species_ids = data.get("species_ids", [])
+        field_conditions = data.get("field_conditions", {})
+        field_size_acres = data.get("field_size_acres", 0.0)
+        
+        logger.info(f"Predicting benefits for {len(species_ids)} species")
+        
+        if not species_ids:
+            raise HTTPException(
+                status_code=400,
+                detail="At least one species ID is required"
+            )
+        
+        if field_size_acres <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Field size must be greater than 0 acres"
+            )
+        
+        predictions = await benefit_tracking_service.predict_benefits(
+            species_ids=species_ids,
+            field_conditions=field_conditions,
+            field_size_acres=field_size_acres
+        )
+        
+        logger.info(f"Successfully predicted benefits for {len(species_ids)} species")
+        return {"predictions": predictions}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error predicting benefits: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error predicting cover crop benefits: {str(e)}"
+        )
+
+
+@router.post("/benefits/track", response_model=BenefitTrackingField)
+async def create_benefit_tracking(
+    data: Dict[str, Any]
+):
+    """
+    Create benefit tracking for a specific field implementation.
+    
+    Sets up comprehensive tracking infrastructure for monitoring actual
+    benefit realization compared to predictions.
+    
+    Args:
+        field_id: Unique identifier for the field
+        species_ids: Cover crop species being planted
+        predicted_benefits: Benefit predictions from prediction endpoint
+        field_size_acres: Field size in acres
+        planting_date: Date of cover crop planting
+        farmer_id: Optional farmer identifier
+    
+    Returns:
+        Benefit tracking record with monitoring protocols
+    """
+    try:
+        # Extract required fields from data
+        field_id = data.get("field_id", "")
+        species_ids = data.get("species_ids", [])
+        predicted_benefits = data.get("predicted_benefits", {})
+        field_size_acres = data.get("field_size_acres", 0.0)
+        planting_date_str = data.get("planting_date")
+        farmer_id = data.get("farmer_id")
+        
+        # Parse planting date if provided as string
+        if isinstance(planting_date_str, str):
+            from datetime import datetime
+            planting_date = datetime.fromisoformat(planting_date_str.replace('Z', '+00:00'))
+        else:
+            planting_date = planting_date_str
+        
+        logger.info(f"Creating benefit tracking for field: {field_id}")
+        
+        if not field_id or len(field_id.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Field ID is required"
+            )
+        
+        if not species_ids:
+            raise HTTPException(
+                status_code=400,
+                detail="At least one species ID is required"
+            )
+        
+        if field_size_acres <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Field size must be greater than 0 acres"
+            )
+        
+        tracking = await benefit_tracking_service.create_field_tracking(
+            field_id=field_id.strip(),
+            species_ids=species_ids,
+            predicted_benefits=predicted_benefits,
+            field_size_acres=field_size_acres,
+            planting_date=planting_date,
+            farmer_id=farmer_id
+        )
+        
+        logger.info(f"Successfully created benefit tracking for field: {field_id}")
+        return tracking
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating benefit tracking: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error creating benefit tracking: {str(e)}"
+        )
+
+
+@router.post("/benefits/measure")
+async def record_benefit_measurement(
+    data: Dict[str, Any]
+):
+    """
+    Record actual benefit measurements from field monitoring.
+    
+    This endpoint allows field technicians and farmers to record actual
+    measured benefits for comparison with predictions and tracking progress.
+    
+    Args:
+        field_id: Field identifier
+        measurement_record: Measurement data with method, value, and validation
+    
+    Returns:
+        Updated measurement status and validation results
+    """
+    try:
+        # Extract fields from data
+        field_id = data.get("field_id", "")
+        measurement_record_data = data.get("measurement_record", {})
+        
+        # Create measurement record object
+        measurement_record = BenefitMeasurementRecord(**measurement_record_data)
+        
+        logger.info(f"Recording measurement for field: {field_id}")
+        
+        if not field_id or len(field_id.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Field ID is required"
+            )
+        
+        result = await benefit_tracking_service.record_measurement(
+            field_id=field_id.strip(),
+            measurement_record=measurement_record
+        )
+        
+        logger.info(f"Successfully recorded measurement for field: {field_id}")
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error recording measurement: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error recording benefit measurement: {str(e)}"
+        )
+
+
+@router.get("/benefits/analytics", response_model=BenefitTrackingAnalytics)
+async def get_benefit_analytics(
+    farmer_id: Optional[str] = Query(None, description="Filter by farmer ID"),
+    field_id: Optional[str] = Query(None, description="Filter by field ID"),
+    start_date: Optional[datetime] = Query(None, description="Analytics start date"),
+    end_date: Optional[datetime] = Query(None, description="Analytics end date"),
+    species_filter: Optional[List[str]] = Query(None, description="Filter by species IDs")
+):
+    """
+    Generate comprehensive benefit tracking analytics and insights.
+    
+    This endpoint provides dashboard-ready analytics including performance
+    comparisons, ROI calculations, prediction accuracy, and recommendations
+    for optimization.
+    
+    Args:
+        farmer_id: Optional farmer filter
+        field_id: Optional field filter  
+        start_date: Analytics period start
+        end_date: Analytics period end
+        species_filter: Optional species filter
+    
+    Returns:
+        Comprehensive analytics with insights and recommendations
+    """
+    try:
+        logger.info("Generating benefit tracking analytics")
+        
+        filters = {}
+        if farmer_id:
+            filters["farmer_id"] = farmer_id.strip()
+        if field_id:
+            filters["field_id"] = field_id.strip()
+        if start_date:
+            filters["start_date"] = start_date
+        if end_date:
+            filters["end_date"] = end_date
+        if species_filter:
+            filters["species_filter"] = species_filter
+        
+        analytics = await benefit_tracking_service.generate_benefit_analytics(
+            filters=filters
+        )
+        
+        logger.info("Successfully generated benefit tracking analytics")
+        return analytics
+        
+    except Exception as e:
+        logger.error(f"Error generating analytics: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating benefit analytics: {str(e)}"
+        )
+
+
+@router.get("/benefits/tracking/{field_id}")
+async def get_field_tracking_status(field_id: str):
+    """
+    Get current benefit tracking status for a specific field.
+    
+    Returns comprehensive tracking status including predictions,
+    measurements, progress, and next recommended actions.
+    
+    Args:
+        field_id: Field identifier
+    
+    Returns:
+        Current tracking status and recommendations
+    """
+    try:
+        logger.info(f"Getting tracking status for field: {field_id}")
+        
+        if not field_id or len(field_id.strip()) == 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Field ID is required"
+            )
+        
+        status = await benefit_tracking_service.get_field_tracking_status(
+            field_id=field_id.strip()
+        )
+        
+        if not status:
+            raise HTTPException(
+                status_code=404,
+                detail=f"No tracking found for field: {field_id}"
+            )
+        
+        logger.info(f"Successfully retrieved tracking status for field: {field_id}")
+        return status
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting tracking status: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving tracking status: {str(e)}"
+        )
+
+
+@router.post("/timing", response_model=TimingRecommendationResponse)
+async def get_timing_recommendations(request: TimingRecommendationRequest):
+    """
+    Generate planting and termination timing recommendations for cover crops.
+    
+    Provides species-specific timing windows based on:
+    - Location and climate zone
+    - Main crop schedule integration
+    - Weather-based timing adjustments
+    - Goal-specific optimization
+    
+    Returns comprehensive timing recommendations including planting windows,
+    termination options, and seasonal strategy guidance.
+    """
+    try:
+        logger.info(f"Generating timing recommendations for species: {request.species_id}")
+        
+        if not cover_crop_service.initialized:
+            await cover_crop_service.initialize()
+        
+        # Get timing recommendations from service
+        timing_response = await cover_crop_service.timing_service.generate_comprehensive_timing_recommendation(request)
+        
+        logger.info(f"Successfully generated timing recommendations for {request.species_id}")
+        return timing_response
+        
+    except Exception as e:
+        logger.error(f"Error generating timing recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating timing recommendations: {str(e)}"
+        )
+
+
+@router.get("/timing")
+async def get_timing_information(
+    species_id: str = Query(..., description="Cover crop species identifier"),
+    latitude: float = Query(..., ge=-90, le=90, description="Latitude in decimal degrees"),
+    longitude: float = Query(..., ge=-180, le=180, description="Longitude in decimal degrees"),
+    planting_year: Optional[int] = Query(None, description="Target planting year (default: current year)")
+):
+    """
+    Get timing information for a specific cover crop species at a location.
+    
+    This GET endpoint provides basic timing windows and recommendations
+    for a specific cover crop species based on location and climate data.
+    
+    Returns:
+        Basic timing information including optimal planting windows,
+        termination recommendations, and seasonal considerations.
+    """
+    try:
+        logger.info(f"Getting timing information for species: {species_id} at {latitude}, {longitude}")
+        
+        if not cover_crop_service.initialized:
+            await cover_crop_service.initialize()
+        
+        # Verify species exists
+        if species_id not in cover_crop_service.species_database:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Cover crop species '{species_id}' not found"
+            )
+        
+        # Create a basic timing request and get recommendations
+        from models.cover_crop_models import TimingRecommendationRequest
+        from datetime import datetime
+        
+        current_year = planting_year or datetime.now().year
+        
+        # Create basic timing request
+        timing_request = TimingRecommendationRequest(
+            species_id=species_id,
+            location={
+                "latitude": latitude,
+                "longitude": longitude
+            },
+            planting_year=current_year
+        )
+        
+        # Get timing recommendations from timing service
+        timing_info = await cover_crop_service.timing_service.generate_comprehensive_timing_recommendation(
+            timing_request
+        )
+        
+        logger.info(f"Successfully retrieved timing information for {species_id}")
+        return timing_info
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting timing information: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving timing information: {str(e)}"
         )

@@ -152,6 +152,13 @@ class RotationGoal:
     baseline_value: Optional[float] = None
     current_value: Optional[float] = None
     progress_tracking: List[Dict] = field(default_factory=list)
+    
+    # Additional fields for API compatibility
+    measurement_criteria: List[str] = field(default_factory=list)
+    target_metrics: Optional[Dict[str, float]] = None
+    created_at: Optional[datetime] = None
+    is_active: bool = True
+    custom_parameters: Optional[Dict[str, Any]] = None
 
 
 @dataclass
@@ -177,6 +184,25 @@ class RotationConstraint:
     can_be_relaxed: bool = False
     relaxation_cost: Optional[float] = None
     alternatives: List[str] = field(default_factory=list)
+
+
+@dataclass
+class RotationYear:
+    """Single year in a rotation plan."""
+    year: int
+    crop_name: str
+    estimated_yield: Optional[float] = None
+    confidence_score: float = 1.0
+    
+    # Management recommendations
+    planting_recommendations: Optional[Dict] = None
+    management_notes: Optional[str] = None
+    expected_benefits: List[str] = field(default_factory=list)
+    
+    # Economic projections
+    estimated_revenue: Optional[float] = None
+    estimated_costs: Optional[float] = None
+    estimated_profit: Optional[float] = None
 
 
 @dataclass
@@ -268,11 +294,9 @@ class RotationAnalysis:
     """Comprehensive rotation analysis results."""
     analysis_id: str
     plan_id: str
-    analysis_date: datetime = field(default_factory=datetime.utcnow)
-    
-    # Overall assessment
     overall_score: float
     recommendation_confidence: float
+    analysis_date: datetime = field(default_factory=datetime.utcnow)
     
     # Benefit analysis
     total_benefits: List[RotationBenefit] = field(default_factory=list)

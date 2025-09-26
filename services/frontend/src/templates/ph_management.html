@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - CAAIN Soil Hub</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Agricultural CSS -->
+    <link href="{{ url_for('static', path='/css/agricultural.css') }}" rel="stylesheet">
+    
+    <style>
+        /* pH Management Specific Styles */
+        .ph-management-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .ph-header {
+            background: linear-gradient(135deg, #2c5530 0%, #4a7c59 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .ph-tabs {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 8px;
+            margin: 0 0.25rem;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: var(--primary-green);
+            border: none;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        .nav-pills .nav-link:hover:not(.active) {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--primary-green);
+        }
+        
+        /* pH Meter Visualization */
+        .ph-meter-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .ph-scale {
+            background: linear-gradient(to right, 
+                #dc3545 0%, #dc3545 12.5%,
+                #fd7e14 12.5%, #fd7e14 25%,
+                #ffc107 25%, #ffc107 37.5%,
+                #28a745 37.5%, #28a745 62.5%,
+                #20c997 62.5%, #20c997 75%,
+                #17a2b8 75%, #17a2b8 87.5%,
+                #6f42c1 87.5%, #6f42c1 100%);
+            height: 40px;
+            border-radius: 20px;
+            position: relative;
+            margin: 2rem 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .ph-scale-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        .ph-indicator {
+            position: absolute;
+            top: -8px;
+            width: 16px;
+            height: 56px;
+            background: #333;
+            border: 3px solid white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transform: translateX(-50%);
+            transition: left 0.5s ease;
+        }
+        
+        .ph-indicator::after {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-bottom: 12px solid #333;
+        }
+        
+        /* Field Status Cards */
+        .field-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 5px solid var(--primary-green);
+            transition: all 0.3s ease;
+        }
+        
+        .field-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        }
+        
+        .field-card.critical {
+            border-left-color: #dc3545;
+            background: linear-gradient(135deg, #f8d7da 0%, #ffffff 100%);
+        }
+        
+        .field-card.warning {
+            border-left-color: #ffc107;
+            background: linear-gradient(135deg, #fff3cd 0%, #ffffff 100%);
+        }
+        
+        .field-card.optimal {
+            border-left-color: #28a745;
+            background: linear-gradient(135deg, #d4edda 0%, #ffffff 100%);
+        }
+        
+        .field-card.alkaline {
+            border-left-color: #17a2b8;
+            background: linear-gradient(135deg, #d1ecf1 0%, #ffffff 100%);
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 100px;
+            display: inline-block;
+        }
+        
+        .status-critical {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .status-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .status-optimal {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-alkaline {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        /* Action Buttons */
+        .action-btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            margin: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .action-btn-primary {
+            background: var(--primary-green);
+            color: white;
+        }
+        
+        .action-btn-primary:hover {
+            background: var(--dark-green);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .action-btn-warning {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .action-btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .action-btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+        
+        /* Lime Calculator */
+        .lime-calculator {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .calculator-step {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-green);
+        }
+        
+        .lime-recommendation {
+            background: linear-gradient(135deg, #e8f5e8 0%, #ffffff 100%);
+            border: 2px solid var(--primary-green);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            position: relative;
+        }
+        
+        .lime-recommendation.recommended {
+            border-color: var(--primary-green);
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.2);
+        }
+        
+        .lime-recommendation.alternative {
+            border-color: #6c757d;
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        }
+        
+        .recommendation-badge {
+            position: absolute;
+            top: -12px;
+            right: 20px;
+            background: var(--primary-green);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        /* Economic Analysis */
+        .economics-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .economics-table table {
+            margin: 0;
+        }
+        
+        .economics-table th {
+            background: var(--primary-green);
+            color: white;
+            padding: 1rem;
+            font-weight: 600;
+        }
+        
+        .economics-table td {
+            padding: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .roi-positive {
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+        
+        .roi-negative {
+            color: #dc3545;
+            font-weight: 600;
+        }
+        
+        /* Monitoring Dashboard */
+        .monitoring-widget {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        .trend-indicator {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        .trend-up {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .trend-down {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .trend-stable {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        /* Alert Configuration */
+        .alert-config {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .threshold-slider {
+            margin: 1rem 0;
+        }
+        
+        .threshold-value {
+            background: var(--primary-green);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+        
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .ph-management-container {
+                padding: 10px;
+            }
+            
+            .ph-header {
+                padding: 1.5rem;
+                text-align: center;
+            }
+            
+            .nav-pills .nav-link {
+                padding: 0.5rem 1rem;
+                margin-bottom: 0.5rem;
+                display: block;
+                text-align: center;
+            }
+            
+            .field-card {
+                padding: 1rem;
+            }
+            
+            .lime-calculator {
+                padding: 1rem;
+            }
+            
+            .calculator-step {
+                padding: 1rem;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+        
+        /* Loading States */
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 1000;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Help Documentation */
+        .help-panel {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #17a2b8;
+        }
+        
+        .help-section {
+            margin-bottom: 1rem;
+        }
+        
+        .help-section h6 {
+            color: #17a2b8;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Data Visualization */
+        .data-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+        
+        .data-card h3 {
+            color: var(--primary-green);
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .data-card p {
+            color: #6c757d;
+            margin: 0;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="ph-management-container">
+        <!-- Header Section -->
+        <div class="ph-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-vial"></i> Soil pH Management</h1>
+                    <p class="mb-0">Comprehensive soil pH analysis, monitoring, and treatment planning for optimal crop production</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex flex-column align-items-end">
+                        <div class="mb-2">
+                            <i class="fas fa-clock"></i> Last Updated: <span id="lastUpdated">Loading...</span>
+                        </div>
+                        <button class="btn btn-light btn-sm" onclick="refreshAllData()">
+                            <i class="fas fa-sync-alt"></i> Refresh Data
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="ph-tabs">
+            <ul class="nav nav-pills nav-fill" id="phTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="dashboard-tab" data-bs-toggle="pill" 
+                            data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="analysis-tab" data-bs-toggle="pill" 
+                            data-bs-target="#analysis" type="button" role="tab">
+                        <i class="fas fa-microscope"></i> Analysis
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="calculator-tab" data-bs-toggle="pill" 
+                            data-bs-target="#calculator" type="button" role="tab">
+                        <i class="fas fa-calculator"></i> Lime Calculator
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="monitoring-tab" data-bs-toggle="pill" 
+                            data-bs-target="#monitoring" type="button" role="tab">
+                        <i class="fas fa-chart-line"></i> Monitoring
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="history-tab" data-bs-toggle="pill" 
+                            data-bs-target="#history" type="button" role="tab">
+                        <i class="fas fa-history"></i> History
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Tab Content -->
+        <div class="tab-content" id="phTabContent">
+            <!-- Dashboard Tab -->
+            <div class="tab-pane fade show active" id="dashboard" role="tabpanel" aria-labelledby="dashboard-tab">
+                <!-- Quick Stats Row -->
+                <div class="row mb-4">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="data-card">
+                            <h3 id="totalFields">--</h3>
+                            <p>Fields Monitored</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="data-card">
+                            <h3 id="averagePh">--</h3>
+                            <p>Average pH</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="data-card">
+                            <h3 id="fieldsNeedingAction">--</h3>
+                            <p>Need Attention</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="data-card">
+                            <h3 id="activeAlerts">--</h3>
+                            <p>Active Alerts</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- pH Meter Visualization -->
+                <div class="ph-meter-container">
+                    <h4><i class="fas fa-thermometer-half"></i> pH Scale Overview</h4>
+                    <div class="ph-scale">
+                        <div class="ph-indicator" id="phIndicator" style="left: 50%;"></div>
+                    </div>
+                    <div class="ph-scale-labels">
+                        <span>3.0<br><small>Very Acidic</small></span>
+                        <span>4.5<br><small>Acidic</small></span>
+                        <span>6.0<br><small>Slightly Acidic</small></span>
+                        <span>7.0<br><small>Neutral</small></span>
+                        <span>8.0<br><small>Alkaline</small></span>
+                        <span>9.0<br><small>Very Alkaline</small></span>
+                        <span>10.0<br><small>Extremely Alkaline</small></span>
+                    </div>
+                    <div class="text-center mt-3">
+                        <h5>Current Farm Average: <span id="currentPhValue">6.2</span></h5>
+                        <p class="text-muted">Click on field cards below to see individual pH levels</p>
+                    </div>
+                </div>
+                
+                <!-- Field Status Cards -->
+                <div class="row" id="fieldStatusCards">
+                    <!-- Field cards will be populated by JavaScript -->
+                </div>
+                
+                <!-- Quick Actions Panel -->
+                <div class="monitoring-widget">
+                    <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100 mb-2" onclick="showRecordTestModal()">
+                                <i class="fas fa-plus"></i> Record New Test
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-warning w-100 mb-2" onclick="calculateLimeRequirements()">
+                                <i class="fas fa-calculator"></i> Calculate Lime
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-info w-100 mb-2" onclick="scheduleMonitoring()">
+                                <i class="fas fa-calendar"></i> Schedule Test
+                            </button>
+                        </div>
+                        <div class="col-md-3">
+                            <button class="btn btn-secondary w-100 mb-2" onclick="generateReport()">
+                                <i class="fas fa-file-pdf"></i> Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Recent Alerts -->
+                <div class="monitoring-widget">
+                    <h5><i class="fas fa-bell"></i> Recent Alerts</h5>
+                    <div id="recentAlerts">
+                        <!-- Alert items will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Analysis Tab -->
+            <div class="tab-pane fade" id="analysis" role="tabpanel" aria-labelledby="analysis-tab">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- pH Analysis Form -->
+                        <div class="monitoring-widget">
+                            <h5><i class="fas fa-microscope"></i> Comprehensive pH Analysis</h5>
+                            <form id="phAnalysisForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="farmId" class="form-label">Farm ID</label>
+                                            <input type="text" class="form-control" id="farmId" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="fieldId" class="form-label">Field ID</label>
+                                            <input type="text" class="form-control" id="fieldId" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="cropType" class="form-label">Crop Type</label>
+                                            <select class="form-select" id="cropType" required>
+                                                <option value="">Select Crop</option>
+                                                <option value="corn">Corn</option>
+                                                <option value="soybean">Soybean</option>
+                                                <option value="wheat">Wheat</option>
+                                                <option value="alfalfa">Alfalfa</option>
+                                                <option value="canola">Canola</option>
+                                                <option value="barley">Barley</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="phValue" class="form-label">pH Value</label>
+                                            <input type="number" class="form-control" id="phValue" 
+                                                   step="0.1" min="3.0" max="10.0" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="organicMatter" class="form-label">Organic Matter (%)</label>
+                                            <input type="number" class="form-control" id="organicMatter" 
+                                                   step="0.1" min="0" max="15">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="phosphorus" class="form-label">Phosphorus (ppm)</label>
+                                            <input type="number" class="form-control" id="phosphorus" 
+                                                   min="0" max="200">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="potassium" class="form-label">Potassium (ppm)</label>
+                                            <input type="number" class="form-control" id="potassium" 
+                                                   min="0" max="800">
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-success">
+                                    <i class="fas fa-search"></i> Analyze pH
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Analysis Results -->
+                        <div class="monitoring-widget" id="analysisResults" style="display: none;">
+                            <h5><i class="fas fa-chart-bar"></i> Analysis Results</h5>
+                            <div id="analysisContent">
+                                <!-- Results will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <!-- Crop pH Requirements -->
+                        <div class="monitoring-widget">
+                            <h5><i class="fas fa-seedling"></i> Crop pH Requirements</h5>
+                            <div id="cropRequirements">
+                                <!-- Requirements will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- pH Reference Guide -->
+                        <div class="help-panel">
+                            <h6><i class="fas fa-info-circle"></i> pH Impact Guide</h6>
+                            <div class="help-section">
+                                <h6>Acidic Soil (pH < 6.0)</h6>
+                                <ul class="small">
+                                    <li>Aluminum toxicity risk</li>
+                                    <li>Poor phosphorus availability</li>
+                                    <li>Reduced microbial activity</li>
+                                    <li>Molybdenum deficiency</li>
+                                </ul>
+                            </div>
+                            <div class="help-section">
+                                <h6>Alkaline Soil (pH > 7.5)</h6>
+                                <ul class="small">
+                                    <li>Iron deficiency (chlorosis)</li>
+                                    <li>Zinc deficiency</li>
+                                    <li>Phosphorus fixation</li>
+                                    <li>Manganese deficiency</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lime Calculator Tab -->
+            <div class="tab-pane fade" id="calculator" role="tabpanel" aria-labelledby="calculator-tab">
+                <div class="row">
+                    <div class="col-lg-6">
+                        <!-- Calculator Input -->
+                        <div class="lime-calculator">
+                            <h5><i class="fas fa-calculator"></i> Advanced Lime Calculator</h5>
+                            
+                            <form id="limeCalculatorForm">
+                                <div class="calculator-step">
+                                    <h6>Step 1: Current Soil Conditions</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="currentPh" class="form-label">Current pH</label>
+                                                <input type="number" class="form-control" id="currentPh" 
+                                                       step="0.1" min="3.0" max="10.0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="bufferPh" class="form-label">Buffer pH (optional)</label>
+                                                <input type="number" class="form-control" id="bufferPh" 
+                                                       step="0.1" min="4.0" max="7.5">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="calculator-step">
+                                    <h6>Step 2: Target pH and Soil Properties</h6>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="targetPh" class="form-label">Target pH</label>
+                                                <input type="number" class="form-control" id="targetPh" 
+                                                       step="0.1" min="3.0" max="10.0" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="soilTexture" class="form-label">Soil Texture</label>
+                                                <select class="form-select" id="soilTexture" required>
+                                                    <option value="">Select Texture</option>
+                                                    <option value="sand">Sand</option>
+                                                    <option value="loamy_sand">Loamy Sand</option>
+                                                    <option value="sandy_loam">Sandy Loam</option>
+                                                    <option value="loam">Loam</option>
+                                                    <option value="silt_loam">Silt Loam</option>
+                                                    <option value="clay_loam">Clay Loam</option>
+                                                    <option value="clay">Clay</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="organicMatterCalc" class="form-label">Organic Matter (%)</label>
+                                                <input type="number" class="form-control" id="organicMatterCalc" 
+                                                       step="0.1" min="0" max="15" required>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="fieldSize" class="form-label">Field Size (acres)</label>
+                                                <input type="number" class="form-control" id="fieldSize" 
+                                                       step="0.1" min="0.1" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-success btn-lg w-100">
+                                    <i class="fas fa-calculator"></i> Calculate Lime Requirements
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-6">
+                        <!-- Calculator Results -->
+                        <div id="limeRecommendations" style="display: none;">
+                            <h5><i class="fas fa-leaf"></i> Lime Recommendations</h5>
+                            <div id="limeRecommendationsList">
+                                <!-- Recommendations will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <!-- Economic Analysis -->
+                        <div class="economics-table" id="economicAnalysis" style="display: none;">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Economic Analysis</th>
+                                        <th>Agricultural Lime</th>
+                                        <th>Hydrated Lime</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="economicsTableBody">
+                                    <!-- Economic data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Application Tips -->
+                        <div class="help-panel mt-3">
+                            <h6><i class="fas fa-lightbulb"></i> Application Best Practices</h6>
+                            <ul class="small">
+                                <li>Apply lime when soil moisture is adequate but not waterlogged</li>
+                                <li>Incorporate lime within 2 weeks for optimal effectiveness</li>
+                                <li>Avoid application before heavy rain forecast</li>
+                                <li>Consider split applications for rates above 4 tons/acre</li>
+                                <li>Retest soil pH 12-18 months after application</li>
+                                <li>Apply lime in fall for maximum benefit to spring crops</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Monitoring Tab -->
+            <div class="tab-pane fade" id="monitoring" role="tabpanel" aria-labelledby="monitoring-tab">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <!-- pH Trends Chart -->
+                        <div class="monitoring-widget">
+                            <h5><i class="fas fa-chart-line"></i> pH Trends Analysis</h5>
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div>
+                                    <select class="form-select" id="fieldSelector" onchange="updateTrendChart()">
+                                        <option value="all">All Fields</option>
+                                        <option value="field_001">North Field</option>
+                                        <option value="field_002">South Field</option>
+                                        <option value="field_003">East Field</option>
+                                        <option value="field_004">West Field</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div class="trend-indicator" id="trendIndicator">
+                                        <i class="fas fa-minus"></i> Stable
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="phTrendChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Monitoring Schedule -->
+                        <div class="monitoring-widget">
+                            <h5><i class="fas fa-calendar-alt"></i> Monitoring Schedule</h5>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Field</th>
+                                            <th>Test Type</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monitoringScheduleTable">
+                                        <!-- Schedule items will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <!-- Alert Configuration -->
+                        <div class="alert-config">
+                            <h5><i class="fas fa-bell"></i> Alert Configuration</h5>
+                            <form id="alertConfigForm">
+                                <div class="mb-3">
+                                    <label for="criticalLowPh" class="form-label">
+                                        Critical Low pH: <span class="threshold-value" id="criticalLowValue">5.0</span>
+                                    </label>
+                                    <input type="range" class="form-range threshold-slider" 
+                                           id="criticalLowPh" min="3.0" max="6.0" step="0.1" value="5.0"
+                                           oninput="updateThresholdValue('criticalLowValue', this.value)">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="criticalHighPh" class="form-label">
+                                        Critical High pH: <span class="threshold-value" id="criticalHighValue">8.0</span>
+                                    </label>
+                                    <input type="range" class="form-range threshold-slider" 
+                                           id="criticalHighPh" min="7.0" max="10.0" step="0.1" value="8.0"
+                                           oninput="updateThresholdValue('criticalHighValue', this.value)">
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="emailAlerts" checked>
+                                        <label class="form-check-label" for="emailAlerts">
+                                            Email Notifications
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="smsAlerts">
+                                        <label class="form-check-label" for="smsAlerts">
+                                            SMS Notifications
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="pushAlerts" checked>
+                                        <label class="form-check-label" for="pushAlerts">
+                                            Push Notifications
+                                        </label>
+                                    </div>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-success w-100">
+                                    <i class="fas fa-save"></i> Save Alert Settings
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Setup Monitoring -->
+                        <div class="alert-config mt-3">
+                            <h5><i class="fas fa-cog"></i> Setup New Monitoring</h5>
+                            <form id="monitoringSetupForm">
+                                <div class="mb-3">
+                                    <label for="monitoringFieldId" class="form-label">Field ID</label>
+                                    <input type="text" class="form-control" id="monitoringFieldId" required>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="monitoringFrequency" class="form-label">Test Frequency</label>
+                                    <select class="form-select" id="monitoringFrequency" required>
+                                        <option value="">Select Frequency</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="biannual">Bi-annual</option>
+                                        <option value="annual">Annual</option>
+                                    </select>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-info w-100">
+                                    <i class="fas fa-plus"></i> Setup Monitoring
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- History Tab -->
+            <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+                <div class="row">
+                    <div class="col-lg-9">
+                        <!-- Historical Data Table -->
+                        <div class="monitoring-widget">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <h5><i class="fas fa-history"></i> pH Test History</h5>
+                                <div class="d-flex gap-2">
+                                    <input type="date" class="form-control" id="startDate" placeholder="Start Date">
+                                    <input type="date" class="form-control" id="endDate" placeholder="End Date">
+                                    <button class="btn btn-outline-secondary" onclick="filterHistory()">
+                                        <i class="fas fa-filter"></i> Filter
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Date</th>
+                                            <th>Field</th>
+                                            <th>pH</th>
+                                            <th>Buffer pH</th>
+                                            <th>Method</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="historyTable">
+                                        <!-- History data will be populated by JavaScript -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <!-- Pagination -->
+                            <nav aria-label="History pagination">
+                                <ul class="pagination justify-content-center" id="historyPagination">
+                                    <!-- Pagination will be populated by JavaScript -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-3">
+                        <!-- Historical Summary -->
+                        <div class="monitoring-widget">
+                            <h6><i class="fas fa-chart-pie"></i> Historical Summary</h6>
+                            <div class="chart-container" style="height: 200px;">
+                                <canvas id="historyPieChart"></canvas>
+                            </div>
+                        </div>
+                        
+                        <!-- Export Options -->
+                        <div class="alert-config">
+                            <h6><i class="fas fa-download"></i> Export Data</h6>
+                            <div class="d-grid gap-2">
+                                <button class="btn btn-outline-success" onclick="exportToCSV()">
+                                    <i class="fas fa-file-csv"></i> Export CSV
+                                </button>
+                                <button class="btn btn-outline-danger" onclick="exportToPDF()">
+                                    <i class="fas fa-file-pdf"></i> Export PDF
+                                </button>
+                                <button class="btn btn-outline-primary" onclick="exportToExcel()">
+                                    <i class="fas fa-file-excel"></i> Export Excel
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Record pH Test Modal -->
+    <div class="modal fade" id="recordTestModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-vial"></i> Record pH Test</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="recordTestForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="testFarmId" class="form-label">Farm ID</label>
+                                    <input type="text" class="form-control" id="testFarmId" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="testFieldId" class="form-label">Field ID</label>
+                                    <input type="text" class="form-control" id="testFieldId" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="testPhValue" class="form-label">pH Value</label>
+                                    <input type="number" class="form-control" id="testPhValue" 
+                                           step="0.1" min="3.0" max="10.0" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="testBufferPh" class="form-label">Buffer pH (optional)</label>
+                                    <input type="number" class="form-control" id="testBufferPh" 
+                                           step="0.1" min="4.0" max="7.5">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="testMethod" class="form-label">Testing Method</label>
+                                    <select class="form-select" id="testMethod" required>
+                                        <option value="">Select Method</option>
+                                        <option value="standard">Standard Lab Test</option>
+                                        <option value="soil_probe">Soil Probe</option>
+                                        <option value="test_strips">Test Strips</option>
+                                        <option value="digital_meter">Digital Meter</option>
+                                        <option value="laboratory">Professional Laboratory</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="testLabName" class="form-label">Lab Name (if applicable)</label>
+                                    <input type="text" class="form-control" id="testLabName">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="testNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="testNotes" rows="3" 
+                                      placeholder="Any additional observations or notes..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="savePhTest()">
+                        <i class="fas fa-save"></i> Save Test
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', path='/js/agricultural.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/ph-management.js') }}"></script>
+    
+    <script>
+        // Initialize the page when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePHManagement();
+        });
+    </script>
+</body>
+</html>

@@ -414,5 +414,84 @@ async def get_address_suggestions(query: str, limit: int = 5) -> Dict[str, Any]:
         }
 
 
+@router.post("/climate-analysis", response_model=Dict[str, Any])
+async def get_climate_analysis(request: LocationValidationRequest) -> Dict[str, Any]:
+    """
+    Get comprehensive climate analysis for coordinates.
+    
+    This endpoint provides detailed climate information including:
+    - USDA Hardiness Zone with historical weather data analysis
+    - Köppen climate classification
+    - Growing season details (length, frost dates)
+    - Temperature and precipitation patterns
+    - Agricultural suitability assessment
+    - Climate-based crop recommendations
+    
+    Args:
+        request: LocationValidationRequest with latitude and longitude
+        
+    Returns:
+        Dict with comprehensive climate analysis data
+        
+    Raises:
+        HTTPException: If analysis fails or coordinates are invalid
+    """
+    try:
+        logger.info(f"Performing climate analysis for coordinates: {request.latitude}, {request.longitude}")
+        
+        analysis = await validation_service.get_comprehensive_climate_analysis(
+            request.latitude,
+            request.longitude
+        )
+        
+        # Check if analysis was successful
+        if analysis.get('error'):
+            logger.warning(f"Climate analysis returned error: {analysis['error']}")
+            return {
+                "success": False,
+                "error": analysis['error'],
+                "basic_climate_zone": analysis.get('basic_zone'),
+                "message": "Enhanced climate analysis not available, basic zone provided"
+            }
+        
+        logger.info(f"Climate analysis successful: USDA Zone {analysis.get('usda_zone')}, Köppen {analysis.get('koppen_classification')}")
+        
+        return {
+            "success": True,
+            "coordinates": {
+                "latitude": request.latitude,
+                "longitude": request.longitude
+            },
+            "climate_data": analysis
+        }
+        
+    except ValueError as e:
+        logger.error(f"Climate analysis validation error: {e}")
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": LOCATION_ERRORS["INVALID_COORDINATES"].dict(),
+                "details": str(e)
+            }
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error during climate analysis: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "error_code": "CLIMATE_ANALYSIS_ERROR",
+                    "error_message": "Internal climate analysis service error",
+                    "agricultural_context": "Unable to analyze climate conditions for agricultural planning",
+                    "suggested_actions": [
+                        "Try again in a few moments",
+                        "Use basic coordinate validation instead",
+                        "Contact support for manual climate assessment"
+                    ]
+                }
+            }
+        )
+
+
 # Export router
 __all__ = ['router']

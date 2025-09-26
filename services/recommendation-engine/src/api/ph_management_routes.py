@@ -7,13 +7,24 @@ from typing import List, Optional, Dict, Any
 from datetime import datetime, date
 from pydantic import BaseModel, Field
 
-from ..services.soil_ph_management_service import (
-    SoilPHManagementService, PHAnalysis, LimeRecommendation, 
-    PHManagementPlan, PHMonitoringRecord, SoilTexture, LimeType
-)
-from ..models.agricultural_models import SoilTestData
+try:
+    from ..services.soil_ph_management_service import (
+        SoilPHManagementService, PHAnalysis, LimeRecommendation, 
+        PHManagementPlan, PHMonitoringRecord, SoilTexture, LimeType
+    )
+    from ..models.agricultural_models import SoilTestData
+except ImportError:
+    # Fallback for direct execution
+    import sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent))
+    from services.soil_ph_management_service import (
+        SoilPHManagementService, PHAnalysis, LimeRecommendation, 
+        PHManagementPlan, PHMonitoringRecord, SoilTexture, LimeType
+    )
+    from models.agricultural_models import SoilTestData
 
-router = APIRouter(prefix="/api/v1/ph", tags=["pH Management"])
+router = APIRouter(prefix="/ph", tags=["pH Management"])
 
 # Request/Response Models
 class PHAnalysisRequest(BaseModel):
@@ -38,7 +49,7 @@ class PHMonitoringRequest(BaseModel):
     """Request for pH monitoring setup."""
     farm_id: str
     field_id: str
-    monitoring_frequency: str = Field(..., regex="^(monthly|quarterly|biannual|annual)$")
+    monitoring_frequency: str = Field(..., pattern="^(monthly|quarterly|biannual|annual)$")
     alert_thresholds: Dict[str, float]
     crop_rotation_schedule: Optional[List[Dict[str, Any]]] = None
 
@@ -166,16 +177,15 @@ async def calculate_lime_requirements(request: LimeCalculatorRequest):
             "success": True,
             "lime_requirements": [
                 {
-                    "lime_type": rec.lime_type.value,
+                    "lime_type": rec.amendment_type.value,
                     "application_rate_tons_per_acre": rec.application_rate_tons_per_acre,
-                    "application_method": rec.application_method,
-                    "application_timing": rec.application_timing,
-                    "incorporation_depth": rec.incorporation_depth,
+                    "application_rate_lbs_per_acre": rec.application_rate_lbs_per_acre,
+                    "application_timing": rec.application_timing.value,
                     "cost_per_acre": rec.cost_per_acre,
                     "expected_ph_change": rec.expected_ph_change,
-                    "time_to_effectiveness": rec.time_to_effectiveness,
-                    "retest_schedule": rec.retest_schedule,
-                    "notes": rec.notes
+                    "time_to_effect_months": rec.time_to_effect_months,
+                    "application_notes": rec.application_notes,
+                    "safety_precautions": rec.safety_precautions
                 }
                 for rec in recommendations
             ],

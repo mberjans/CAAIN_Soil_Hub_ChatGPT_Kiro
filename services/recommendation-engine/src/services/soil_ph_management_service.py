@@ -11,6 +11,11 @@ from enum import Enum
 import numpy as np
 import math
 
+try:
+    from ..models.agricultural_models import SoilTestData
+except ImportError:
+    from models.agricultural_models import SoilTestData
+
 class SoilTexture(Enum):
     """Soil texture classifications."""
     SAND = "sand"
@@ -34,6 +39,13 @@ class AmendmentType(Enum):
     ELEMENTAL_SULFUR = "elemental_sulfur"
     ALUMINUM_SULFATE = "aluminum_sulfate"
     IRON_SULFATE = "iron_sulfate"
+
+class LimeType(Enum):
+    """Types of lime for pH adjustment."""
+    AGRICULTURAL_LIME = "agricultural_lime"
+    DOLOMITIC_LIME = "dolomitic_lime"
+    HYDRATED_LIME = "hydrated_lime"
+    QUICK_LIME = "quick_lime"
 
 class ApplicationTiming(Enum):
     """Optimal timing for pH amendments."""
@@ -109,6 +121,56 @@ class PHTimeline:
     monitoring_points: List[Dict[str, Any]]
     factors_affecting_change: List[str]
     confidence_intervals: Dict[str, Tuple[float, float]]
+
+@dataclass
+class PHAnalysis:
+    """Comprehensive pH analysis results."""
+    def __init__(self):
+        self.current_ph: float = 0.0
+        self.target_ph: float = 0.0
+        self.ph_status: str = ""
+        self.management_priority: str = ""
+        self.nutrient_availability: Dict[str, float] = {}
+        self.crop_suitability: Dict[str, float] = {}
+        self.yield_impact: float = 0.0
+        self.recommendations: List[PHAmendmentRecommendation] = []
+        self.monitoring_needed: bool = False
+        self.explanation: str = ""
+        
+        # Additional fields for API compatibility
+        self.ph_level: Optional[Any] = None
+        self.ph_deviation: float = 0.0
+        self.nutrient_availability_impact: Dict[str, float] = {}
+        self.crop_suitability_score: float = 0.0
+        self.acidification_risk: str = ""
+        self.alkalinity_risk: str = ""
+        self.buffering_capacity: float = 0.0
+
+@dataclass
+class PHMonitoringRecord:
+    """pH monitoring and tracking record."""
+    record_id: str
+    farm_id: str
+    field_id: str
+    ph_reading: float
+    test_date: datetime
+    test_method: str
+    soil_depth_inches: float
+    soil_moisture_percent: float
+    temperature_f: float
+    notes: str
+    location_coordinates: Optional[Tuple[float, float]] = None
+
+@dataclass  
+class LimeRecommendation:
+    """Lime application recommendation."""
+    lime_type: LimeType
+    application_rate_tons_per_acre: float
+    cost_per_ton: float
+    total_cost: float
+    expected_ph_change: float
+    application_timing: ApplicationTiming
+    notes: List[str]
 
 class SoilPHManagementService:
     """Service for comprehensive soil pH management."""
@@ -548,8 +610,9 @@ class SoilPHManagementService:
                         availability[nutrient] = y1 + (y2 - y1) * (current_ph - x1) / (x2 - x1)
                         break
         
-        return availability  
-  async def calculate_ph_amendments(
+        return availability
+    
+    async def calculate_ph_amendments(
         self,
         current_ph: float,
         target_ph: float,
@@ -1037,8 +1100,7 @@ class SoilPHManagementService:
     
     def _explain_potassium_availability(self, ph: float, availability: float) -> str:
         """Explain potassium availability at given pH."""
-        return f"At pH {ph:.1f}, potassium availability is {availability*100:.0f}%. Potassium is generally available across a wide pH range, but extreme pH can affect uptake." 
-       return economics
+        return f"At pH {ph:.1f}, potassium availability is {availability*100:.0f}%. Potassium is generally available across a wide pH range, but extreme pH can affect uptake."
 
     def _interpolate_yield_impact(self, ph: float, yield_curve: Dict[float, float]) -> float:
         """Interpolate yield impact from pH-yield curve."""
@@ -1356,3 +1418,164 @@ class SoilPHManagementService:
             return "strongly_alkaline"
         else:
             return "very_strongly_alkaline"
+    
+    async def analyze_soil_ph(
+        self,
+        farm_id: str,
+        field_id: str,
+        crop_type: str,
+        soil_test_data: SoilTestData,
+        field_conditions: Optional[Dict[str, Any]] = None
+    ) -> PHAnalysis:
+        """
+        Analyze soil pH levels and provide comprehensive assessment.
+        
+        This method adapts the existing functionality to match the expected API interface.
+        """
+        try:
+            # Extract basic parameters from soil test data
+            current_ph = soil_test_data.ph
+            organic_matter = soil_test_data.organic_matter_percent
+            
+            # Determine soil texture (default if not provided)
+            soil_texture_str = soil_test_data.soil_texture or "loam"
+            try:
+                soil_texture = SoilTexture(soil_texture_str.lower().replace(' ', '_'))
+            except ValueError:
+                soil_texture = SoilTexture.LOAM
+            
+            # Get crop preferences
+            crop_preferences = self.crop_ph_preferences.get(crop_type.lower())
+            if not crop_preferences:
+                crop_preferences = self.crop_ph_preferences['corn']
+            
+            # Calculate target pH
+            target_ph = (crop_preferences.optimal_ph_min + crop_preferences.optimal_ph_max) / 2
+            
+            # Determine pH level classification
+            ph_deviation = abs(current_ph - target_ph)
+            
+            if current_ph < crop_preferences.acceptable_ph_min:
+                ph_level = "acidic"
+                management_priority = "high" if ph_deviation > 1.0 else "medium"
+            elif current_ph > crop_preferences.acceptable_ph_max:
+                ph_level = "alkaline"
+                management_priority = "high" if ph_deviation > 1.0 else "medium"
+            elif crop_preferences.optimal_ph_min <= current_ph <= crop_preferences.optimal_ph_max:
+                ph_level = "optimal"
+                management_priority = "low"
+            else:
+                ph_level = "suboptimal"
+                management_priority = "medium"
+            
+            # Calculate nutrient availability impact
+            nutrient_availability_impact = self._assess_nutrient_availability(current_ph)
+            
+            # Calculate crop suitability score
+            crop_suitability_score = self._calculate_yield_impact(current_ph, crop_preferences)
+            crop_suitability_score = max(0.0, min(1.0, crop_suitability_score / 100))  # Normalize to 0-1
+            
+            # Assess risks
+            acidification_risk = "high" if current_ph < 5.5 else "low" if current_ph > 6.0 else "medium"
+            alkalinity_risk = "high" if current_ph > 8.0 else "low" if current_ph < 7.5 else "medium"
+            
+            # Calculate buffering capacity (simplified)
+            buffer_factors = self.buffer_capacity_factors.get(soil_texture, self.buffer_capacity_factors[SoilTexture.LOAM])
+            buffering_capacity = buffer_factors['base_buffer_capacity'] * (1 + organic_matter * 0.1)
+            
+            # Create PHAnalysis object with the expected attributes
+            analysis = PHAnalysis()
+            analysis.current_ph = current_ph
+            analysis.target_ph = target_ph
+            # Create a simple enum-like object for ph_level
+            class PHLevel:
+                def __init__(self, value):
+                    self.value = value
+            
+            analysis.ph_level = PHLevel(ph_level)
+            analysis.ph_deviation = ph_deviation
+            analysis.nutrient_availability_impact = nutrient_availability_impact
+            analysis.crop_suitability_score = crop_suitability_score
+            analysis.acidification_risk = acidification_risk
+            analysis.alkalinity_risk = alkalinity_risk
+            analysis.buffering_capacity = buffering_capacity
+            analysis.management_priority = management_priority
+            
+            return analysis
+            
+        except Exception as e:
+            raise Exception(f"pH analysis failed: {str(e)}")
+    
+    async def calculate_lime_requirements(
+        self,
+        current_ph: float,
+        target_ph: float,
+        soil_texture: str,
+        organic_matter_percent: float,
+        field_size_acres: float,
+        buffer_ph: Optional[float] = None,
+        field_conditions: Optional[Dict[str, Any]] = None
+    ) -> List[PHAmendmentRecommendation]:
+        """
+        Calculate lime requirements for pH adjustment.
+        
+        This method provides comprehensive lime application recommendations
+        based on current and target pH levels.
+        """
+        try:
+            # Convert soil texture string to enum
+            try:
+                soil_texture_enum = SoilTexture(soil_texture.lower().replace(' ', '_'))
+            except ValueError:
+                soil_texture_enum = SoilTexture.LOAM
+            
+            # Validate pH values
+            if current_ph >= target_ph:
+                raise ValueError("Target pH must be higher than current pH for lime application")
+            
+            # Calculate pH increase needed
+            ph_increase_needed = target_ph - current_ph
+            
+            # Use buffer pH if available for more accurate calculations
+            if buffer_ph:
+                # Adjust calculation based on buffer pH
+                buffering_adjustment = 1.0 + abs(buffer_ph - 6.0) * 0.1
+                ph_increase_needed *= buffering_adjustment
+            
+            # Get lime recommendations using existing method
+            recommendations = self._calculate_lime_recommendations(
+                ph_increase_needed=ph_increase_needed,
+                soil_texture=soil_texture_enum,
+                organic_matter_percent=organic_matter_percent,
+                field_size_acres=field_size_acres
+            )
+            
+            # Apply field-specific adjustments if provided
+            if field_conditions:
+                for rec in recommendations:
+                    # Adjust for drainage conditions
+                    drainage = field_conditions.get('drainage_class', 'well_drained')
+                    if drainage == 'poorly_drained':
+                        rec.application_rate_tons_per_acre *= 0.8  # Reduce rate
+                        rec.time_to_effect_months += 3  # Slower effect
+                    elif drainage == 'excessively_drained':
+                        rec.application_rate_tons_per_acre *= 1.2  # Increase rate
+                        rec.time_to_effect_months -= 2  # Faster effect
+                    
+                    # Adjust for slope
+                    slope = field_conditions.get('slope_percent', 0)
+                    if slope > 8:
+                        rec.application_notes.append(
+                            "Consider split applications due to slope to prevent runoff"
+                        )
+                        rec.application_rate_tons_per_acre *= 0.9  # Reduce per application
+                    
+                    # Recalculate dependent values
+                    rec.application_rate_lbs_per_acre = rec.application_rate_tons_per_acre * 2000
+                    rec.cost_per_acre = rec.application_rate_tons_per_acre * \
+                        self.amendment_properties[rec.amendment_type]['cost_per_ton']
+            
+            return recommendations
+            
+        except Exception as e:
+            raise Exception(f"Lime calculation failed: {str(e)}")

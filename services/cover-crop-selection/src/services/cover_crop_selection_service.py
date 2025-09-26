@@ -13,7 +13,7 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 
 try:
-    from ..models.cover_crop_models import (
+    from models.cover_crop_models import (
         CoverCropSelectionRequest,
         CoverCropSelectionResponse,
         CoverCropRecommendation,
@@ -38,6 +38,7 @@ try:
     from .main_crop_integration_service import MainCropIntegrationService
     from .goal_based_recommendation_service import GoalBasedRecommendationService
     from .timing_service import CoverCropTimingService
+    from .benefit_tracking_service import BenefitQuantificationService
 except ImportError:
     from models.cover_crop_models import (
         CoverCropSelectionRequest,
@@ -64,6 +65,7 @@ except ImportError:
     from services.main_crop_integration_service import MainCropIntegrationService
     from services.goal_based_recommendation_service import GoalBasedRecommendationService
     from services.timing_service import CoverCropTimingService
+    from services.benefit_tracking_service import BenefitQuantificationService
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +81,7 @@ class CoverCropSelectionService:
         self.main_crop_integration_service = MainCropIntegrationService()
         self.goal_based_service = GoalBasedRecommendationService()
         self.timing_service = CoverCropTimingService()
+        self.benefit_tracking_service = BenefitQuantificationService()
         self.initialized = False
         
     async def initialize(self):
@@ -1799,9 +1802,9 @@ class CoverCropSelectionService:
                 climate_response = await client.post(
                     f"{self.climate_service_url}/api/v1/climate/detect-zone",
                     json={
-                        "latitude": request.location.get("latitude"),
-                        "longitude": request.location.get("longitude"),
-                        "elevation_ft": request.location.get("elevation_ft") if request.location else None
+                        "latitude": request.location.latitude,
+                        "longitude": request.location.longitude,
+                        "elevation_ft": getattr(request.location, 'elevation_ft', None) if request.location else None
                     }
                 )
                 
@@ -2961,3 +2964,313 @@ class CoverCropSelectionService:
         except Exception as e:
             logger.error(f"Error getting species timing flexibility: {e}")
             raise
+    
+    # === BENEFIT QUANTIFICATION AND TRACKING INTEGRATION ===
+    
+    async def select_cover_crops_with_benefit_tracking(
+        self,
+        request: CoverCropSelectionRequest,
+        enable_benefit_tracking: bool = True
+    ) -> Tuple[CoverCropSelectionResponse, Optional[Dict]]:
+        """
+        Select cover crops with integrated benefit quantification and tracking.
+        
+        Args:
+            request: Cover crop selection request
+            enable_benefit_tracking: Whether to generate benefit predictions
+            
+        Returns:
+            Tuple of (selection response, benefit tracking data)
+        """
+        try:
+            # Get standard cover crop recommendations
+            selection_response = await self.select_cover_crops(request)
+            
+            if not enable_benefit_tracking:
+                return selection_response, None
+                
+            # Generate benefit quantification for recommended species
+            benefit_tracking_data = {}
+            
+            # Process single species recommendations
+            for recommendation in selection_response.single_species_recommendations:
+                species = await self._get_species_by_id(recommendation.species_id)
+                if species:
+                    benefits = await self._generate_benefit_quantification(
+                        [species], request, recommendation
+                    )
+                    benefit_tracking_data[recommendation.species_id] = benefits
+            
+            # Process mixture recommendations
+            if selection_response.mixture_recommendations:
+                for mixture_rec in selection_response.mixture_recommendations:
+                    mixture_species = []
+                    for species_id in mixture_rec.species_composition.keys():
+                        species = await self._get_species_by_id(species_id)
+                        if species:
+                            mixture_species.append(species)
+                    
+                    if mixture_species:
+                        mixture_benefits = await self._generate_benefit_quantification(
+                            mixture_species, request, mixture_rec
+                        )
+                        mixture_key = f"mixture_{mixture_rec.mixture_id}"
+                        benefit_tracking_data[mixture_key] = mixture_benefits
+            
+            logger.info(f"Generated benefit tracking for {len(benefit_tracking_data)} recommendations")
+            return selection_response, benefit_tracking_data
+            
+        except Exception as e:
+            logger.error(f"Error in cover crop selection with benefit tracking: {e}")
+            raise
+    
+    async def _generate_benefit_quantification(
+        self,
+        species_list: List[CoverCropSpecies],
+        request: CoverCropSelectionRequest,
+        recommendation: Any
+    ) -> Dict:
+        """Generate benefit quantification for selected species."""
+        try:
+            # Extract field conditions from request
+            field_conditions = {
+                'field_size_acres': getattr(request, 'field_size_acres', 50.0),
+                'soil': {
+                    'ph': getattr(request.soil_data, 'ph', 6.5) if request.soil_data else 6.5,
+                    'organic_matter_percent': getattr(request.soil_data, 'organic_matter_percent', 2.5) if request.soil_data else 2.5,
+                    'fertility_index': 0.8,  # Default
+                    'slope_percent': getattr(request.field_characteristics, 'slope_percent', 2.0) if hasattr(request, 'field_characteristics') else 2.0,
+                    'estimated_annual_soil_loss_tons_per_acre': 3.0  # Default estimate
+                },
+                'climate': {}
+            }
+            
+            # Add climate data if available
+            if request.climate_data:
+                field_conditions['climate'] = {
+                    'avg_temp_f': request.climate_data.average_temperature_f,
+                    'annual_precip_inches': request.climate_data.annual_precipitation_inches,
+                    'growing_degree_days': getattr(request.climate_data, 'growing_degree_days', 2500),
+                    'frost_free_days': getattr(request.climate_data, 'frost_free_days', 180)
+                }
+            
+            # Implementation details
+            implementation_details = {
+                'farm_id': getattr(request, 'farm_id', 'unknown'),
+                'field_id': getattr(request, 'field_id', 'unknown'),
+                'implementation_id': f"impl_{request.request_id}",
+                'seeding_rate_factor': 1.0,
+                'timing_factor': 0.95,
+                'planting_date': str(request.planting_window.start_date) if hasattr(request, 'planting_window') and request.planting_window else None,
+                'termination_method': 'herbicide'  # Default
+            }
+            
+            # Get benefit predictions from benefit tracking service
+            predicted_benefits = await self.benefit_tracking_service.predict_benefits(
+                species_list, field_conditions, implementation_details
+            )
+            
+            # Calculate total economic value
+            total_predicted_value = sum(
+                entry.economic_value_predicted or 0.0
+                for entry in predicted_benefits.values()
+            )
+            
+            # Calculate average confidence
+            avg_confidence = sum(
+                entry.predicted_confidence for entry in predicted_benefits.values()
+            ) / len(predicted_benefits) if predicted_benefits else 0.0
+            
+            # Create summary
+            benefit_summary = {
+                'total_predicted_benefits': len(predicted_benefits),
+                'total_economic_value': total_predicted_value,
+                'average_confidence': avg_confidence,
+                'benefit_details': {
+                    benefit_type.value: {
+                        'predicted_value': entry.predicted_value,
+                        'predicted_unit': entry.predicted_unit,
+                        'economic_value': entry.economic_value_predicted,
+                        'confidence': entry.predicted_confidence,
+                        'category': entry.benefit_category
+                    }
+                    for benefit_type, entry in predicted_benefits.items()
+                },
+                'implementation_details': implementation_details,
+                'field_conditions_used': field_conditions
+            }
+            
+            return benefit_summary
+            
+        except Exception as e:
+            logger.error(f"Error generating benefit quantification: {e}")
+            raise
+    
+    async def create_field_benefit_tracking(
+        self,
+        farm_id: str,
+        field_id: str,
+        field_size_acres: float,
+        selected_species: List[str],
+        implementation_year: int,
+        implementation_season: str,
+        baseline_measurements: Optional[Dict[str, float]] = None
+    ) -> str:
+        """
+        Create field-level benefit tracking for selected cover crops.
+        
+        Args:
+            farm_id: Farm identifier
+            field_id: Field identifier  
+            field_size_acres: Field size in acres
+            selected_species: List of selected cover crop species IDs
+            implementation_year: Year of implementation
+            implementation_season: Season of implementation
+            baseline_measurements: Optional baseline measurements
+            
+        Returns:
+            Tracking ID for the created field tracking
+        """
+        try:
+            field_tracking = await self.benefit_tracking_service.create_field_tracking(
+                farm_id=farm_id,
+                field_id=field_id,
+                field_size_acres=field_size_acres,
+                cover_crop_species=selected_species,
+                implementation_year=implementation_year,
+                implementation_season=implementation_season,
+                baseline_measurements=baseline_measurements
+            )
+            
+            logger.info(f"Created field benefit tracking: {field_tracking.tracking_id}")
+            return field_tracking.tracking_id
+            
+        except Exception as e:
+            logger.error(f"Error creating field benefit tracking: {e}")
+            raise
+    
+    async def record_benefit_measurement(
+        self,
+        benefit_entry_id: str,
+        measurement_method: str,
+        measured_value: float,
+        measurement_unit: str,
+        measurement_conditions: Dict[str, Any],
+        technician_notes: Optional[str] = None
+    ) -> str:
+        """
+        Record a benefit measurement for tracking.
+        
+        Args:
+            benefit_entry_id: Benefit entry identifier
+            measurement_method: Method used for measurement
+            measured_value: Measured value
+            measurement_unit: Unit of measurement
+            measurement_conditions: Conditions during measurement
+            technician_notes: Optional technician notes
+            
+        Returns:
+            Measurement record ID
+        """
+        try:
+            from models.cover_crop_models import BenefitMeasurementMethod
+            
+            # Convert string method to enum
+            method_enum = BenefitMeasurementMethod(measurement_method)
+            
+            measurement_record = await self.benefit_tracking_service.record_measurement(
+                benefit_entry_id=benefit_entry_id,
+                measurement_method=method_enum,
+                measured_value=measured_value,
+                measurement_unit=measurement_unit,
+                measurement_conditions=measurement_conditions,
+                technician_notes=technician_notes
+            )
+            
+            logger.info(f"Recorded benefit measurement: {measurement_record.record_id}")
+            return measurement_record.record_id
+            
+        except Exception as e:
+            logger.error(f"Error recording benefit measurement: {e}")
+            raise
+    
+    async def generate_benefit_analytics(
+        self,
+        farm_ids: List[str],
+        start_date: datetime,
+        end_date: datetime
+    ) -> Dict[str, Any]:
+        """
+        Generate benefit tracking analytics for specified farms and time period.
+        
+        Args:
+            farm_ids: List of farm identifiers
+            start_date: Analysis period start date
+            end_date: Analysis period end date
+            
+        Returns:
+            Analytics summary dictionary
+        """
+        try:
+            analytics = await self.benefit_tracking_service.generate_analytics(
+                farm_ids=farm_ids,
+                analysis_period_start=start_date,
+                analysis_period_end=end_date
+            )
+            
+            # Convert to dictionary for API response
+            analytics_dict = {
+                'analytics_id': analytics.analytics_id,
+                'generated_at': analytics.generated_at.isoformat(),
+                'analysis_period': {
+                    'start': analytics.analysis_period_start.isoformat(),
+                    'end': analytics.analysis_period_end.isoformat()
+                },
+                'scope': {
+                    'farm_count': len(analytics.farm_ids),
+                    'field_count': analytics.field_count,
+                    'total_acres': analytics.total_acres_analyzed
+                },
+                'benefit_performance': {
+                    'accuracy_by_type': {
+                        benefit_type.value: accuracy
+                        for benefit_type, accuracy in analytics.benefit_accuracy_by_type.items()
+                    },
+                    'top_performing_benefits': analytics.top_performing_benefits,
+                    'underperforming_benefits': analytics.underperforming_benefits
+                },
+                'economic_insights': {
+                    'total_predicted_value': analytics.total_predicted_value,
+                    'total_realized_value': analytics.total_realized_value,
+                    'average_roi': analytics.average_roi,
+                    'cost_benefit_distribution': analytics.cost_benefit_distribution
+                },
+                'species_performance': {
+                    'performance_ranking': analytics.species_performance_ranking,
+                    'benefit_specialization': {
+                        species: [benefit.value for benefit in benefits]
+                        for species, benefits in analytics.species_benefit_specialization.items()
+                    }
+                },
+                'recommendations': {
+                    'measurement_protocol_improvements': analytics.measurement_protocol_improvements,
+                    'prediction_model_refinements': analytics.prediction_model_refinements,
+                    'farmer_recommendations': analytics.farmer_recommendations
+                },
+                'quality_metrics': {
+                    'overall_data_quality': analytics.overall_data_quality_score,
+                    'measurement_completion_rate': analytics.measurement_completion_rate,
+                    'validation_completion_rate': analytics.validation_completion_rate
+                }
+            }
+            
+            logger.info(f"Generated benefit analytics for {len(farm_ids)} farms")
+            return analytics_dict
+            
+        except Exception as e:
+            logger.error(f"Error generating benefit analytics: {e}")
+            raise
+    
+    async def _get_species_by_id(self, species_id: str) -> Optional[CoverCropSpecies]:
+        """Get species object by ID."""
+        return self.species_database.get(species_id)

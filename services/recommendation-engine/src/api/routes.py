@@ -260,3 +260,31 @@ try:
     router.include_router(planting_router)
 except ImportError:
     logger.warning("Planting date routes not available")
+
+# Include pH management routes
+try:
+    from .ph_management_routes import router as ph_router
+    router.include_router(ph_router)
+    logger.info("pH management routes included successfully")
+except ImportError as e:
+    logger.warning(f"pH management routes not available: {e}")
+    try:
+        from ph_management_routes import router as ph_router
+        router.include_router(ph_router)
+        logger.info("pH management routes included successfully (fallback import)")
+    except ImportError as e2:
+        logger.warning(f"pH management routes completely unavailable: {e2}")
+
+# Include rotation planning routes
+try:
+    from .rotation_routes import router as rotation_router
+    router.include_router(rotation_router)
+    logger.info("Rotation planning routes included successfully")
+except ImportError as e:
+    logger.warning(f"Rotation planning routes not available: {e}")
+    try:
+        from rotation_routes import router as rotation_router
+        router.include_router(rotation_router)
+        logger.info("Rotation planning routes included successfully (fallback import)")
+    except ImportError as e2:
+        logger.warning(f"Rotation planning routes completely unavailable: {e2}")

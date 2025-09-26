@@ -14,7 +14,7 @@ from dataclasses import dataclass
 import math
 
 try:
-    from ..models.cover_crop_models import (
+    from models.cover_crop_models import (
         TimingRecommendationRequest,
         TimingRecommendationResponse,
         PlantingTimingWindow,
@@ -460,9 +460,17 @@ class CoverCropTimingService:
         
         logger.info(f"Loaded timing data for {len(self.species_timing_data)} cover crop species")
     
-    async def get_climate_data(self, location: Dict[str, Any]) -> ClimateTimingData:
+    async def get_climate_data(self, location) -> ClimateTimingData:
         """Retrieve climate data for timing calculations."""
         try:
+            # Handle both Location objects and dictionaries
+            if hasattr(location, 'latitude'):
+                # Location object
+                lat, lon = location.latitude, location.longitude
+            else:
+                # Dictionary
+                lat, lon = location.get("latitude"), location.get("longitude")
+                
             climate_data = ClimateTimingData()
             
             # Try to get data from climate service
@@ -471,7 +479,7 @@ class CoverCropTimingService:
                     # Get climate zone data
                     zone_response = await client.post(
                         f"{self.climate_service_url}/api/climate/detect-zone",
-                        json={"latitude": location.get("latitude"), "longitude": location.get("longitude")}
+                        json={"latitude": lat, "longitude": lon}
                     )
                     
                     if zone_response.status_code == 200:
@@ -493,9 +501,13 @@ class CoverCropTimingService:
             # Return default climate data based on location
             return self._estimate_climate_timing_from_location(location)
     
-    def _estimate_climate_timing_from_zone(self, climate_zone: str, location: Dict[str, Any]) -> ClimateTimingData:
+    def _estimate_climate_timing_from_zone(self, climate_zone: str, location) -> ClimateTimingData:
         """Estimate climate timing data from climate zone."""
-        latitude = location.get("latitude", 40.0)
+        # Handle both Location objects and dictionaries
+        if hasattr(location, 'latitude'):
+            latitude = location.latitude
+        else:
+            latitude = location.get("latitude", 40.0)
         
         # Base climate data on zone and latitude
         climate_data = ClimateTimingData()
@@ -521,9 +533,13 @@ class CoverCropTimingService:
         
         return climate_data
     
-    def _estimate_climate_timing_from_location(self, location: Dict[str, Any]) -> ClimateTimingData:
+    def _estimate_climate_timing_from_location(self, location) -> ClimateTimingData:
         """Estimate climate timing data from location."""
-        latitude = location.get("latitude", 40.0)
+        # Handle both Location objects and dictionaries
+        if hasattr(location, 'latitude'):
+            latitude = location.latitude
+        else:
+            latitude = location.get("latitude", 40.0)
         
         climate_data = ClimateTimingData()
         

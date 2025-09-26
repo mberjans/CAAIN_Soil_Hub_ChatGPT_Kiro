@@ -125,7 +125,7 @@ class RotationGoalService:
                 }
             },
             'risk_reduction': {
-                'type': RotationGoalType.RISK_MANAGEMENT,
+                'type': RotationGoalType.RISK_REDUCTION,
                 'description': 'Minimize production and market risks',
                 'default_weight': 0.15,
                 'measurement_criteria': [
@@ -140,7 +140,7 @@ class RotationGoalService:
                 }
             },
             'labor_efficiency': {
-                'type': RotationGoalType.OPERATIONAL_EFFICIENCY,
+                'type': RotationGoalType.LABOR_OPTIMIZATION,
                 'description': 'Optimize labor and equipment efficiency',
                 'default_weight': 0.1,
                 'measurement_criteria': [
@@ -172,13 +172,13 @@ class RotationGoalService:
                 'validation_rules': ['alternative_availability']
             },
             'maximum_consecutive': {
-                'type': ConstraintType.MAX_CONSECUTIVE,
+                'type': ConstraintType.SEQUENCE_RULE,
                 'description': 'Limit consecutive years of same crop',
                 'parameters': ['crop_name', 'max_consecutive_years'],
                 'validation_rules': ['rotation_length_compatibility']
             },
             'minimum_diversity': {
-                'type': ConstraintType.MIN_DIVERSITY,
+                'type': ConstraintType.SEQUENCE_RULE,
                 'description': 'Ensure minimum crop diversity',
                 'parameters': ['min_unique_crops', 'diversity_index_threshold'],
                 'validation_rules': ['available_crop_count']
@@ -190,13 +190,13 @@ class RotationGoalService:
                 'validation_rules': ['equipment_availability', 'labor_capacity']
             },
             'economic_threshold': {
-                'type': ConstraintType.ECONOMIC_CONSTRAINT,
+                'type': ConstraintType.MARKET_CONTRACT,
                 'description': 'Meet minimum economic thresholds',
                 'parameters': ['min_profit_per_acre', 'max_cost_per_acre'],
                 'validation_rules': ['market_price_validation']
             },
             'regulatory_compliance': {
-                'type': ConstraintType.REGULATORY_CONSTRAINT,
+                'type': ConstraintType.REGULATORY,
                 'description': 'Comply with regulatory requirements',
                 'parameters': ['regulation_type', 'compliance_requirements'],
                 'validation_rules': ['regulation_applicability']
@@ -362,6 +362,13 @@ class RotationGoalService:
         
         return conflicts
     
+    async def analyze_goal_conflicts(
+        self,
+        goals: List[RotationGoal]
+    ) -> List[GoalConflictResolution]:
+        """Analyze conflicts between goals (alias for resolve_goal_conflicts)."""
+        return await self.resolve_goal_conflicts(goals)
+    
     async def measure_goal_achievement(
         self,
         goal: RotationGoal,
@@ -394,7 +401,7 @@ class RotationGoalService:
                 goal, rotation_results
             )
         
-        elif goal.goal_type == RotationGoalType.RISK_MANAGEMENT:
+        elif goal.goal_type == RotationGoalType.RISK_REDUCTION:
             achieved_value, target_value = self._measure_risk_management_achievement(
                 goal, rotation_results
             )
@@ -510,8 +517,8 @@ class RotationGoalService:
             RotationGoalType.PROFIT_MAXIMIZATION: 'profit_maximization',
             RotationGoalType.PEST_MANAGEMENT: 'pest_disease_management',
             RotationGoalType.SUSTAINABILITY: 'environmental_sustainability',
-            RotationGoalType.RISK_MANAGEMENT: 'risk_reduction',
-            RotationGoalType.OPERATIONAL_EFFICIENCY: 'labor_efficiency'
+            RotationGoalType.RISK_REDUCTION: 'risk_reduction',
+            RotationGoalType.LABOR_OPTIMIZATION: 'labor_efficiency'
         }
         return mapping.get(goal_type, 'soil_health_improvement')
     
@@ -538,7 +545,7 @@ class RotationGoalService:
                 conflicts.append(f"Crop '{crop_name}' not available in this region")
                 suggestions.append(f"Consider alternative crops: {', '.join(available_crops[:3])}")
         
-        elif constraint_type == ConstraintType.MAX_CONSECUTIVE:
+        elif constraint_type == ConstraintType.SEQUENCE_RULE:
             crop_name = parameters.get('crop_name')
             max_consecutive = parameters.get('max_consecutive')
             
@@ -550,7 +557,7 @@ class RotationGoalService:
                 conflicts.append("max_consecutive must be a positive integer")
                 is_feasible = False
         
-        elif constraint_type == ConstraintType.MIN_DIVERSITY:
+        elif constraint_type == ConstraintType.TIMING_CONSTRAINT:
             min_unique_crops = parameters.get('min_unique_crops')
             if min_unique_crops is None or min_unique_crops < 2:
                 conflicts.append("min_unique_crops must be at least 2")
@@ -759,7 +766,7 @@ class RotationGoalService:
                     conflicts.append("Alfalfa not suitable for poorly drained soils")
                     suggestions.append("Improve drainage or select alternative legume")
         
-        elif constraint.constraint_type == ConstraintType.MIN_DIVERSITY:
+        elif constraint.constraint_type == ConstraintType.TIMING_CONSTRAINT:
             min_crops = constraint.parameters.get('min_unique_crops', 2)
             
             if len(available_crops) < min_crops:
@@ -932,9 +939,9 @@ class RotationGoalService:
         for goal in goals:
             if goal.goal_type == RotationGoalType.PROFIT_MAXIMIZATION:
                 optimized_weights[goal.goal_id] = 0.5  # High weight for profit
-            elif goal.goal_type == RotationGoalType.RISK_MANAGEMENT:
+            elif goal.goal_type == RotationGoalType.RISK_REDUCTION:
                 optimized_weights[goal.goal_id] = 0.2  # Risk management supports profit
-            elif goal.goal_type == RotationGoalType.OPERATIONAL_EFFICIENCY:
+            elif goal.goal_type == RotationGoalType.LABOR_OPTIMIZATION:
                 optimized_weights[goal.goal_id] = 0.15  # Efficiency supports profit
             else:
                 optimized_weights[goal.goal_id] = 0.15 / (len(goals) - 3)  # Distribute remaining
