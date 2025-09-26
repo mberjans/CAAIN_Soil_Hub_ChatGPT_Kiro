@@ -26,9 +26,12 @@ try:
         MainCropRotationPlan,
         CoverCropRotationIntegration,
         CropTimingWindow,
-        RotationBenefitAnalysis
+        RotationBenefitAnalysis,
+        GoalBasedObjectives,
+        GoalBasedRecommendation
     )
     from .main_crop_integration_service import MainCropIntegrationService
+    from .goal_based_recommendation_service import GoalBasedRecommendationService
 except ImportError:
     from models.cover_crop_models import (
         CoverCropSelectionRequest,
@@ -43,9 +46,12 @@ except ImportError:
         MainCropRotationPlan,
         CoverCropRotationIntegration,
         CropTimingWindow,
-        RotationBenefitAnalysis
+        RotationBenefitAnalysis,
+        GoalBasedObjectives,
+        GoalBasedRecommendation
     )
     from services.main_crop_integration_service import MainCropIntegrationService
+    from services.goal_based_recommendation_service import GoalBasedRecommendationService
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +65,7 @@ class CoverCropSelectionService:
         self.mixture_database = {}
         self.climate_service_url = "http://localhost:8003"  # Data integration service
         self.main_crop_integration_service = MainCropIntegrationService()
+        self.goal_based_service = GoalBasedRecommendationService()
         self.initialized = False
         
     async def initialize(self):
@@ -1820,3 +1827,205 @@ class CoverCropSelectionService:
                 return False
         
         return True
+    
+    async def get_goal_based_recommendations(
+        self,
+        request: CoverCropSelectionRequest,
+        objectives: GoalBasedObjectives
+    ) -> GoalBasedRecommendation:
+        """
+        Get goal-based cover crop recommendations.
+        
+        Args:
+            request: Cover crop selection request with location and conditions
+            objectives: Goal-based objectives with farmer priorities
+            
+        Returns:
+            Goal-based recommendation with optimized species and management
+        """
+        try:
+            logger.info(f"Processing goal-based recommendation request: {request.request_id}")
+            
+            # Get suitable species first
+            suitable_species = await self._find_suitable_species(request)
+            
+            if not suitable_species:
+                logger.warning("No suitable species found for goal-based recommendations")
+                # Return empty recommendation
+                return GoalBasedRecommendation(
+                    request_id=request.request_id,
+                    farmer_goals=objectives,
+                    recommended_species=[],
+                    goal_achievement_scores={},
+                    optimized_seeding_rates={},
+                    goal_focused_management={},
+                    cost_benefit_analysis={},
+                    goal_synergy_analysis={},
+                    confidence_score=0.0
+                )
+            
+            # Use goal-based service to generate recommendations
+            individual_recommendations = await self.goal_based_service.generate_goal_based_recommendations(
+                species_candidates=suitable_species,
+                objectives=objectives,
+                soil_conditions=request.soil_conditions,
+                climate_data=request.climate_data if hasattr(request, 'climate_data') else None,
+                planting_window=request.planting_window if hasattr(request, 'planting_window') else None
+            )
+            
+            # Convert individual recommendations to response format
+            if individual_recommendations:
+                # Create response with all recommended species
+                recommended_species = [rec.species for rec in individual_recommendations]
+                
+                # Calculate aggregate scores and analysis
+                avg_alignment = sum(rec.overall_goal_alignment for rec in individual_recommendations) / len(individual_recommendations)
+                
+                # Combine goal achievements from all recommendations
+                combined_goal_achievements = {}
+                for rec in individual_recommendations:
+                    for goal_achievement in rec.goal_achievement_scores:
+                        goal_key = f"{goal_achievement.goal_name}_{goal_achievement.goal_category}"
+                        if goal_key not in combined_goal_achievements:
+                            combined_goal_achievements[goal_key] = []
+                        combined_goal_achievements[goal_key].append(goal_achievement.achievement_score)
+                
+                # Average the achievement scores by goal
+                avg_goal_achievements = {
+                    goal: sum(scores) / len(scores) for goal, scores in combined_goal_achievements.items()
+                }
+                
+                # Create optimized seeding rates mapping
+                optimized_seeding_rates = {
+                    rec.species.species_id: rec.goal_optimized_seeding_rate 
+                    for rec in individual_recommendations
+                }
+                
+                # Create goal-focused management guidance
+                goal_focused_management = {}
+                for rec in individual_recommendations:
+                    for goal_category, benefits in rec.goal_specific_benefits.items():
+                        if goal_category not in goal_focused_management:
+                            goal_focused_management[goal_category] = {
+                                'planting_practices': [],
+                                'maintenance_practices': [],
+                                'termination_practices': []
+                            }
+                        
+                        # Add management notes from this recommendation
+                        for note in rec.goal_focused_management_notes:
+                            if 'planting' in note.lower():
+                                goal_focused_management[goal_category]['planting_practices'].append(note)
+                            elif 'maintenance' in note.lower() or 'monitoring' in note.lower():
+                                goal_focused_management[goal_category]['maintenance_practices'].append(note)
+                            elif 'termination' in note.lower():
+                                goal_focused_management[goal_category]['termination_practices'].append(note)
+                
+                # Calculate cost-benefit analysis
+                total_cost = sum(
+                    rec.goal_based_cost_benefit.get('establishment_cost', 0) if rec.goal_based_cost_benefit else 0
+                    for rec in individual_recommendations
+                )
+                total_benefits = sum(
+                    rec.goal_based_cost_benefit.get('expected_benefits', 0) if rec.goal_based_cost_benefit else 0
+                    for rec in individual_recommendations
+                )
+                
+                cost_benefit_analysis = {
+                    'total_establishment_cost': total_cost,
+                    'expected_benefits': total_benefits,
+                    'roi_estimate': (total_benefits / total_cost) if total_cost > 0 else 0.0
+                }
+                
+                # Create goal synergy analysis
+                goal_synergy_analysis = {
+                    'synergy_score': sum(rec.goal_synergy_score for rec in individual_recommendations) / len(individual_recommendations),
+                    'potential_conflicts': [],
+                    'enhancement_opportunities': []
+                }
+                
+                # Add potential conflicts from recommendations
+                for rec in individual_recommendations:
+                    if rec.potential_goal_trade_offs:
+                        goal_synergy_analysis['potential_conflicts'].extend(rec.potential_goal_trade_offs)
+                    goal_synergy_analysis['enhancement_opportunities'].extend(rec.goal_enhancement_strategies)
+                
+                # Create the response
+                goal_recommendation = GoalBasedRecommendation(
+                    request_id=request.request_id,
+                    farmer_goals=objectives,
+                    recommended_species=recommended_species,
+                    goal_achievement_scores=avg_goal_achievements,
+                    optimized_seeding_rates=optimized_seeding_rates,
+                    goal_focused_management=goal_focused_management,
+                    cost_benefit_analysis=cost_benefit_analysis,
+                    goal_synergy_analysis=goal_synergy_analysis,
+                    confidence_score=avg_alignment,
+                    individual_recommendations=individual_recommendations
+                )
+                
+                logger.info(f"Generated goal-based recommendations with {len(recommended_species)} species")
+                return goal_recommendation
+            else:
+                logger.warning("No goal-based recommendations generated")
+                return GoalBasedRecommendation(
+                    request_id=request.request_id,
+                    farmer_goals=objectives,
+                    recommended_species=[],
+                    goal_achievement_scores={},
+                    optimized_seeding_rates={},
+                    goal_focused_management={},
+                    cost_benefit_analysis={},
+                    goal_synergy_analysis={},
+                    confidence_score=0.0
+                )
+            
+        except Exception as e:
+            logger.error(f"Error in goal-based recommendations: {e}")
+            raise
+    
+    async def analyze_goal_feasibility(
+        self,
+        request: CoverCropSelectionRequest,
+        objectives: GoalBasedObjectives
+    ) -> Dict[str, Any]:
+        """
+        Analyze feasibility of achieving specified goals.
+        
+        Args:
+            request: Cover crop selection request with location and conditions
+            objectives: Goal-based objectives to analyze
+            
+        Returns:
+            Detailed feasibility analysis with recommendations
+        """
+        try:
+            logger.info(f"Analyzing goal feasibility for request: {request.request_id}")
+            
+            # Get suitable species for analysis
+            suitable_species = await self._find_suitable_species(request)
+            
+            # Use goal-based service for feasibility analysis
+            feasibility_analysis = await self.goal_based_service.analyze_goal_feasibility(
+                suitable_species, request, objectives
+            )
+            
+            return feasibility_analysis
+            
+        except Exception as e:
+            logger.error(f"Error in goal feasibility analysis: {e}")
+            raise
+    
+    async def get_goal_categories_and_options(self) -> Dict[str, Any]:
+        """
+        Get available goal categories and specific goal options.
+        
+        Returns:
+            Dictionary of available goals and options for goal-based planning
+        """
+        try:
+            return self.goal_based_service.get_available_goal_categories()
+            
+        except Exception as e:
+            logger.error(f"Error getting goal categories: {e}")
+            raise

@@ -18,9 +18,15 @@ try:
         CoverCropSpecies,
         CoverCropType,
         GrowingSeason,
-        SoilBenefit
+        SoilBenefit,
+        GoalBasedObjectives,
+        GoalBasedRecommendation,
+        FarmerGoalCategory,
+        GoalPriority,
+        SpecificGoal
     )
     from ..services.cover_crop_selection_service import CoverCropSelectionService
+    from ..services.goal_based_recommendation_service import GoalBasedRecommendationService
 except ImportError:
     from models.cover_crop_models import (
         CoverCropSelectionRequest,
@@ -30,9 +36,15 @@ except ImportError:
         CoverCropSpecies,
         CoverCropType,
         GrowingSeason,
-        SoilBenefit
+        SoilBenefit,
+        GoalBasedObjectives,
+        GoalBasedRecommendation,
+        FarmerGoalCategory,
+        GoalPriority,
+        SpecificGoal
     )
     from services.cover_crop_selection_service import CoverCropSelectionService
+    from services.goal_based_recommendation_service import GoalBasedRecommendationService
 
 logger = logging.getLogger(__name__)
 
@@ -582,4 +594,221 @@ async def get_rotation_position_recommendations(
         raise HTTPException(
             status_code=500,
             detail=f"Error generating rotation position recommendations: {str(e)}"
+        )
+
+
+# Goal-Based Cover Crop Selection Endpoints
+@router.post("/goal-based-recommendations", response_model=GoalBasedRecommendation)
+async def get_goal_based_recommendations(
+    request: CoverCropSelectionRequest,
+    objectives: GoalBasedObjectives
+):
+    """
+    Get goal-based cover crop recommendations with farmer priority optimization.
+    
+    This endpoint provides sophisticated cover crop recommendations that are optimized
+    based on specific farmer goals and priorities. It goes beyond traditional selection
+    by considering goal achievement scores, goal synergies, and priority-weighted outcomes.
+    
+    Agricultural Logic:
+    - Farmer goal prioritization and weighting
+    - Goal achievement scoring based on species characteristics
+    - Goal synergy and conflict analysis
+    - Priority-optimized seeding rates and management
+    - Goal-focused cost-benefit analysis
+    - Multi-objective optimization for complex farming scenarios
+    
+    Features:
+    - Production goals (yield optimization, quality improvement)
+    - Environmental goals (soil health, biodiversity, carbon sequestration) 
+    - Economic goals (cost reduction, profitability, risk management)
+    - Operational goals (labor efficiency, equipment utilization)
+    - Sustainability goals (long-term soil health, environmental stewardship)
+    
+    Args:
+        request: Standard cover crop selection request with field conditions
+        objectives: Goal-based objectives with farmer priorities and specific goals
+    """
+    try:
+        logger.info(f"Processing goal-based recommendation request: {request.request_id}")
+        
+        # Validate request data
+        if not request.location or "latitude" not in request.location or "longitude" not in request.location:
+            raise HTTPException(
+                status_code=400,
+                detail="Location data with latitude and longitude is required"
+            )
+        
+        if not request.planting_window or "start" not in request.planting_window:
+            raise HTTPException(
+                status_code=400,
+                detail="Planting window with start date is required"
+            )
+        
+        if request.field_size_acres <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Field size must be greater than 0 acres"
+            )
+        
+        # Validate goal-based objectives
+        if not objectives.farmer_goals:
+            raise HTTPException(
+                status_code=400,
+                detail="At least one farmer goal must be specified"
+            )
+        
+        # Validate priorities sum to reasonable values
+        total_priority = sum(goal.priority_weight for goal in objectives.farmer_goals)
+        if total_priority <= 0:
+            raise HTTPException(
+                status_code=400,
+                detail="Goal priority weights must sum to a positive value"
+            )
+        
+        # Get goal-based recommendations
+        response = await cover_crop_service.get_goal_based_recommendations(
+            request=request,
+            objectives=objectives
+        )
+        
+        logger.info(f"Successfully generated goal-based recommendations for request: {request.request_id}")
+        return response
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in goal-based recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating goal-based recommendations: {str(e)}"
+        )
+
+
+@router.post("/goal-analysis")
+async def analyze_goal_feasibility(
+    request: CoverCropSelectionRequest,
+    objectives: GoalBasedObjectives
+):
+    """
+    Analyze feasibility of achieving specified farmer goals.
+    
+    This endpoint provides detailed analysis of how feasible it is to achieve
+    the specified goals given the field conditions, climate, and constraints.
+    It helps farmers set realistic expectations and prioritize goals.
+    
+    Agricultural Logic:  
+    - Goal feasibility assessment based on field conditions
+    - Constraint analysis (climate, soil, economic, operational)
+    - Goal conflict identification and resolution strategies
+    - Alternative goal suggestions for better outcomes
+    - Risk assessment for goal achievement
+    - Timeline analysis for goal realization
+    
+    Args:
+        request: Cover crop selection request with field conditions
+        objectives: Goal-based objectives to analyze for feasibility
+    """
+    try:
+        logger.info(f"Analyzing goal feasibility for request: {request.request_id}")
+        
+        # Validate request data
+        if not request.location:
+            raise HTTPException(
+                status_code=400,
+                detail="Location data is required for goal feasibility analysis"
+            )
+        
+        if not objectives.farmer_goals:
+            raise HTTPException(
+                status_code=400,
+                detail="At least one farmer goal must be specified for analysis"
+            )
+        
+        # Perform goal feasibility analysis
+        analysis = await cover_crop_service.analyze_goal_feasibility(
+            request=request,
+            objectives=objectives
+        )
+        
+        logger.info(f"Successfully completed goal feasibility analysis for request: {request.request_id}")
+        return analysis
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in goal feasibility analysis: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error analyzing goal feasibility: {str(e)}"
+        )
+
+
+@router.get("/goal-categories")
+async def get_goal_categories_and_options():
+    """
+    Get available goal categories and specific goal options for goal-based planning.
+    
+    This endpoint provides the complete catalog of available farmer goals that can
+    be used in goal-based cover crop selection. It includes goal categories,
+    specific goals within each category, and guidance on goal selection.
+    
+    Returns:
+        Dictionary containing:
+        - Available goal categories (Production, Environmental, Economic, etc.)
+        - Specific goals within each category
+        - Goal descriptions and expected outcomes
+        - Priority setting guidance
+        - Goal compatibility information
+        - Example goal combinations for different farming scenarios
+    """
+    try:
+        logger.info("Getting available goal categories and options")
+        
+        # Get goal categories from service
+        categories = await cover_crop_service.get_goal_categories_and_options()
+        
+        logger.info("Successfully retrieved goal categories and options")
+        return categories
+        
+    except Exception as e:
+        logger.error(f"Error getting goal categories: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving goal categories: {str(e)}"
+        )
+
+
+@router.get("/goal-examples")
+async def get_goal_based_examples():
+    """
+    Get example goal-based scenarios for different farming situations.
+    
+    This endpoint provides pre-configured goal examples that demonstrate
+    how to use goal-based cover crop selection for common farming scenarios.
+    
+    Returns:
+        Collection of example scenarios with:
+        - Scenario descriptions (new farmer, sustainability focus, profit optimization, etc.)
+        - Pre-configured goal combinations
+        - Expected outcomes and benefits
+        - Implementation guidance
+        - Success metrics and monitoring approaches
+    """
+    try:
+        logger.info("Getting goal-based example scenarios")
+        
+        # Get example scenarios from goal service
+        goal_service = GoalBasedRecommendationService()
+        examples = goal_service.get_example_goal_scenarios()
+        
+        logger.info("Successfully retrieved goal-based examples")
+        return examples
+
+        
+    except Exception as e:
+        logger.error(f"Error getting goal-based examples: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error retrieving goal-based examples: {str(e)}"
         )

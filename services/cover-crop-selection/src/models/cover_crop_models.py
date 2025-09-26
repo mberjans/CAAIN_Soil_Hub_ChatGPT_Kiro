@@ -116,6 +116,165 @@ class ClimateData(BaseModel):
     heat_stress_risk: Optional[str] = Field(None, description="Heat stress risk")
 
 
+class FarmerGoalCategory(str, Enum):
+    """High-level farmer goal categories for cover crop selection."""
+    SOIL_HEALTH = "soil_health"
+    NUTRIENT_MANAGEMENT = "nutrient_management"
+    EROSION_CONTROL = "erosion_control"
+    WEED_MANAGEMENT = "weed_management"
+    WATER_MANAGEMENT = "water_management"
+    PEST_DISEASE_CONTROL = "pest_disease_control"
+    CARBON_SEQUESTRATION = "carbon_sequestration"
+    ECONOMIC_OPTIMIZATION = "economic_optimization"
+    BIODIVERSITY_ENHANCEMENT = "biodiversity_enhancement"
+
+
+class GoalPriority(str, Enum):
+    """Priority levels for farmer goals."""
+    CRITICAL = "critical"  # Must achieve - highest weight
+    HIGH = "high"         # Very important - high weight
+    MEDIUM = "medium"     # Important - moderate weight
+    LOW = "low"          # Nice to have - low weight
+
+
+class SpecificGoal(BaseModel):
+    """Specific goal within a farmer's cover crop objectives."""
+    
+    goal_id: str = Field(..., description="Unique goal identifier")
+    category: FarmerGoalCategory = Field(..., description="Goal category")
+    priority: GoalPriority = Field(..., description="Goal priority level")
+    weight: float = Field(..., ge=0.0, le=1.0, description="Goal weight (0-1)")
+    
+    # Goal specifics
+    target_benefit: SoilBenefit = Field(..., description="Target soil benefit")
+    quantitative_target: Optional[float] = Field(None, description="Quantitative target if applicable")
+    target_unit: Optional[str] = Field(None, description="Unit for quantitative target")
+    
+    # Constraints and preferences
+    acceptable_cost_range: Optional[Dict[str, float]] = Field(None, description="Min/max cost per acre")
+    management_complexity_limit: Optional[str] = Field(None, description="Maximum management complexity")
+    timing_constraints: Optional[Dict[str, Any]] = Field(None, description="Timing restrictions")
+    
+    # Success criteria
+    success_metrics: List[str] = Field(default_factory=list, description="How to measure goal achievement")
+    minimum_achievement_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="Minimum achievement level")
+
+
+class GoalBasedObjectives(BaseModel):
+    """Enhanced goal-based farmer objectives for cover crop selection."""
+    
+    # Goal structure
+    specific_goals: List[SpecificGoal] = Field(..., min_items=1, description="Specific farmer goals")
+    goal_synergies: Optional[Dict[str, List[str]]] = Field(None, description="Goals that work well together")
+    goal_conflicts: Optional[Dict[str, List[str]]] = Field(None, description="Potentially conflicting goals")
+    
+    # Overall preferences
+    primary_focus: FarmerGoalCategory = Field(..., description="Primary focus area")
+    secondary_focus: Optional[FarmerGoalCategory] = Field(None, description="Secondary focus area")
+    overall_strategy: str = Field(default="balanced", description="Overall strategy (aggressive, balanced, conservative)")
+    
+    # Constraints
+    total_budget_per_acre: Optional[float] = Field(None, ge=0, description="Total budget per acre")
+    management_capacity: str = Field(default="moderate", description="Management capacity (low, moderate, high)")
+    risk_tolerance: str = Field(default="moderate", description="Risk tolerance (low, moderate, high)")
+    
+    # Integration preferences
+    cash_crop_integration: Optional[str] = Field(None, description="Cash crop to integrate with")
+    rotation_system_goals: Optional[List[str]] = Field(None, description="Rotation system specific goals")
+    multi_year_planning: bool = Field(default=False, description="Multi-year goal planning")
+    
+    @validator('specific_goals')
+    def validate_goal_weights(cls, v):
+        """Validate that goal weights sum to reasonable range."""
+        total_weight = sum(goal.weight for goal in v)
+        if total_weight > 1.5:  # Allow some flexibility beyond perfect 1.0
+            raise ValueError("Total goal weights should not exceed 1.5")
+        if total_weight < 0.3:
+            raise ValueError("Total goal weights should be at least 0.3")
+        return v
+
+
+class GoalAchievementMetrics(BaseModel):
+    """Metrics for tracking goal achievement in cover crop recommendations."""
+    
+    goal_id: str = Field(..., description="Associated goal identifier")
+    predicted_achievement_score: float = Field(..., ge=0.0, le=1.0, description="Predicted achievement (0-1)")
+    confidence_level: float = Field(..., ge=0.0, le=1.0, description="Confidence in prediction")
+    
+    # Quantitative predictions
+    quantitative_prediction: Optional[float] = Field(None, description="Quantitative benefit prediction")
+    prediction_range: Optional[Dict[str, float]] = Field(None, description="Min/max prediction range")
+    
+    # Contributing factors
+    primary_contributing_factors: List[str] = Field(..., description="Main factors contributing to achievement")
+    limiting_factors: Optional[List[str]] = Field(None, description="Factors that may limit achievement")
+    enhancement_opportunities: Optional[List[str]] = Field(None, description="Ways to enhance achievement")
+    
+    # Success monitoring
+    monitoring_indicators: List[str] = Field(..., description="Key indicators to monitor")
+    measurement_timeline: Optional[Dict[str, str]] = Field(None, description="When to measure indicators")
+
+
+class GoalBasedSpeciesRecommendation(BaseModel):
+    """Individual cover crop species recommendation optimized for specific farmer goals."""
+    
+    # Base recommendation
+    species: CoverCropSpecies = Field(..., description="Recommended species")
+    suitability_score: float = Field(..., ge=0.0, le=1.0, description="Overall suitability score")
+    
+    # Goal-specific scoring
+    goal_achievement_scores: List[GoalAchievementMetrics] = Field(..., description="Goal-specific achievement metrics")
+    overall_goal_alignment: float = Field(..., ge=0.0, le=1.0, description="Overall goal alignment score")
+    goal_synergy_score: float = Field(..., ge=0.0, le=1.0, description="How well goals work together")
+    
+    # Optimized recommendations
+    goal_optimized_seeding_rate: float = Field(..., ge=0, description="Seeding rate optimized for goals")
+    goal_optimized_planting_date: date = Field(..., description="Planting date optimized for goals")
+    goal_optimized_termination: str = Field(..., description="Termination method optimized for goals")
+    
+    # Goal-specific benefits and trade-offs
+    goal_specific_benefits: Dict[str, List[str]] = Field(..., description="Benefits by goal category")
+    potential_goal_trade_offs: Optional[List[str]] = Field(None, description="Potential trade-offs between goals")
+    goal_enhancement_strategies: List[str] = Field(..., description="Strategies to enhance goal achievement")
+    
+    # Economic analysis with goal context
+    goal_based_cost_benefit: Optional[Dict[str, Any]] = Field(None, description="Cost-benefit analysis by goal")
+    goal_based_roi_estimate: Optional[float] = Field(None, description="ROI estimate considering goal priorities")
+    
+    # Management guidance
+    goal_focused_management_notes: List[str] = Field(..., description="Management notes focused on goal achievement")
+    goal_monitoring_plan: List[str] = Field(..., description="Monitoring plan for goal achievement")
+    goal_adjustment_recommendations: Optional[List[str]] = Field(None, description="Potential goal adjustments")
+
+
+class GoalBasedRecommendation(BaseModel):
+    """Complete goal-based cover crop recommendation response."""
+    
+    # Request tracking
+    request_id: str = Field(..., description="Unique request identifier")
+    farmer_goals: GoalBasedObjectives = Field(..., description="Farmer's goal-based objectives")
+    
+    # Recommended species
+    recommended_species: List[CoverCropSpecies] = Field(..., description="List of recommended cover crop species")
+    
+    # Aggregate goal analysis
+    goal_achievement_scores: Dict[str, float] = Field(..., description="Achievement scores by goal category")
+    optimized_seeding_rates: Dict[str, float] = Field(..., description="Optimized seeding rates by species ID")
+    
+    # Management guidance
+    goal_focused_management: Dict[str, Dict[str, List[str]]] = Field(..., description="Management practices by goal category")
+    
+    # Economic analysis
+    cost_benefit_analysis: Dict[str, Any] = Field(..., description="Overall cost-benefit analysis")
+    goal_synergy_analysis: Dict[str, Any] = Field(..., description="Analysis of goal synergies and conflicts")
+    
+    # Overall confidence
+    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Overall confidence in recommendations")
+    
+    # Individual detailed recommendations (optional for detailed analysis)
+    individual_recommendations: Optional[List[GoalBasedSpeciesRecommendation]] = Field(None, description="Detailed individual species recommendations")
+
+
 class CoverCropObjectives(BaseModel):
     """Farmer objectives for cover crop selection."""
     
