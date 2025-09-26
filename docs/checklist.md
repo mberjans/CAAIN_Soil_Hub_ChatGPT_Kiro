@@ -253,7 +253,16 @@ This master checklist combines all feature implementation tasks with unique iden
   - Service tested and verified: 3 species loaded successfully, all functionality operational
 
 ### TICKET-013_cover-crop-selection-5. Comprehensive Cover Crop Species Database
-- [ ] TICKET-013_cover-crop-selection-5.1 Build comprehensive cover crop species database
+- [x] TICKET-013_cover-crop-selection-5.1 Build comprehensive cover crop species database ✅ **FUNCTIONAL**
+  - **Species Coverage**: Expanded from 3 to 18 comprehensive species across all major categories
+  - **Legumes (7)**: Crimson Clover, Red Clover, White Clover, Austrian Winter Pea, Hairy Vetch, Cowpea, Berseem Clover
+  - **Grasses (5)**: Winter Rye, Winter Wheat, Oats, Annual Ryegrass, Sorghum Sudan
+  - **Brassicas (3)**: Radish (Tillage), Turnip, Mustard - all with biofumigant and deep taproot benefits
+  - **Forbs (3)**: Sunflower, Buckwheat, Phacelia - diverse ecological benefits including pollinator habitat
+  - **Enhanced Data Model**: Added missing SoilBenefit enum values (biomass_production, heat_tolerance, salt_tolerance, pollinator_habitat, phosphorus_mobilization)
+  - **Comprehensive Attributes**: Each species includes detailed climate tolerance, soil requirements, seeding rates, establishment costs, termination methods, and primary benefits
+  - **Service Integration**: Species database properly loads and integrates with recommendation engine
+  - **Testing Verified**: All 18 species load correctly, categorization works, nitrogen fixers identified (7 species)
 
 ### TICKET-013_cover-crop-selection-6. Planting and Termination Timing System
 - [ ] TICKET-013_cover-crop-selection-6.1 Develop planting and termination timing system

@@ -36,8 +36,14 @@ class SoilBenefit(str, Enum):
     COMPACTION_RELIEF = "compaction_relief"
     WEED_SUPPRESSION = "weed_suppression"
     PEST_MANAGEMENT = "pest_management"
+    PEST_SUPPRESSION = "pest_suppression"
     NUTRIENT_SCAVENGING = "nutrient_scavenging"
     SOIL_STRUCTURE = "soil_structure"
+    BIOMASS_PRODUCTION = "biomass_production"
+    HEAT_TOLERANCE = "heat_tolerance"
+    SALT_TOLERANCE = "salt_tolerance"
+    POLLINATOR_HABITAT = "pollinator_habitat"
+    PHOSPHORUS_MOBILIZATION = "phosphorus_mobilization"
 
 
 class CoverCropSpecies(BaseModel):
