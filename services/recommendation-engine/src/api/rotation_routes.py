@@ -21,7 +21,8 @@ from ..services.rotation_goal_service import RotationGoalService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/rotations", tags=["crop-rotation"])
+router = APIRouter(prefix="/rotations", tags=["crop-rotation"])
+fields_router = APIRouter(prefix="/fields", tags=["fields"])
 
 # Initialize services
 goal_service = RotationGoalService()
@@ -77,7 +78,7 @@ class GoalConflictAnalysisRequest(BaseModel):
 
 # Field History Management Endpoints
 
-@router.post("/fields", status_code=status.HTTP_201_CREATED)
+@fields_router.post("", status_code=status.HTTP_201_CREATED)
 async def create_field_profile(request: FieldProfileRequest):
     """Create a new field profile for rotation planning."""
     try:
@@ -114,7 +115,7 @@ async def create_field_profile(request: FieldProfileRequest):
         raise HTTPException(status_code=500, detail=f"Failed to create field profile: {str(e)}")
 
 
-@router.post("/fields/{field_id}/history", status_code=status.HTTP_201_CREATED)
+@fields_router.post("/{field_id}/history", status_code=status.HTTP_201_CREATED)
 async def add_field_history(field_id: str, history_data: FieldHistoryRequest):
     """Add field history record."""
     try:
@@ -137,7 +138,7 @@ async def add_field_history(field_id: str, history_data: FieldHistoryRequest):
         raise HTTPException(status_code=500, detail=f"Failed to add field history: {str(e)}")
 
 
-@router.get("/fields/{field_id}/history")
+@fields_router.get("/{field_id}/history")
 async def get_field_history(
     field_id: str,
     start_year: Optional[int] = Query(None, description="Start year for history range"),
@@ -188,7 +189,7 @@ async def get_field_history(
         raise HTTPException(status_code=500, detail=f"Failed to get field history: {str(e)}")
 
 
-@router.put("/fields/{field_id}/history/{year}")
+@fields_router.put("/{field_id}/history/{year}")
 async def update_field_history(field_id: str, year: int, updates: Dict[str, Any]):
     """Update field history record."""
     try:
@@ -212,7 +213,7 @@ async def update_field_history(field_id: str, year: int, updates: Dict[str, Any]
         raise HTTPException(status_code=500, detail=f"Failed to update field history: {str(e)}")
 
 
-@router.delete("/fields/{field_id}/history/{year}")
+@fields_router.delete("/{field_id}/history/{year}")
 async def delete_field_history(field_id: str, year: int):
     """Delete field history record."""
     try:
@@ -237,7 +238,7 @@ async def delete_field_history(field_id: str, year: int):
         raise HTTPException(status_code=500, detail=f"Failed to delete field history: {str(e)}")
 
 
-@router.post("/fields/{field_id}/bulk-import")
+@fields_router.post("/{field_id}/bulk-import")
 async def bulk_import_history(field_id: str, request: BulkHistoryImportRequest):
     """Bulk import field history records."""
     try:
@@ -613,7 +614,7 @@ async def get_economic_analysis(
         raise HTTPException(status_code=500, detail=f"Economic analysis failed: {str(e)}")
 
 
-@router.get("/fields/{field_id}/data-quality")
+@fields_router.get("/{field_id}/data-quality")
 async def assess_field_data_quality(field_id: str):
     """Assess quality of field history data."""
     try:
@@ -635,7 +636,7 @@ async def assess_field_data_quality(field_id: str):
         raise HTTPException(status_code=500, detail=f"Data quality assessment failed: {str(e)}")
 
 
-@router.get("/fields/{field_id}/sequence-analysis")
+@fields_router.get("/{field_id}/sequence-analysis")
 async def get_crop_sequence_analysis(field_id: str, years: int = Query(10, ge=1, le=20)):
     """Analyze crop sequence patterns in field history."""
     try:
