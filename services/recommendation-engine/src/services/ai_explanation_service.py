@@ -143,7 +143,7 @@ class AIExplanationService:
         location_data: Optional[Dict[str, Any]] = None
     ) -> str:
         """
-        Generate seasonal timing advice for recommendations.
+        Generate seasonal timing advice for recommendations with climate zone context.
         
         Args:
             recommendation_type: Type of recommendation
@@ -151,19 +151,20 @@ class AIExplanationService:
             location_data: Location information for regional timing
             
         Returns:
-            Seasonal timing advice
+            Seasonal timing advice with climate zone considerations
         """
         try:
             current_month = datetime.now().month
+            climate_zone = self._extract_climate_zone(recommendation_data, location_data)
             
             if recommendation_type == "crop_selection":
-                return self._generate_crop_timing_advice(recommendation_data, current_month)
+                return self._generate_crop_timing_advice(recommendation_data, current_month, climate_zone)
             elif recommendation_type == "soil_fertility":
-                return self._generate_soil_timing_advice(recommendation_data, current_month)
+                return self._generate_soil_timing_advice(recommendation_data, current_month, climate_zone)
             elif recommendation_type == "fertilizer_selection":
-                return self._generate_fertilizer_timing_advice(recommendation_data, current_month)
+                return self._generate_fertilizer_timing_advice(recommendation_data, current_month, climate_zone)
             else:
-                return self._generate_generic_timing_advice(current_month)
+                return self._generate_generic_timing_advice(current_month, climate_zone)
                 
         except Exception as e:
             logger.error(f"Error generating timing advice: {e}")
@@ -217,6 +218,7 @@ class AIExplanationService:
         return {
             "crop_selection": (
                 "{crop_name} is {suitability_level} for your farm conditions. "
+                "{climate_zone_context} "
                 "Your soil pH of {soil_ph} is {ph_assessment} for {crop_name}. "
                 "{additional_factors}"
             ),
@@ -256,6 +258,7 @@ class AIExplanationService:
                 'diversity_score': recommendation_data.get('diversity_score', 'unknown'),
                 'nutrient': recommendation_data.get('nutrient', 'nutrient'),
                 'deficiency_level': recommendation_data.get('severity', 'moderate'),
+                'climate_zone_context': self._generate_climate_zone_context(recommendation_data, context),
             }
             
             # Add assessment variables
@@ -325,6 +328,113 @@ class AIExplanationService:
         
         return variables
     
+    def _generate_climate_zone_context(self, recommendation_data: Dict[str, Any], context: Dict[str, Any]) -> str:
+        """
+        Generate climate zone context for recommendations.
+        
+        Args:
+            recommendation_data: Recommendation details including climate compatibility
+            context: Farm and location context data
+            
+        Returns:
+            Climate zone context description
+        """
+        try:
+            # Prioritize climate zone from recommendation data (more specific)
+            climate_zone = recommendation_data.get('climate_zone')
+            
+            # Fallback to location data if not in recommendation
+            if not climate_zone:
+                location_data = context.get('location_data') or context.get('farm_profile', {}).get('location')
+                if location_data:
+                    climate_zone = getattr(location_data, 'climate_zone', None) or location_data.get('climate_zone')
+            
+            if not climate_zone:
+                return "Climate zone information not available."
+            
+            # Get climate compatibility information from recommendation
+            climate_compatibility_score = recommendation_data.get('climate_compatibility_score', 0.7)
+            crop_name = recommendation_data.get('crop_name', 'this crop')
+            
+            # Generate context based on compatibility score
+            if climate_compatibility_score >= 1.0:
+                return f"Climate Zone {climate_zone} is optimal for {crop_name} production."
+            elif climate_compatibility_score >= 0.8:
+                compatible_zones = recommendation_data.get('compatible_climate_zones', [])
+                if compatible_zones:
+                    return f"Climate Zone {climate_zone} is well-suited for {crop_name}, being adjacent to optimal zones {', '.join(compatible_zones[:3])}."
+                else:
+                    return f"Climate Zone {climate_zone} is well-suited for {crop_name} production."
+            elif climate_compatibility_score >= 0.5:
+                return f"Climate Zone {climate_zone} is marginal for {crop_name}. Consider heat/cold tolerant varieties and monitor seasonal conditions."
+            else:
+                compatible_zones = recommendation_data.get('compatible_climate_zones', [])
+                if compatible_zones:
+                    return f"Climate Zone {climate_zone} may present challenges for {crop_name}. Optimal zones are {', '.join(compatible_zones[:3])}."
+                else:
+                    return f"Climate Zone {climate_zone} may present challenges for {crop_name}. Consult local extension services for variety recommendations."
+                    
+        except Exception as e:
+            logger.warning(f"Error generating climate zone context: {e}")
+            return "Climate zone analysis not available."
+    
+    def _extract_climate_zone(self, recommendation_data: Dict[str, Any], context: Optional[Dict[str, Any]]) -> Optional[str]:
+        """
+        Extract climate zone from recommendation or context data.
+        
+        Args:
+            recommendation_data: Recommendation details
+            context: Full context including location information
+            
+        Returns:
+            Climate zone string or None if not available
+        """
+        # Check recommendation_data first (more specific)
+        climate_zone = recommendation_data.get('climate_zone')
+        if climate_zone:
+            return climate_zone
+        
+        # Check context for location_data as fallback
+        if context:
+            location_data = context.get('location_data')
+            if location_data:
+                if hasattr(location_data, 'climate_zone'):
+                    return location_data.climate_zone
+                elif isinstance(location_data, dict):
+                    return location_data.get('climate_zone')
+        
+        return None
+    
+    def _get_climate_timing_context(self, climate_zone: str) -> str:
+        """
+        Generate climate zone specific timing context.
+        
+        Args:
+            climate_zone: USDA climate zone (e.g., "6a")
+            
+        Returns:
+            Climate-specific timing context
+        """
+        if not climate_zone:
+            return ""
+            
+        try:
+            # Extract the numeric part of climate zone (e.g., "10a" -> 10, "6b" -> 6)
+            import re
+            zone_match = re.search(r'(\d+)', climate_zone)
+            zone_num = int(zone_match.group(1)) if zone_match else 0
+            
+            if zone_num <= 4:
+                return f" Zone {climate_zone} has a shorter growing season with late spring start and early fall finish."
+            elif zone_num <= 6:
+                return f" Zone {climate_zone} provides a moderate growing season with standard spring/fall timing."
+            elif zone_num <= 8:
+                return f" Zone {climate_zone} offers an extended growing season with early spring start and late fall finish."
+            else:
+                return f" Zone {climate_zone} allows for year-round growing with minimal frost risk."
+        except (ValueError, IndexError):
+            return f" Consider climate zone {climate_zone} characteristics for optimal timing."
+    
     def _enhance_explanation(
         self, 
         base_explanation: str, 
@@ -343,6 +453,13 @@ class AIExplanationService:
         timing = recommendation_data.get('timing')
         if timing:
             enhancements.append(f"Recommended timing: {timing}.")
+        
+        # Add climate zone specific notes
+        climate_zone = self._extract_climate_zone(recommendation_data, context)
+        if climate_zone:
+            climate_compatibility_score = recommendation_data.get('climate_compatibility_score', 0.7)
+            if climate_compatibility_score < 0.7:
+                enhancements.append(f"Consider cold-hardy or heat-tolerant varieties for Zone {climate_zone}.")
         
         # Add cost information
         cost = recommendation_data.get('cost_per_acre')
@@ -585,64 +702,122 @@ class AIExplanationService:
         
         return f"Monitor crop response and retest soil {nutrient} levels next season to evaluate correction effectiveness."
     
-    def _generate_crop_timing_advice(self, recommendation_data: Dict[str, Any], current_month: int) -> str:
-        """Generate crop selection timing advice."""
+    def _generate_crop_timing_advice(self, recommendation_data: Dict[str, Any], current_month: int, climate_zone: Optional[str] = None) -> str:
+        """Generate crop selection timing advice with climate zone considerations."""
         crop_name = recommendation_data.get('crop_name', '').lower()
+        climate_context = self._get_climate_timing_context(climate_zone) if climate_zone else ""
         
         if current_month in [1, 2, 3]:  # Winter/Early Spring
-            return "Plan seed purchases and equipment preparation. Review crop insurance options."
+            base_advice = "Plan seed purchases and equipment preparation. Review crop insurance options."
+            if climate_zone:
+                if climate_zone in ['3a', '3b', '4a']:
+                    base_advice += f" In Zone {climate_zone}, plan for later spring planting due to extended frost risk."
+                elif climate_zone in ['7a', '7b', '8a', '8b']:
+                    base_advice += f" In Zone {climate_zone}, consider early spring varieties and soil preparation."
+            return base_advice
+            
         elif current_month in [4, 5]:  # Spring planting season
             if 'corn' in crop_name:
-                return "Optimal corn planting window. Monitor soil temperature (50°F+) and moisture conditions."
+                base_advice = "Optimal corn planting window. Monitor soil temperature (50°F+) and moisture conditions."
+                if climate_zone:
+                    if climate_zone in ['3a', '3b', '4a']:
+                        base_advice += f" Zone {climate_zone} may require waiting until late May for optimal conditions."
+                    elif climate_zone in ['6a', '6b', '7a']:
+                        base_advice += f" Zone {climate_zone} allows for mid-April to early May planting."
+                return base_advice
             elif 'soybean' in crop_name:
-                return "Prepare for soybean planting after corn. Soil temperature should reach 55°F+."
+                base_advice = "Prepare for soybean planting after corn. Soil temperature should reach 55°F+."
+                if climate_zone:
+                    if climate_zone in ['3a', '3b', '4a']:
+                        base_advice += f" Zone {climate_zone} typically allows planting from late May through June."
+                return base_advice
             else:
-                return "Spring planting season. Monitor soil conditions and weather forecasts."
+                return f"Spring planting season. Monitor soil conditions and weather forecasts.{climate_context}"
+                
         elif current_month in [6, 7, 8]:  # Growing season
-            return "Focus on crop monitoring and in-season management. Plan for next year's crop selection."
+            base_advice = "Focus on crop monitoring and in-season management. Plan for next year's crop selection."
+            if climate_zone and climate_zone in ['8a', '8b', '9a', '9b']:
+                base_advice += f" Zone {climate_zone} may allow for second season plantings of cool-season crops."
+            return base_advice
+            
         elif current_month in [9, 10]:  # Harvest season
-            return "Harvest season. Evaluate crop performance for next year's planning."
+            base_advice = "Harvest season. Evaluate crop performance for next year's planning."
+            if climate_zone:
+                if climate_zone in ['3a', '3b', '4a']:
+                    base_advice += f" Zone {climate_zone} harvest typically occurs early to mid-September."
+                elif climate_zone in ['7a', '7b', '8a']:
+                    base_advice += f" Zone {climate_zone} allows for extended harvest window through October."
+            return base_advice
         else:  # Late fall/winter
-            return "Post-harvest evaluation period. Plan crop selection for next growing season."
+            return f"Post-harvest evaluation period. Plan crop selection for next growing season.{climate_context}"
     
-    def _generate_soil_timing_advice(self, recommendation_data: Dict[str, Any], current_month: int) -> str:
-        """Generate soil fertility timing advice."""
+    def _generate_soil_timing_advice(self, recommendation_data: Dict[str, Any], current_month: int, climate_zone: Optional[str] = None) -> str:
+        """Generate soil fertility timing advice with climate zone considerations."""
         if current_month in [9, 10, 11]:  # Fall
-            return "Optimal time for lime application and fall fertilizer programs. Soil sampling recommended."
+            base_advice = "Optimal time for lime application and fall fertilizer programs. Soil sampling recommended."
+            if climate_zone:
+                if climate_zone in ['3a', '3b', '4a']:
+                    base_advice += f" Zone {climate_zone} benefits from early fall applications before ground freeze."
+                elif climate_zone in ['8a', '8b', '9a']:
+                    base_advice += f" Zone {climate_zone} allows for extended fall application window through December."
+            return base_advice
+            
         elif current_month in [12, 1, 2]:  # Winter
-            return "Plan soil fertility program for next season. Review soil test results and plan amendments."
+            base_advice = "Plan soil fertility program for next season. Review soil test results and plan amendments."
+            if climate_zone and climate_zone in ['7a', '7b', '8a', '8b', '9a']:
+                base_advice += f" Zone {climate_zone} may allow for winter lime applications during mild periods."
+            return base_advice
+            
         elif current_month in [3, 4]:  # Early spring
-            return "Spring soil testing and fertilizer application window. Monitor soil conditions."
+            base_advice = "Spring soil testing and fertilizer application window. Monitor soil conditions."
+            if climate_zone:
+                if climate_zone in ['3a', '3b', '4a']:
+                    base_advice += f" Zone {climate_zone} requires waiting for soil thaw and drainage."
+                elif climate_zone in ['6a', '6b', '7a']:
+                    base_advice += f" Zone {climate_zone} typically allows early April applications."
+            return base_advice
         else:  # Growing season
             return "Monitor crop response to fertility program. Plan tissue testing if needed."
     
-    def _generate_fertilizer_timing_advice(self, recommendation_data: Dict[str, Any], current_month: int) -> str:
-        """Generate fertilizer application timing advice."""
+    def _generate_fertilizer_timing_advice(self, recommendation_data: Dict[str, Any], current_month: int, climate_zone: Optional[str] = None) -> str:
+        """Generate fertilizer application timing advice with climate zone considerations."""
         fertilizer_type = recommendation_data.get('fertilizer_type', '').lower()
         
         if 'nitrogen' in fertilizer_type or 'n' in fertilizer_type:
             if current_month in [4, 5]:
-                return "Spring nitrogen application window. Split applications may improve efficiency."
+                base_advice = "Spring nitrogen application window. Split applications may improve efficiency."
+                if climate_zone:
+                    if climate_zone in ['3a', '3b', '4a']:
+                        base_advice += f" Zone {climate_zone} may require delayed applications until soil temperature reaches 40°F."
+                    elif climate_zone in ['7a', '7b', '8a']:
+                        base_advice += f" Zone {climate_zone} allows for earlier March applications."
+                return base_advice
             elif current_month in [6, 7]:
                 return "Side-dress nitrogen application period for corn. Monitor crop needs."
             else:
                 return "Plan nitrogen application timing to match crop uptake patterns."
         else:
             if current_month in [9, 10, 11]:
-                return "Fall application recommended for phosphorus and potassium."
+                base_advice = "Fall application recommended for phosphorus and potassium."
+                if climate_zone:
+                    if climate_zone in ['3a', '3b', '4a']:
+                        base_advice += f" Zone {climate_zone} benefits from early fall application before freeze-up."
+                return base_advice
             else:
                 return "Spring application acceptable if fall application was missed."
     
-    def _generate_generic_timing_advice(self, current_month: int) -> str:
-        """Generate generic timing advice."""
+    def _generate_generic_timing_advice(self, current_month: int, climate_zone: Optional[str] = None) -> str:
+        """Generate generic timing advice with climate zone considerations."""
+        climate_context = self._get_climate_timing_context(climate_zone) if climate_zone else ""
+        
         if current_month in [3, 4, 5]:
-            return "Spring planning and implementation season. Monitor weather and soil conditions."
+            return f"Spring planning and implementation season. Monitor weather and soil conditions.{climate_context}"
         elif current_month in [6, 7, 8]:
-            return "Growing season monitoring period. Focus on crop management and assessment."
+            return f"Growing season monitoring period. Focus on crop management and assessment.{climate_context}"
         elif current_month in [9, 10, 11]:
-            return "Harvest and fall preparation season. Plan for next year's management."
+            return f"Harvest and fall preparation season. Plan for next year's management.{climate_context}"
         else:
-            return "Winter planning period. Review performance and plan improvements."
+            return f"Winter planning period. Review performance and plan improvements.{climate_context}"
 
 # Factory function for easy initialization
 def create_ai_explanation_service() -> AIExplanationService:
