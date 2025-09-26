@@ -328,7 +328,7 @@ This master checklist combines all feature implementation tasks with unique iden
 - [x] TICKET-013_cover-crop-selection-13.1 Develop user interface components
 
 ### TICKET-013_cover-crop-selection-14. System Integration
-- [ ] TICKET-013_cover-crop-selection-14.1 Integrate with existing systems
+- [x] TICKET-013_cover-crop-selection-14.1 Integrate with existing systems
 
 ## Crop Rotation Planning
 
