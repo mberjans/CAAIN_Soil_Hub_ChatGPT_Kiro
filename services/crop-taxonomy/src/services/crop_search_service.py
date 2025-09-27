@@ -13,9 +13,15 @@ try:  # pragma: no cover - runtime import resolution
         CropSearchRequest,
         CropSearchResponse,
         CropSearchResult,
+        FilterContributionAggregate,
+        FilterScoreBreakdown,
+        ResultRankingDetails,
         SearchFacets,
+        SearchRankingOverview,
         SearchOperator,
         SearchStatistics,
+        SearchVisualizationSummary,
+        ScoreBucket,
         SortField,
         SortOrder,
         TaxonomyFilterCriteria,
@@ -32,9 +38,15 @@ except ImportError:  # pragma: no cover - fallback for direct execution
         CropSearchRequest,
         CropSearchResponse,
         CropSearchResult,
+        FilterContributionAggregate,
+        FilterScoreBreakdown,
+        ResultRankingDetails,
         SearchFacets,
+        SearchRankingOverview,
         SearchOperator,
         SearchStatistics,
+        SearchVisualizationSummary,
+        ScoreBucket,
         SortField,
         SortOrder,
         TaxonomyFilterCriteria,
@@ -128,6 +140,8 @@ class CropSearchService:
         facets = self._build_facets(sorted_results)
         statistics = self._build_statistics(start_time, matched_results, paginated_results)
         filters_summary = self._summarize_filters(request.filter_criteria)
+        ranking_overview = self._build_ranking_overview(sorted_results)
+        visualization_summary = self._build_visualization_summary(sorted_results)
         total_count = len(matched_results)
         returned_count = len(paginated_results)
         offset_value = request.offset
@@ -147,6 +161,8 @@ class CropSearchService:
             alternative_searches=[],
             statistics=statistics,
             applied_filters=filters_summary,
+            ranking_overview=ranking_overview,
+            visualization_summary=visualization_summary,
             has_more_results=has_more_results,
             next_offset=next_offset,
         )
@@ -257,6 +273,12 @@ class CropSearchService:
             return None
 
         relevance_score, matching_details, partial_details, missing_details, highlights, similarity = self._compile_scores(filter_results, matched_filters, applicable_filters)
+        ranking_details, score_breakdown = self._build_result_ranking_details(
+            filter_results,
+            applicable_filters,
+            matched_filters,
+            partial_filters,
+        )
         suitability_score = relevance_score
 
         result = CropSearchResult(
@@ -268,6 +290,8 @@ class CropSearchService:
             missing_criteria=missing_details,
             search_highlights=highlights,
             similarity_factors=similarity,
+            score_breakdown=score_breakdown,
+            ranking_details=ranking_details,
             recommendation_notes=[],
             potential_concerns=[],
         )
@@ -1093,6 +1117,297 @@ class CropSearchService:
             similarity_factors["filters_matched_ratio"] = matched_filters / float(applicable_filters)
 
         return relevance_score, matching_details, partial_details, missing_details, highlights, similarity_factors
+
+    def _build_result_ranking_details(
+        self,
+        filter_results: List[FilterEvaluation],
+        applicable_filters: int,
+        matched_filters: int,
+        partial_filters: int,
+    ) -> Tuple[ResultRankingDetails, Dict[str, float]]:
+        breakdown: Dict[str, float] = {}
+        filter_scores: List[FilterScoreBreakdown] = []
+
+        index = 0
+        while index < len(filter_results):
+            evaluation = filter_results[index]
+            if evaluation.active:
+                breakdown[evaluation.name] = evaluation.score
+                collected_notes: List[str] = []
+
+                note_index = 0
+                while note_index < len(evaluation.notes):
+                    collected_notes.append(evaluation.notes[note_index])
+                    note_index += 1
+
+                note_index = 0
+                while note_index < len(evaluation.partial_notes):
+                    note_text = "Partial: " + evaluation.partial_notes[note_index]
+                    collected_notes.append(note_text)
+                    note_index += 1
+
+                note_index = 0
+                while note_index < len(evaluation.missing_notes):
+                    note_text = "Missing: " + evaluation.missing_notes[note_index]
+                    collected_notes.append(note_text)
+                    note_index += 1
+
+                filter_scores.append(
+                    FilterScoreBreakdown(
+                        name=evaluation.name,
+                        weight=evaluation.weight,
+                        score=evaluation.score,
+                        matched=evaluation.matched,
+                        partial=evaluation.partial,
+                        notes=collected_notes,
+                    )
+                )
+            index += 1
+
+        missing_filters = 0
+        if applicable_filters > matched_filters + partial_filters:
+            missing_filters = applicable_filters - matched_filters - partial_filters
+
+        coverage = 1.0
+        if applicable_filters > 0:
+            coverage = matched_filters / float(applicable_filters)
+
+        ranking_details = ResultRankingDetails(
+            active_filters=applicable_filters,
+            matched_filters=matched_filters,
+            partial_filters=partial_filters,
+            missing_filters=missing_filters,
+            coverage=coverage,
+            filter_scores=filter_scores,
+        )
+
+        return ranking_details, breakdown
+
+    def _build_ranking_overview(self, results: List[CropSearchResult]) -> Optional[SearchRankingOverview]:
+        if len(results) == 0:
+            return None
+
+        scores: List[float] = []
+        index = 0
+        best_score = 0.0
+        worst_score = 0.0
+        coverage_sum = 0.0
+        coverage_count = 0
+
+        while index < len(results):
+            current_result = results[index]
+            score = current_result.relevance_score
+            scores.append(score)
+
+            if index == 0:
+                best_score = score
+                worst_score = score
+            else:
+                if score > best_score:
+                    best_score = score
+                if score < worst_score:
+                    worst_score = score
+
+            details = current_result.ranking_details
+            if details is not None:
+                coverage_sum += details.coverage
+                coverage_count += 1
+
+            index += 1
+
+        scores.sort()
+
+        median_score = 0.0
+        score_count = len(scores)
+        if score_count > 0:
+            middle_index = score_count // 2
+            if score_count % 2 == 1:
+                median_score = scores[middle_index]
+            else:
+                first_value = scores[middle_index - 1]
+                second_value = scores[middle_index]
+                median_score = (first_value + second_value) / 2.0
+
+        average_coverage = 0.0
+        if coverage_count > 0:
+            average_coverage = coverage_sum / float(coverage_count)
+
+        return SearchRankingOverview(
+            best_score=best_score,
+            worst_score=worst_score,
+            median_score=median_score,
+            average_coverage=average_coverage,
+        )
+
+    def _build_visualization_summary(self, results: List[CropSearchResult]) -> SearchVisualizationSummary:
+        summary = SearchVisualizationSummary()
+        if len(results) == 0:
+            return summary
+
+        bucket_ranges: List[Tuple[str, float, float]] = []
+        bucket_ranges.append(("0.00-0.25", 0.0, 0.25))
+        bucket_ranges.append(("0.25-0.50", 0.25, 0.5))
+        bucket_ranges.append(("0.50-0.75", 0.5, 0.75))
+        bucket_ranges.append(("0.75-1.00", 0.75, 1.0))
+
+        bucket_counts: Dict[str, int] = {}
+        range_index = 0
+        while range_index < len(bucket_ranges):
+            label_only = bucket_ranges[range_index][0]
+            bucket_counts[label_only] = 0
+            range_index += 1
+
+        result_index = 0
+        while result_index < len(results):
+            score = results[result_index].relevance_score
+            range_index = 0
+            placed = False
+            while range_index < len(bucket_ranges) and placed is False:
+                bucket_info = bucket_ranges[range_index]
+                label_value = bucket_info[0]
+                lower_bound = bucket_info[1]
+                upper_bound = bucket_info[2]
+
+                if range_index == len(bucket_ranges) - 1:
+                    if score >= lower_bound and score <= upper_bound:
+                        bucket_counts[label_value] = bucket_counts[label_value] + 1
+                        placed = True
+                else:
+                    if score >= lower_bound and score < upper_bound:
+                        bucket_counts[label_value] = bucket_counts[label_value] + 1
+                        placed = True
+                range_index += 1
+            result_index += 1
+
+        score_buckets: List[ScoreBucket] = []
+        range_index = 0
+        while range_index < len(bucket_ranges):
+            bucket_info = bucket_ranges[range_index]
+            label_value = bucket_info[0]
+            lower_bound = bucket_info[1]
+            upper_bound = bucket_info[2]
+            count_value = bucket_counts.get(label_value, 0)
+            score_buckets.append(
+                ScoreBucket(
+                    label=label_value,
+                    count=count_value,
+                    minimum=lower_bound,
+                    maximum=upper_bound,
+                )
+            )
+            range_index += 1
+
+        total_scores: Dict[str, float] = {}
+        appearance_counts: Dict[str, int] = {}
+        matched_counts: Dict[str, int] = {}
+        partial_counts: Dict[str, int] = {}
+        missing_counts: Dict[str, int] = {}
+        weights: Dict[str, float] = {}
+
+        result_index = 0
+        while result_index < len(results):
+            details = results[result_index].ranking_details
+            if details is not None:
+                filter_index = 0
+                while filter_index < len(details.filter_scores):
+                    score_detail = details.filter_scores[filter_index]
+                    name_value = score_detail.name
+                    if name_value not in total_scores:
+                        total_scores[name_value] = 0.0
+                        appearance_counts[name_value] = 0
+                        matched_counts[name_value] = 0
+                        partial_counts[name_value] = 0
+                        missing_counts[name_value] = 0
+                        weights[name_value] = score_detail.weight
+
+                    total_scores[name_value] = total_scores[name_value] + score_detail.score
+                    appearance_counts[name_value] = appearance_counts[name_value] + 1
+
+                    if score_detail.matched:
+                        matched_counts[name_value] = matched_counts[name_value] + 1
+                    elif score_detail.partial:
+                        partial_counts[name_value] = partial_counts[name_value] + 1
+                    else:
+                        missing_counts[name_value] = missing_counts[name_value] + 1
+
+                    filter_index += 1
+            result_index += 1
+
+        filter_aggregates: List[FilterContributionAggregate] = []
+        for name_value in total_scores:
+            appearances = appearance_counts.get(name_value, 0)
+            average_score = 0.0
+            if appearances > 0:
+                average_score = total_scores[name_value] / float(appearances)
+
+            aggregate = FilterContributionAggregate(
+                name=name_value,
+                average_score=average_score,
+                matched_results=matched_counts.get(name_value, 0),
+                partial_results=partial_counts.get(name_value, 0),
+                weight=weights.get(name_value, 0.0),
+            )
+            filter_aggregates.append(aggregate)
+
+        filter_aggregates.sort(key=lambda item: item.average_score, reverse=True)
+
+        missing_total = 0
+        for name_value in missing_counts:
+            missing_total = missing_total + missing_counts[name_value]
+
+        match_summary: Dict[str, int] = {}
+        match_summary['matched_filters'] = 0
+        match_summary['partial_filters'] = 0
+        match_summary['missing_filters'] = 0
+
+        result_index = 0
+        while result_index < len(results):
+            details = results[result_index].ranking_details
+            if details is not None:
+                match_summary['matched_filters'] = match_summary['matched_filters'] + details.matched_filters
+                match_summary['partial_filters'] = match_summary['partial_filters'] + details.partial_filters
+                match_summary['missing_filters'] = match_summary['missing_filters'] + details.missing_filters
+            result_index += 1
+
+        highlights: List[str] = []
+
+        if len(filter_aggregates) > 0:
+            top_aggregate = filter_aggregates[0]
+            scored_value = round(top_aggregate.average_score, 2)
+            highlights.append(
+                "Top filter dimension: " + top_aggregate.name + " (avg score " + str(scored_value) + ")"
+            )
+
+        dominant_bucket_label = ""
+        dominant_bucket_count = 0
+        bucket_index = 0
+        while bucket_index < len(score_buckets):
+            bucket = score_buckets[bucket_index]
+            if bucket.count > dominant_bucket_count:
+                dominant_bucket_count = bucket.count
+                dominant_bucket_label = bucket.label
+            bucket_index += 1
+
+        if dominant_bucket_count > 0:
+            highlights.append(
+                "Most results fall in score range " + dominant_bucket_label + " (" + str(dominant_bucket_count) + " results)"
+            )
+
+        total_filters = match_summary['matched_filters'] + match_summary['partial_filters'] + match_summary['missing_filters']
+        if total_filters > 0:
+            coverage_ratio = match_summary['matched_filters'] / float(total_filters)
+            coverage_percent = int(round(coverage_ratio * 100))
+            highlights.append("Filter coverage: " + str(coverage_percent) + "% fully satisfied")
+
+        if missing_total > 0:
+            highlights.append(str(missing_total) + " filter evaluations lacked full matches")
+
+        summary.score_distribution = score_buckets
+        summary.filter_contributions = filter_aggregates
+        summary.match_summary = match_summary
+        summary.highlights = highlights
+
+        return summary
 
     def _sort_results(
         self,
