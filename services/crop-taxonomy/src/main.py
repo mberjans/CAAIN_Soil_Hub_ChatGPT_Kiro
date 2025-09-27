@@ -25,6 +25,7 @@ try:
     from api.filter_routes import router as filter_router
     from api.learning_routes import router as learning_router
     from api.preference_recommendation_routes import router as preference_recommendation_router
+    from api.filtering_routes import router as filtering_router
 except ImportError as e:
     logging.error(f"Import error: {e}")
     # Create placeholder routers if imports fail
@@ -37,6 +38,7 @@ except ImportError as e:
     filter_router = APIRouter()
     learning_router = APIRouter()
     preference_recommendation_router = APIRouter()
+    filtering_router = APIRouter()
 
 # Configure logging
 logging.basicConfig(
@@ -134,12 +136,14 @@ app.add_middleware(
 
 # Include routers
 app.include_router(taxonomy_router, prefix="/api/v1")
-app.include_router(search_router, prefix="/api/v1")
+app.include_router(search_router, prefix="/api/v1/crop-taxonomy")
 app.include_router(variety_router, prefix="/api/v1") 
 app.include_router(regional_router, prefix="/api/v1")
 app.include_router(preference_router, prefix="/api/v1")
+app.include_router(filter_router, prefix="/api/v1")
 app.include_router(learning_router, prefix="/api/v1")
 app.include_router(preference_recommendation_router)
+app.include_router(filtering_router)  # Include the new filtering routes with no prefix (handles full paths)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():

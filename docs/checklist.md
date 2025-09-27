@@ -68,7 +68,7 @@ This master checklist combines all feature implementation tasks with unique iden
   **Status**: ✅ COMPLETED - Complete override system implemented with modal-based interface, zone comparison, safety checks, user confirmation requirements, and backend logging. Includes local storage persistence and comprehensive validation.
 
 ### TICKET-001_climate-zone-detection-4. Climate Data Integration
-- [x!] TICKET-001_climate-zone-detection-4.1 Extend weather service with climate zone data
+- [ ] TICKET-001_climate-zone-detection-4.1 Extend weather service with climate zone data
   **Status**: ✅ IMPLEMENTED - Weather service successfully extended with comprehensive climate zone integration including historical weather analysis, USDA zone determination, Köppen classification, frost date analysis, enhanced agricultural metrics, and intelligent caching
 - [x] TICKET-001_climate-zone-detection-4.2 Update location validation service
   **Status**: ✅ IMPLEMENTED - Location validation service has comprehensive climate zone integration including enhanced weather service integration, USDA zone detection, Köppen classification, agricultural assessment with climate factors, and comprehensive climate analysis methods
@@ -452,7 +452,7 @@ This master checklist combines all feature implementation tasks with unique iden
 ### TICKET-012_crop-rotation-planning-10. Testing and Validation
 - [x] TICKET-012_crop-rotation-planning-10.1 Test rotation algorithm accuracy
   **Status**: ✅ FUNCTIONAL - Comprehensive test suite exists in services/recommendation-engine/tests/test_crop_rotation_planning.py
-- [x!] TICKET-012_crop-rotation-planning-10.2 Validate agricultural soundness
+- [ ] TICKET-012_crop-rotation-planning-10.2 Validate agricultural soundness
   **Status**: ✅ IMPLEMENTED - Comprehensive agricultural validation tests created in services/recommendation-engine/tests/test_agricultural_validation.py covering crop compatibility, nitrogen management, yield estimation, pest/disease management, and overall agricultural soundness
  - [x] TICKET-012_crop-rotation-planning-10.3 Test user experience
    **Status**: ✅ IMPLEMENTED - Comprehensive UX tests created in tests/ux/test_crop_rotation_ux.py covering web interface, mobile experience, accessibility compliance, and performance requirements
@@ -460,9 +460,9 @@ This master checklist combines all feature implementation tasks with unique iden
 ## Crop Type Filtering
 
 ### TICKET-005_crop-type-filtering-1. Enhanced Crop Classification and Filtering System
-- [x!] TICKET-005_crop-type-filtering-1.1 Develop comprehensive crop taxonomy
+- [ ] TICKET-005_crop-type-filtering-1.1 Develop comprehensive crop taxonomy
   **Status**: ✅ UPDATED - Crop taxonomy models and services validated with passing tests; compatibility and enumeration fixes ensure taxonomy classification operates reliably
-- [x!] TICKET-005_crop-type-filtering-1.2 Extend crop filtering attributes model - CODEX FAILED, RETURN LATER
+- [ ] TICKET-005_crop-type-filtering-1.2 Extend crop filtering attributes model
   **Status**: ✅ UPDATED - Crop filtering model now includes advanced attribute helpers, validation, and Python 3.13 compatibility fixes with passing unit coverage
   **Implementation**: Enhance existing `CropFilteringAttributes` model in `services/crop-taxonomy/src/models/crop_filtering_models.py`
   **Code**: Add advanced filtering fields: `pest_resistance_traits`, `market_class_filters`, `certification_filters`, `seed_availability_filters`
@@ -478,7 +478,7 @@ This master checklist combines all feature implementation tasks with unique iden
   **Integration**: Connect with existing crop taxonomy service and recommendation engine
   **Testing**: Validate tag accuracy >90% against agricultural extension data
   **Status**: ✅ Implemented advanced tagging service with automated generation, manual workflows, database schema, API endpoints, and unit coverage
-- [x!] TICKET-005_crop-type-filtering-1.4 Create crop preference profiles system - CODEX FAILED, RETURN LATER
+- [ ] TICKET-005_crop-type-filtering-1.4 Create crop preference profiles system
   **Implementation**: Develop `CropPreferenceService` in `services/crop-taxonomy/src/services/crop_preference_service.py`
   **Database**: Create `farmer_crop_preferences` table with user_id, preference_type, crop_categories, weights, constraints
   **Features**: Preference learning from user selections, preference-based filtering, preference conflict resolution
@@ -544,9 +544,9 @@ This master checklist combines all feature implementation tasks with unique iden
   **Testing**: A/B testing framework for preference-based vs. standard recommendations
 
 ### TICKET-005_crop-type-filtering-4. Enhanced API Endpoints for Advanced Filtering
-- [ ] TICKET-005_crop-type-filtering-4.1 Extend existing crop taxonomy API with advanced filtering endpoints
+- [x] TICKET-005_crop-type-filtering-4.1 Extend existing crop taxonomy API with advanced filtering endpoints
   **Implementation**: Enhance `services/crop-taxonomy/src/api/search_routes.py` with new filtering capabilities
-  - [ ] TICKET-005_crop-type-filtering-4.1.1 Enhance POST `/api/v1/crop-taxonomy/search` with multi-criteria filtering
+  - [x] TICKET-005_crop-type-filtering-4.1.1 Enhance POST `/api/v1/crop-taxonomy/search` with multi-criteria filtering
     **Request Schema**:
     ```json
     {
@@ -568,16 +568,16 @@ This master checklist combines all feature implementation tasks with unique iden
     **Integration**: Connect with climate zone detection, soil pH management, and user preference services
     **Performance**: <2s response time, support pagination for large result sets
     **Agricultural Validation**: Test with real farming scenarios, validate against extension recommendations
-  - [ ] TICKET-005_crop-type-filtering-4.1.2 Create GET `/api/v1/crop-taxonomy/filter-options` - Dynamic filter options
+  - [x] TICKET-005_crop-type-filtering-4.1.2 Create GET `/api/v1/crop-taxonomy/filter-options` - Dynamic filter options
     **Implementation**: Return available filter values based on current crop database and user location
     **Features**: Location-aware filter options, filter value counts, filter dependency suggestions
     **Response**: Available categories, soil types, climate zones, maturity ranges, resistance traits
     **Caching**: Redis cache for filter options with 1-hour TTL, location-based cache keys
-  - [ ] TICKET-005_crop-type-filtering-4.1.3 Implement GET `/api/v1/crop-taxonomy/categories/detailed` - Enhanced category information
+  - [x] TICKET-005_crop-type-filtering-4.1.3 Implement GET `/api/v1/crop-taxonomy/categories/detailed` - Enhanced category information
     **Features**: Category descriptions, typical characteristics, example crops, agricultural context
     **Integration**: Connect with existing crop taxonomy service and agricultural knowledge base
     **Response**: Hierarchical category structure with metadata, usage statistics, regional relevance
-  - [ ] TICKET-005_crop-type-filtering-4.1.4 Add POST `/api/v1/crop-taxonomy/filter/validate` - Filter combination validation
+  - [x] TICKET-005_crop-type-filtering-4.1.4 Add POST `/api/v1/crop-taxonomy/filter/validate` - Filter combination validation
     **Features**: Validate filter combinations, detect conflicts, suggest alternatives
     **Logic**: Check for contradictory filters, validate against agricultural constraints
     **Response**: Validation results, conflict explanations, suggested modifications
