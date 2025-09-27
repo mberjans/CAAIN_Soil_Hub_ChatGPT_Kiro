@@ -23,6 +23,7 @@ try:
         CropCategory,
         PrimaryUse
     )
+    from models.crop_filtering_models import CropFilteringAttributes
     from models.service_models import (
         CropClassificationRequest,
         ClassificationResult,
@@ -46,6 +47,7 @@ except ImportError:
         CropCategory,
         PrimaryUse
     )
+    from ..models.crop_filtering_models import CropFilteringAttributes
     from ..models.service_models import (
         CropClassificationRequest,
         ClassificationResult,
@@ -923,6 +925,46 @@ class CropTaxonomyService:
                 water_content=nutr_data.get('water_content', 0.0)
             )
         
+        filtering_attributes = None
+        filtering_data = db_data.get('filtering_attributes')
+        if filtering_data:
+            seasonality = filtering_data.get('seasonality', {}) or {}
+            ag_systems = filtering_data.get('agricultural_systems', {}) or {}
+            management = filtering_data.get('management', {}) or {}
+            technology = filtering_data.get('technology', {}) or {}
+            sustainability = filtering_data.get('sustainability', {}) or {}
+            market = filtering_data.get('market', {}) or {}
+            advanced = filtering_data.get('advanced_filters', {}) or {}
+
+            filtering_attributes = CropFilteringAttributes(
+                filter_id=filtering_data.get('filter_id'),
+                crop_id=filtering_data.get('crop_id') or db_data.get('crop_id'),
+                planting_season=seasonality.get('planting_season', []),
+                growing_season=seasonality.get('growing_season', []),
+                harvest_season=seasonality.get('harvest_season', []),
+                farming_systems=ag_systems.get('farming_systems', []),
+                rotation_compatibility=ag_systems.get('rotation_compatibility', []),
+                intercropping_compatible=ag_systems.get('intercropping_compatible', False),
+                cover_crop_compatible=ag_systems.get('cover_crop_compatible', True),
+                management_complexity=management.get('complexity'),
+                input_requirements=management.get('input_requirements'),
+                labor_requirements=management.get('labor_requirements'),
+                precision_ag_compatible=technology.get('precision_ag_compatible', True),
+                gps_guidance_recommended=technology.get('gps_guidance_recommended', False),
+                sensor_monitoring_beneficial=technology.get('sensor_monitoring_beneficial', False),
+                carbon_sequestration_potential=sustainability.get('carbon_sequestration_potential'),
+                biodiversity_support=sustainability.get('biodiversity_support'),
+                pollinator_value=sustainability.get('pollinator_value'),
+                water_use_efficiency=sustainability.get('water_use_efficiency'),
+                market_stability=market.get('market_stability'),
+                price_premium_potential=market.get('price_premium_potential', False),
+                value_added_opportunities=market.get('value_added_opportunities', []),
+                pest_resistance_traits=advanced.get('pest_resistance_traits', {}),
+                market_class_filters=advanced.get('market_class_filters', {}),
+                certification_filters=advanced.get('certification_filters', {}),
+                seed_availability_filters=advanced.get('seed_availability_filters', {})
+            )
+
         return ComprehensiveCropData(
             crop_id=db_data.get('crop_id', uuid4()),
             crop_name=db_data.get('crop_name', ''),
@@ -931,6 +973,7 @@ class CropTaxonomyService:
             climate_adaptations=climate_adaptations,
             soil_requirements=soil_requirements,
             nutritional_profile=nutritional_profile,
+            filtering_attributes=filtering_attributes,
             search_keywords=db_data.get('search_keywords', []),
             tags=db_data.get('tags', []),
             data_source="database",

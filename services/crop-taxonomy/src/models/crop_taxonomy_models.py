@@ -6,10 +6,14 @@ and comprehensive crop data following agricultural science standards.
 """
 
 from pydantic import BaseModel, Field, validator, root_validator
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, TYPE_CHECKING
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
+
+
+if TYPE_CHECKING:  # pragma: no cover - type checking helper
+    from .crop_filtering_models import CropFilteringAttributes
 
 
 def _ensure_model_dump_compatibility():
@@ -501,6 +505,10 @@ class ComprehensiveCropData(BaseModel):
     climate_adaptations: Optional[CropClimateAdaptations] = Field(None, description="Climate adaptation data")
     soil_requirements: Optional[CropSoilRequirements] = Field(None, description="Soil requirements")
     nutritional_profile: Optional[CropNutritionalProfile] = Field(None, description="Nutritional composition")
+    filtering_attributes: Optional['CropFilteringAttributes'] = Field(
+        None,
+        description="Advanced filtering attributes associated with the crop"
+    )
     
     # Search and categorization
     search_keywords: List[str] = Field(default_factory=list, description="Search keywords")

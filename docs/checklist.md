@@ -462,7 +462,7 @@ This master checklist combines all feature implementation tasks with unique iden
 ### TICKET-005_crop-type-filtering-1. Enhanced Crop Classification and Filtering System
 - [x!] TICKET-005_crop-type-filtering-1.1 Develop comprehensive crop taxonomy
   **Status**: ✅ UPDATED - Crop taxonomy models and services validated with passing tests; compatibility and enumeration fixes ensure taxonomy classification operates reliably
-- [ ] TICKET-005_crop-type-filtering-1.2 Extend crop filtering attributes model
+- [x] TICKET-005_crop-type-filtering-1.2 Extend crop filtering attributes model
   **Implementation**: Enhance existing `CropFilteringAttributes` model in `services/crop-taxonomy/src/models/crop_filtering_models.py`
   **Code**: Add advanced filtering fields: `pest_resistance_traits`, `market_class_filters`, `certification_filters`, `seed_availability_filters`
   **Database**: Extend `crop_filtering_attributes` table with new JSONB columns for flexible attribute storage

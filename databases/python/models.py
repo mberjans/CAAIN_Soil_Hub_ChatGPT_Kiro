@@ -232,11 +232,506 @@ class SoilTest(Base):
 
 
 # ============================================================================
-# CROP AND ROTATION MODELS
+# ENHANCED CROP TAXONOMY MODELS (TICKET-005)
+# ============================================================================
+
+class CropTaxonomicHierarchy(Base):
+    """Botanical taxonomic hierarchy for crops following Linnaean classification."""
+    
+    __tablename__ = 'crop_taxonomic_hierarchy'
+    
+    taxonomy_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    kingdom = Column(String(50), nullable=False, default='Plantae')
+    phylum = Column(String(50), nullable=False, default='Magnoliophyta')
+    class_ = Column('class', String(50), nullable=False)
+    order_name = Column(String(50), nullable=False)
+    family = Column(String(100), nullable=False)
+    genus = Column(String(100), nullable=False)
+    species = Column(String(100), nullable=False)
+    subspecies = Column(String(100))
+    variety = Column(String(100))
+    cultivar = Column(String(100))
+    common_synonyms = Column(ARRAY(Text))
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    crops = relationship("Crop", back_populates="taxonomic_hierarchy")
+    
+    # Constraints
+    __table_args__ = (
+        UniqueConstraint('kingdom', 'phylum', 'class', 'order_name', 'family', 'genus', 'species', 'subspecies', 'variety', 
+                        name='uq_taxonomic_classification'),
+        Index('idx_crop_taxonomy_family', 'family'),
+        Index('idx_crop_taxonomy_genus', 'genus'),
+        Index('idx_crop_taxonomy_species', 'species'),
+        Index('idx_crop_taxonomy_full_name', 'genus', 'species'),
+        Index('idx_crop_taxonomy_name_search', 'genus', 'species', postgresql_using='gin', 
+              postgresql_ops={'genus': 'gin_trgm_ops', 'species': 'gin_trgm_ops'}),
+    )
+    
+    def __repr__(self):
+        return f"<CropTaxonomicHierarchy(genus='{self.genus}', species='{self.species}')>"
+
+
+class CropAgriculturalClassification(Base):
+    """Agricultural classification and characteristics for crops."""
+    
+    __tablename__ = 'crop_agricultural_classification'
+    
+    classification_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # Primary agricultural categories
+    crop_category = Column(String(50), nullable=False)
+    crop_subcategory = Column(String(100))
+    
+    # Agricultural use classifications
+    primary_use = Column(String(50))
+    secondary_uses = Column(ARRAY(Text))
+    
+    # Growth characteristics
+    growth_habit = Column(String(50))
+    plant_type = Column(String(50))
+    growth_form = Column(String(50))
+    
+    # Size classifications
+    mature_height_min_inches = Column(Integer)
+    mature_height_max_inches = Column(Integer)
+    mature_width_min_inches = Column(Integer)
+    mature_width_max_inches = Column(Integer)
+    root_system_type = Column(String(50))
+    
+    # Photosynthesis and metabolic characteristics
+    photosynthesis_type = Column(String(10))
+    nitrogen_fixing = Column(Boolean, default=False)
+    mycorrhizal_associations = Column(Boolean, default=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    crops = relationship("Crop", back_populates="agricultural_classification")
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("crop_category IN ('grain', 'oilseed', 'forage', 'vegetable', 'fruit', 'specialty', 'legume', 'cereal', 'root_crop', 'leafy_green', 'herb_spice', 'fiber', 'sugar_crop', 'cover_crop', 'ornamental', 'medicinal')", name='check_ag_crop_category'),
+        CheckConstraint("primary_use IN ('food_human', 'feed_livestock', 'industrial', 'soil_improvement', 'ornamental', 'medicinal', 'fiber', 'biofuel', 'dual_purpose')", name='check_primary_use'),
+        CheckConstraint("growth_habit IN ('annual', 'biennial', 'perennial', 'semi_perennial')", name='check_growth_habit'),
+        CheckConstraint("plant_type IN ('grass', 'herb', 'shrub', 'tree', 'vine', 'succulent')", name='check_plant_type'),
+        CheckConstraint("growth_form IN ('upright', 'spreading', 'climbing', 'trailing', 'rosette', 'bushy')", name='check_growth_form'),
+        CheckConstraint("root_system_type IN ('fibrous', 'taproot', 'rhizome', 'bulb', 'tuber', 'corm')", name='check_root_system_type'),
+        CheckConstraint("photosynthesis_type IN ('C3', 'C4', 'CAM')", name='check_photosynthesis_type'),
+        Index('idx_ag_classification_category', 'crop_category'),
+        Index('idx_ag_classification_use', 'primary_use'),
+        Index('idx_ag_classification_habit', 'growth_habit'),
+        Index('idx_ag_classification_type', 'plant_type'),
+    )
+    
+    def __repr__(self):
+        return f"<CropAgriculturalClassification(category='{self.crop_category}', use='{self.primary_use}')>"
+
+
+class CropClimateAdaptations(Base):
+    """Climate and environmental adaptations for crops."""
+    
+    __tablename__ = 'crop_climate_adaptations'
+    
+    adaptation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # Temperature requirements and tolerances
+    optimal_temp_min_f = Column(Float)
+    optimal_temp_max_f = Column(Float)
+    absolute_temp_min_f = Column(Float)
+    absolute_temp_max_f = Column(Float)
+    frost_tolerance = Column(String(20))
+    heat_tolerance = Column(String(20))
+    
+    # USDA hardiness zones
+    hardiness_zone_min = Column(String(5))
+    hardiness_zone_max = Column(String(5))
+    hardiness_zones = Column(ARRAY(Text))
+    
+    # Precipitation and water requirements
+    annual_precipitation_min_inches = Column(Float)
+    annual_precipitation_max_inches = Column(Float)
+    water_requirement = Column(String(20))
+    drought_tolerance = Column(String(20))
+    flooding_tolerance = Column(String(20))
+    
+    # Seasonal adaptations
+    photoperiod_sensitivity = Column(String(20))
+    vernalization_requirement = Column(Boolean, default=False)
+    vernalization_days = Column(Integer)
+    
+    # Altitude and geographic adaptations
+    elevation_min_feet = Column(Integer)
+    elevation_max_feet = Column(Integer)
+    latitude_range_min = Column(Float)
+    latitude_range_max = Column(Float)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    crops = relationship("Crop", back_populates="climate_adaptations")
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("frost_tolerance IN ('none', 'light', 'moderate', 'heavy')", name='check_frost_tolerance'),
+        CheckConstraint("heat_tolerance IN ('low', 'moderate', 'high', 'extreme')", name='check_heat_tolerance'),
+        CheckConstraint("water_requirement IN ('very_low', 'low', 'moderate', 'high', 'very_high')", name='check_water_requirement'),
+        CheckConstraint("drought_tolerance IN ('none', 'low', 'moderate', 'high', 'extreme')", name='check_drought_tolerance'),
+        CheckConstraint("flooding_tolerance IN ('none', 'brief', 'moderate', 'extended')", name='check_flooding_tolerance'),
+        CheckConstraint("photoperiod_sensitivity IN ('none', 'short_day', 'long_day', 'day_neutral')", name='check_photoperiod_sensitivity'),
+        Index('idx_climate_hardiness_zones', 'hardiness_zones', postgresql_using='gin'),
+        Index('idx_climate_temp_range', 'optimal_temp_min_f', 'optimal_temp_max_f'),
+        Index('idx_climate_precipitation', 'annual_precipitation_min_inches', 'annual_precipitation_max_inches'),
+        Index('idx_climate_drought_tolerance', 'drought_tolerance'),
+    )
+    
+    def __repr__(self):
+        return f"<CropClimateAdaptations(drought_tolerance='{self.drought_tolerance}', zones={self.hardiness_zones})>"
+
+
+class CropSoilRequirements(Base):
+    """Soil requirements and tolerances for crops."""
+    
+    __tablename__ = 'crop_soil_requirements'
+    
+    soil_req_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # pH requirements
+    optimal_ph_min = Column(Float)
+    optimal_ph_max = Column(Float)
+    tolerable_ph_min = Column(Float)
+    tolerable_ph_max = Column(Float)
+    
+    # Soil texture preferences
+    preferred_textures = Column(ARRAY(Text), default=['loam', 'sandy_loam', 'clay_loam'])
+    tolerable_textures = Column(ARRAY(Text))
+    
+    # Drainage requirements
+    drainage_requirement = Column(String(30))
+    drainage_tolerance = Column(ARRAY(Text))
+    
+    # Soil chemical tolerances
+    salinity_tolerance = Column(String(20))
+    alkalinity_tolerance = Column(String(20))
+    acidity_tolerance = Column(String(20))
+    
+    # Nutrient preferences
+    nitrogen_requirement = Column(String(20))
+    phosphorus_requirement = Column(String(20))
+    potassium_requirement = Column(String(20))
+    
+    # Soil structure preferences
+    compaction_tolerance = Column(String(20))
+    organic_matter_preference = Column(String(20))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    crops = relationship("Crop", back_populates="soil_requirements")
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("optimal_ph_min >= 3.0 AND optimal_ph_min <= 10.0", name='check_optimal_ph_min'),
+        CheckConstraint("optimal_ph_max >= 3.0 AND optimal_ph_max <= 10.0", name='check_optimal_ph_max'),
+        CheckConstraint("tolerable_ph_min >= 3.0 AND tolerable_ph_min <= 10.0", name='check_tolerable_ph_min'),
+        CheckConstraint("tolerable_ph_max >= 3.0 AND tolerable_ph_max <= 10.0", name='check_tolerable_ph_max'),
+        CheckConstraint("optimal_ph_min <= optimal_ph_max", name='check_optimal_ph_range'),
+        CheckConstraint("tolerable_ph_min <= tolerable_ph_max", name='check_tolerable_ph_range'),
+        CheckConstraint("drainage_requirement IN ('well_drained', 'moderately_well_drained', 'somewhat_poorly_drained', 'poorly_drained', 'very_poorly_drained', 'excessive_drained')", name='check_drainage_requirement'),
+        CheckConstraint("salinity_tolerance IN ('none', 'low', 'moderate', 'high')", name='check_salinity_tolerance'),
+        CheckConstraint("alkalinity_tolerance IN ('none', 'low', 'moderate', 'high')", name='check_alkalinity_tolerance'),
+        CheckConstraint("acidity_tolerance IN ('none', 'low', 'moderate', 'high')", name='check_acidity_tolerance'),
+        CheckConstraint("nitrogen_requirement IN ('very_low', 'low', 'moderate', 'high', 'very_high')", name='check_nitrogen_requirement'),
+        CheckConstraint("phosphorus_requirement IN ('very_low', 'low', 'moderate', 'high', 'very_high')", name='check_phosphorus_requirement'),
+        CheckConstraint("potassium_requirement IN ('very_low', 'low', 'moderate', 'high', 'very_high')", name='check_potassium_requirement'),
+        CheckConstraint("compaction_tolerance IN ('none', 'low', 'moderate', 'high')", name='check_compaction_tolerance'),
+        CheckConstraint("organic_matter_preference IN ('low', 'moderate', 'high', 'very_high')", name='check_organic_matter_preference'),
+        Index('idx_soil_ph_range', 'optimal_ph_min', 'optimal_ph_max'),
+        Index('idx_soil_drainage', 'drainage_requirement'),
+        Index('idx_soil_textures', 'preferred_textures', postgresql_using='gin'),
+    )
+    
+    def __repr__(self):
+        return f"<CropSoilRequirements(ph_range={self.optimal_ph_min}-{self.optimal_ph_max}, drainage='{self.drainage_requirement}')>"
+
+
+class CropNutritionalProfiles(Base):
+    """Nutritional and composition data for crops."""
+    
+    __tablename__ = 'crop_nutritional_profiles'
+    
+    nutrition_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    
+    # Macronutrients (per 100g fresh weight)
+    calories_per_100g = Column(Float)
+    protein_g_per_100g = Column(Float)
+    carbohydrates_g_per_100g = Column(Float)
+    fiber_g_per_100g = Column(Float)
+    fat_g_per_100g = Column(Float)
+    sugar_g_per_100g = Column(Float)
+    
+    # Minerals (mg per 100g unless specified)
+    calcium_mg = Column(Float)
+    iron_mg = Column(Float)
+    magnesium_mg = Column(Float)
+    phosphorus_mg = Column(Float)
+    potassium_mg = Column(Float)
+    sodium_mg = Column(Float)
+    zinc_mg = Column(Float)
+    
+    # Vitamins
+    vitamin_c_mg = Column(Float)
+    vitamin_a_iu = Column(Integer)
+    vitamin_k_mcg = Column(Float)
+    folate_mcg = Column(Float)
+    
+    # Specialized compounds
+    antioxidant_capacity_orac = Column(Integer)
+    phenolic_compounds_mg = Column(Float)
+    
+    # Feed value (for livestock crops)
+    crude_protein_percent = Column(Float)
+    digestible_energy_mcal_kg = Column(Float)
+    neutral_detergent_fiber_percent = Column(Float)
+    
+    # Industrial/commercial values
+    oil_content_percent = Column(Float)
+    starch_content_percent = Column(Float)
+    cellulose_content_percent = Column(Float)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    crops = relationship("Crop", back_populates="nutritional_profile")
+    
+    def __repr__(self):
+        return f"<CropNutritionalProfiles(protein={self.protein_g_per_100g}g, calories={self.calories_per_100g})>"
+
+
+class CropFilteringAttributes(Base):
+    """Crop filtering and search attributes for advanced queries."""
+    
+    __tablename__ = 'crop_filtering_attributes'
+    
+    filter_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    crop_id = Column(UUID(as_uuid=True), ForeignKey('crops.crop_id', ondelete='CASCADE'), nullable=False)
+    
+    # Seasonality attributes
+    planting_season = Column(ARRAY(Text), default=['spring'])
+    growing_season = Column(ARRAY(Text), default=['summer'])
+    harvest_season = Column(ARRAY(Text), default=['fall'])
+    
+    # Agricultural system compatibility
+    farming_systems = Column(ARRAY(Text), default=['conventional'])
+    rotation_compatibility = Column(ARRAY(Text))
+    intercropping_compatible = Column(Boolean, default=False)
+    cover_crop_compatible = Column(Boolean, default=True)
+    
+    # Management intensity
+    management_complexity = Column(String(20))
+    input_requirements = Column(String(20))
+    labor_requirements = Column(String(20))
+    
+    # Technology compatibility
+    precision_ag_compatible = Column(Boolean, default=True)
+    gps_guidance_recommended = Column(Boolean, default=False)
+    sensor_monitoring_beneficial = Column(Boolean, default=False)
+    
+    # Sustainability attributes
+    carbon_sequestration_potential = Column(String(20))
+    biodiversity_support = Column(String(20))
+    pollinator_value = Column(String(20))
+    water_use_efficiency = Column(String(20))
+    
+    # Market and economic attributes
+    market_stability = Column(String(20))
+    price_premium_potential = Column(Boolean, default=False)
+    value_added_opportunities = Column(ARRAY(Text))
+
+    # Advanced filtering attributes stored as JSONB for flexibility
+    pest_resistance_traits = Column(JSONB, default=dict)
+    market_class_filters = Column(JSONB, default=dict)
+    certification_filters = Column(JSONB, default=dict)
+    seed_availability_filters = Column(JSONB, default=dict)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    crop = relationship("Crop", back_populates="filtering_attributes")
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("management_complexity IN ('low', 'moderate', 'high')", name='check_management_complexity'),
+        CheckConstraint("input_requirements IN ('minimal', 'moderate', 'intensive')", name='check_input_requirements'),
+        CheckConstraint("labor_requirements IN ('low', 'moderate', 'high')", name='check_labor_requirements'),
+        CheckConstraint("carbon_sequestration_potential IN ('none', 'low', 'moderate', 'high')", name='check_carbon_sequestration'),
+        CheckConstraint("biodiversity_support IN ('low', 'moderate', 'high')", name='check_biodiversity_support'),
+        CheckConstraint("pollinator_value IN ('none', 'low', 'moderate', 'high')", name='check_pollinator_value'),
+        CheckConstraint("water_use_efficiency IN ('poor', 'fair', 'good', 'excellent')", name='check_water_use_efficiency'),
+        CheckConstraint("market_stability IN ('volatile', 'moderate', 'stable')", name='check_market_stability'),
+        Index('idx_filtering_crop_id', 'crop_id'),
+        Index('idx_filtering_seasons', 'planting_season', postgresql_using='gin'),
+        Index('idx_filtering_systems', 'farming_systems', postgresql_using='gin'),
+        Index('idx_filtering_complexity', 'management_complexity'),
+    )
+    
+    def __repr__(self):
+        return f"<CropFilteringAttributes(crop_id='{self.crop_id}', complexity='{self.management_complexity}')>"
+
+
+class EnhancedCropVarieties(Base):
+    """Enhanced crop varieties with detailed characteristics."""
+    
+    __tablename__ = 'enhanced_crop_varieties'
+    
+    variety_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    crop_id = Column(UUID(as_uuid=True), ForeignKey('crops.crop_id', ondelete='CASCADE'), nullable=False)
+    
+    # Variety identification
+    variety_name = Column(String(200), nullable=False)
+    variety_code = Column(String(50))
+    breeder_company = Column(String(150))
+    parent_varieties = Column(ARRAY(Text))
+    
+    # Maturity and timing
+    relative_maturity = Column(Integer)
+    maturity_group = Column(String(10))
+    days_to_emergence = Column(Integer)
+    days_to_flowering = Column(Integer)
+    days_to_physiological_maturity = Column(Integer)
+    
+    # Performance characteristics
+    yield_potential_percentile = Column(Integer)
+    yield_stability_rating = Column(Integer)
+    standability_rating = Column(Integer)
+    
+    # Resistance and tolerance traits
+    disease_resistances = Column(JSONB)
+    pest_resistances = Column(JSONB)
+    herbicide_tolerances = Column(ARRAY(Text))
+    stress_tolerances = Column(ARRAY(Text))
+    
+    # Quality traits
+    quality_characteristics = Column(JSONB)
+    protein_content_range = Column(String(20))
+    oil_content_range = Column(String(20))
+    
+    # Adaptation and recommendations
+    adapted_regions = Column(ARRAY(Text))
+    recommended_planting_populations = Column(JSONB)
+    special_management_notes = Column(Text)
+    
+    # Commercial information
+    seed_availability = Column(String(20))
+    relative_seed_cost = Column(String(20))
+    technology_package = Column(String(100))
+    
+    # Regulatory and certification
+    organic_approved = Column(Boolean)
+    non_gmo_certified = Column(Boolean)
+    registration_year = Column(Integer)
+    patent_protected = Column(Boolean, default=False)
+    
+    is_active = Column(Boolean, default=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    crop = relationship("Crop", back_populates="enhanced_varieties")
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("yield_potential_percentile >= 0 AND yield_potential_percentile <= 100", name='check_yield_percentile'),
+        CheckConstraint("yield_stability_rating >= 1 AND yield_stability_rating <= 10", name='check_yield_stability'),
+        CheckConstraint("standability_rating >= 1 AND standability_rating <= 10", name='check_standability'),
+        CheckConstraint("seed_availability IN ('widely_available', 'limited', 'specialty', 'research_only')", name='check_seed_availability'),
+        CheckConstraint("relative_seed_cost IN ('low', 'moderate', 'high', 'premium')", name='check_seed_cost'),
+        UniqueConstraint('crop_id', 'variety_name', 'breeder_company', name='uq_crop_variety_company'),
+        Index('idx_enhanced_varieties_crop_id', 'crop_id'),
+        Index('idx_enhanced_varieties_maturity', 'relative_maturity'),
+        Index('idx_enhanced_varieties_active', 'is_active'),
+        Index('idx_enhanced_varieties_regions', 'adapted_regions', postgresql_using='gin'),
+        Index('idx_enhanced_varieties_name_search', 'variety_name', postgresql_using='gin', 
+              postgresql_ops={'variety_name': 'gin_trgm_ops'}),
+    )
+    
+    def __repr__(self):
+        return f"<EnhancedCropVarieties(name='{self.variety_name}', company='{self.breeder_company}')>"
+
+
+class CropRegionalAdaptations(Base):
+    """Regional crop adaptations and recommendations."""
+    
+    __tablename__ = 'crop_regional_adaptations'
+    
+    adaptation_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    crop_id = Column(UUID(as_uuid=True), ForeignKey('crops.crop_id', ondelete='CASCADE'), nullable=False)
+    
+    # Geographic scope
+    region_name = Column(String(100), nullable=False)
+    region_type = Column(String(50))
+    country_code = Column(String(3), default='USA')
+    
+    # Geographic boundaries
+    region_bounds = Column(Geography('POLYGON', srid=4326))
+    latitude_range_min = Column(Float)
+    latitude_range_max = Column(Float)
+    longitude_range_min = Column(Float)
+    longitude_range_max = Column(Float)
+    
+    # Adaptation ratings
+    adaptation_score = Column(Integer)
+    production_potential = Column(String(20))
+    risk_level = Column(String(20))
+    
+    # Regional characteristics
+    typical_planting_dates = Column(JSONB)
+    typical_harvest_dates = Column(JSONB)
+    common_varieties = Column(ARRAY(Text))
+    regional_challenges = Column(ARRAY(Text))
+    management_considerations = Column(ARRAY(Text))
+    
+    # Economic factors
+    market_demand = Column(String(20))
+    infrastructure_support = Column(String(20))
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Relationships
+    crop = relationship("Crop", back_populates="regional_adaptations")
+    
+    # Constraints
+    __table_args__ = (
+        CheckConstraint("region_type IN ('state', 'multi_state', 'county', 'climate_zone', 'ecoregion', 'custom')", name='check_region_type'),
+        CheckConstraint("adaptation_score >= 1 AND adaptation_score <= 10", name='check_adaptation_score'),
+        CheckConstraint("production_potential IN ('poor', 'fair', 'good', 'excellent')", name='check_production_potential'),
+        CheckConstraint("risk_level IN ('very_low', 'low', 'moderate', 'high', 'very_high')", name='check_risk_level'),
+        CheckConstraint("market_demand IN ('very_low', 'low', 'moderate', 'high', 'very_high')", name='check_market_demand'),
+        CheckConstraint("infrastructure_support IN ('poor', 'fair', 'good', 'excellent')", name='check_infrastructure_support'),
+        Index('idx_regional_adaptations_crop_id', 'crop_id'),
+        Index('idx_regional_adaptations_region', 'region_name', 'region_type'),
+        Index('idx_regional_adaptations_bounds', 'region_bounds', postgresql_using='gist'),
+        Index('idx_regional_adaptations_score', 'adaptation_score'),
+    )
+    
+    def __repr__(self):
+        return f"<CropRegionalAdaptations(crop_id='{self.crop_id}', region='{self.region_name}', score={self.adaptation_score})>"
+
+
+# ============================================================================
+# ENHANCED CROP MODEL WITH TAXONOMY RELATIONSHIPS
 # ============================================================================
 
 class Crop(Base):
-    """Crop type model with characteristics and requirements."""
+    """Enhanced crop type model with comprehensive taxonomic relationships."""
     
     __tablename__ = 'crops'
     
@@ -245,6 +740,18 @@ class Crop(Base):
     scientific_name = Column(String(150))
     crop_category = Column(String(50))
     crop_family = Column(String(100))
+    
+    # Enhanced classification fields
+    crop_code = Column(String(20), unique=True)
+    fao_crop_code = Column(String(10))
+    usda_crop_code = Column(String(10))
+    search_keywords = Column(ARRAY(Text))
+    tags = Column(ARRAY(Text))
+    is_cover_crop = Column(Boolean, default=False)
+    is_companion_crop = Column(Boolean, default=False)
+    crop_status = Column(String(20), default='active')
+    
+    # Legacy fields (kept for backward compatibility)
     nitrogen_fixing = Column(Boolean, default=False)
     typical_yield_range_min = Column(Float)
     typical_yield_range_max = Column(Float)
@@ -256,22 +763,52 @@ class Crop(Base):
     optimal_ph_max = Column(Float)
     drought_tolerance = Column(String(20))
     cold_tolerance = Column(String(20))
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
     
-    # Relationships
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    
+    # Foreign keys to enhanced taxonomy tables
+    taxonomy_id = Column(UUID(as_uuid=True), ForeignKey('crop_taxonomic_hierarchy.taxonomy_id'))
+    agricultural_classification_id = Column(UUID(as_uuid=True), ForeignKey('crop_agricultural_classification.classification_id'))
+    climate_adaptation_id = Column(UUID(as_uuid=True), ForeignKey('crop_climate_adaptations.adaptation_id'))
+    soil_requirements_id = Column(UUID(as_uuid=True), ForeignKey('crop_soil_requirements.soil_req_id'))
+    nutritional_profile_id = Column(UUID(as_uuid=True), ForeignKey('crop_nutritional_profiles.nutrition_id'))
+    filtering_attributes_id = Column(UUID(as_uuid=True), ForeignKey('crop_filtering_attributes.filter_id'))
+    
+    # Relationships to enhanced taxonomy tables
+    taxonomic_hierarchy = relationship("CropTaxonomicHierarchy", back_populates="crops")
+    agricultural_classification = relationship("CropAgriculturalClassification", back_populates="crops")
+    climate_adaptations = relationship("CropClimateAdaptations", back_populates="crops")
+    soil_requirements = relationship("CropSoilRequirements", back_populates="crops")
+    nutritional_profile = relationship("CropNutritionalProfiles", back_populates="crops")
+    filtering_attributes = relationship("CropFilteringAttributes", back_populates="crop", uselist=False)
+    
+    # Relationships to varieties and history
     varieties = relationship("CropVariety", back_populates="crop", cascade="all, delete-orphan")
+    enhanced_varieties = relationship("EnhancedCropVarieties", back_populates="crop", cascade="all, delete-orphan")
+    regional_adaptations = relationship("CropRegionalAdaptations", back_populates="crop", cascade="all, delete-orphan")
     crop_history = relationship("CropHistory", back_populates="crop")
     
     # Constraints
     __table_args__ = (
         CheckConstraint("crop_category IN ('grain', 'oilseed', 'forage', 'vegetable', 'fruit', 'specialty')", name='check_crop_category'),
+        CheckConstraint("crop_status IN ('active', 'deprecated', 'experimental', 'regional')", name='check_crop_status'),
         CheckConstraint("drought_tolerance IN ('low', 'moderate', 'high')", name='check_drought_tolerance'),
         CheckConstraint("cold_tolerance IN ('low', 'moderate', 'high')", name='check_cold_tolerance'),
         Index('idx_crops_name_trgm', 'crop_name', postgresql_using='gin', postgresql_ops={'crop_name': 'gin_trgm_ops'}),
+        Index('idx_crops_taxonomy_id', 'taxonomy_id'),
+        Index('idx_crops_agricultural_classification', 'agricultural_classification_id'),
+        Index('idx_crops_climate_adaptation', 'climate_adaptation_id'),
+        Index('idx_crops_filtering_attributes', 'filtering_attributes_id'),
+        Index('idx_crops_code', 'crop_code'),
+        Index('idx_crops_tags', 'tags', postgresql_using='gin'),
+        Index('idx_crops_keywords', 'search_keywords', postgresql_using='gin'),
+        Index('idx_crops_cover_crop', 'is_cover_crop'),
+        Index('idx_crops_status', 'crop_status'),
     )
     
     def __repr__(self):
-        return f"<Crop(name='{self.crop_name}', category='{self.crop_category}')>"
+        return f"<Crop(name='{self.crop_name}', category='{self.crop_category}', status='{self.crop_status}')>"
 
 
 class CropVariety(Base):
@@ -838,6 +1375,10 @@ __all__ = [
     'Farm', 'Field',
     'SoilTest',
     'Crop', 'CropVariety', 'CropHistory',
+    # Enhanced Crop Taxonomy Models
+    'CropTaxonomicHierarchy', 'CropAgriculturalClassification', 'CropClimateAdaptations',
+    'CropSoilRequirements', 'CropNutritionalProfiles', 'CropFilteringAttributes',
+    'EnhancedCropVarieties', 'CropRegionalAdaptations',
     'FertilizerProduct', 'FertilizerApplication',
     'QuestionType', 'Recommendation',
     'EquipmentType', 'FarmEquipment',
