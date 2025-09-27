@@ -79,11 +79,14 @@ for _candidate_model in (
     'models.crop_filtering_models'
 ):
     try:
-        module = import_module(_candidate_model)
+        if _candidate_model.startswith('..'):
+            module = import_module(_candidate_model, package=__package__)
+        else:
+            module = import_module(_candidate_model)
         CropFilteringAttributes = getattr(module, 'CropFilteringAttributes', None)
         if CropFilteringAttributes is not None:
             break
-    except ImportError:
+    except (ImportError, TypeError):
         continue
 
 

@@ -22,6 +22,7 @@ try:
     from api.variety_routes import router as variety_router
     from api.regional_routes import router as regional_router
     from api.preference_routes import router as preference_router
+    from api.filter_routes import router as filter_router
 except ImportError as e:
     logging.error(f"Import error: {e}")
     # Create placeholder routers if imports fail
@@ -31,6 +32,7 @@ except ImportError as e:
     variety_router = APIRouter()
     regional_router = APIRouter()
     preference_router = APIRouter()
+    filter_router = APIRouter()
 
 # Configure logging
 logging.basicConfig(

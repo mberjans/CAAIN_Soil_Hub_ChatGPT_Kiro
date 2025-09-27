@@ -28,6 +28,13 @@ __all__ = [
     'CropSearchRequest',
     'CropSearchResponse',
     'TaxonomyFilterCriteria',
+    'FilterDirective',
+    'FilterCombinationRequest',
+    'FilterCombinationResponse',
+    'FilterPresetSummary',
+    'FilterSuggestionRequest',
+    'FilterSuggestionResponse',
+    'FilterSuggestion',
 
     # Variety and regional models
     'EnhancedCropVariety',

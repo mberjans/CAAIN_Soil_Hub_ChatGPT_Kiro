@@ -775,6 +775,182 @@ class SearchStatistics(BaseModel):
     result_quality_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall result quality")
 
 
+
+
+# ============================================================================
+# FILTER COMBINATION AND SUGGESTION MODELS
+# ============================================================================
+
+class FilterDirective(BaseModel):
+    """Directive describing a single filter adjustment."""
+
+    category: str = Field(..., description="Target filter category (climate, soil, etc.)")
+    attribute: str = Field(..., description="Attribute within the filter category")
+    value: Any = Field(..., description="Desired value for the attribute")
+    priority: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Priority weight for applying the directive"
+    )
+    rationale: Optional[str] = Field(None, description="Reason for applying the directive")
+
+
+class FilterCombinationRequest(BaseModel):
+    """Request payload for dynamically combining filter directives."""
+
+    request_id: str = Field(..., description="Unique request identifier")
+    base_criteria: TaxonomyFilterCriteria = Field(
+        default_factory=TaxonomyFilterCriteria,
+        description="Existing filter criteria to extend"
+    )
+    directives: List[FilterDirective] = Field(
+        default_factory=list,
+        description="Directives to apply to the base criteria"
+    )
+    preset_keys: List[str] = Field(
+        default_factory=list,
+        description="Filter preset identifiers to apply"
+    )
+    context: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Contextual information such as climate, soil, or goals"
+    )
+    include_suggestions: bool = Field(
+        default=True,
+        description="Include follow-up filter suggestions in the response"
+    )
+
+
+class FilterPresetSummary(BaseModel):
+    """Summary details about a recommended filter preset."""
+
+    key: str = Field(..., description="Preset identifier")
+    name: str = Field(..., description="Human-readable preset name")
+    description: str = Field(..., description="Description of the preset")
+    rationale: List[str] = Field(
+        default_factory=list,
+        description="Reasons why the preset is relevant"
+    )
+
+
+class FilterCombinationResponse(BaseModel):
+    """Response payload with combined filter criteria and guidance."""
+
+    request_id: str = Field(..., description="Original request identifier")
+    combined_criteria: TaxonomyFilterCriteria = Field(
+        ..., description="Resulting combined filter criteria"
+    )
+    applied_presets: List[str] = Field(
+        default_factory=list,
+        description="Preset keys applied during combination"
+    )
+    dependency_notes: List[str] = Field(
+        default_factory=list,
+        description="Notes about dependency adjustments that were applied"
+    )
+    conflicts: List[str] = Field(
+        default_factory=list,
+        description="Detected conflicts between requested filters"
+    )
+    warnings: List[str] = Field(
+        default_factory=list,
+        description="Additional warnings or cautions"
+    )
+    suggested_directives: List[FilterDirective] = Field(
+        default_factory=list,
+        description="Follow-up directives suggested by the engine"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional metadata about the combination process"
+    )
+
+
+class FilterSuggestionRequest(BaseModel):
+    """Request for intelligent filter suggestions."""
+
+    request_id: str = Field(..., description="Unique request identifier")
+    context: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Context such as farm profile, crops, or goals"
+    )
+    climate_zone: Optional[str] = Field(
+        None,
+        description="Primary climate zone (e.g., USDA hardiness zone)"
+    )
+    location_coordinates: Optional[Dict[str, float]] = Field(
+        None,
+        description="Latitude and longitude for location-aware suggestions"
+    )
+    existing_criteria: Optional[TaxonomyFilterCriteria] = Field(
+        None,
+        description="Current criteria to consider when generating suggestions"
+    )
+    max_suggestions: int = Field(
+        default=5,
+        ge=0,
+        le=20,
+        description="Maximum number of suggestions to return"
+    )
+    include_presets: bool = Field(
+        default=True,
+        description="Whether to include preset recommendations"
+    )
+    focus_areas: List[str] = Field(
+        default_factory=list,
+        description="Optional focus areas such as sustainability or profitability"
+    )
+
+
+class FilterSuggestion(BaseModel):
+    """Individual intelligent filter suggestion."""
+
+    key: str = Field(..., description="Suggestion identifier")
+    title: str = Field(..., description="Short title for the suggestion")
+    description: str = Field(..., description="Detailed suggestion description")
+    directives: List[FilterDirective] = Field(
+        default_factory=list,
+        description="Filter directives represented by this suggestion"
+    )
+    rationale: List[str] = Field(
+        default_factory=list,
+        description="Reasons supporting the suggestion"
+    )
+    score: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Relevance score for ranking"
+    )
+    category: Optional[str] = Field(
+        None,
+        description="Suggestion category such as climate, soil, or market"
+    )
+
+
+class FilterSuggestionResponse(BaseModel):
+    """Response containing intelligent filter suggestions."""
+
+    request_id: str = Field(..., description="Original request identifier")
+    suggestions: List[FilterSuggestion] = Field(
+        default_factory=list,
+        description="List of suggested filters"
+    )
+    preset_summaries: List[FilterPresetSummary] = Field(
+        default_factory=list,
+        description="Relevant preset summaries"
+    )
+    context_summary: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Summary of interpreted context information"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional metadata about suggestion generation"
+    )
+
+
 class CropSearchResponse(BaseModel):
     """Response containing crop search results."""
     
