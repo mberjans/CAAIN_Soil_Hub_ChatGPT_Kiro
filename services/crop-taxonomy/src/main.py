@@ -24,6 +24,7 @@ try:
     from api.preference_routes import router as preference_router
     from api.filter_routes import router as filter_router
     from api.learning_routes import router as learning_router
+    from api.preference_recommendation_routes import router as preference_recommendation_router
 except ImportError as e:
     logging.error(f"Import error: {e}")
     # Create placeholder routers if imports fail
@@ -35,6 +36,7 @@ except ImportError as e:
     preference_router = APIRouter()
     filter_router = APIRouter()
     learning_router = APIRouter()
+    preference_recommendation_router = APIRouter()
 
 # Configure logging
 logging.basicConfig(
@@ -137,6 +139,7 @@ app.include_router(variety_router, prefix="/api/v1")
 app.include_router(regional_router, prefix="/api/v1")
 app.include_router(preference_router, prefix="/api/v1")
 app.include_router(learning_router, prefix="/api/v1")
+app.include_router(preference_recommendation_router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
