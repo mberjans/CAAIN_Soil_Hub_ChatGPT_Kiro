@@ -721,67 +721,6 @@ class CropSearchRequest(BaseModel):
 # SEARCH RESULTS AND RESPONSES
 # ============================================================================
 
-class CropSearchResult(BaseModel):
-    """Individual crop search result with relevance scoring."""
-    
-    # Basic crop information
-    crop: ComprehensiveCropData = Field(..., description="Crop data")
-    
-    # Relevance and matching
-    relevance_score: float = Field(..., ge=0.0, le=1.0, description="Overall relevance score")
-    suitability_score: float = Field(..., ge=0.0, le=1.0, description="Suitability for criteria")
-    
-    # Matching details
-    matching_criteria: List[str] = Field(default_factory=list, description="Criteria that matched")
-    partial_matches: List[str] = Field(default_factory=list, description="Criteria with partial matches")
-    missing_criteria: List[str] = Field(default_factory=list, description="Criteria not met")
-    
-    # Search-specific data
-    search_highlights: Dict[str, List[str]] = Field(default_factory=dict, description="Search term highlights")
-    similarity_factors: Dict[str, float] = Field(default_factory=dict, description="Similarity scores by factor")
-    score_breakdown: Dict[str, float] = Field(
-        default_factory=dict,
-        description="Per-filter score contributions for visualization"
-    )
-    ranking_details: Optional[ResultRankingDetails] = Field(
-        None,
-        description="Detailed breakdown of ranking metrics"
-    )
-    
-    # Recommendations
-    recommendation_notes: List[str] = Field(default_factory=list, description="Specific recommendation notes")
-    potential_concerns: List[str] = Field(default_factory=list, description="Potential concerns or limitations")
-
-
-class SearchFacets(BaseModel):
-    """Search facets for refining results."""
-    
-    categories: Dict[str, int] = Field(default_factory=dict, description="Categories with counts")
-    families: Dict[str, int] = Field(default_factory=dict, description="Taxonomic families with counts")
-    growth_habits: Dict[str, int] = Field(default_factory=dict, description="Growth habits with counts")
-    hardiness_zones: Dict[str, int] = Field(default_factory=dict, description="Hardiness zones with counts")
-    primary_uses: Dict[str, int] = Field(default_factory=dict, description="Primary uses with counts")
-    
-    # Dynamic facets based on search criteria
-    dynamic_facets: Dict[str, Dict[str, int]] = Field(default_factory=dict, description="Dynamic facets based on results")
-
-
-class SearchStatistics(BaseModel):
-    """Search execution statistics."""
-    
-    total_results: int = Field(..., description="Total matching results")
-    search_time_ms: float = Field(..., description="Search execution time (milliseconds)")
-    filtered_results: int = Field(..., description="Results after filtering")
-    
-    # Search optimization metrics
-    index_hits: int = Field(default=0, description="Database index hits")
-    full_scan_required: bool = Field(default=False, description="Required full table scan")
-    cache_hit: bool = Field(default=False, description="Results served from cache")
-    
-    # Quality metrics
-    average_relevance_score: float = Field(default=0.0, description="Average relevance score")
-    result_quality_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall result quality")
-
 
 class FilterScoreBreakdown(BaseModel):
     """Score contribution details for an individual filter dimension."""
@@ -855,6 +794,68 @@ class SearchVisualizationSummary(BaseModel):
         default_factory=list,
         description="Narrative highlights for presenting the ranking"
     )
+
+
+class CropSearchResult(BaseModel):
+    """Individual crop search result with relevance scoring."""
+    
+    # Basic crop information
+    crop: ComprehensiveCropData = Field(..., description="Crop data")
+    
+    # Relevance and matching
+    relevance_score: float = Field(..., ge=0.0, le=1.0, description="Overall relevance score")
+    suitability_score: float = Field(..., ge=0.0, le=1.0, description="Suitability for criteria")
+    
+    # Matching details
+    matching_criteria: List[str] = Field(default_factory=list, description="Criteria that matched")
+    partial_matches: List[str] = Field(default_factory=list, description="Criteria with partial matches")
+    missing_criteria: List[str] = Field(default_factory=list, description="Criteria not met")
+    
+    # Search-specific data
+    search_highlights: Dict[str, List[str]] = Field(default_factory=dict, description="Search term highlights")
+    similarity_factors: Dict[str, float] = Field(default_factory=dict, description="Similarity scores by factor")
+    score_breakdown: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Per-filter score contributions for visualization"
+    )
+    ranking_details: Optional[ResultRankingDetails] = Field(
+        None,
+        description="Detailed breakdown of ranking metrics"
+    )
+    
+    # Recommendations
+    recommendation_notes: List[str] = Field(default_factory=list, description="Specific recommendation notes")
+    potential_concerns: List[str] = Field(default_factory=list, description="Potential concerns or limitations")
+
+
+class SearchFacets(BaseModel):
+    """Search facets for refining results."""
+    
+    categories: Dict[str, int] = Field(default_factory=dict, description="Categories with counts")
+    families: Dict[str, int] = Field(default_factory=dict, description="Taxonomic families with counts")
+    growth_habits: Dict[str, int] = Field(default_factory=dict, description="Growth habits with counts")
+    hardiness_zones: Dict[str, int] = Field(default_factory=dict, description="Hardiness zones with counts")
+    primary_uses: Dict[str, int] = Field(default_factory=dict, description="Primary uses with counts")
+    
+    # Dynamic facets based on search criteria
+    dynamic_facets: Dict[str, Dict[str, int]] = Field(default_factory=dict, description="Dynamic facets based on results")
+
+
+class SearchStatistics(BaseModel):
+    """Search execution statistics."""
+    
+    total_results: int = Field(..., description="Total matching results")
+    search_time_ms: float = Field(..., description="Search execution time (milliseconds)")
+    filtered_results: int = Field(..., description="Results after filtering")
+    
+    # Search optimization metrics
+    index_hits: int = Field(default=0, description="Database index hits")
+    full_scan_required: bool = Field(default=False, description="Required full table scan")
+    cache_hit: bool = Field(default=False, description="Results served from cache")
+    
+    # Quality metrics
+    average_relevance_score: float = Field(default=0.0, description="Average relevance score")
+    result_quality_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall result quality")
 
 
 
