@@ -806,12 +806,17 @@
         <!-- Filter Actions Bar -->
         <div class="filter-actions">
             <div class="row">
-                <div class="col-6">
+                <div class="col-4">
                     <button class="btn btn-secondary filter-action-btn w-100" id="save-filters-btn">
                         <i class="fas fa-save"></i> Save Filters
                     </button>
                 </div>
-                <div class="col-6">
+                <div class="col-4">
+                    <button class="btn btn-info filter-action-btn w-100" id="sync-filters-btn">
+                        <i class="fas fa-sync-alt"></i> Sync Filters
+                    </button>
+                </div>
+                <div class="col-4">
                     <button class="btn btn-success filter-action-btn w-100 btn-apply-filters" id="apply-filters-btn">
                         <i class="fas fa-filter"></i> Apply Filters
                     </button>
@@ -836,8 +841,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             initializeFilters();
             initializeEventListeners();
-            // Load any saved filters from localStorage
-            loadSavedFilters();
+            // Initialize filter sync functionality
+            initializeFilterSync();
         });
 
         // Initialize filter components
@@ -889,6 +894,9 @@
             
             // Save filters button
             document.getElementById('save-filters-btn').addEventListener('click', saveFilters);
+            
+            // Sync filters button
+            document.getElementById('sync-filters-btn').addEventListener('click', syncFilters);
         }
 
         // Set up range sliders with value displays
@@ -1035,7 +1043,7 @@
         async function applyFilters() {
             const filters = getFiltersFromUI();
             currentFilters = filters;
-            saveFiltersToSession();
+            saveFiltersToSession(true); // true to auto-sync session filters
 
             // Show loading indicator
             document.getElementById('loading-indicator').style.display = 'block';
@@ -1406,30 +1414,335 @@
             document.getElementById('no-results-message').style.display = 'none';
         }
 
-        // Save filters
-        function saveFilters() {
+        // Delete a saved filter preset (with optional server sync)
+        async function deleteFilterPreset(presetName) {
+            // Remove from local storage
+            const savedFilters = JSON.parse(localStorage.getItem('savedCropFilters') || '{}');
+            if (savedFilters[presetName]) {
+                delete savedFilters[presetName];
+                localStorage.setItem('savedCropFilters', JSON.stringify(savedFilters));
+                
+                // Also remove from sync map if exists
+                const syncMap = JSON.parse(localStorage.getItem('filterSyncMap') || '{}');
+                if (syncMap[presetName]) {
+                    delete syncMap[presetName];
+                    localStorage.setItem('filterSyncMap', JSON.stringify(syncMap));
+                }
+            }
+            
+            // Try to delete from server if authenticated and sync'd
+            const userId = getAuthenticatedUserId();
+            if (userId) {
+                const syncMap = JSON.parse(localStorage.getItem('filterSyncMap') || '{}');
+                const presetId = syncMap[presetName];
+                
+                if (presetId) {
+                    try {
+                        const response = await fetch(`/api/v1/crop-taxonomy/preferences/filter-presets/${presetId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${getAuthToken()}`
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            // Remove from sync map after successful deletion from server
+                            delete syncMap[presetName];
+                            localStorage.setItem('filterSyncMap', JSON.stringify(syncMap));
+                            showNotification(`Filter preset deleted: "${presetName}"`, 'success');
+                        } else {
+                            const errorData = await response.json();
+                            showNotification(`Deleted locally but failed to delete from server: ${errorData.detail || 'Server error'}`, 'warning');
+                        }
+                    } catch (error) {
+                        showNotification(`Error deleting filter from server: ${error.message}`, 'error');
+                    }
+                }
+            }
+            
+            // Refresh the display or update the UI as needed
+            showNotification(`Filter preset removed: "${presetName}"`, 'info');
+        }
+
+        // Save filters with synchronization
+        async function saveFilters() {
             const filters = getFiltersFromUI();
             const saveName = prompt('Enter a name for these filters:', 'My Filter Preset');
             if (saveName) {
+                // Save to local storage
                 const savedFilters = JSON.parse(localStorage.getItem('savedCropFilters') || '{}');
                 savedFilters[saveName] = filters;
                 localStorage.setItem('savedCropFilters', JSON.stringify(savedFilters));
-                showNotification(`Filters saved as "${saveName}"`, 'success');
+                
+                // Attempt to sync with server if user is authenticated
+                const userId = getAuthenticatedUserId();
+                if (userId) {
+                    try {
+                        const response = await fetch('/api/v1/crop-taxonomy/preferences/filter-presets', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${getAuthToken()}`
+                            },
+                            body: JSON.stringify({
+                                name: saveName,
+                                filter_config: filters,
+                                is_public: false
+                            })
+                        });
+                        
+                        if (response.ok) {
+                            const result = await response.json();
+                            showNotification(`Filters saved and synced: "${saveName}"`, 'success');
+                            
+                            // Store the server ID in local storage for future sync
+                            const syncMap = JSON.parse(localStorage.getItem('filterSyncMap') || '{}');
+                            syncMap[saveName] = result.preset_id;
+                            localStorage.setItem('filterSyncMap', JSON.stringify(syncMap));
+                        } else {
+                            const errorData = await response.json();
+                            showNotification(`Filter saved locally but sync failed: ${errorData.detail || 'Server error'}`, 'warning');
+                        }
+                    } catch (error) {
+                        showNotification(`Filter saved locally but sync failed: ${error.message}`, 'warning');
+                    }
+                } else {
+                    showNotification(`Filters saved locally as "${saveName}" (Not synced - login required for cloud sync)`, 'info');
+                }
             }
         }
 
-        // Load saved filters
-        function loadSavedFilters() {
+        // Load saved filters with synchronization
+        async function loadSavedFilters() {
+            // Check for authenticated user and sync from server first
+            const userId = getAuthenticatedUserId();
+            if (userId) {
+                try {
+                    const response = await fetch(`/api/v1/crop-taxonomy/preferences/filter-presets?user_id=${userId}`, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${getAuthToken()}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        const serverPresets = data.presets;
+                        
+                        // Update local storage with server data
+                        const localFilters = JSON.parse(localStorage.getItem('savedCropFilters') || '{}');
+                        const syncMap = JSON.parse(localStorage.getItem('filterSyncMap') || '{}');
+                        
+                        for (const preset of serverPresets) {
+                            localFilters[preset.name] = preset.filter_config;
+                            syncMap[preset.name] = preset.preset_id;
+                        }
+                        
+                        localStorage.setItem('savedCropFilters', JSON.stringify(localFilters));
+                        localStorage.setItem('filterSyncMap', JSON.stringify(syncMap));
+                    }
+                } catch (error) {
+                    console.warn('Could not sync filters from server:', error);
+                }
+            }
+            
+            // Load from local storage
             const savedFilters = JSON.parse(localStorage.getItem('savedCropFilters') || '{}');
             if (Object.keys(savedFilters).length > 0) {
                 // Optionally implement UI to load saved filters
                 console.log('Saved filters available:', Object.keys(savedFilters));
+                
+                // Show notification about available filters
+                showNotification(`Loaded ${Object.keys(savedFilters).length} saved filter presets`, 'info');
             }
         }
 
-        // Save filters to session
-        function saveFiltersToSession() {
+        // Get authenticated user ID (would come from session storage or cookies in real implementation)
+        function getAuthenticatedUserId() {
+            return localStorage.getItem('userId') || sessionStorage.getItem('userId');
+        }
+
+        // Get authentication token (would come from session storage or cookies in real implementation)
+        function getAuthToken() {
+            return localStorage.getItem('authToken') || sessionStorage.getItem('authToken');
+        }
+
+        // Sync filters with server
+        async function syncFilters() {
+            const userId = getAuthenticatedUserId();
+            if (!userId) {
+                showNotification('Cannot sync filters - not logged in', 'info');
+                return;
+            }
+
+            try {
+                // Get local filters
+                const localFilters = JSON.parse(localStorage.getItem('savedCropFilters') || '{}');
+                const syncMap = JSON.parse(localStorage.getItem('filterSyncMap') || '{}');
+                
+                // Get server filters
+                const response = await fetch(`/api/v1/crop-taxonomy/preferences/filter-presets?user_id=${userId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const serverData = await response.json();
+                    const serverPresets = serverData.presets;
+                    
+                    // Sync local to server (for any locally saved filters not on server)
+                    for (const [name, config] of Object.entries(localFilters)) {
+                        // Check if this filter exists on server
+                        const serverPreset = serverPresets.find(p => p.name === name);
+                        if (!serverPreset) {
+                            // This filter doesn't exist on server, so create it
+                            const createResponse = await fetch('/api/v1/crop-taxonomy/preferences/filter-presets', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${getAuthToken()}`
+                                },
+                                body: JSON.stringify({
+                                    name: name,
+                                    filter_config: config,
+                                    is_public: false
+                                })
+                            });
+                            
+                            if (createResponse.ok) {
+                                const result = await createResponse.json();
+                                syncMap[name] = result.preset_id;
+                                localStorage.setItem('filterSyncMap', JSON.stringify(syncMap));
+                            }
+                        }
+                    }
+                    
+                    // Sync server to local (for any server filters not in local storage)
+                    for (const preset of serverPresets) {
+                        if (!localFilters[preset.name]) {
+                            localFilters[preset.name] = preset.filter_config;
+                            syncMap[preset.name] = preset.preset_id;
+                        }
+                    }
+                    
+                    // Update local storage
+                    localStorage.setItem('savedCropFilters', JSON.stringify(localFilters));
+                    localStorage.setItem('filterSyncMap', JSON.stringify(syncMap));
+                    
+                    showNotification(`Successfully synced filters with server: ${Object.keys(localFilters).length} presets`, 'success');
+                } else {
+                    showNotification('Failed to sync filters with server', 'error');
+                }
+            } catch (error) {
+                showNotification(`Sync failed: ${error.message}`, 'error');
+            }
+        }
+
+        // Load filters from server when app starts
+        function initializeFilterSync() {
+            // Load any existing filters from localStorage
+            loadSavedFilters();
+            
+            // Set up periodic sync if user is authenticated
+            const userId = getAuthenticatedUserId();
+            if (userId) {
+                // Sync every 5 minutes if user is logged in
+                setInterval(syncFilters, 5 * 60 * 1000);
+            }
+        }
+
+        // Save current filters to session with optional auto-sync to server
+        function saveFiltersToSession(autoSync = false) {
             localStorage.setItem('cropFilteringSession', JSON.stringify(currentFilters));
+            
+            // Optionally sync to server as a temporary named preset
+            if (autoSync) {
+                const userId = getAuthenticatedUserId();
+                if (userId) {
+                    // Create/update a temporary session preset
+                    const sessionPresetName = `session_${new Date().toISOString().split('T')[0]}`;
+                    const sessionFilters = JSON.parse(localStorage.getItem('cropFilteringSession') || '{}');
+                    
+                    // Only update if different from server version
+                    const syncMap = JSON.parse(localStorage.getItem('filterSyncMap') || '{}');
+                    const sessionPresetId = syncMap[sessionPresetName];
+                    
+                    if (sessionPresetId) {
+                        // Update existing session preset
+                        updateServerFilterPreset(sessionPresetId, sessionPresetName, sessionFilters);
+                    } else {
+                        // Create new session preset
+                        saveFilterToServer(sessionPresetName, sessionFilters, true); // true = is_temporary
+                    }
+                }
+            }
+        }
+
+        // Save a filter to server (helper function)
+        async function saveFilterToServer(name, filters, isTemporary = false) {
+            try {
+                const response = await fetch('/api/v1/crop-taxonomy/preferences/filter-presets', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        filter_config: filters,
+                        is_public: false,
+                        tags: isTemporary ? ['session', 'temporary'] : ['user_saved']
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    // Store server ID in sync map
+                    const syncMap = JSON.parse(localStorage.getItem('filterSyncMap') || '{}');
+                    syncMap[name] = result.preset_id;
+                    localStorage.setItem('filterSyncMap', JSON.stringify(syncMap));
+                    return result.preset_id;
+                } else {
+                    const errorData = await response.json();
+                    console.error('Failed to save filter to server:', errorData);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error saving filter to server:', error);
+                return null;
+            }
+        }
+
+        // Update a server filter preset (helper function)
+        async function updateServerFilterPreset(presetId, name, filters) {
+            try {
+                const response = await fetch(`/api/v1/crop-taxonomy/preferences/filter-presets/${presetId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getAuthToken()}`
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        filter_config: filters,
+                        is_public: false
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    return result.preset_id;
+                } else {
+                    const errorData = await response.json();
+                    console.error('Failed to update filter on server:', errorData);
+                    return null;
+                }
+            } catch (error) {
+                console.error('Error updating filter on server:', error);
+                return null;
+            }
         }
 
         // Render visualizations
