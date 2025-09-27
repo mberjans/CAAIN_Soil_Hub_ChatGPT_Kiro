@@ -203,6 +203,18 @@ class CropPreferenceService:
         if storage_record is None:
             key = self._memory_key(user_id, preference_type.value if preference_type else None)
             storage_record = self._memory_profiles.get(key)
+            if storage_record is None and preference_type is None:
+                fallback_order = [
+                    PreferenceType.USER_DEFINED.value,
+                    PreferenceType.LEARNED.value,
+                    PreferenceType.SYSTEM_SUGGESTED.value
+                ]
+                for fallback_type in fallback_order:
+                    fallback_key = self._memory_key(user_id, fallback_type)
+                    if fallback_key in self._memory_profiles:
+                        storage_record = self._memory_profiles.get(fallback_key)
+                        if storage_record is not None:
+                            break
         if storage_record is None:
             return None
         return self._record_to_profile(storage_record)
