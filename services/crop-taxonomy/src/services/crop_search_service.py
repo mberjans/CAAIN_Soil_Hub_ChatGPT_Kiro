@@ -1,867 +1,1262 @@
-"""
-Crop Search Service
+"""Crop search service with advanced multi-criteria filtering."""
 
-Advanced search and filtering service for crop taxonomy with
-intelligent query processing, multi-criteria filtering, and ML-enhanced recommendations.
-"""
+from __future__ import annotations
 
 import logging
-from typing import List, Dict, Any, Optional, Tuple, Union, Set
-from datetime import datetime, date
-from uuid import UUID
-import asyncio
+import os
+from datetime import datetime
+from typing import Dict, List, Optional, Tuple
 
-try:
+try:  # pragma: no cover - runtime import resolution
+    from ..data.reference_crops import build_reference_crops_dataset
     from ..models.crop_filtering_models import (
-        GeographicFilterCriteria,
-        ClimateFilterCriteria,
-        SoilFilterCriteria,
-        AgriculturalFilterCriteria,
-        ManagementFilterCriteria,
-        SustainabilityFilterCriteria,
-        EconomicFilterCriteria,
-        TaxonomyFilterCriteria,
         CropSearchRequest,
         CropSearchResponse,
-        SmartRecommendationRequest,
-        SmartRecommendationResponse,
-        MLInsight,
-        ContextAwareRecommendation,
-        SearchResultItem,
-        FilterMatchScore,
-        ScoringContext
+        CropSearchResult,
+        SearchFacets,
+        SearchOperator,
+        SearchStatistics,
+        SortField,
+        SortOrder,
+        TaxonomyFilterCriteria,
     )
     from ..models.crop_taxonomy_models import (
         ComprehensiveCropData,
-        CropCategory,
-        PrimaryUse,
-        LifeCycle,
-        ClimateZone,
-        SoilType,
-        DrainageClass
+        CropAgriculturalClassification,
+        CropClimateAdaptations,
+        CropSoilRequirements,
     )
-    from ..models.service_models import ConfidenceLevel
-except ImportError:
-    from models.crop_filtering_models import (
-        GeographicFilterCriteria,
-        ClimateFilterCriteria,
-        SoilFilterCriteria,
-        AgriculturalFilterCriteria,
-        ManagementFilterCriteria,
-        SustainabilityFilterCriteria,
-        EconomicFilterCriteria,
-        TaxonomyFilterCriteria,
+except ImportError:  # pragma: no cover - fallback for direct execution
+    from data.reference_crops import build_reference_crops_dataset
+    from models.crop_filtering_models import (  # type: ignore
         CropSearchRequest,
         CropSearchResponse,
-        SmartRecommendationRequest,
-        SmartRecommendationResponse,
-        MLInsight,
-        ContextAwareRecommendation,
-        SearchResultItem,
-        FilterMatchScore,
-        ScoringContext
+        CropSearchResult,
+        SearchFacets,
+        SearchOperator,
+        SearchStatistics,
+        SortField,
+        SortOrder,
+        TaxonomyFilterCriteria,
     )
-    from models.crop_taxonomy_models import (
+    from models.crop_taxonomy_models import (  # type: ignore
         ComprehensiveCropData,
-        CropCategory,
-        PrimaryUse,
-        LifeCycle,
-        ClimateZone,
-        SoilType,
-        DrainageClass
+        CropAgriculturalClassification,
+        CropClimateAdaptations,
+        CropSoilRequirements,
     )
-    from models.service_models import ConfidenceLevel
-
 
 logger = logging.getLogger(__name__)
 
 
-class CropSearchService:
-    """
-    Advanced search service for crop taxonomy with intelligent filtering,
-    multi-criteria scoring, and machine learning enhanced recommendations.
-    """
+class FilterEvaluation:
+    """Container for filter evaluation details."""
 
-    def __init__(self, database_url: Optional[str] = None):
-        """Initialize the crop search service with database integration and scoring algorithms."""
+    def __init__(self, name: str, weight: float) -> None:
+        self.name = name
+        self.weight = weight
+        self.active = False
+        self.score = 0.0
+        self.matched = False
+        self.partial = False
+        self.notes: List[str] = []
+        self.partial_notes: List[str] = []
+        self.missing_notes: List[str] = []
+        self.highlights: Dict[str, List[str]] = {}
+
+
+class CropSearchService:
+    """Advanced search service for crop taxonomy data."""
+
+    def __init__(self, database_url: Optional[str] = None) -> None:
+        self.scoring_weights = self._initialize_scoring_weights()
+        self.search_cache: Dict[str, CropSearchResponse] = {}
+        self.reference_crops: List[ComprehensiveCropData] = []
+        self.db = None
+        self.database_available = False
+        self._initialise_database(database_url)
+        self._load_reference_dataset()
+
+    def _initialise_database(self, database_url: Optional[str]) -> None:
+        """Initialise database connection if available."""
         try:
             from ..database.crop_taxonomy_db import CropTaxonomyDatabase
+        except ImportError:  # pragma: no cover - optional dependency
+            logger.info("Crop taxonomy database module not available; using reference dataset")
+            return
+
+        try:
+            if database_url is None:
+                database_url = os.getenv("DATABASE_URL")
             self.db = CropTaxonomyDatabase(database_url)
             self.database_available = self.db.test_connection()
-            logger.info(f"Search service database connection: {'successful' if self.database_available else 'failed'}")
-        except ImportError:
-            logger.warning("Database integration not available for search service")
+        except Exception as exc:  # pragma: no cover - connection failure path
+            logger.warning("Crop taxonomy database unavailable: %s", str(exc))
             self.db = None
             self.database_available = False
-            
-        self.search_cache = {}
-        self.scoring_weights = self._initialize_scoring_weights()
-        self.ml_model = None  # Placeholder for ML model integration
-        
+
+    def _load_reference_dataset(self) -> None:
+        """Load fallback dataset for searches."""
+        try:
+            dataset = build_reference_crops_dataset()
+            self.reference_crops = dataset
+        except Exception as exc:  # pragma: no cover - defensive guard
+            logger.error("Failed to load reference crops dataset: %s", str(exc))
+            self.reference_crops = []
+
     def _initialize_scoring_weights(self) -> Dict[str, float]:
-        """Initialize scoring weights for different filter criteria."""
-        return {
-            "climate_match": 0.25,
-            "soil_match": 0.20,
-            "geographic_match": 0.15,
-            "agricultural_match": 0.15,
-            "management_match": 0.10,
-            "sustainability_match": 0.10,
-            "economic_match": 0.05
-        }
+        """Weighting for filter categories."""
+        weights: Dict[str, float] = {}
+        weights["text_match"] = 0.18
+        weights["taxonomy_match"] = 0.07
+        weights["geographic_match"] = 0.15
+        weights["climate_match"] = 0.20
+        weights["soil_match"] = 0.15
+        weights["agricultural_match"] = 0.12
+        weights["management_match"] = 0.05
+        weights["sustainability_match"] = 0.04
+        weights["economic_match"] = 0.04
+        return weights
 
     async def search_crops(self, request: CropSearchRequest) -> CropSearchResponse:
-        """
-        Execute comprehensive crop search with multi-criteria filtering.
-        
-        Args:
-            request: Search request with filter criteria and preferences
-            
-        Returns:
-            Search results with scoring and recommendations
-        """
-        try:
-            # Get candidate crops from database
-            candidate_crops = await self._get_candidate_crops(request)
-            
-            if not candidate_crops:
-                return CropSearchResponse(
-                    total_results=0,
-                    results=[],
-                    search_metadata={
-                        "query_time": datetime.utcnow(),
-                        "filters_applied": 0,
-                        "message": "No crops found matching criteria"
-                    }
-                )
+        """Execute comprehensive crop search with filtering and scoring."""
+        start_time = datetime.utcnow()
+        candidates = await self._get_candidate_crops(request)
+        matched_results = self._evaluate_candidates(candidates, request.filter_criteria)
+        sorted_results = self._sort_results(matched_results, request.sort_by, request.sort_order)
+        paginated_results = self._paginate_results(sorted_results, request.offset, request.max_results)
+        facets = self._build_facets(sorted_results)
+        statistics = self._build_statistics(start_time, matched_results, paginated_results)
+        filters_summary = self._summarize_filters(request.filter_criteria)
+        total_count = len(matched_results)
+        returned_count = len(paginated_results)
+        offset_value = request.offset
+        has_more_results = False
+        next_offset = None
+        if offset_value + returned_count < total_count:
+            has_more_results = True
+            next_offset = offset_value + returned_count
 
-            # Apply filters and score results
-            filtered_results = await self._apply_filters_and_score(candidate_crops, request)
-            
-            # Sort by relevance score
-            sorted_results = sorted(
-                filtered_results, 
-                key=lambda x: x.relevance_score, 
-                reverse=True
-            )
-            
-            # Apply pagination
-            start_idx = (request.page - 1) * request.page_size if request.page > 0 else 0
-            end_idx = start_idx + request.page_size
-            paginated_results = sorted_results[start_idx:end_idx]
-            
-            # Generate search metadata
-            search_metadata = await self._generate_search_metadata(
-                request, len(candidate_crops), len(filtered_results)
-            )
-            
-            return CropSearchResponse(
-                total_results=len(filtered_results),
-                results=paginated_results,
-                search_metadata=search_metadata,
-                applied_filters=request.filter_criteria
-            )
-
-        except Exception as e:
-            logger.error(f"Error in crop search: {str(e)}")
-            return CropSearchResponse(
-                total_results=0,
-                results=[],
-                search_metadata={
-                    "error": str(e),
-                    "query_time": datetime.utcnow()
-                }
-            )
+        response = CropSearchResponse(
+            request_id=request.request_id,
+            results=paginated_results,
+            total_count=total_count,
+            returned_count=returned_count,
+            facets=facets,
+            suggested_refinements=self._suggest_refinements(matched_results, request.filter_criteria),
+            alternative_searches=[],
+            statistics=statistics,
+            applied_filters=filters_summary,
+            has_more_results=has_more_results,
+            next_offset=next_offset,
+        )
+        return response
 
     async def _get_candidate_crops(self, request: CropSearchRequest) -> List[ComprehensiveCropData]:
-        """Get initial set of candidate crops from database."""
-        if not self.database_available:
-            logger.warning("Database not available, returning empty crop list")
-            return []
-            
-        try:
-            # Convert our filter criteria to database search filters
-            db_filters = self._convert_to_db_filters(request.filter_criteria)
-            
-            # Search database for matching crops
-            db_results = self.db.search_crops(
-                search_text=request.search_query,
-                filters=db_filters,
-                limit=request.page_size * 3,  # Get more results to filter
-                offset=0
-            )
-            
-            # Convert database results to ComprehensiveCropData objects
-            candidate_crops = []
-            for db_result in db_results:
-                crop_data = self._convert_db_to_comprehensive_crop_data(db_result)
-                candidate_crops.append(crop_data)
-                
-            return candidate_crops
-            
-        except Exception as e:
-            logger.error(f"Error getting candidate crops from database: {e}")
-            return []
+        """Retrieve initial candidate crops from database or reference dataset."""
+        candidates: List[ComprehensiveCropData] = []
 
-    def _convert_to_db_filters(self, filter_criteria: TaxonomyFilterCriteria):
-        """Convert our filter criteria to database filter format."""
-        try:
-            # Import the database filter models
-            from ..models.crop_taxonomy_models import CropSearchFilters
-            
-            # This is a simplified conversion - in reality, we'd need to map
-            # all the filter criteria properly
-            db_filters = CropSearchFilters()
-            
-            # Add basic mappings - this would need to be expanded
-            if hasattr(filter_criteria, 'climate') and filter_criteria.climate:
-                db_filters.climate_filters = filter_criteria.climate
-                
-            if hasattr(filter_criteria, 'soil') and filter_criteria.soil:
-                db_filters.soil_filters = filter_criteria.soil
-                
-            if hasattr(filter_criteria, 'geographic') and filter_criteria.geographic:
-                db_filters.geographic_filters = filter_criteria.geographic
-                
-            if hasattr(filter_criteria, 'agricultural') and filter_criteria.agricultural:
-                db_filters.agricultural_filters = filter_criteria.agricultural
-                
-            return db_filters
-            
-        except Exception as e:
-            logger.warning(f"Error converting filters: {e}")
-            return None
-
-    def _convert_db_to_comprehensive_crop_data(self, db_data: Dict[str, Any]) -> ComprehensiveCropData:
-        """Convert database result to ComprehensiveCropData."""
-        from uuid import uuid4
-        from ..models.crop_taxonomy_models import (
-            CropTaxonomicHierarchy, CropAgriculturalClassification,
-            CropClimateAdaptations, CropSoilRequirements, CropNutritionalProfile
-        )
-        
-        # Extract and convert taxonomic hierarchy
-        taxonomic_hierarchy = None
-        if 'taxonomic_hierarchy' in db_data:
-            tax_data = db_data['taxonomic_hierarchy']
-            taxonomic_hierarchy = CropTaxonomicHierarchy(
-                id=tax_data.get('id', uuid4()),
-                kingdom=tax_data.get('kingdom', 'Plantae'),
-                phylum=tax_data.get('phylum', 'Tracheophyta'),
-                class_name=tax_data.get('class_name', 'Unknown'),
-                order=tax_data.get('order', 'Unknown'),
-                family=tax_data.get('family', 'Unknown'),
-                genus=tax_data.get('genus', 'Unknown'),
-                species=tax_data.get('species', 'Unknown'),
-                common_names=tax_data.get('common_names', []),
-                botanical_authority=tax_data.get('botanical_authority', ''),
-                is_hybrid=tax_data.get('is_hybrid', False),
-                ploidy_level=tax_data.get('ploidy_level', 2),
-                chromosome_count=tax_data.get('chromosome_count', 0)
-            )
-        
-        # Convert other sections similarly (agricultural, climate, soil, nutritional)
-        # This is a simplified version - full implementation would convert all fields
-        
-        return ComprehensiveCropData(
-            crop_id=db_data.get('crop_id', uuid4()),
-            crop_name=db_data.get('crop_name', ''),
-            taxonomic_hierarchy=taxonomic_hierarchy,
-            agricultural_classification=None,  # Would be converted from db_data
-            climate_adaptations=None,          # Would be converted from db_data
-            soil_requirements=None,            # Would be converted from db_data
-            nutritional_profile=None,          # Would be converted from db_data
-            search_keywords=db_data.get('search_keywords', []),
-            tags=db_data.get('tags', []),
-            data_source="database",
-            confidence_score=0.85,
-            updated_at=datetime.utcnow(),
-            last_updated=datetime.utcnow()
-        )
-
-    async def _apply_filters_and_score(
-        self, 
-        crops: List[ComprehensiveCropData], 
-        request: CropSearchRequest
-    ) -> List[SearchResultItem]:
-        """Apply filters and calculate relevance scores for each crop."""
-        results = []
-        
-        for crop in crops:
-            # Calculate filter match scores
-            filter_scores = await self._calculate_filter_scores(crop, request.filter_criteria)
-            
-            # Calculate overall relevance score
-            relevance_score = await self._calculate_relevance_score(filter_scores, request)
-            
-            # Check if crop meets minimum thresholds
-            if relevance_score >= (request.min_confidence_threshold or 0.0):
-                result_item = SearchResultItem(
-                    crop_data=crop,
-                    relevance_score=relevance_score,
-                    filter_scores=filter_scores,
-                    match_reasons=await self._generate_match_reasons(filter_scores),
-                    recommendations=await self._generate_crop_recommendations(crop, request)
+        if self.database_available and self.db is not None:
+            try:
+                search_text = self._primary_search_text(request.filter_criteria)
+                db_results = self.db.search_crops(
+                    search_text=search_text,
+                    filters=None,
+                    limit=request.max_results * 6,
+                    offset=request.offset,
                 )
-                results.append(result_item)
-        
+                index = 0
+                while index < len(db_results):
+                    crop_dict = db_results[index]
+                    crop = self._convert_db_to_comprehensive_crop_data(crop_dict)
+                    candidates.append(crop)
+                    index += 1
+            except Exception as exc:  # pragma: no cover - database fallback path
+                logger.warning("Database search failed, using reference dataset: %s", str(exc))
+
+        if len(candidates) == 0:
+            index = 0
+            while index < len(self.reference_crops):
+                candidates.append(self.reference_crops[index])
+                index += 1
+
+        return candidates
+
+    def _primary_search_text(self, criteria: TaxonomyFilterCriteria) -> Optional[str]:
+        """Select primary search text from criteria."""
+        if criteria.text_search:
+            return criteria.text_search
+        if criteria.common_name_search:
+            return criteria.common_name_search
+        if criteria.scientific_name_search:
+            return criteria.scientific_name_search
+        return None
+
+    def _convert_db_to_comprehensive_crop_data(self, record: Dict[str, object]) -> ComprehensiveCropData:
+        """Convert database row to comprehensive crop data."""
+        try:
+            return ComprehensiveCropData(**record)
+        except Exception:  # pragma: no cover - ensure fallback conversion
+            crop_data = ComprehensiveCropData(
+                crop_name=str(record.get("crop_name", "")),
+                crop_id=record.get("crop_id"),
+            )
+            return crop_data
+
+    def _evaluate_candidates(
+        self,
+        candidates: List[ComprehensiveCropData],
+        criteria: TaxonomyFilterCriteria,
+    ) -> List[CropSearchResult]:
+        """Evaluate candidate crops against filter criteria."""
+        results: List[CropSearchResult] = []
+        index = 0
+        while index < len(candidates):
+            crop = candidates[index]
+            evaluation = self._evaluate_crop(crop, criteria)
+            if evaluation is not None:
+                results.append(evaluation)
+            index += 1
         return results
 
-    async def _calculate_filter_scores(
-        self, 
-        crop: ComprehensiveCropData, 
-        filter_criteria: TaxonomyFilterCriteria
-    ) -> Dict[str, FilterMatchScore]:
-        """Calculate match scores for each filter category."""
-        scores = {}
-        
-        # Geographic filter scoring
-        if filter_criteria.geographic:
-            scores["geographic"] = await self._score_geographic_match(
-                crop, filter_criteria.geographic
-            )
-            
-        # Climate filter scoring  
-        if filter_criteria.climate:
-            scores["climate"] = await self._score_climate_match(
-                crop, filter_criteria.climate
-            )
-            
-        # Soil filter scoring
-        if filter_criteria.soil:
-            scores["soil"] = await self._score_soil_match(
-                crop, filter_criteria.soil
-            )
-            
-        # Agricultural filter scoring
-        if filter_criteria.agricultural:
-            scores["agricultural"] = await self._score_agricultural_match(
-                crop, filter_criteria.agricultural
-            )
-            
-        # Management filter scoring
-        if filter_criteria.management:
-            scores["management"] = await self._score_management_match(
-                crop, filter_criteria.management
-            )
-            
-        # Sustainability filter scoring
-        if filter_criteria.sustainability:
-            scores["sustainability"] = await self._score_sustainability_match(
-                crop, filter_criteria.sustainability
-            )
-            
-        # Economic filter scoring
-        if filter_criteria.economic:
-            scores["economic"] = await self._score_economic_match(
-                crop, filter_criteria.economic
-            )
-        
-        return scores
+    def _evaluate_crop(
+        self,
+        crop: ComprehensiveCropData,
+        criteria: TaxonomyFilterCriteria,
+    ) -> Optional[CropSearchResult]:
+        """Evaluate a single crop against all search criteria."""
+        if not self._passes_taxonomy_filters(crop, criteria):
+            return None
 
-    async def _score_geographic_match(
-        self, 
-        crop: ComprehensiveCropData, 
-        geo_criteria: GeographicFilterCriteria
-    ) -> FilterMatchScore:
-        """Score geographic compatibility."""
-        score = 0.0
-        max_score = 0.0
-        details = {}
-        
-        # Check latitude range
-        if geo_criteria.latitude_range and crop.climate_adaptations:
-            max_score += 1.0
-            # Simplified scoring - would use actual geographic data
-            score += 0.8
-            details["latitude_match"] = "Good match for specified latitude range"
-            
-        # Check hardiness zones
-        if geo_criteria.hardiness_zones and crop.climate_adaptations:
-            max_score += 1.0
-            if crop.climate_adaptations.climate_zones:
-                # Check for zone overlap
-                common_zones = set(geo_criteria.hardiness_zones) & set(crop.climate_adaptations.climate_zones)
-                if common_zones:
-                    score += 1.0
-                    details["hardiness_zones"] = f"Compatible zones: {list(common_zones)}"
+        filter_results: List[FilterEvaluation] = []
+        filter_results.append(self._evaluate_text_filter(crop, criteria))
+        filter_results.append(self._evaluate_geographic_filter(crop, criteria.geographic_filter))
+        filter_results.append(self._evaluate_climate_filter(crop, criteria.climate_filter))
+        filter_results.append(self._evaluate_soil_filter(crop, criteria.soil_filter))
+        filter_results.append(self._evaluate_agricultural_filter(crop, criteria.agricultural_filter))
+        filter_results.append(self._evaluate_management_filter(crop, criteria.management_filter))
+        filter_results.append(self._evaluate_sustainability_filter(crop, criteria.sustainability_filter))
+        filter_results.append(self._evaluate_economic_filter(crop, criteria.economic_filter))
+
+        applicable_filters = 0
+        matched_filters = 0
+        partial_filters = 0
+        filter_index = 0
+        while filter_index < len(filter_results):
+            current = filter_results[filter_index]
+            if current.active:
+                applicable_filters += 1
+                if current.matched:
+                    matched_filters += 1
+                elif current.partial:
+                    partial_filters += 1
+            filter_index += 1
+
+        passes_filters = self._determine_pass_status(criteria.search_operator, applicable_filters, matched_filters, partial_filters)
+        if not passes_filters:
+            return None
+
+        relevance_score, matching_details, partial_details, missing_details, highlights, similarity = self._compile_scores(filter_results, matched_filters, applicable_filters)
+        suitability_score = relevance_score
+
+        result = CropSearchResult(
+            crop=crop,
+            relevance_score=relevance_score,
+            suitability_score=suitability_score,
+            matching_criteria=matching_details,
+            partial_matches=partial_details,
+            missing_criteria=missing_details,
+            search_highlights=highlights,
+            similarity_factors=similarity,
+            recommendation_notes=[],
+            potential_concerns=[],
+        )
+        return result
+
+    def _passes_taxonomy_filters(self, crop: ComprehensiveCropData, criteria: TaxonomyFilterCriteria) -> bool:
+        """Ensure crop satisfies taxonomy specific filters before scoring."""
+        taxonomy = crop.taxonomic_hierarchy
+        if criteria.families:
+            if taxonomy is None or taxonomy.family is None:
+                return False
+            if not self._value_in_iterable(taxonomy.family, criteria.families):
+                return False
+
+        if criteria.genera:
+            if taxonomy is None or taxonomy.genus is None:
+                return False
+            if not self._value_in_iterable(taxonomy.genus, criteria.genera):
+                return False
+
+        return True
+
+    def _value_in_iterable(self, value: str, container: List[str]) -> bool:
+        """Case-insensitive containment helper."""
+        if value is None:
+            return False
+        lower_value = value.lower()
+        index = 0
+        while index < len(container):
+            candidate = container[index]
+            if candidate is not None and lower_value == candidate.lower():
+                return True
+            index += 1
+        return False
+
+    def _enum_value(self, enum_member) -> Optional[str]:
+        if enum_member is None:
+            return None
+        if hasattr(enum_member, "value"):
+            return str(enum_member.value)
+        return str(enum_member)
+
+    def _rank_in_order(self, value: Optional[str], order: List[str]) -> int:
+        if value is None:
+            return -1
+        normalized = value.lower()
+        index = 0
+        while index < len(order):
+            if normalized == order[index]:
+                return index
+            index += 1
+        return -1
+
+    def _meets_rank_requirement(self, candidate, required, order: List[str]) -> bool:
+        candidate_value = self._enum_value(candidate)
+        required_value = self._enum_value(required)
+        if required_value is None:
+            return True
+        candidate_rank = self._rank_in_order(candidate_value, order)
+        required_rank = self._rank_in_order(required_value, order)
+        if candidate_rank == -1:
+            return False
+        return candidate_rank >= required_rank
+
+    def _evaluate_text_filter(self, crop: ComprehensiveCropData, criteria: TaxonomyFilterCriteria) -> FilterEvaluation:
+        evaluation = FilterEvaluation("text", self.scoring_weights.get("text_match", 0.18))
+        terms = self._collect_search_terms(criteria)
+        if len(terms) == 0:
+            evaluation.score = 1.0
+            evaluation.matched = True
+            return evaluation
+
+        evaluation.active = True
+        fields = self._gather_text_fields(crop)
+        matched_terms: List[str] = []
+        term_count = len(terms)
+        matched_count = 0
+        term_index = 0
+        while term_index < term_count:
+            term = terms[term_index]
+            if self._term_in_fields(term, fields):
+                matched_count += 1
+                matched_terms.append(term)
+                evaluation.notes.append("Matched term '" + term + "'")
+            else:
+                evaluation.missing_notes.append("No match for term '" + term + "'")
+            term_index += 1
+
+        if len(matched_terms) > 0:
+            evaluation.highlights["text"] = []
+            index = 0
+            while index < len(matched_terms):
+                evaluation.highlights["text"].append(matched_terms[index])
+                index += 1
+
+        if term_count > 0:
+            evaluation.score = matched_count / float(term_count)
+        else:
+            evaluation.score = 1.0
+
+        if matched_count == term_count and term_count > 0:
+            evaluation.matched = True
+        elif matched_count > 0:
+            evaluation.partial = True
+        return evaluation
+
+    def _gather_text_fields(self, crop: ComprehensiveCropData) -> List[str]:
+        fields: List[str] = []
+        if crop.crop_name:
+            fields.append(crop.crop_name.lower())
+        scientific = crop.scientific_name
+        if scientific:
+            fields.append(scientific.lower())
+        if crop.search_keywords:
+            index = 0
+            while index < len(crop.search_keywords):
+                keyword = crop.search_keywords[index]
+                if keyword:
+                    fields.append(keyword.lower())
+                index += 1
+        if crop.tags:
+            index = 0
+            while index < len(crop.tags):
+                tag = crop.tags[index]
+                if tag:
+                    fields.append(tag.lower())
+                index += 1
+        taxonomy = crop.taxonomic_hierarchy
+        if taxonomy and taxonomy.common_synonyms:
+            index = 0
+            while index < len(taxonomy.common_synonyms):
+                synonym = taxonomy.common_synonyms[index]
+                if synonym:
+                    fields.append(synonym.lower())
+                index += 1
+        return fields
+
+    def _term_in_fields(self, term: str, fields: List[str]) -> bool:
+        if term is None or len(term) == 0:
+            return False
+        normalized = term.lower()
+        index = 0
+        while index < len(fields):
+            field_value = fields[index]
+            if normalized in field_value:
+                return True
+            index += 1
+        return False
+
+    def _collect_search_terms(self, criteria: TaxonomyFilterCriteria) -> List[str]:
+        terms: List[str] = []
+        for value in [criteria.text_search, criteria.common_name_search, criteria.scientific_name_search]:
+            if value:
+                for raw_term in value.split():
+                    cleaned = raw_term.strip()
+                    if len(cleaned) > 0:
+                        terms.append(cleaned)
+        return terms
+
+    def _evaluate_geographic_filter(self, crop: ComprehensiveCropData, geo_filter) -> FilterEvaluation:
+        evaluation = FilterEvaluation("geographic", self.scoring_weights.get("geographic_match", 0.15))
+        if geo_filter is None:
+            evaluation.score = 1.0
+        else:
+            evaluation.active = self._geographic_filter_has_values(geo_filter)
+            if not evaluation.active:
+                evaluation.score = 1.0
+                return evaluation
+
+            adaptation = crop.climate_adaptations
+            if adaptation is None:
+                evaluation.partial_notes.append("No climate adaptation data for geographic filter")
+                return evaluation
+
+            checks = 0
+            matches = 0
+
+            if geo_filter.hardiness_zones:
+                checks += 1
+                if adaptation.hardiness_zones:
+                    overlap = self._intersect_lists(adaptation.hardiness_zones, geo_filter.hardiness_zones)
+                    if len(overlap) > 0:
+                        matches += 1
+                        evaluation.notes.append("Hardiness zones overlap")
+                    else:
+                        evaluation.missing_notes.append("Hardiness zones do not overlap")
                 else:
-                    details["hardiness_zones"] = "No compatible hardiness zones"
-                    
-        final_score = score / max_score if max_score > 0 else 0.0
-        
-        return FilterMatchScore(
-            category="geographic",
-            score=final_score,
-            max_possible_score=1.0,
-            weight=self.scoring_weights.get("geographic_match", 0.15),
-            details=details
-        )
+                    evaluation.partial_notes.append("Crop lacks hardiness zone data")
 
-    async def _score_climate_match(
-        self, 
-        crop: ComprehensiveCropData, 
-        climate_criteria: ClimateFilterCriteria
-    ) -> FilterMatchScore:
-        """Score climate compatibility."""
-        score = 0.0
-        max_score = 0.0
-        details = {}
-        
-        if not crop.climate_adaptations:
-            return FilterMatchScore(
-                category="climate",
-                score=0.0,
-                max_possible_score=1.0,
-                weight=self.scoring_weights.get("climate_match", 0.25),
-                details={"error": "No climate data available for crop"}
-            )
-            
-        # Temperature range scoring
-        if climate_criteria.temperature_range and crop.climate_adaptations.temperature_range:
-            max_score += 1.0
-            crop_temp_min, crop_temp_max = crop.climate_adaptations.temperature_range
-            criteria_temp_min, criteria_temp_max = climate_criteria.temperature_range
-            
-            # Calculate overlap
-            overlap_min = max(crop_temp_min, criteria_temp_min)
-            overlap_max = min(crop_temp_max, criteria_temp_max)
-            
-            if overlap_max > overlap_min:
-                overlap_range = overlap_max - overlap_min
-                crop_range = crop_temp_max - crop_temp_min
-                criteria_range = criteria_temp_max - criteria_temp_min
-                
-                # Score based on percentage of overlap
-                temp_score = min(overlap_range / crop_range, overlap_range / criteria_range)
-                score += temp_score
-                details["temperature"] = f"Temperature overlap: {overlap_min}°C to {overlap_max}°C"
-            else:
-                details["temperature"] = "No temperature range overlap"
-                
-        # Precipitation scoring
-        if climate_criteria.precipitation_range and crop.climate_adaptations.precipitation_range:
-            max_score += 1.0
-            crop_precip_min, crop_precip_max = crop.climate_adaptations.precipitation_range
-            criteria_precip_min, criteria_precip_max = climate_criteria.precipitation_range
-            
-            # Calculate overlap similar to temperature
-            overlap_min = max(crop_precip_min, criteria_precip_min)
-            overlap_max = min(crop_precip_max, criteria_precip_max)
-            
-            if overlap_max > overlap_min:
-                overlap_range = overlap_max - overlap_min
-                crop_range = crop_precip_max - crop_precip_min
-                criteria_range = criteria_precip_max - criteria_precip_min
-                
-                precip_score = min(overlap_range / crop_range, overlap_range / criteria_range)
-                score += precip_score
-                details["precipitation"] = f"Precipitation overlap: {overlap_min}mm to {overlap_max}mm"
-            else:
-                details["precipitation"] = "No precipitation range overlap"
-                
-        final_score = score / max_score if max_score > 0 else 0.0
-        
-        return FilterMatchScore(
-            category="climate",
-            score=final_score,
-            max_possible_score=1.0,
-            weight=self.scoring_weights.get("climate_match", 0.25),
-            details=details
-        )
+            if geo_filter.elevation_min_feet is not None or geo_filter.elevation_max_feet is not None:
+                checks += 1
+                min_ok = True
+                max_ok = True
+                if geo_filter.elevation_min_feet is not None and adaptation.elevation_min_feet is not None:
+                    if adaptation.elevation_max_feet is not None and adaptation.elevation_max_feet < geo_filter.elevation_min_feet:
+                        min_ok = False
+                if geo_filter.elevation_max_feet is not None and adaptation.elevation_max_feet is not None:
+                    if adaptation.elevation_min_feet is not None and adaptation.elevation_min_feet > geo_filter.elevation_max_feet:
+                        max_ok = False
+                if min_ok and max_ok:
+                    matches += 1
+                    evaluation.notes.append("Elevation range compatible")
+                else:
+                    evaluation.missing_notes.append("Elevation outside requested range")
 
-    async def _score_soil_match(
-        self, 
-        crop: ComprehensiveCropData, 
-        soil_criteria: SoilFilterCriteria
-    ) -> FilterMatchScore:
-        """Score soil compatibility."""
-        score = 0.0
-        max_score = 0.0
-        details = {}
-        
-        if not crop.soil_requirements:
-            return FilterMatchScore(
-                category="soil",
-                score=0.0,
-                max_possible_score=1.0,
-                weight=self.scoring_weights.get("soil_match", 0.20),
-                details={"error": "No soil requirements data available for crop"}
-            )
-            
-        # pH range scoring
-        if soil_criteria.ph_range and crop.soil_requirements.ph_range:
-            max_score += 1.0
-            crop_ph_min, crop_ph_max = crop.soil_requirements.ph_range
-            criteria_ph_min, criteria_ph_max = soil_criteria.ph_range
-            
-            # Calculate pH overlap
-            overlap_min = max(crop_ph_min, criteria_ph_min)
-            overlap_max = min(crop_ph_max, criteria_ph_max)
-            
-            if overlap_max > overlap_min:
-                overlap_range = overlap_max - overlap_min
-                crop_range = crop_ph_max - crop_ph_min
-                
-                ph_score = overlap_range / crop_range
-                score += ph_score
-                details["ph"] = f"pH compatibility: {overlap_min} to {overlap_max}"
+            if checks > 0:
+                evaluation.score = matches / float(checks)
             else:
-                details["ph"] = "No pH range compatibility"
-                
-        # Soil texture scoring
-        if soil_criteria.texture_classes and crop.soil_requirements.preferred_textures:
-            max_score += 1.0
-            common_textures = set(soil_criteria.texture_classes) & set(crop.soil_requirements.preferred_textures)
-            if common_textures:
-                texture_score = len(common_textures) / len(crop.soil_requirements.preferred_textures)
-                score += texture_score
-                details["texture"] = f"Compatible textures: {list(common_textures)}"
-            else:
-                details["texture"] = "No compatible soil textures"
-                
-        # Drainage scoring
-        if soil_criteria.drainage_classes and crop.soil_requirements.drainage_requirements:
-            max_score += 1.0
-            common_drainage = set(soil_criteria.drainage_classes) & set(crop.soil_requirements.drainage_requirements)
-            if common_drainage:
-                drainage_score = len(common_drainage) / len(crop.soil_requirements.drainage_requirements)
-                score += drainage_score
-                details["drainage"] = f"Compatible drainage: {list(common_drainage)}"
-            else:
-                details["drainage"] = "No compatible drainage classes"
-                
-        final_score = score / max_score if max_score > 0 else 0.0
-        
-        return FilterMatchScore(
-            category="soil",
-            score=final_score,
-            max_possible_score=1.0,
-            weight=self.scoring_weights.get("soil_match", 0.20),
-            details=details
-        )
+                evaluation.score = 1.0
 
-    async def _score_agricultural_match(
-        self, 
-        crop: ComprehensiveCropData, 
-        ag_criteria: AgriculturalFilterCriteria
-    ) -> FilterMatchScore:
-        """Score agricultural characteristics match."""
-        score = 0.0
-        max_score = 0.0
-        details = {}
-        
-        if not crop.agricultural_classification:
-            return FilterMatchScore(
-                category="agricultural",
-                score=0.0,
-                max_possible_score=1.0,
-                weight=self.scoring_weights.get("agricultural_match", 0.15),
-                details={"error": "No agricultural classification data available"}
-            )
-            
-        # Category matching
-        if ag_criteria.crop_categories:
-            max_score += 1.0
-            if crop.agricultural_classification.primary_category in ag_criteria.crop_categories:
-                score += 1.0
-                details["category"] = f"Primary category match: {crop.agricultural_classification.primary_category}"
-            elif any(cat in ag_criteria.crop_categories for cat in crop.agricultural_classification.secondary_categories or []):
-                score += 0.7
-                details["category"] = "Secondary category match"
+            if evaluation.score >= 0.99:
+                evaluation.matched = True
+            elif evaluation.score > 0.0:
+                evaluation.partial = True
+        return evaluation
+
+    def _geographic_filter_has_values(self, geo_filter) -> bool:
+        if geo_filter.hardiness_zones:
+            if len(geo_filter.hardiness_zones) > 0:
+                return True
+        if geo_filter.latitude_range:
+            return True
+        if geo_filter.longitude_range:
+            return True
+        if geo_filter.elevation_min_feet is not None:
+            return True
+        if geo_filter.elevation_max_feet is not None:
+            return True
+        if geo_filter.states:
+            if len(geo_filter.states) > 0:
+                return True
+        if geo_filter.countries:
+            if len(geo_filter.countries) > 0:
+                return True
+        if geo_filter.koppen_zones:
+            if len(geo_filter.koppen_zones) > 0:
+                return True
+        return False
+
+    def _intersect_lists(self, first: List[str], second: List[str]) -> List[str]:
+        overlap: List[str] = []
+        index = 0
+        while index < len(first):
+            value = first[index]
+            if value is not None and self._value_in_iterable(value, second):
+                overlap.append(value)
+            index += 1
+        return overlap
+
+    def _evaluate_climate_filter(self, crop: ComprehensiveCropData, climate_filter) -> FilterEvaluation:
+        evaluation = FilterEvaluation("climate", self.scoring_weights.get("climate_match", 0.20))
+        if climate_filter is None:
+            evaluation.score = 1.0
+        else:
+            evaluation.active = self._climate_filter_has_values(climate_filter)
+            if not evaluation.active:
+                evaluation.score = 1.0
+                return evaluation
+
+            adaptation: Optional[CropClimateAdaptations] = crop.climate_adaptations
+            if adaptation is None:
+                evaluation.partial_notes.append("No climate adaptation data available")
+                return evaluation
+
+            checks = 0
+            matches = 0
+
+            if climate_filter.temperature_range_f:
+                checks += 1
+                temp_match = self._temperature_overlap(adaptation, climate_filter.temperature_range_f)
+                if temp_match:
+                    matches += 1
+                    evaluation.notes.append("Temperature range compatible")
+                else:
+                    evaluation.missing_notes.append("Temperature range outside tolerance")
+
+            if climate_filter.drought_tolerance_required:
+                checks += 1
+                drought_order = ["none", "low", "moderate", "high", "extreme"]
+                if self._meets_rank_requirement(adaptation.drought_tolerance, climate_filter.drought_tolerance_required, drought_order):
+                    matches += 1
+                    evaluation.notes.append("Drought tolerance requirement met")
+                else:
+                    evaluation.missing_notes.append("Insufficient drought tolerance")
+
+            if climate_filter.frost_tolerance_required:
+                checks += 1
+                frost_order = ["none", "light", "moderate", "heavy"]
+                if self._meets_rank_requirement(adaptation.frost_tolerance, climate_filter.frost_tolerance_required, frost_order):
+                    matches += 1
+                    evaluation.notes.append("Frost tolerance requirement met")
+                else:
+                    evaluation.missing_notes.append("Frost tolerance requirement not met")
+
+            if climate_filter.heat_tolerance_required:
+                checks += 1
+                heat_order = ["low", "moderate", "high", "extreme"]
+                if self._meets_rank_requirement(adaptation.heat_tolerance, climate_filter.heat_tolerance_required, heat_order):
+                    matches += 1
+                    evaluation.notes.append("Heat tolerance requirement met")
+                else:
+                    evaluation.missing_notes.append("Heat tolerance requirement not met")
+
+            if checks > 0:
+                evaluation.score = matches / float(checks)
             else:
-                details["category"] = "No category match"
-                
-        # Life cycle matching
-        if ag_criteria.life_cycles:
-            max_score += 1.0
-            if crop.agricultural_classification.life_cycle in ag_criteria.life_cycles:
-                score += 1.0
-                details["life_cycle"] = f"Life cycle match: {crop.agricultural_classification.life_cycle}"
+                evaluation.score = 1.0
+
+            if evaluation.score >= 0.99:
+                evaluation.matched = True
+            elif evaluation.score > 0.0:
+                evaluation.partial = True
+        return evaluation
+
+    def _climate_filter_has_values(self, climate_filter) -> bool:
+        if climate_filter.temperature_range_f:
+            return True
+        if climate_filter.drought_tolerance_required:
+            return True
+        if climate_filter.frost_tolerance_required:
+            return True
+        if climate_filter.heat_tolerance_required:
+            return True
+        if climate_filter.annual_precipitation_range:
+            return True
+        if climate_filter.growing_season_length_days:
+            return True
+        if climate_filter.photoperiod_requirements:
+            if len(climate_filter.photoperiod_requirements) > 0:
+                return True
+        return False
+
+    def _temperature_overlap(self, adaptation: CropClimateAdaptations, requested: Dict[str, float]) -> bool:
+        if adaptation.optimal_temp_min_f is None or adaptation.optimal_temp_max_f is None:
+            return False
+        min_key = "min"
+        max_key = "max"
+        request_min = requested.get(min_key)
+        request_max = requested.get(max_key)
+        if request_min is None or request_max is None:
+            return False
+        crop_min = adaptation.optimal_temp_min_f
+        crop_max = adaptation.optimal_temp_max_f
+        overlap_min = max(crop_min, request_min)
+        overlap_max = min(crop_max, request_max)
+        return overlap_max >= overlap_min
+
+    def _evaluate_soil_filter(self, crop: ComprehensiveCropData, soil_filter) -> FilterEvaluation:
+        evaluation = FilterEvaluation("soil", self.scoring_weights.get("soil_match", 0.15))
+        if soil_filter is None:
+            evaluation.score = 1.0
+        else:
+            evaluation.active = self._soil_filter_has_values(soil_filter)
+            if not evaluation.active:
+                evaluation.score = 1.0
+                return evaluation
+
+            soil: Optional[CropSoilRequirements] = crop.soil_requirements
+            if soil is None:
+                evaluation.partial_notes.append("No soil requirement data available")
+                return evaluation
+
+            checks = 0
+            matches = 0
+
+            if soil_filter.ph_range:
+                checks += 1
+                if self._ph_overlap(soil, soil_filter.ph_range, soil_filter.ph_tolerance_strict):
+                    matches += 1
+                    evaluation.notes.append("Soil pH range compatible")
+                else:
+                    evaluation.missing_notes.append("Soil pH outside acceptable range")
+
+            if soil_filter.texture_classes:
+                checks += 1
+                if self._texture_match(soil, soil_filter.texture_classes):
+                    matches += 1
+                    evaluation.notes.append("Soil texture requirement met")
+                else:
+                    evaluation.missing_notes.append("Soil texture requirement not met")
+
+            if soil_filter.drainage_classes:
+                checks += 1
+                if soil.drainage_requirement is not None and self._value_in_iterable(soil.drainage_requirement.value, soil_filter.drainage_classes):
+                    matches += 1
+                    evaluation.notes.append("Drainage requirement met")
+                else:
+                    evaluation.missing_notes.append("Drainage requirement not met")
+
+            if checks > 0:
+                evaluation.score = matches / float(checks)
             else:
-                details["life_cycle"] = "No life cycle match"
-                
-        # Maturity range scoring
-        if ag_criteria.maturity_days_range and crop.agricultural_classification.maturity_days_range:
-            max_score += 1.0
-            crop_min, crop_max = crop.agricultural_classification.maturity_days_range
-            criteria_min, criteria_max = ag_criteria.maturity_days_range
-            
-            # Check for overlap
-            if crop_min <= criteria_max and crop_max >= criteria_min:
-                # Calculate overlap score
-                overlap_min = max(crop_min, criteria_min)
-                overlap_max = min(crop_max, criteria_max)
-                overlap_range = overlap_max - overlap_min
-                total_range = max(crop_max, criteria_max) - min(crop_min, criteria_min)
-                
-                maturity_score = overlap_range / total_range if total_range > 0 else 0
-                score += maturity_score
-                details["maturity"] = f"Maturity overlap: {overlap_min}-{overlap_max} days"
+                evaluation.score = 1.0
+
+            if evaluation.score >= 0.99:
+                evaluation.matched = True
+            elif evaluation.score > 0.0:
+                evaluation.partial = True
+        return evaluation
+
+    def _soil_filter_has_values(self, soil_filter) -> bool:
+        if soil_filter.ph_range:
+            return True
+        if soil_filter.texture_classes:
+            if len(soil_filter.texture_classes) > 0:
+                return True
+        if soil_filter.drainage_classes:
+            if len(soil_filter.drainage_classes) > 0:
+                return True
+        if soil_filter.salinity_tolerance_required:
+            return True
+        if soil_filter.acidity_tolerance_required:
+            return True
+        if soil_filter.low_fertility_tolerance is not None:
+            return True
+        if soil_filter.high_fertility_requirement is not None:
+            return True
+        return False
+
+    def _ph_overlap(self, soil: CropSoilRequirements, requested: Dict[str, float], strict: bool) -> bool:
+        if soil.optimal_ph_min is None or soil.optimal_ph_max is None:
+            return False
+        min_key = "min"
+        max_key = "max"
+        req_min = requested.get(min_key)
+        req_max = requested.get(max_key)
+        if req_min is None or req_max is None:
+            return False
+        lower_bound = soil.optimal_ph_min
+        upper_bound = soil.optimal_ph_max
+        if not strict and soil.tolerable_ph_min is not None and soil.tolerable_ph_max is not None:
+            lower_bound = soil.tolerable_ph_min
+            upper_bound = soil.tolerable_ph_max
+        overlap_min = max(lower_bound, req_min)
+        overlap_max = min(upper_bound, req_max)
+        return overlap_max >= overlap_min
+
+    def _texture_match(self, soil: CropSoilRequirements, requested: List[str]) -> bool:
+        if soil.preferred_textures:
+            index = 0
+            while index < len(soil.preferred_textures):
+                texture = soil.preferred_textures[index]
+                if texture and self._value_in_iterable(texture, requested):
+                    return True
+                index += 1
+        if soil.tolerable_textures:
+            index = 0
+            while index < len(soil.tolerable_textures):
+                texture = soil.tolerable_textures[index]
+                if texture and self._value_in_iterable(texture, requested):
+                    return True
+                index += 1
+        return False
+
+    def _evaluate_agricultural_filter(self, crop: ComprehensiveCropData, ag_filter) -> FilterEvaluation:
+        evaluation = FilterEvaluation("agricultural", self.scoring_weights.get("agricultural_match", 0.12))
+        if ag_filter is None:
+            evaluation.score = 1.0
+            return evaluation
+
+        evaluation.active = self._agricultural_filter_has_values(ag_filter)
+        if not evaluation.active:
+            evaluation.score = 1.0
+            return evaluation
+
+        classification: Optional[CropAgriculturalClassification] = crop.agricultural_classification
+        if classification is None:
+            evaluation.partial_notes.append("No agricultural classification data available")
+            return evaluation
+
+        checks = 0
+        matches = 0
+
+        if ag_filter.categories:
+            checks += 1
+            if classification.crop_category and self._enum_in_iterable(classification.crop_category.value, ag_filter.categories):
+                matches += 1
+                evaluation.notes.append("Crop category requirement met")
             else:
-                details["maturity"] = "No maturity range overlap"
-                
-        final_score = score / max_score if max_score > 0 else 0.0
-        
-        return FilterMatchScore(
-            category="agricultural",
-            score=final_score,
-            max_possible_score=1.0,
-            weight=self.scoring_weights.get("agricultural_match", 0.15),
-            details=details
-        )
+                evaluation.missing_notes.append("Crop category requirement not met")
 
-    async def _score_management_match(
-        self, 
-        crop: ComprehensiveCropData, 
-        mgmt_criteria: ManagementFilterCriteria
-    ) -> FilterMatchScore:
-        """Score management requirements compatibility."""
-        # Simplified implementation
-        return FilterMatchScore(
-            category="management",
-            score=0.8,  # Placeholder score
-            max_possible_score=1.0,
-            weight=self.scoring_weights.get("management_match", 0.10),
-            details={"note": "Management scoring not fully implemented"}
-        )
+        if ag_filter.primary_uses:
+            checks += 1
+            if classification.primary_use and self._enum_in_iterable(classification.primary_use.value, ag_filter.primary_uses):
+                matches += 1
+                evaluation.notes.append("Primary use requirement met")
+            else:
+                evaluation.missing_notes.append("Primary use requirement not met")
 
-    async def _score_sustainability_match(
-        self, 
-        crop: ComprehensiveCropData, 
-        sust_criteria: SustainabilityFilterCriteria
-    ) -> FilterMatchScore:
-        """Score sustainability characteristics."""
-        # Simplified implementation
-        return FilterMatchScore(
-            category="sustainability",
-            score=0.7,  # Placeholder score
-            max_possible_score=1.0,
-            weight=self.scoring_weights.get("sustainability_match", 0.10),
-            details={"note": "Sustainability scoring not fully implemented"}
-        )
+        if ag_filter.growth_habits:
+            checks += 1
+            if classification.growth_habit and self._enum_in_iterable(classification.growth_habit.value, ag_filter.growth_habits):
+                matches += 1
+                evaluation.notes.append("Growth habit requirement met")
+            else:
+                evaluation.missing_notes.append("Growth habit requirement not met")
 
-    async def _score_economic_match(
-        self, 
-        crop: ComprehensiveCropData, 
-        econ_criteria: EconomicFilterCriteria
-    ) -> FilterMatchScore:
-        """Score economic viability."""
-        # Simplified implementation
-        return FilterMatchScore(
-            category="economic",
-            score=0.6,  # Placeholder score
-            max_possible_score=1.0,
-            weight=self.scoring_weights.get("economic_match", 0.05),
-            details={"note": "Economic scoring not fully implemented"}
-        )
+        if ag_filter.plant_types:
+            checks += 1
+            if classification.plant_type and self._enum_in_iterable(classification.plant_type.value, ag_filter.plant_types):
+                matches += 1
+                evaluation.notes.append("Plant type requirement met")
+            else:
+                evaluation.missing_notes.append("Plant type requirement not met")
 
-    async def _calculate_relevance_score(
-        self, 
-        filter_scores: Dict[str, FilterMatchScore], 
-        request: CropSearchRequest
-    ) -> float:
-        """Calculate overall relevance score from individual filter scores."""
-        if not filter_scores:
-            return 0.0
-            
+        if ag_filter.nitrogen_fixing_required is not None:
+            checks += 1
+            if classification.nitrogen_fixing == ag_filter.nitrogen_fixing_required:
+                matches += 1
+                evaluation.notes.append("Nitrogen fixing requirement met")
+            else:
+                evaluation.missing_notes.append("Nitrogen fixing requirement not met")
+
+        if checks > 0:
+            evaluation.score = matches / float(checks)
+        else:
+            evaluation.score = 1.0
+
+        if evaluation.score >= 0.99:
+            evaluation.matched = True
+        elif evaluation.score > 0.0:
+            evaluation.partial = True
+        return evaluation
+
+    def _agricultural_filter_has_values(self, ag_filter) -> bool:
+        if ag_filter.categories and len(ag_filter.categories) > 0:
+            return True
+        if ag_filter.primary_uses and len(ag_filter.primary_uses) > 0:
+            return True
+        if ag_filter.exclude_categories and len(ag_filter.exclude_categories) > 0:
+            return True
+        if ag_filter.growth_habits and len(ag_filter.growth_habits) > 0:
+            return True
+        if ag_filter.plant_types and len(ag_filter.plant_types) > 0:
+            return True
+        if ag_filter.photosynthesis_types and len(ag_filter.photosynthesis_types) > 0:
+            return True
+        if ag_filter.nitrogen_fixing_required is not None:
+            return True
+        if ag_filter.cover_crop_only is not None:
+            return True
+        if ag_filter.companion_crop_suitable is not None:
+            return True
+        if ag_filter.max_height_inches is not None:
+            return True
+        if ag_filter.min_height_inches is not None:
+            return True
+        return False
+
+    def _enum_in_iterable(self, value: str, container: List) -> bool:
+        if value is None:
+            return False
+        index = 0
+        while index < len(container):
+            item = container[index]
+            if item is None:
+                index += 1
+                continue
+            candidate = item
+            if hasattr(candidate, "value"):
+                candidate_value = candidate.value
+            else:
+                candidate_value = str(candidate)
+            if candidate_value.lower() == value.lower():
+                return True
+            index += 1
+        return False
+
+    def _evaluate_management_filter(self, crop: ComprehensiveCropData, management_filter) -> FilterEvaluation:
+        evaluation = FilterEvaluation("management", self.scoring_weights.get("management_match", 0.05))
+        if management_filter is None:
+            evaluation.score = 1.0
+            return evaluation
+
+        evaluation.active = self._management_filter_has_values(management_filter)
+        if not evaluation.active:
+            evaluation.score = 1.0
+            return evaluation
+
+        attributes = crop.filtering_attributes
+        if attributes is None:
+            evaluation.partial_notes.append("No management attribute data available")
+            return evaluation
+
+        checks = 0
+        matches = 0
+
+        if management_filter.max_management_complexity is not None and attributes.management_complexity is not None:
+            checks += 1
+            if attributes.management_complexity.value <= management_filter.max_management_complexity.value:
+                matches += 1
+                evaluation.notes.append("Management complexity within range")
+            else:
+                evaluation.missing_notes.append("Management complexity exceeds preference")
+
+        if management_filter.max_input_requirements is not None and attributes.input_requirements is not None:
+            checks += 1
+            if attributes.input_requirements.value <= management_filter.max_input_requirements.value:
+                matches += 1
+                evaluation.notes.append("Input requirements within range")
+            else:
+                evaluation.missing_notes.append("Input requirements exceed preference")
+
+        if management_filter.max_labor_requirements is not None and attributes.labor_requirements is not None:
+            checks += 1
+            if attributes.labor_requirements.value <= management_filter.max_labor_requirements.value:
+                matches += 1
+                evaluation.notes.append("Labor requirements within range")
+            else:
+                evaluation.missing_notes.append("Labor requirements exceed preference")
+
+        if checks > 0:
+            evaluation.score = matches / float(checks)
+        else:
+            evaluation.score = 1.0
+
+        if evaluation.score >= 0.99:
+            evaluation.matched = True
+        elif evaluation.score > 0.0:
+            evaluation.partial = True
+        return evaluation
+
+    def _management_filter_has_values(self, management_filter) -> bool:
+        if management_filter.max_management_complexity is not None:
+            return True
+        if management_filter.max_input_requirements is not None:
+            return True
+        if management_filter.max_labor_requirements is not None:
+            return True
+        if management_filter.precision_ag_compatible_required is not None:
+            return True
+        if management_filter.low_tech_suitable is not None:
+            return True
+        if management_filter.farming_systems and len(management_filter.farming_systems) > 0:
+            return True
+        if management_filter.organic_suitable is not None:
+            return True
+        return False
+
+    def _evaluate_sustainability_filter(self, crop: ComprehensiveCropData, sustainability_filter) -> FilterEvaluation:
+        evaluation = FilterEvaluation("sustainability", self.scoring_weights.get("sustainability_match", 0.04))
+        if sustainability_filter is None:
+            evaluation.score = 1.0
+            return evaluation
+
+        evaluation.active = self._sustainability_filter_has_values(sustainability_filter)
+        if not evaluation.active:
+            evaluation.score = 1.0
+            return evaluation
+
+        attributes = crop.filtering_attributes
+        if attributes is None:
+            evaluation.partial_notes.append("No sustainability attribute data available")
+            return evaluation
+
+        checks = 0
+        matches = 0
+
+        if sustainability_filter.min_carbon_sequestration is not None and attributes.carbon_sequestration_potential is not None:
+            checks += 1
+            if attributes.carbon_sequestration_potential.value >= sustainability_filter.min_carbon_sequestration.value:
+                matches += 1
+                evaluation.notes.append("Carbon sequestration meets requirement")
+            else:
+                evaluation.missing_notes.append("Carbon sequestration below requirement")
+
+        if sustainability_filter.drought_resilient_only and crop.climate_adaptations is not None:
+            checks += 1
+            drought_order = ["none", "low", "moderate", "high", "extreme"]
+            if self._meets_rank_requirement(crop.climate_adaptations.drought_tolerance, "high", drought_order):
+                matches += 1
+                evaluation.notes.append("Drought resilience requirement met")
+            else:
+                evaluation.missing_notes.append("Crop not drought resilient")
+
+        if checks > 0:
+            evaluation.score = matches / float(checks)
+        else:
+            evaluation.score = 1.0
+
+        if evaluation.score >= 0.99:
+            evaluation.matched = True
+        elif evaluation.score > 0.0:
+            evaluation.partial = True
+        return evaluation
+
+    def _sustainability_filter_has_values(self, sustainability_filter) -> bool:
+        if sustainability_filter.min_carbon_sequestration is not None:
+            return True
+        if sustainability_filter.min_biodiversity_support is not None:
+            return True
+        if sustainability_filter.min_pollinator_value is not None:
+            return True
+        if sustainability_filter.min_water_efficiency is not None:
+            return True
+        if sustainability_filter.drought_resilient_only:
+            return True
+        if sustainability_filter.erosion_control_capable is not None:
+            return True
+        if sustainability_filter.soil_building_capable is not None:
+            return True
+        return False
+
+    def _evaluate_economic_filter(self, crop: ComprehensiveCropData, economic_filter) -> FilterEvaluation:
+        evaluation = FilterEvaluation("economic", self.scoring_weights.get("economic_match", 0.04))
+        if economic_filter is None:
+            evaluation.score = 1.0
+            return evaluation
+
+        evaluation.active = self._economic_filter_has_values(economic_filter)
+        if not evaluation.active:
+            evaluation.score = 1.0
+            return evaluation
+
+        attributes = crop.filtering_attributes
+        if attributes is None:
+            evaluation.partial_notes.append("No economic attribute data available")
+            return evaluation
+
+        checks = 0
+        matches = 0
+
+        if economic_filter.market_stability_required is not None and attributes.market_stability is not None:
+            checks += 1
+            if attributes.market_stability.value >= economic_filter.market_stability_required.value:
+                matches += 1
+                evaluation.notes.append("Market stability meets requirement")
+            else:
+                evaluation.missing_notes.append("Market stability below requirement")
+
+        if economic_filter.premium_market_potential is not None:
+            checks += 1
+            if attributes.price_premium_potential == economic_filter.premium_market_potential:
+                matches += 1
+                evaluation.notes.append("Premium market potential requirement met")
+            else:
+                evaluation.missing_notes.append("Premium market potential requirement not met")
+
+        if checks > 0:
+            evaluation.score = matches / float(checks)
+        else:
+            evaluation.score = 1.0
+
+        if evaluation.score >= 0.99:
+            evaluation.matched = True
+        elif evaluation.score > 0.0:
+            evaluation.partial = True
+        return evaluation
+
+    def _economic_filter_has_values(self, economic_filter) -> bool:
+        if economic_filter.market_stability_required is not None:
+            return True
+        if economic_filter.premium_market_potential is not None:
+            return True
+        if economic_filter.processing_opportunities and len(economic_filter.processing_opportunities) > 0:
+            return True
+        if economic_filter.low_establishment_cost is not None:
+            return True
+        if economic_filter.high_roi_potential is not None:
+            return True
+        return False
+
+    def _determine_pass_status(
+        self,
+        operator: SearchOperator,
+        applicable_filters: int,
+        matched_filters: int,
+        partial_filters: int,
+    ) -> bool:
+        if applicable_filters == 0:
+            return True
+        if operator == SearchOperator.AND:
+            return matched_filters == applicable_filters
+        if operator == SearchOperator.OR:
+            return matched_filters > 0 or partial_filters > 0
+        if operator == SearchOperator.NOT:
+            return matched_filters == 0 and partial_filters == 0
+        return matched_filters > 0
+
+    def _compile_scores(
+        self,
+        filter_results: List[FilterEvaluation],
+        matched_filters: int,
+        applicable_filters: int,
+    ) -> Tuple[float, List[str], List[str], List[str], Dict[str, List[str]], Dict[str, float]]:
+        matching_details: List[str] = []
+        partial_details: List[str] = []
+        missing_details: List[str] = []
+        highlights: Dict[str, List[str]] = {}
         weighted_sum = 0.0
         total_weight = 0.0
-        
-        for category, score_obj in filter_scores.items():
-            weight = score_obj.weight
-            score = score_obj.score
-            
-            weighted_sum += score * weight
-            total_weight += weight
-            
-        return weighted_sum / total_weight if total_weight > 0 else 0.0
 
-    async def _generate_match_reasons(self, filter_scores: Dict[str, FilterMatchScore]) -> List[str]:
-        """Generate human-readable match reasons."""
-        reasons = []
-        
-        for category, score_obj in filter_scores.items():
-            if score_obj.score >= 0.8:
-                reasons.append(f"Excellent {category} compatibility ({score_obj.score:.1%})")
-            elif score_obj.score >= 0.6:
-                reasons.append(f"Good {category} match ({score_obj.score:.1%})")
-            elif score_obj.score >= 0.4:
-                reasons.append(f"Moderate {category} compatibility ({score_obj.score:.1%})")
-                
-        return reasons
+        index = 0
+        while index < len(filter_results):
+            evaluation = filter_results[index]
+            if evaluation.highlights:
+                for key, values in evaluation.highlights.items():
+                    if key not in highlights:
+                        highlights[key] = []
+                    value_index = 0
+                    while value_index < len(values):
+                        highlights[key].append(values[value_index])
+                        value_index += 1
+            summary_text = evaluation.name + " filter applied"
+            if evaluation.matched:
+                matching_details.append(summary_text)
+            elif evaluation.partial:
+                partial_details.append(summary_text)
+            elif evaluation.active:
+                missing_details.append(summary_text)
 
-    async def _generate_crop_recommendations(
-        self, 
-        crop: ComprehensiveCropData, 
-        request: CropSearchRequest
-    ) -> List[str]:
-        """Generate contextual recommendations for the crop."""
-        recommendations = []
-        
-        # Add basic recommendations based on crop characteristics
-        if crop.agricultural_classification:
-            if crop.agricultural_classification.is_cover_crop:
-                recommendations.append("Consider for soil improvement and erosion control")
-            if crop.agricultural_classification.primary_use == PrimaryUse.FOOD_HUMAN:
-                recommendations.append("Suitable for direct human consumption")
-            if crop.agricultural_classification.life_cycle == LifeCycle.PERENNIAL:
-                recommendations.append("Long-term investment with multiple harvest seasons")
-                
-        return recommendations
+            if evaluation.active:
+                weighted_sum += evaluation.score * evaluation.weight
+                total_weight += evaluation.weight
+            index += 1
 
-    async def _generate_search_metadata(
-        self, 
-        request: CropSearchRequest, 
-        total_candidates: int, 
-        filtered_results: int
-    ) -> Dict[str, Any]:
-        """Generate metadata about the search operation."""
-        filters_applied = 0
-        if request.filter_criteria:
-            if request.filter_criteria.geographic:
-                filters_applied += 1
-            if request.filter_criteria.climate:
-                filters_applied += 1
-            if request.filter_criteria.soil:
-                filters_applied += 1
-            if request.filter_criteria.agricultural:
-                filters_applied += 1
-                
-        return {
-            "query_time": datetime.utcnow(),
-            "total_candidates": total_candidates,
-            "filtered_results": filtered_results,
-            "filters_applied": filters_applied,
-            "filter_effectiveness": filtered_results / total_candidates if total_candidates > 0 else 0,
-            "search_parameters": {
-                "page": request.page,
-                "page_size": request.page_size,
-                "min_confidence": request.min_confidence_threshold
-            }
-        }
+        relevance_score = 0.0
+        if total_weight > 0.0:
+            relevance_score = weighted_sum / total_weight
 
-    async def get_smart_recommendations(
-        self, 
-        request: SmartRecommendationRequest
-    ) -> SmartRecommendationResponse:
-        """
-        Provide ML-enhanced crop recommendations with contextual insights.
-        
-        Args:
-            request: Smart recommendation request with context
-            
-        Returns:
-            Intelligent recommendations with ML insights
-        """
-        try:
-            # Analyze context and generate baseline recommendations
-            context_analysis = await self._analyze_context(request.context)
-            
-            # Generate ML insights (placeholder for actual ML integration)
-            ml_insights = await self._generate_ml_insights(request)
-            
-            # Create context-aware recommendations
-            recommendations = await self._create_context_aware_recommendations(
-                request, context_analysis, ml_insights
+        similarity_factors: Dict[str, float] = {}
+        if applicable_filters > 0:
+            similarity_factors["filters_matched_ratio"] = matched_filters / float(applicable_filters)
+
+        return relevance_score, matching_details, partial_details, missing_details, highlights, similarity_factors
+
+    def _sort_results(
+        self,
+        results: List[CropSearchResult],
+        sort_by: SortField,
+        sort_order: SortOrder,
+    ) -> List[CropSearchResult]:
+        reverse = sort_order == SortOrder.DESC
+        if sort_by == SortField.NAME:
+            return sorted(results, key=lambda result: result.crop.crop_name.lower(), reverse=reverse)
+        if sort_by == SortField.CATEGORY:
+            return sorted(
+                results,
+                key=lambda result: result.crop.primary_category or "",
+                reverse=reverse,
             )
-            
-            return SmartRecommendationResponse(
-                recommendations=recommendations,
-                ml_insights=ml_insights,
-                context_analysis=context_analysis,
-                confidence_level=ConfidenceLevel.HIGH
+        if sort_by == SortField.SCIENTIFIC_NAME:
+            return sorted(
+                results,
+                key=lambda result: (result.crop.scientific_name or "").lower(),
+                reverse=reverse,
             )
-            
-        except Exception as e:
-            logger.error(f"Error in smart recommendations: {str(e)}")
-            return SmartRecommendationResponse(
-                recommendations=[],
-                ml_insights=[],
-                context_analysis={},
-                confidence_level=ConfidenceLevel.LOW,
-                error_message=str(e)
+        if sort_by == SortField.UPDATED_DATE:
+            return sorted(
+                results,
+                key=lambda result: result.crop.updated_at or datetime.min,
+                reverse=reverse,
             )
+        return sorted(results, key=lambda result: result.relevance_score, reverse=reverse)
 
-    async def _analyze_context(self, context: ScoringContext) -> Dict[str, Any]:
-        """Analyze the provided context for recommendation generation."""
-        analysis = {
-            "primary_factors": [],
-            "risk_factors": [],
-            "opportunities": [],
-            "recommendations": []
-        }
-        
-        # Analyze based on context attributes
-        if hasattr(context, 'climate_data') and context.climate_data:
-            analysis["primary_factors"].append("climate_data_available")
-            
-        if hasattr(context, 'soil_data') and context.soil_data:
-            analysis["primary_factors"].append("soil_data_available")
-            
-        return analysis
+    def _paginate_results(
+        self,
+        results: List[CropSearchResult],
+        offset: int,
+        limit: int,
+    ) -> List[CropSearchResult]:
+        paginated: List[CropSearchResult] = []
+        index = 0
+        appended = 0
+        total = len(results)
+        while index < total and appended < limit:
+            if index >= offset:
+                paginated.append(results[index])
+                appended += 1
+            index += 1
+        return paginated
 
-    async def _generate_ml_insights(self, request: SmartRecommendationRequest) -> List[MLInsight]:
-        """Generate machine learning insights (placeholder implementation)."""
-        # This would integrate with actual ML models
-        insights = [
-            MLInsight(
-                insight_type="pattern_recognition",
-                confidence=0.85,
-                description="Historical data shows high success rate for legume crops in similar conditions",
-                data_points={"success_rate": 0.89, "sample_size": 150}
-            ),
-            MLInsight(
-                insight_type="risk_assessment",
-                confidence=0.78,
-                description="Moderate drought risk detected for upcoming growing season",
-                data_points={"drought_probability": 0.35, "impact_severity": "moderate"}
-            )
-        ]
-        
-        return insights
+    def _build_facets(self, results: List[CropSearchResult]) -> SearchFacets:
+        facets = SearchFacets()
+        index = 0
+        while index < len(results):
+            crop = results[index].crop
+            classification = crop.agricultural_classification
+            taxonomy = crop.taxonomic_hierarchy
 
-    async def _create_context_aware_recommendations(
-        self, 
-        request: SmartRecommendationRequest,
-        context_analysis: Dict[str, Any],
-        ml_insights: List[MLInsight]
-    ) -> List[ContextAwareRecommendation]:
-        """Create intelligent recommendations based on context and ML insights."""
-        recommendations = []
-        
-        # Create sample recommendation
-        recommendation = ContextAwareRecommendation(
-            crop_suggestion="Soybeans",
-            confidence_score=0.87,
-            reasoning=[
-                "Excellent soil nitrogen fixation capabilities",
-                "High market demand in target region", 
-                "Good drought tolerance for predicted conditions"
-            ],
-            context_factors=[
-                "soil_improvement_goal",
-                "economic_viability",
-                "climate_resilience"
-            ],
-            potential_benefits=[
-                "Improved soil fertility for following crops",
-                "Reduced fertilizer costs",
-                "Strong market prices projected"
-            ],
-            risk_mitigation_strategies=[
-                "Consider drought-resistant varieties",
-                "Plan irrigation backup system",
-                "Monitor market price trends"
-            ]
+            if classification and classification.crop_category:
+                category_value = classification.crop_category.value
+                count = facets.categories.get(category_value, 0)
+                facets.categories[category_value] = count + 1
+
+            if taxonomy and taxonomy.family:
+                family_value = taxonomy.family
+                count = facets.families.get(family_value, 0)
+                facets.families[family_value] = count + 1
+
+            if classification and classification.growth_habit:
+                habit_value = classification.growth_habit.value
+                count = facets.growth_habits.get(habit_value, 0)
+                facets.growth_habits[habit_value] = count + 1
+
+            adaptation = crop.climate_adaptations
+            if adaptation and adaptation.hardiness_zones:
+                zone_index = 0
+                while zone_index < len(adaptation.hardiness_zones):
+                    zone = adaptation.hardiness_zones[zone_index]
+                    count = facets.hardiness_zones.get(zone, 0)
+                    facets.hardiness_zones[zone] = count + 1
+                    zone_index += 1
+
+            if classification and classification.primary_use:
+                use_value = classification.primary_use.value
+                count = facets.primary_uses.get(use_value, 0)
+                facets.primary_uses[use_value] = count + 1
+
+            index += 1
+        return facets
+
+    def _build_statistics(
+        self,
+        start_time: datetime,
+        matched_results: List[CropSearchResult],
+        paginated_results: List[CropSearchResult],
+    ) -> SearchStatistics:
+        search_duration = (datetime.utcnow() - start_time).total_seconds() * 1000.0
+        total_results = len(matched_results)
+        returned_results = len(paginated_results)
+        average_score = 0.0
+        if total_results > 0:
+            score_sum = 0.0
+            index = 0
+            while index < total_results:
+                score_sum += matched_results[index].relevance_score
+                index += 1
+            average_score = score_sum / float(total_results)
+
+        result_quality = average_score
+
+        statistics = SearchStatistics(
+            total_results=total_results,
+            search_time_ms=search_duration,
+            filtered_results=total_results,
+            index_hits=0,
+            full_scan_required=False,
+            cache_hit=False,
+            average_relevance_score=average_score,
+            result_quality_score=result_quality,
         )
-        
-        recommendations.append(recommendation)
-        return recommendations
+        return statistics
+
+    def _summarize_filters(self, criteria: TaxonomyFilterCriteria) -> Dict[str, object]:
+        summary: Dict[str, object] = {}
+        if criteria.text_search:
+            summary["text_search"] = criteria.text_search
+        if criteria.families:
+            families_copy: List[str] = []
+            index = 0
+            while index < len(criteria.families):
+                families_copy.append(criteria.families[index])
+                index += 1
+            summary["families"] = families_copy
+        if criteria.genera:
+            genera_copy: List[str] = []
+            index = 0
+            while index < len(criteria.genera):
+                genera_copy.append(criteria.genera[index])
+                index += 1
+            summary["genera"] = genera_copy
+        if criteria.geographic_filter and self._geographic_filter_has_values(criteria.geographic_filter):
+            summary["geographic"] = "applied"
+        if criteria.climate_filter and self._climate_filter_has_values(criteria.climate_filter):
+            summary["climate"] = "applied"
+        if criteria.soil_filter and self._soil_filter_has_values(criteria.soil_filter):
+            summary["soil"] = "applied"
+        if criteria.agricultural_filter and self._agricultural_filter_has_values(criteria.agricultural_filter):
+            summary["agricultural"] = "applied"
+        if criteria.management_filter and self._management_filter_has_values(criteria.management_filter):
+            summary["management"] = "applied"
+        if criteria.sustainability_filter and self._sustainability_filter_has_values(criteria.sustainability_filter):
+            summary["sustainability"] = "applied"
+        if criteria.economic_filter and self._economic_filter_has_values(criteria.economic_filter):
+            summary["economic"] = "applied"
+        return summary
+
+    def _suggest_refinements(
+        self,
+        results: List[CropSearchResult],
+        criteria: TaxonomyFilterCriteria,
+    ) -> List[str]:
+        refinements: List[str] = []
+        if len(results) == 0 and criteria.text_search:
+            refinements.append("Try a broader text search or remove restrictive filters")
+        if len(results) > 10:
+            refinements.append("Use additional filters to narrow results")
+        return refinements
 
 
-# Create service instance with database connection
-import os
-crop_search_service = CropSearchService(
-    database_url=os.getenv('DATABASE_URL')
-)
+crop_search_service = CropSearchService()
