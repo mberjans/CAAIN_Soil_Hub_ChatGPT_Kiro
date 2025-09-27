@@ -30,13 +30,23 @@ try:
 except ImportError:  # pragma: no cover
     CropAttributeTaggingService = None
 
+try:
+    from .crop_preference_service import CropPreferenceService, crop_preference_service
+except ImportError:  # pragma: no cover
+    CropPreferenceService = None
+    crop_preference_service = None
+
 __all__ = []
 for _name in [
     "CropTaxonomyService",
     "CropSearchService",
     "VarietyRecommendationService",
     "RegionalAdaptationService",
-    "CropAttributeTaggingService"
+    "CropAttributeTaggingService",
+    "CropPreferenceService"
 ]:
     if globals().get(_name) is not None:
         __all__.append(_name)
+
+if crop_preference_service is not None:
+    __all__.append('crop_preference_service')

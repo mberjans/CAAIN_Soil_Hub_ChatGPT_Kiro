@@ -27,7 +27,8 @@ sys.path.append('/Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro
 from models import (
     Base, Crop, CropTaxonomicHierarchy, CropAgriculturalClassification,
     CropClimateAdaptations, CropSoilRequirements, CropNutritionalProfiles,
-    CropFilteringAttributes, CropAttributeTag, EnhancedCropVarieties, CropRegionalAdaptations
+    CropFilteringAttributes, CropAttributeTag, FarmerCropPreference,
+    EnhancedCropVarieties, CropRegionalAdaptations
 )
 
 # Import Pydantic models from our service
@@ -978,6 +979,198 @@ class CropTaxonomyDatabase:
                 'infrastructure_support': adaptation.infrastructure_support
             }
         }
+
+    # ========================================================================
+    # FARMER PREFERENCE OPERATIONS
+    # ========================================================================
+
+    def get_preference_profile(
+        self,
+        user_id: UUID,
+        preference_type: Optional[str] = None
+    ) -> Optional[Dict[str, Any]]:
+        """Fetch the most recently updated preference profile for a user."""
+        try:
+            with self.get_session() as session:
+                query = session.query(FarmerCropPreference).filter(
+                    FarmerCropPreference.user_id == user_id
+                )
+                if preference_type:
+                    query = query.filter(FarmerCropPreference.preference_type == preference_type)
+                record = query.order_by(FarmerCropPreference.updated_at.desc()).first()
+                if record is None:
+                    return None
+                return self._preference_to_dict(record)
+        except Exception as exc:
+            logger.error("Error retrieving preference profile: %s", exc)
+            raise
+
+    def list_preference_profiles(self, user_id: UUID) -> List[Dict[str, Any]]:
+        """List all preference profiles for a user."""
+        results: List[Dict[str, Any]] = []
+        try:
+            with self.get_session() as session:
+                query = session.query(FarmerCropPreference).filter(
+                    FarmerCropPreference.user_id == user_id
+                ).order_by(FarmerCropPreference.updated_at.desc())
+                records = query.all()
+                for record in records:
+                    data = self._preference_to_dict(record)
+                    results.append(data)
+        except Exception as exc:
+            logger.error("Error listing preference profiles: %s", exc)
+            raise
+        return results
+
+    def upsert_preference_profile(
+        self,
+        profile_data: Dict[str, Any],
+        replace_existing: bool = False
+    ) -> Dict[str, Any]:
+        """Create or update a preference profile record."""
+        try:
+            with self.get_session() as session:
+                user_id_value = profile_data.get('user_id')
+                if user_id_value is None:
+                    raise ValueError("user_id required for preference profile")
+                if not isinstance(user_id_value, UUID):
+                    user_id_value = UUID(str(user_id_value))
+                preference_id = profile_data.get('preference_id')
+                record: Optional[FarmerCropPreference] = None
+                if preference_id:
+                    record = session.query(FarmerCropPreference).filter(
+                        FarmerCropPreference.preference_id == preference_id
+                    ).first()
+                if record is None:
+                    query = session.query(FarmerCropPreference).filter(
+                        FarmerCropPreference.user_id == user_id_value
+                    )
+                    if profile_data.get('preference_type'):
+                        query = query.filter(
+                            FarmerCropPreference.preference_type == profile_data['preference_type']
+                        )
+                    if profile_data.get('title'):
+                        query = query.filter(FarmerCropPreference.title == profile_data['title'])
+                    record = query.first()
+
+                if record is None:
+                    record = FarmerCropPreference()
+                    session.add(record)
+
+                record.user_id = user_id_value
+                record.preference_type = profile_data.get('preference_type', record.preference_type)
+                record.title = profile_data.get('title')
+                record.management_style = profile_data.get('management_style')
+                record.risk_tolerance = profile_data.get('risk_tolerance')
+                record.confidence = profile_data.get('confidence', record.confidence)
+
+                if replace_existing or record.crop_categories is None:
+                    record.crop_categories = None
+                if replace_existing or record.market_focus is None:
+                    record.market_focus = None
+                if replace_existing or record.sustainability_focus is None:
+                    record.sustainability_focus = None
+
+                categories_value = profile_data.get('crop_categories')
+                if categories_value is not None:
+                    record.crop_categories = categories_value
+                market_value = profile_data.get('market_focus')
+                if market_value is not None:
+                    record.market_focus = market_value
+                sustainability_value = profile_data.get('sustainability_focus')
+                if sustainability_value is not None:
+                    record.sustainability_focus = sustainability_value
+
+                weights_value = profile_data.get('weights')
+                if weights_value is not None:
+                    record.weights = weights_value
+                constraints_value = profile_data.get('constraints')
+                if constraints_value is not None:
+                    record.constraints = constraints_value
+                priority_value = profile_data.get('priority_notes')
+                if priority_value is not None:
+                    record.priority_notes = priority_value
+                metadata_value = profile_data.get('profile_metadata')
+                if metadata_value is not None:
+                    record.profile_metadata = metadata_value
+
+                session.flush()
+                return self._preference_to_dict(record)
+        except Exception as exc:
+            logger.error("Error upserting preference profile: %s", exc)
+            raise
+
+    def _preference_to_dict(self, record: FarmerCropPreference) -> Dict[str, Any]:
+        """Convert preference record to dictionary representation."""
+        result: Dict[str, Any] = {
+            'preference_id': str(record.preference_id),
+            'user_id': str(record.user_id),
+            'preference_type': record.preference_type,
+            'title': record.title,
+            'management_style': record.management_style,
+            'risk_tolerance': record.risk_tolerance,
+            'confidence': record.confidence,
+            'created_at': record.created_at.isoformat() if record.created_at else None,
+            'updated_at': record.updated_at.isoformat() if record.updated_at else None,
+        }
+
+        if record.crop_categories:
+            categories: List[str] = []
+            for item in record.crop_categories:
+                categories.append(item)
+            result['crop_categories'] = categories
+        else:
+            result['crop_categories'] = []
+
+        if record.market_focus:
+            market_entries: List[str] = []
+            for item in record.market_focus:
+                market_entries.append(item)
+            result['market_focus'] = market_entries
+        else:
+            result['market_focus'] = []
+
+        if record.sustainability_focus:
+            sustainability_entries: List[str] = []
+            for item in record.sustainability_focus:
+                sustainability_entries.append(item)
+            result['sustainability_focus'] = sustainability_entries
+        else:
+            result['sustainability_focus'] = []
+
+        if record.weights:
+            weights_list: List[Dict[str, Any]] = []
+            for item in record.weights:
+                weights_list.append(item)
+            result['weights'] = weights_list
+        else:
+            result['weights'] = []
+
+        if record.constraints:
+            constraint_list: List[Dict[str, Any]] = []
+            for item in record.constraints:
+                constraint_list.append(item)
+            result['constraints'] = constraint_list
+        else:
+            result['constraints'] = []
+
+        if record.priority_notes:
+            notes: Dict[str, Any] = {}
+            for key, value in record.priority_notes.items():
+                notes[key] = value
+            result['priority_notes'] = notes
+        else:
+            result['priority_notes'] = {}
+
+        if record.profile_metadata:
+            metadata_copy: Dict[str, Any] = {}
+            for key, value in record.profile_metadata.items():
+                metadata_copy[key] = value
+            result['profile_metadata'] = metadata_copy
+        else:
+            result['profile_metadata'] = {}
+
+        return result
 
     # ============================================================================
     # DATABASE MANAGEMENT OPERATIONS
