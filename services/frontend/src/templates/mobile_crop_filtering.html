@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Filtering - CAAIN Soil Hub Mobile</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .mobile-container {
+            max-width: 100%;
+            margin: 0 auto;
+            background: #f8f9fa;
+            min-height: 100vh;
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #2c5530 0%, #4a7c59 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        
+        .filter-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #28a745;
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+            border: 1px solid #dee2e6;
+        }
+        
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            padding: 0.5rem 0;
+        }
+        
+        .filter-content {
+            padding: 1rem 0;
+            display: none;
+        }
+        
+        .filter-content.show {
+            display: block;
+        }
+        
+        .quick-filter-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.25rem 0.125rem;
+            width: 100%;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .quick-filter-btn:hover {
+            background: #218838;
+            color: white;
+        }
+        
+        .applied-filter-badge {
+            background: #28a745;
+            color: white;
+            border-radius: 12px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            margin: 0.125rem;
+            display: inline-block;
+        }
+        
+        .input-group-mobile {
+            margin-bottom: 1rem;
+        }
+        
+        .input-group-mobile label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.25rem;
+            display: block;
+        }
+        
+        .input-group-mobile input,
+        .input-group-mobile select,
+        .input-group-mobile textarea {
+            border-radius: 8px;
+            border: 1px solid #ced4da;
+            padding: 0.75rem;
+            width: 100%;
+        }
+        
+        .range-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .range-value {
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 8px;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+        
+        .result-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        
+        .result-card.high-suitability {
+            border-left-color: #28a745;
+        }
+        
+        .result-card.medium-suitability {
+            border-left-color: #ffc107;
+        }
+        
+        .result-card.low-suitability {
+            border-left-color: #dc3545;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        
+        .result-score {
+            background: #007bff;
+            color: white;
+            border-radius: 12px;
+            padding: 0.25rem 0.75rem;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        
+        .result-score.high {
+            background: #28a745;
+        }
+        
+        .result-score.medium {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .result-score.low {
+            background: #dc3545;
+        }
+        
+        .result-category {
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            margin-top: 0.25rem;
+        }
+        
+        .result-tags {
+            margin: 0.5rem 0;
+        }
+        
+        .result-tag {
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 0.125rem;
+            display: inline-block;
+        }
+        
+        .nav-tabs .nav-link {
+            border-radius: 8px 8px 0 0;
+            margin-right: 0.25rem;
+            font-size: 0.85rem;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+        }
+        
+        .tab-content {
+            padding: 1rem 0;
+        }
+        
+        .chart-container {
+            height: 200px;
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            border: 1px solid #dee2e6;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .no-results-message {
+            text-align: center;
+            padding: 2rem;
+            color: #6c757d;
+        }
+        
+        .filter-actions {
+            padding: 1rem;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-top: 1px solid #dee2e6;
+            z-index: 100;
+        }
+        
+        .filter-action-btn {
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.25rem;
+            font-size: 0.9rem;
+        }
+        
+        .btn-apply-filters {
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+        
+        .btn-apply-filters:hover {
+            background: #218838;
+            color: white;
+        }
+        
+        .btn-clear-filters {
+            background: #6c757d;
+            color: white;
+            border: none;
+        }
+        
+        .btn-clear-filters:hover {
+            background: #5a6268;
+            color: white;
+        }
+        
+        .quick-action-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin: 1rem 0.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .swipe-gesture {
+            text-align: center;
+            padding: 0.5rem;
+            color: #6c757d;
+            font-size: 0.8rem;
+        }
+        
+        .applied-filters-container {
+            background: #e8f5e8;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.5rem 0;
+        }
+        
+        .filter-preview {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            margin: 0.125rem;
+        }
+        
+        .filter-badge {
+            background: #28a745;
+            color: white;
+            border-radius: 12px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+            margin: 0.125rem;
+            display: inline-block;
+        }
+        
+        .filter-toggle {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 0.5rem 0.75rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+        }
+        
+        .filter-toggle.active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .result-pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+        }
+        
+        .page-btn {
+            background: #e9ecef;
+            border: none;
+            border-radius: 8px;
+            padding: 0.5rem 1rem;
+            margin: 0 0.25rem;
+        }
+        
+        .page-btn.active {
+            background: #28a745;
+            color: white;
+        }
+        
+        .page-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .result-attributes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        
+        .result-attribute {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.25rem 0.5rem;
+            font-size: 0.75rem;
+        }
+        
+        .comparison-header {
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 8px;
+            margin: 0.5rem 0;
+        }
+        
+        .comparison-item {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 0.75rem;
+            margin: 0.25rem 0;
+        }
+        
+        .comparison-label {
+            font-weight: bold;
+            color: #495057;
+        }
+        
+        .comparison-value {
+            color: #28a745;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Header -->
+        <div class="header-section">
+            <h4><i class="fas fa-filter"></i> Crop Filtering</h4>
+            <p class="mb-0">Filter crops by your preferences and conditions</p>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="container-fluid p-2">
+            <ul class="nav nav-tabs" id="filterTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="filters-tab" data-bs-toggle="tab" 
+                            data-bs-target="#filters" type="button" role="tab">
+                        <i class="fas fa-sliders-h"></i> Filters
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="results-tab" data-bs-toggle="tab" 
+                            data-bs-target="#results" type="button" role="tab">
+                        <i class="fas fa-list"></i> Results
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="visualizations-tab" data-bs-toggle="tab" 
+                            data-bs-target="#visualizations" type="button" role="tab">
+                        <i class="fas fa-chart-bar"></i> Visualizations
+                    </button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="filterTabContent">
+                <!-- Filters Tab -->
+                <div class="tab-pane fade show active" id="filters" role="tabpanel">
+                    <!-- Applied Filters -->
+                    <div class="applied-filters-container">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <strong><i class="fas fa-check-circle"></i> Applied Filters</strong>
+                            <button class="btn btn-sm btn-outline-danger" id="clearAllFiltersBtn">
+                                <i class="fas fa-times"></i> Clear All
+                            </button>
+                        </div>
+                        <div id="appliedFiltersList">
+                            <div class="text-muted text-center py-2">No filters applied</div>
+                        </div>
+                    </div>
+
+                    <!-- Quick Filters Section -->
+                    <div class="quick-action-section">
+                        <h6><i class="fas fa-bolt"></i> Quick Filters</h6>
+                        <div class="row">
+                            <div class="col-6">
+                                <button class="quick-filter-btn" data-quick-filter="drought">
+                                    <i class="fas fa-tint"></i> Drought Tolerant
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="quick-filter-btn" data-quick-filter="nitrogen">
+                                    <i class="fas fa-leaf"></i> Nitrogen Fixing
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="quick-filter-btn" data-quick-filter="low-maintenance">
+                                    <i class="fas fa-user"></i> Low Maintenance
+                                </button>
+                            </div>
+                            <div class="col-6">
+                                <button class="quick-filter-btn" data-quick-filter="high-yield">
+                                    <i class="fas fa-chart-line"></i> High Yield
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Climate Filters -->
+                    <div class="filter-card">
+                        <div class="filter-toggle" data-target="climate-filters">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong><i class="fas fa-temperature-high"></i> Climate & Zone</strong>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="filter-content" id="climate-filters">
+                            <div class="input-group-mobile">
+                                <label>USDA Hardiness Zones</label>
+                                <select class="form-select" id="climate-zones" multiple>
+                                    <option value="5a">Zone 5a</option>
+                                    <option value="5b">Zone 5b</option>
+                                    <option value="6a">Zone 6a</option>
+                                    <option value="6b">Zone 6b</option>
+                                    <option value="7a">Zone 7a</option>
+                                    <option value="7b">Zone 7b</option>
+                                    <option value="8a">Zone 8a</option>
+                                    <option value="8b">Zone 8b</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group-mobile">
+                                <label>Growing Season Length</label>
+                                <div class="range-controls">
+                                    <div class="small">Min: <span id="growing-season-min-value">60</span> days</div>
+                                    <input type="range" class="form-range" id="growing-season-min" min="30" max="200" value="60">
+                                </div>
+                                <div class="range-controls">
+                                    <div class="small">Max: <span id="growing-season-max-value">150</span> days</div>
+                                    <input type="range" class="form-range" id="growing-season-max" min="30" max="200" value="150">
+                                </div>
+                            </div>
+                            
+                            <div class="input-group-mobile">
+                                <label>Drought Tolerance</label>
+                                <select class="form-select" id="drought-tolerance">
+                                    <option value="">Any</option>
+                                    <option value="low">Low</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="high">High</option>
+                                    <option value="very_high">Very High</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Soil Filters -->
+                    <div class="filter-card">
+                        <div class="filter-toggle" data-target="soil-filters">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong><i class="fas fa-seedling"></i> Soil Requirements</strong>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="filter-content" id="soil-filters">
+                            <div class="input-group-mobile">
+                                <label>Soil pH Range</label>
+                                <div class="range-controls">
+                                    <div class="small">Min: <span id="ph-min-value">5.5</span></div>
+                                    <input type="range" class="form-range" id="ph-min" min="3" max="9" step="0.1" value="5.5">
+                                </div>
+                                <div class="range-controls">
+                                    <div class="small">Max: <span id="ph-max-value">7.5</span></div>
+                                    <input type="range" class="form-range" id="ph-max" min="3" max="9" step="0.1" value="7.5">
+                                </div>
+                            </div>
+                            
+                            <div class="input-group-mobile">
+                                <label>Soil Types</label>
+                                <select class="form-select" id="soil-types" multiple>
+                                    <option value="clay">Clay</option>
+                                    <option value="silty_clay">Silty Clay</option>
+                                    <option value="clay_loam">Clay Loam</option>
+                                    <option value="silty_clay_loam">Silty Clay Loam</option>
+                                    <option value="sandy_clay">Sandy Clay</option>
+                                    <option value="sandy_clay_loam">Sandy Clay Loam</option>
+                                    <option value="loam">Loam</option>
+                                    <option value="silty_loam">Silty Loam</option>
+                                    <option value="sandy_loam">Sandy Loam</option>
+                                    <option value="sand">Sand</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group-mobile">
+                                <label>Drainage Classes</label>
+                                <select class="form-select" id="drainage-classes">
+                                    <option value="">Any</option>
+                                    <option value="well_drained">Well Drained</option>
+                                    <option value="moderately_drained">Moderately Drained</option>
+                                    <option value="poorly_drained">Poorly Drained</option>
+                                    <option value="very_poorly_drained">Very Poorly Drained</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Agricultural Filters -->
+                    <div class="filter-card">
+                        <div class="filter-toggle" data-target="agricultural-filters">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong><i class="fas fa-tractor"></i> Agricultural</strong>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="filter-content" id="agricultural-filters">
+                            <div class="input-group-mobile">
+                                <label>Crop Categories</label>
+                                <select class="form-select" id="crop-categories" multiple>
+                                    <option value="grain_crops">Grain Crops</option>
+                                    <option value="oilseed_crops">Oilseed Crops</option>
+                                    <option value="legume_crops">Legume Crops</option>
+                                    <option value="forage_crops">Forage Crops</option>
+                                    <option value="cover_crops">Cover Crops</option>
+                                    <option value="vegetables">Vegetables</option>
+                                    <option value="fruits">Fruits</option>
+                                    <option value="tuber_crops">Tuber Crops</option>
+                                    <option value="fibre_crops">Fibre Crops</option>
+                                    <option value="sugar_crops">Sugar Crops</option>
+                                    <option value="feed_crops">Feed Crops</option>
+                                    <option value="specialty_crops">Specialty Crops</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group-mobile">
+                                <label>Management Complexity</label>
+                                <select class="form-select" id="management-complexity">
+                                    <option value="">Any</option>
+                                    <option value="low">Low</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="high">High</option>
+                                </select>
+                            </div>
+                            
+                            <div class="input-group-mobile">
+                                <label>Pest Resistance</label>
+                                <select class="form-select" id="pest-resistance">
+                                    <option value="">Any</option>
+                                    <option value="corn_borer">Corn Borer</option>
+                                    <option value="aphids">Aphids</option>
+                                    <option value="spider_mites">Spider Mites</option>
+                                    <option value="cutworms">Cutworms</option>
+                                    <option value="wireworms">Wireworms</option>
+                                    <option value="rust">Rust</option>
+                                    <option value="blight">Blight</option>
+                                    <option value="mildew">Mildew</option>
+                                    <option value="scab">Scab</option>
+                                    <option value="smut">Smut</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Market Filters -->
+                    <div class="filter-card">
+                        <div class="filter-toggle" data-target="market-filters">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <strong><i class="fas fa-dollar-sign"></i> Market & Economic</strong>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                        </div>
+                        <div class="filter-content" id="market-filters">
+                            <div class="input-group-mobile">
+                                <label>Market Class</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="organic-eligible">
+                                    <label class="form-check-label" for="organic-eligible">Organic Eligible</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="non-gmo">
+                                    <label class="form-check-label" for="non-gmo">Non-GMO</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="identity-preserved">
+                                    <label class="form-check-label" for="identity-preserved">Identity Preserved</label>
+                                </div>
+                            </div>
+                            
+                            <div class="input-group-mobile">
+                                <label>Market Stability</label>
+                                <select class="form-select" id="market-stability">
+                                    <option value="">Any</option>
+                                    <option value="stable">Stable</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="volatile">Volatile</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Tab -->
+                <div class="tab-pane fade" id="results" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6><i class="fas fa-list"></i> Filtered Crops</h6>
+                        <div>
+                            <span class="text-muted">Results: <span id="results-count">0</span></span>
+                            <select id="sort-options" class="form-select form-select-sm ms-2" style="display: inline-block; width: auto;">
+                                <option value="suitability_score">Suitability Score</option>
+                                <option value="name">Alphabetical</option>
+                                <option value="yield_potential">Yield Potential</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Loading Spinner -->
+                    <div class="loading-spinner" id="loading-indicator">
+                        <div class="spinner-border text-success" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <div class="mt-2">Searching for crops...</div>
+                    </div>
+
+                    <!-- No Results Message -->
+                    <div class="no-results-message" id="no-results-message" style="display: none;">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5>No crops match your filters</h5>
+                        <p>Try adjusting your filters to see more results</p>
+                        <button class="btn btn-outline-primary" id="reset-filters-btn">
+                            <i class="fas fa-redo"></i> Reset Filters
+                        </button>
+                    </div>
+
+                    <!-- Results Container -->
+                    <div id="crop-results-list">
+                        <!-- Results will be populated here -->
+                    </div>
+
+                    <!-- Pagination -->
+                    <div class="result-pagination" id="pagination-container" style="display: none;">
+                        <!-- Pagination will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Visualizations Tab -->
+                <div class="tab-pane fade" id="visualizations" role="tabpanel">
+                    <h6><i class="fas fa-chart-bar"></i> Filter Results Visualization</h6>
+                    
+                    <!-- Summary Cards -->
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="filter-card text-center">
+                                <div class="h4 text-success" id="total-results-count">0</div>
+                                <small>Total Matching Crops</small>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="filter-card text-center">
+                                <div class="h4 text-info" id="active-filters-count">0</div>
+                                <small>Active Filters</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Charts -->
+                    <div class="chart-container">
+                        <canvas id="categoryDistributionChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="droughtToleranceChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <canvas id="managementComplexityChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Actions Bar -->
+        <div class="filter-actions">
+            <div class="row">
+                <div class="col-6">
+                    <button class="btn btn-secondary filter-action-btn w-100" id="save-filters-btn">
+                        <i class="fas fa-save"></i> Save Filters
+                    </button>
+                </div>
+                <div class="col-6">
+                    <button class="btn btn-success filter-action-btn w-100 btn-apply-filters" id="apply-filters-btn">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Global variables
+        let currentFilters = {};
+        let currentResults = [];
+        let currentPage = 1;
+        let resultsPerPage = 5;
+        let charts = {};
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeFilters();
+            initializeEventListeners();
+            // Load any saved filters from localStorage
+            loadSavedFilters();
+        });
+
+        // Initialize filter components
+        function initializeFilters() {
+            // Set up filter toggles
+            document.querySelectorAll('.filter-toggle').forEach(toggle => {
+                toggle.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const content = document.getElementById(targetId);
+                    const icon = this.querySelector('.fa-chevron-down');
+                    
+                    content.classList.toggle('show');
+                    if (icon) {
+                        icon.style.transform = content.classList.contains('show') ? 'rotate(180deg)' : 'rotate(0deg)';
+                    }
+                });
+            });
+
+            // Set up range slider value displays
+            setupRangeSliders();
+        }
+
+        // Initialize event listeners
+        function initializeEventListeners() {
+            // Filter value changes
+            document.getElementById('growing-season-min').addEventListener('input', updateSliderValue);
+            document.getElementById('growing-season-max').addEventListener('input', updateSliderValue);
+            document.getElementById('ph-min').addEventListener('input', updateSliderValue);
+            document.getElementById('ph-max').addEventListener('input', updateSliderValue);
+            
+            // Apply filters button
+            document.getElementById('apply-filters-btn').addEventListener('click', applyFilters);
+            
+            // Clear all filters button
+            document.getElementById('clearAllFiltersBtn').addEventListener('click', clearAllFilters);
+            
+            // Reset filters button
+            document.getElementById('reset-filters-btn').addEventListener('click', clearAllFilters);
+            
+            // Sort options change
+            document.getElementById('sort-options').addEventListener('change', applyFilters);
+            
+            // Quick filter buttons
+            document.querySelectorAll('[data-quick-filter]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    applyQuickFilter(this.getAttribute('data-quick-filter'));
+                });
+            });
+            
+            // Save filters button
+            document.getElementById('save-filters-btn').addEventListener('click', saveFilters);
+        }
+
+        // Set up range sliders with value displays
+        function setupRangeSliders() {
+            updateSliderValue(document.getElementById('growing-season-min'));
+            updateSliderValue(document.getElementById('growing-season-max'));
+            updateSliderValue(document.getElementById('ph-min'));
+            updateSliderValue(document.getElementById('ph-max'));
+        }
+
+        // Update slider value display
+        function updateSliderValue(slider) {
+            if (typeof slider === 'object' && slider.target) {
+                slider = slider.target;
+            }
+            
+            const valueElement = document.getElementById(`${slider.id}-value`);
+            if (valueElement) {
+                valueElement.textContent = slider.value;
+            }
+            
+            // Update max slider to not go below min slider
+            if (slider.id === 'ph-min') {
+                const maxSlider = document.getElementById('ph-max');
+                if (maxSlider && parseFloat(slider.value) > parseFloat(maxSlider.value)) {
+                    maxSlider.value = parseFloat(slider.value);
+                    document.getElementById('ph-max-value').textContent = parseFloat(slider.value);
+                }
+            } else if (slider.id === 'ph-max') {
+                const minSlider = document.getElementById('ph-min');
+                if (minSlider && parseFloat(slider.value) < parseFloat(minSlider.value)) {
+                    minSlider.value = parseFloat(slider.value);
+                    document.getElementById('ph-min-value').textContent = parseFloat(slider.value);
+                }
+            } else if (slider.id === 'growing-season-min') {
+                const maxSlider = document.getElementById('growing-season-max');
+                if (maxSlider && parseInt(slider.value) > parseInt(maxSlider.value)) {
+                    maxSlider.value = parseInt(slider.value);
+                    document.getElementById('growing-season-max-value').textContent = parseInt(slider.value);
+                }
+            } else if (slider.id === 'growing-season-max') {
+                const minSlider = document.getElementById('growing-season-min');
+                if (minSlider && parseInt(slider.value) < parseInt(minSlider.value)) {
+                    minSlider.value = parseInt(slider.value);
+                    document.getElementById('growing-season-min-value').textContent = parseInt(slider.value);
+                }
+            }
+        }
+
+        // Get filters from UI
+        function getFiltersFromUI() {
+            const filters = {};
+
+            // Climate filters
+            const climateZones = Array.from(document.getElementById('climate-zones').selectedOptions).map(option => option.value);
+            if (climateZones.length > 0) {
+                filters.climate_zones = climateZones;
+            }
+
+            filters.growing_season_range = {
+                min: parseInt(document.getElementById('growing-season-min').value),
+                max: parseInt(document.getElementById('growing-season-max').value)
+            };
+
+            const droughtTolerance = document.getElementById('drought-tolerance').value;
+            if (droughtTolerance) {
+                filters.drought_tolerance = droughtTolerance;
+            }
+
+            // Soil filters
+            filters.soil_ph_range = {
+                min: parseFloat(document.getElementById('ph-min').value),
+                max: parseFloat(document.getElementById('ph-max').value)
+            };
+
+            const soilTypes = Array.from(document.getElementById('soil-types').selectedOptions).map(option => option.value);
+            if (soilTypes.length > 0) {
+                filters.soil_types = soilTypes;
+            }
+
+            const drainageClass = document.getElementById('drainage-classes').value;
+            if (drainageClass) {
+                filters.drainage_class = drainageClass;
+            }
+
+            // Agricultural filters
+            const cropCategories = Array.from(document.getElementById('crop-categories').selectedOptions).map(option => option.value);
+            if (cropCategories.length > 0) {
+                filters.crop_categories = cropCategories;
+            }
+
+            const managementComplexity = document.getElementById('management-complexity').value;
+            if (managementComplexity) {
+                filters.management_complexity = managementComplexity;
+            }
+
+            const pestResistance = document.getElementById('pest-resistance').value;
+            if (pestResistance) {
+                filters.pest_resistance = pestResistance;
+            }
+
+            // Market filters
+            const marketClass = [];
+            if (document.getElementById('organic-eligible').checked) marketClass.push('organic_eligible');
+            if (document.getElementById('non-gmo').checked) marketClass.push('non_gmo');
+            if (document.getElementById('identity-preserved').checked) marketClass.push('identity_preserved');
+            
+            if (marketClass.length > 0) {
+                filters.market_class = marketClass;
+            }
+
+            const marketStability = document.getElementById('market-stability').value;
+            if (marketStability) {
+                filters.market_stability = marketStability;
+            }
+
+            return filters;
+        }
+
+        // Apply quick filter
+        function applyQuickFilter(filterType) {
+            switch(filterType) {
+                case 'drought':
+                    document.getElementById('drought-tolerance').value = 'high';
+                    break;
+                case 'nitrogen':
+                    // This would typically update crop category to legumes
+                    const legumeOption = Array.from(document.getElementById('crop-categories').options)
+                        .find(option => option.value === 'legume_crops');
+                    if (legumeOption) legumeOption.selected = true;
+                    break;
+                case 'low-maintenance':
+                    document.getElementById('management-complexity').value = 'low';
+                    break;
+                case 'high-yield':
+                    // This would typically involve more complex logic in a real app
+                    break;
+            }
+            
+            applyFilters();
+        }
+
+        // Apply filters and get results
+        async function applyFilters() {
+            const filters = getFiltersFromUI();
+            currentFilters = filters;
+            saveFiltersToSession();
+
+            // Show loading indicator
+            document.getElementById('loading-indicator').style.display = 'block';
+            document.getElementById('crop-results-list').innerHTML = '';
+            document.getElementById('no-results-message').style.display = 'none';
+            document.getElementById('pagination-container').style.display = 'none';
+
+            try {
+                // In a real application, this would be an API call
+                // For this example, we'll simulate the API call
+                const results = await simulateCropSearch(filters);
+                currentResults = results;
+                currentPage = 1;
+                
+                displayResults();
+                displayAppliedFilters();
+                renderVisualizations();
+            } catch (error) {
+                console.error('Error applying filters:', error);
+                showError('Error applying filters. Please try again.');
+            } finally {
+                document.getElementById('loading-indicator').style.display = 'none';
+            }
+        }
+
+        // Simulate crop search (would be API call in real app)
+        async function simulateCropSearch(filters) {
+            // Simulate API call delay
+            await new Promise(resolve => setTimeout(resolve, 800));
+
+            // For demo purposes, return mock data based on filters
+            const mockCrops = [
+                {
+                    id: 'crop-1',
+                    name: 'Winter Wheat',
+                    scientific_name: 'Triticum aestivum',
+                    category: 'grain_crops',
+                    suitability_score: 0.92,
+                    description: 'Excellent winter-hardy grain crop with high yield potential.',
+                    climate_zones: ['3a', '3b', '4a', '4b', '5a', '5b'],
+                    ph_range: {min: 5.5, max: 7.5},
+                    maturity_days: 220,
+                    drought_tolerance: 'moderate',
+                    management_complexity: 'moderate',
+                    tags: ['grain', 'winter_crop', 'nitrogen_fixing', 'erosion_control']
+                },
+                {
+                    id: 'crop-2',
+                    name: 'Soybean',
+                    scientific_name: 'Glycine max',
+                    category: 'legume_crops',
+                    suitability_score: 0.88,
+                    description: 'Nitrogen-fixing legume crop with excellent protein content.',
+                    climate_zones: ['5a', '5b', '6a', '6b', '7a', '7b'],
+                    ph_range: {min: 6.0, max: 7.0},
+                    maturity_days: 100,
+                    drought_tolerance: 'moderate',
+                    management_complexity: 'moderate',
+                    tags: ['nitrogen_fixing', 'organic', 'rotation_crop', 'cover_crop']
+                },
+                {
+                    id: 'crop-3',
+                    name: 'Crimson Clover',
+                    scientific_name: 'Trifolium incarnatum',
+                    category: 'cover_crops',
+                    suitability_score: 0.95,
+                    description: 'Popular winter annual cover crop for nitrogen fixation.',
+                    climate_zones: ['6a', '6b', '7a', '7b', '8a', '8b'],
+                    ph_range: {min: 6.0, max: 7.0},
+                    maturity_days: 240,
+                    drought_tolerance: 'low',
+                    management_complexity: 'low',
+                    tags: ['nitrogen_fixing', 'erosion_control', 'pollinator_support', 'organic']
+                },
+                {
+                    id: 'crop-4',
+                    name: 'Corn',
+                    scientific_name: 'Zea mays',
+                    category: 'grain_crops',
+                    suitability_score: 0.85,
+                    description: 'High-yielding cereal grain with significant nitrogen requirements.',
+                    climate_zones: ['4a', '4b', '5a', '5b', '6a', '6b'],
+                    ph_range: {min: 5.8, max: 7.0},
+                    maturity_days: 120,
+                    drought_tolerance: 'low',
+                    management_complexity: 'high',
+                    tags: ['high_yield', 'nitrogen_hungry', 'rotation_crop', 'feed_crop']
+                },
+                {
+                    id: 'crop-5',
+                    name: 'Alfalfa',
+                    scientific_name: 'Medicago sativa',
+                    category: 'forage_crops',
+                    suitability_score: 0.82,
+                    description: 'Perennial legume for high-quality forage and soil improvement.',
+                    climate_zones: ['3a', '3b', '4a', '4b', '5a', '5b'],
+                    ph_range: {min: 6.5, max: 7.5},
+                    maturity_days: 365,
+                    drought_tolerance: 'moderate',
+                    management_complexity: 'high',
+                    tags: ['perennial', 'nitrogen_fixing', 'drought_tolerant', 'forage']
+                }
+            ];
+
+            // Filter mock crops based on applied filters
+            let filteredCrops = [...mockCrops];
+
+            if (filters.crop_categories && filters.crop_categories.length > 0) {
+                filteredCrops = filteredCrops.filter(crop => 
+                    filters.crop_categories.includes(crop.category));
+            }
+
+            if (filters.drought_tolerance) {
+                filteredCrops = filteredCrops.filter(crop => 
+                    crop.drought_tolerance === filters.drought_tolerance);
+            }
+
+            if (filters.management_complexity) {
+                filteredCrops = filteredCrops.filter(crop => 
+                    crop.management_complexity === filters.management_complexity);
+            }
+
+            if (filters.soil_ph_range) {
+                filteredCrops = filteredCrops.filter(crop => 
+                    crop.ph_range.min >= filters.soil_ph_range.min && 
+                    crop.ph_range.max <= filters.soil_ph_range.max);
+            }
+
+            if (filters.growing_season_range) {
+                filteredCrops = filteredCrops.filter(crop => 
+                    crop.maturity_days >= filters.growing_season_range.min && 
+                    crop.maturity_days <= filters.growing_season_range.max);
+            }
+
+            if (filters.climate_zones && filters.climate_zones.length > 0) {
+                filteredCrops = filteredCrops.filter(crop => 
+                    crop.climate_zones.some(zone => filters.climate_zones.includes(zone)));
+            }
+
+            // Sort by suitability score by default
+            const sortField = document.getElementById('sort-options').value;
+            if (sortField === 'suitability_score') {
+                filteredCrops.sort((a, b) => b.suitability_score - a.suitability_score);
+            } else if (sortField === 'name') {
+                filteredCrops.sort((a, b) => a.name.localeCompare(b.name));
+            } else if (sortField === 'yield_potential') {
+                filteredCrops.sort((a, b) => b.suitability_score - a.suitability_score); // Mock for demo
+            }
+
+            return filteredCrops;
+        }
+
+        // Display results
+        function displayResults() {
+            const container = document.getElementById('crop-results-list');
+            const resultsCount = document.getElementById('results-count');
+            const noResultsMessage = document.getElementById('no-results-message');
+            const paginationContainer = document.getElementById('pagination-container');
+
+            if (currentResults.length === 0) {
+                noResultsMessage.style.display = 'block';
+                container.innerHTML = '';
+                resultsCount.textContent = '0';
+                paginationContainer.style.display = 'none';
+                return;
+            }
+
+            noResultsMessage.style.display = 'none';
+            resultsCount.textContent = currentResults.length;
+
+            // Calculate pagination
+            const totalPages = Math.ceil(currentResults.length / resultsPerPage);
+            const startIndex = (currentPage - 1) * resultsPerPage;
+            const endIndex = Math.min(startIndex + resultsPerPage, currentResults.length);
+            const resultsToShow = currentResults.slice(startIndex, endIndex);
+
+            // Display results
+            container.innerHTML = '';
+            resultsToShow.forEach(crop => {
+                const cropElement = createCropCard(crop);
+                container.appendChild(cropElement);
+            });
+
+            // Create pagination
+            createPagination(totalPages);
+        }
+
+        // Create crop card
+        function createCropCard(crop) {
+            const card = document.createElement('div');
+            
+            // Determine suitability class
+            let suitabilityClass = 'low-suitability';
+            let scoreClass = 'low';
+            if (crop.suitability_score >= 0.8) {
+                suitabilityClass = 'high-suitability';
+                scoreClass = 'high';
+            } else if (crop.suitability_score >= 0.6) {
+                suitabilityClass = 'medium-suitability';
+                scoreClass = 'medium';
+            }
+            
+            card.className = `result-card ${suitabilityClass}`;
+            
+            // Calculate suitability percentage
+            const suitabilityPercent = Math.round(crop.suitability_score * 100);
+            
+            card.innerHTML = `
+                <div class="result-header">
+                    <div>
+                        <h6 class="mb-1">${crop.name}</h6>
+                        <div class="small text-muted">${crop.scientific_name}</div>
+                    </div>
+                    <div class="result-score ${scoreClass}">${suitabilityPercent}%</div>
+                </div>
+                
+                <p class="mb-1">${crop.description}</p>
+                
+                <div class="result-category">
+                    ${crop.category.replace('_', ' ').toUpperCase()}
+                </div>
+                
+                <div class="result-attributes">
+                    <div class="result-attribute">
+                        <i class="fas fa-thermometer-half"></i> Zones: ${crop.climate_zones.slice(0, 3).join(', ')}
+                    </div>
+                    <div class="result-attribute">
+                        <i class="fas fa-hourglass-half"></i> ${crop.maturity_days} days
+                    </div>
+                    <div class="result-attribute">
+                        <i class="fas fa-tint"></i> ${crop.drought_tolerance} drought
+                    </div>
+                    <div class="result-attribute">
+                        <i class="fas fa-user"></i> ${crop.management_complexity} management
+                    </div>
+                </div>
+                
+                <div class="result-tags">
+                    ${crop.tags.map(tag => `<span class="result-tag">${tag.replace('_', ' ')}</span>`).join('')}
+                </div>
+                
+                <div class="mt-2">
+                    <button class="btn btn-sm btn-outline-primary me-2">
+                        <i class="fas fa-info-circle"></i> Details
+                    </button>
+                    <button class="btn btn-sm btn-outline-success">
+                        <i class="fas fa-plus"></i> Add to Plan
+                    </button>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Create pagination
+        function createPagination(totalPages) {
+            const paginationContainer = document.getElementById('pagination-container');
+            paginationContainer.style.display = 'flex';
+            paginationContainer.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Previous button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = `page-btn ${currentPage === 1 ? 'disabled' : ''}`;
+            prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevBtn.disabled = currentPage === 1;
+            prevBtn.onclick = () => goToPage(currentPage - 1);
+            paginationContainer.appendChild(prevBtn);
+
+            // Page numbers
+            for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                pageBtn.textContent = i;
+                pageBtn.onclick = () => goToPage(i);
+                paginationContainer.appendChild(pageBtn);
+            }
+
+            // Next button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = `page-btn ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextBtn.disabled = currentPage === totalPages;
+            nextBtn.onclick = () => goToPage(currentPage + 1);
+            paginationContainer.appendChild(nextBtn);
+        }
+
+        // Go to specific page
+        function goToPage(page) {
+            if (page < 1 || page > Math.ceil(currentResults.length / resultsPerPage)) return;
+            currentPage = page;
+            displayResults();
+        }
+
+        // Display applied filters
+        function displayAppliedFilters() {
+            const container = document.getElementById('appliedFiltersList');
+            container.innerHTML = '';
+
+            if (!currentFilters || Object.keys(currentFilters).length === 0) {
+                container.innerHTML = '<div class="text-muted text-center py-2">No filters applied</div>';
+                return;
+            }
+
+            // Add each filter to the display
+            for (const [key, value] of Object.entries(currentFilters)) {
+                if (value && (Array.isArray(value) ? value.length > 0 : true)) {
+                    let label = key.replace('_', ' ');
+                    let displayValue = value;
+
+                    if (Array.isArray(value)) {
+                        displayValue = value.join(', ');
+                    } else if (typeof value === 'object') {
+                        if (value.min !== undefined && value.max !== undefined) {
+                            displayValue = `${value.min} - ${value.max}`;
+                            label = label.replace('_range', '');
+                        }
+                    }
+
+                    const filterElement = document.createElement('div');
+                    filterElement.className = 'filter-preview';
+                    filterElement.textContent = `${label}: ${displayValue}`;
+                    container.appendChild(filterElement);
+                }
+            }
+        }
+
+        // Clear all filters
+        function clearAllFilters() {
+            // Reset all filter UI elements
+            document.querySelectorAll('select[multiple]').forEach(select => {
+                Array.from(select.options).forEach(option => option.selected = false);
+            });
+
+            document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+
+            document.querySelectorAll('input[type="range"]').forEach(slider => {
+                if (slider.id === 'growing-season-min') slider.value = 60;
+                else if (slider.id === 'growing-season-max') slider.value = 150;
+                else if (slider.id === 'ph-min') slider.value = 5.5;
+                else if (slider.id === 'ph-max') slider.value = 7.5;
+            });
+
+            // Update slider value displays
+            updateSliderValue({target: document.getElementById('growing-season-min')});
+            updateSliderValue({target: document.getElementById('growing-season-max')});
+            updateSliderValue({target: document.getElementById('ph-min')});
+            updateSliderValue({target: document.getElementById('ph-max')});
+
+            // Reset single-select dropdowns
+            document.querySelectorAll('select:not([multiple])').forEach(select => {
+                select.selectedIndex = 0;
+            });
+
+            // Clear filters
+            currentFilters = {};
+            currentResults = [];
+            currentPage = 1;
+
+            // Update UI
+            displayAppliedFilters();
+            document.getElementById('crop-results-list').innerHTML = '';
+            document.getElementById('results-count').textContent = '0';
+            document.getElementById('pagination-container').style.display = 'none';
+            document.getElementById('no-results-message').style.display = 'none';
+        }
+
+        // Save filters
+        function saveFilters() {
+            const filters = getFiltersFromUI();
+            const saveName = prompt('Enter a name for these filters:', 'My Filter Preset');
+            if (saveName) {
+                const savedFilters = JSON.parse(localStorage.getItem('savedCropFilters') || '{}');
+                savedFilters[saveName] = filters;
+                localStorage.setItem('savedCropFilters', JSON.stringify(savedFilters));
+                showNotification(`Filters saved as "${saveName}"`, 'success');
+            }
+        }
+
+        // Load saved filters
+        function loadSavedFilters() {
+            const savedFilters = JSON.parse(localStorage.getItem('savedCropFilters') || '{}');
+            if (Object.keys(savedFilters).length > 0) {
+                // Optionally implement UI to load saved filters
+                console.log('Saved filters available:', Object.keys(savedFilters));
+            }
+        }
+
+        // Save filters to session
+        function saveFiltersToSession() {
+            localStorage.setItem('cropFilteringSession', JSON.stringify(currentFilters));
+        }
+
+        // Render visualizations
+        function renderVisualizations() {
+            if (!currentResults || currentResults.length === 0) {
+                showNoDataMessage();
+                return;
+            }
+
+            renderCategoryDistributionChart();
+            renderDroughtToleranceChart();
+            renderManagementComplexityChart();
+            updateSummaryCards();
+        }
+
+        // Render category distribution chart
+        function renderCategoryDistributionChart() {
+            const ctx = document.getElementById('categoryDistributionChart');
+            if (!ctx) return;
+
+            // Destroy existing chart if it exists
+            if (charts.categoryChart) {
+                charts.categoryChart.destroy();
+            }
+
+            // Count crop categories
+            const categoryCounts = {};
+            currentResults.forEach(crop => {
+                if (categoryCounts[crop.category]) {
+                    categoryCounts[crop.category]++;
+                } else {
+                    categoryCounts[crop.category] = 1;
+                }
+            });
+
+            const labels = Object.keys(categoryCounts).map(cat => cat.replace('_', ' '));
+            const data = Object.values(categoryCounts);
+
+            charts.categoryChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Number of Crops',
+                        data: data,
+                        backgroundColor: [
+                            'rgba(54, 162, 235, 0.6)',
+                            'rgba(255, 99, 132, 0.6)',
+                            'rgba(255, 206, 86, 0.6)',
+                            'rgba(75, 192, 192, 0.6)',
+                            'rgba(153, 102, 255, 0.6)',
+                            'rgba(255, 159, 64, 0.6)'
+                        ],
+                        borderColor: [
+                            'rgba(54, 162, 235, 1)',
+                            'rgba(255, 99, 132, 1)',
+                            'rgba(255, 206, 86, 1)',
+                            'rgba(75, 192, 192, 1)',
+                            'rgba(153, 102, 255, 1)',
+                            'rgba(255, 159, 64, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Crop Category Distribution'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Number of Crops'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render drought tolerance chart
+        function renderDroughtToleranceChart() {
+            const ctx = document.getElementById('droughtToleranceChart');
+            if (!ctx) return;
+
+            // Destroy existing chart if it exists
+            if (charts.droughtChart) {
+                charts.droughtChart.destroy();
+            }
+
+            // Count drought tolerance levels
+            const toleranceCounts = {};
+            currentResults.forEach(crop => {
+                if (toleranceCounts[crop.drought_tolerance]) {
+                    toleranceCounts[crop.drought_tolerance]++;
+                } else {
+                    toleranceCounts[crop.drought_tolerance] = 1;
+                }
+            });
+
+            const labels = Object.keys(toleranceCounts).map(tol => tol.replace('_', ' '));
+            const data = Object.values(toleranceCounts);
+
+            charts.droughtChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Drought Tolerance Levels',
+                        data: data,
+                        backgroundColor: [
+                            'rgba(255, 99, 132, 0.8)',
+                            'rgba(54, 162, 235, 0.8)',
+                            'rgba(255, 206, 86, 0.8)',
+                            'rgba(75, 192, 192, 0.8)'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Drought Tolerance Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Render management complexity chart
+        function renderManagementComplexityChart() {
+            const ctx = document.getElementById('managementComplexityChart');
+            if (!ctx) return;
+
+            // Destroy existing chart if it exists
+            if (charts.managementChart) {
+                charts.managementChart.destroy();
+            }
+
+            // Count management complexity levels
+            const complexityCounts = { low: 0, moderate: 0, high: 0 };
+            currentResults.forEach(crop => {
+                if (complexityCounts[crop.management_complexity] !== undefined) {
+                    complexityCounts[crop.management_complexity]++;
+                }
+            });
+
+            const labels = Object.keys(complexityCounts).map(level => level.replace('_', ' '));
+            const data = Object.values(complexityCounts);
+
+            charts.managementChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Management Complexity',
+                        data: data,
+                        backgroundColor: [
+                            'rgba(40, 167, 69, 0.8)',   // Green for low
+                            'rgba(255, 193, 7, 0.8)',   // Yellow for moderate
+                            'rgba(220, 53, 69, 0.8)'    // Red for high
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Management Complexity Distribution'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update summary cards
+        function updateSummaryCards() {
+            document.getElementById('total-results-count').textContent = currentResults.length;
+            document.getElementById('active-filters-count').textContent = Object.keys(currentFilters).length;
+        }
+
+        // Show "no data" message for charts
+        function showNoDataMessage() {
+            // In a real implementation, we'd show a no-data message in the chart containers
+            console.log('No data to visualize');
+        }
+
+        // Show error message
+        function showError(message) {
+            showNotification(message, 'danger');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Create and show notification
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 10px; left: 50%; transform: translateX(-50%); z-index: 1050; max-width: 90%;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
