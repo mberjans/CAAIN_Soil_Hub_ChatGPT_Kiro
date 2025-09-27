@@ -13,6 +13,7 @@ from .crop_taxonomy_models import *
 from .crop_filtering_models import *
 from .crop_variety_models import *
 from .service_models import *
+from .preference_models import *
 
 __all__ = [
     # Core taxonomy models
@@ -27,12 +28,12 @@ __all__ = [
     'CropSearchRequest',
     'CropSearchResponse',
     'TaxonomyFilterCriteria',
-    
+
     # Variety and regional models
     'EnhancedCropVariety',
     'CropRegionalAdaptation',
     'VarietyRecommendation',
-    
+
     # Service request/response models
     'CropTaxonomyRequest',
     'CropTaxonomyResponse',
@@ -59,7 +60,22 @@ __all__ = [
     'TagCategory',
     'TagType',
     'TagValidationStatus',
-    'TagManagementAction'
+    'TagManagementAction',
+
+    # Preference models
+    'PreferenceType',
+    'PreferenceDimension',
+    'ConstraintType',
+    'RiskTolerance',
+    'ManagementStyle',
+    'PreferenceWeight',
+    'PreferenceConstraint',
+    'PreferenceConfidence',
+    'PreferenceSignal',
+    'PreferenceLearningRequest',
+    'PreferenceProfile',
+    'PreferenceProfileResponse',
+    'PreferenceUpdateRequest'
 ]
 
 

@@ -635,6 +635,63 @@ class CropAttributeTag(Base):
         return f"<CropAttributeTag(tag='{self.tag_name}', category='{self.tag_category}', type='{self.tag_type}')>"
 
 
+class FarmerCropPreference(Base):
+    """Farmer crop preference profiles with weighting and constraints."""
+
+    __tablename__ = 'farmer_crop_preferences'
+
+    preference_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.user_id', ondelete='CASCADE'), nullable=False)
+    preference_type = Column(String(40), nullable=False, default='user_defined')
+    title = Column(String(120))
+
+    crop_categories = Column(ARRAY(Text))
+    market_focus = Column(ARRAY(Text))
+    sustainability_focus = Column(ARRAY(Text))
+
+    management_style = Column(String(30))
+    risk_tolerance = Column(String(20))
+    confidence = Column(String(20), nullable=False, default='medium')
+
+    weights = Column(JSONB, default=dict)
+    constraints = Column(JSONB, default=dict)
+    priority_notes = Column(JSONB, default=dict)
+    profile_metadata = Column(JSONB, default=dict)
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    user = relationship("User", backref="crop_preferences")
+
+    __table_args__ = (
+        CheckConstraint(
+            "preference_type IN ('user_defined', 'system_suggested', 'learned')",
+            name='check_preference_type'
+        ),
+        CheckConstraint(
+            "management_style IS NULL OR management_style IN ('low_input', 'balanced', 'high_intensity')",
+            name='check_management_style_preference'
+        ),
+        CheckConstraint(
+            "risk_tolerance IS NULL OR risk_tolerance IN ('low', 'moderate', 'high')",
+            name='check_risk_tolerance_preference'
+        ),
+        CheckConstraint(
+            "confidence IN ('low', 'medium', 'high')",
+            name='check_preference_confidence'
+        ),
+        UniqueConstraint('user_id', 'preference_type', 'title', name='uq_user_preference_profile'),
+        Index('idx_preference_user', 'user_id'),
+        Index('idx_preference_type', 'preference_type')
+    )
+
+    def __repr__(self):
+        return (
+            f"<FarmerCropPreference(user_id='{self.user_id}', type='{self.preference_type}', "
+            f"confidence='{self.confidence}')>"
+        )
+
+
 class EnhancedCropVarieties(Base):
     """Enhanced crop varieties with detailed characteristics."""
     
@@ -1428,7 +1485,7 @@ __all__ = [
     # Enhanced Crop Taxonomy Models
     'CropTaxonomicHierarchy', 'CropAgriculturalClassification', 'CropClimateAdaptations',
     'CropSoilRequirements', 'CropNutritionalProfiles', 'CropFilteringAttributes',
-    'CropAttributeTag', 'EnhancedCropVarieties', 'CropRegionalAdaptations',
+    'CropAttributeTag', 'FarmerCropPreference', 'EnhancedCropVarieties', 'CropRegionalAdaptations',
     'FertilizerProduct', 'FertilizerApplication',
     'QuestionType', 'Recommendation',
     'EquipmentType', 'FarmEquipment',
