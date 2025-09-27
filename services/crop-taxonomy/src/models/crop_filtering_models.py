@@ -111,7 +111,7 @@ class SortField(str, Enum):
 
 class CropFilteringAttributes(BaseModel):
     """Comprehensive filtering attributes for advanced crop search."""
-    
+
     filter_id: Optional[UUID] = Field(None, description="Unique filter attributes identifier")
     crop_id: UUID = Field(..., description="Associated crop identifier")
     
@@ -164,10 +164,358 @@ class CropFilteringAttributes(BaseModel):
         default_factory=dict,
         description="Seed availability filters across suppliers and regions"
     )
-    
+
     # Metadata
     created_at: Optional[datetime] = Field(None, description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
+
+    _RESISTANCE_RANKINGS = {
+        "none": 0,
+        "susceptible": 0,
+        "low": 1,
+        "limited": 1,
+        "moderate": 2,
+        "medium": 2,
+        "intermediate": 2,
+        "good": 3,
+        "high": 3,
+        "strong": 3,
+        "very high": 4,
+        "very strong": 4,
+        "excellent": 4,
+        "exceptional": 4
+    }
+
+    _AFFIRMATIVE_TERMS = (
+        "yes",
+        "true",
+        "available",
+        "approved",
+        "active",
+        "certified",
+        "granted",
+        "enabled"
+    )
+
+    _NEGATIVE_TERMS = (
+        "no",
+        "false",
+        "unavailable",
+        "denied",
+        "inactive",
+        "not certified",
+        "not available",
+        "disabled"
+    )
+
+    @validator('pest_resistance_traits', pre=True, always=True)
+    def _validate_pest_resistance_traits(cls, value):
+        """Ensure pest resistance traits are stored as a dictionary with string keys."""
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError('pest_resistance_traits must be a dictionary')
+        sanitized = {}
+        for key, trait_value in value.items():
+            if key is None:
+                continue
+            key_str = str(key)
+            sanitized[key_str] = trait_value
+        return sanitized
+
+    @validator('market_class_filters', pre=True, always=True)
+    def _validate_market_class_filters(cls, value):
+        """Ensure market class filters use string keys."""
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError('market_class_filters must be a dictionary')
+        sanitized = {}
+        for key, filter_value in value.items():
+            if key is None:
+                continue
+            key_str = str(key)
+            sanitized[key_str] = filter_value
+        return sanitized
+
+    @validator('certification_filters', pre=True, always=True)
+    def _validate_certification_filters(cls, value):
+        """Ensure certification filters use string keys."""
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError('certification_filters must be a dictionary')
+        sanitized = {}
+        for key, filter_value in value.items():
+            if key is None:
+                continue
+            key_str = str(key)
+            sanitized[key_str] = filter_value
+        return sanitized
+
+    @validator('seed_availability_filters', pre=True, always=True)
+    def _validate_seed_availability_filters(cls, value):
+        """Ensure seed availability filters are stored as a dictionary with canonical keys."""
+        if value is None:
+            return {}
+        if not isinstance(value, dict):
+            raise ValueError('seed_availability_filters must be a dictionary')
+        sanitized = {}
+        for key, seed_value in value.items():
+            if key is None:
+                continue
+            key_str = str(key)
+            if key_str in ('regions', 'suppliers'):
+                normalized_list = []
+                if isinstance(seed_value, (list, tuple, set)):
+                    for item in seed_value:
+                        if item is None:
+                            continue
+                        normalized_list.append(str(item))
+                elif seed_value is None:
+                    normalized_list = []
+                else:
+                    normalized_list.append(str(seed_value))
+                sanitized[key_str] = normalized_list
+            else:
+                sanitized[key_str] = seed_value
+        return sanitized
+
+    @staticmethod
+    def _normalize_term(term: Optional[str]) -> str:
+        """Normalize terms for comparison without using regular expressions."""
+        if term is None:
+            return ''
+        cleaned_characters = []
+        for character in term:
+            if character.isalnum():
+                cleaned_characters.append(character.lower())
+            elif character in (' ', '-', '_', '/'):  # treat separators as spaces
+                cleaned_characters.append(' ')
+        collapsed = []
+        previous_space = False
+        for character in cleaned_characters:
+            if character == ' ':
+                if not previous_space:
+                    collapsed.append(character)
+                previous_space = True
+            else:
+                collapsed.append(character)
+                previous_space = False
+        normalized = ''.join(collapsed).strip()
+        return normalized
+
+    @classmethod
+    def _terms_match(cls, candidate: str, target: str) -> bool:
+        """Case-insensitive comparison that tolerates separators."""
+        normalized_candidate = cls._normalize_term(candidate)
+        normalized_target = cls._normalize_term(target)
+        if not normalized_candidate or not normalized_target:
+            return False
+        if normalized_candidate == normalized_target:
+            return True
+        if normalized_candidate.find(normalized_target) != -1 and len(normalized_target) >= 3:
+            return True
+        if normalized_target.find(normalized_candidate) != -1 and len(normalized_candidate) >= 3:
+            return True
+        return False
+
+    @classmethod
+    def _resistance_rank(cls, level: Any) -> int:
+        """Convert various resistance descriptors to ranked numeric values."""
+        if level is None:
+            return 0
+        if isinstance(level, (int, float)):
+            if level < 0:
+                return 0
+            if level > 4:
+                return 4
+            return int(level)
+        normalized_level = cls._normalize_term(str(level))
+        if normalized_level in cls._RESISTANCE_RANKINGS:
+            return cls._RESISTANCE_RANKINGS[normalized_level]
+        return 0
+
+    @classmethod
+    def _interpret_affirmative(cls, value: Any) -> Optional[bool]:
+        """Interpret diverse values as boolean indicators."""
+        if value is None:
+            return None
+        if isinstance(value, bool):
+            return value
+        if isinstance(value, (int, float)):
+            if value == 0:
+                return False
+            return True
+        if isinstance(value, str):
+            normalized_value = cls._normalize_term(value)
+            for positive_term in cls._AFFIRMATIVE_TERMS:
+                if normalized_value == positive_term:
+                    return True
+            for negative_term in cls._NEGATIVE_TERMS:
+                if normalized_value == negative_term:
+                    return False
+        return None
+
+    @classmethod
+    def _matches_in_structure(cls, structure: Any, target: str) -> bool:
+        """Search a nested structure for a string that matches the target."""
+        if structure is None:
+            return False
+        if isinstance(structure, str):
+            return cls._terms_match(structure, target)
+        if isinstance(structure, dict):
+            for nested_key, nested_value in structure.items():
+                if isinstance(nested_key, str) and cls._terms_match(nested_key, target):
+                    interpreted = cls._interpret_affirmative(nested_value)
+                    if interpreted is None:
+                        if nested_value:
+                            return True
+                    elif interpreted:
+                        return True
+                if cls._matches_in_structure(nested_value, target):
+                    return True
+            return False
+        if isinstance(structure, (list, tuple, set)):
+            for item in structure:
+                if cls._matches_in_structure(item, target):
+                    return True
+            return False
+        interpreted_value = cls._interpret_affirmative(structure)
+        if interpreted_value is None:
+            return False
+        return interpreted_value
+
+    def get_pest_resistance_level(self, pest_name: str) -> Optional[str]:
+        """Get the resistance descriptor for a specific pest."""
+        normalized_target = self._normalize_term(pest_name)
+        if not normalized_target:
+            return None
+        for trait_name, trait_value in self.pest_resistance_traits.items():
+            if not isinstance(trait_name, str):
+                continue
+            if not self._terms_match(trait_name, normalized_target):
+                continue
+            if isinstance(trait_value, dict):
+                if 'level' in trait_value and trait_value['level'] is not None:
+                    return str(trait_value['level'])
+                if 'rating' in trait_value and trait_value['rating'] is not None:
+                    return str(trait_value['rating'])
+            if isinstance(trait_value, (str, int, float)):
+                return str(trait_value)
+        return None
+
+    def resists_pest_at_least(self, pest_name: str, minimum_level: str) -> bool:
+        """Determine if resistance meets or exceeds the requested level."""
+        current_level = self.get_pest_resistance_level(pest_name)
+        if current_level is None:
+            return False
+        current_rank = self._resistance_rank(current_level)
+        required_rank = self._resistance_rank(minimum_level)
+        return current_rank >= required_rank
+
+    def supports_market_class(self, market_class: str) -> bool:
+        """Check whether the crop supports a requested market class."""
+        normalized_target = self._normalize_term(market_class)
+        if not normalized_target:
+            return False
+        for key, value in self.market_class_filters.items():
+            if isinstance(key, str) and self._terms_match(key, normalized_target):
+                interpreted = self._interpret_affirmative(value)
+                if interpreted is None:
+                    return True
+                return interpreted
+            if self._matches_in_structure(value, normalized_target):
+                return True
+        return False
+
+    def has_certification(self, certification: str) -> bool:
+        """Verify whether the crop aligns with a specific certification."""
+        normalized_target = self._normalize_term(certification)
+        if not normalized_target:
+            return False
+        for key, value in self.certification_filters.items():
+            if isinstance(key, str) and self._terms_match(key, normalized_target):
+                if isinstance(value, dict):
+                    status_value = self._interpret_affirmative(value.get('status'))
+                    if status_value is None:
+                        status_value = self._interpret_affirmative(value.get('value'))
+                    if status_value is not None:
+                        return status_value
+                    return True
+                interpreted = self._interpret_affirmative(value)
+                if interpreted is not None:
+                    return interpreted
+                return bool(value)
+            if isinstance(value, dict):
+                name_value = value.get('name')
+                if isinstance(name_value, str) and self._terms_match(name_value, normalized_target):
+                    status_value = self._interpret_affirmative(value.get('status'))
+                    if status_value is None:
+                        status_value = self._interpret_affirmative(value.get('value'))
+                    if status_value is not None:
+                        return status_value
+                    return True
+                if self._matches_in_structure(value, normalized_target):
+                    return True
+            elif isinstance(value, (list, tuple, set)):
+                if self._matches_in_structure(value, normalized_target):
+                    return True
+            elif isinstance(value, str):
+                if self._terms_match(value, normalized_target):
+                    interpreted = self._interpret_affirmative(value)
+                    if interpreted is not None:
+                        return interpreted
+                    return True
+        return False
+
+    def is_seed_available(self, region: Optional[str] = None, supplier: Optional[str] = None) -> bool:
+        """Determine seed availability with optional regional and supplier filters."""
+        availability = self.seed_availability_filters or {}
+        if not availability:
+            return False
+        status_value = self._interpret_affirmative(availability.get('status'))
+        if status_value is False:
+            return False
+        if region:
+            region_match = False
+            if self._matches_in_structure(availability.get('regions'), region):
+                region_match = True
+            else:
+                regional_status = availability.get('regional_status')
+                if isinstance(regional_status, dict):
+                    for region_name, region_value in regional_status.items():
+                        if not isinstance(region_name, str):
+                            continue
+                        if not self._terms_match(region_name, region):
+                            continue
+                        interpreted_region = self._interpret_affirmative(region_value)
+                        if interpreted_region is None or interpreted_region:
+                            region_match = True
+                            break
+            if not region_match:
+                return False
+        if supplier:
+            supplier_match = False
+            if self._matches_in_structure(availability.get('suppliers'), supplier):
+                supplier_match = True
+            else:
+                supplier_status = availability.get('supplier_status')
+                if isinstance(supplier_status, dict):
+                    for supplier_name, supplier_value in supplier_status.items():
+                        if not isinstance(supplier_name, str):
+                            continue
+                        if not self._terms_match(supplier_name, supplier):
+                            continue
+                        interpreted_supplier = self._interpret_affirmative(supplier_value)
+                        if interpreted_supplier is None or interpreted_supplier:
+                            supplier_match = True
+                            break
+            if not supplier_match:
+                return False
+        if status_value is None:
+            return True
+        return status_value
 
 
 # ============================================================================

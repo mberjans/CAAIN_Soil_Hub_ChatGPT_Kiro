@@ -374,6 +374,93 @@ class TestCropFilteringAttributes:
         assert crop.filtering_attributes is not None
         assert crop.filtering_attributes.pest_resistance_traits.get("aphids") == "moderate"
 
+    def test_pest_resistance_comparison(self):
+        """Verify pest resistance helpers handle ranking correctly."""
+        filtering = CropFilteringAttributes(
+            crop_id=uuid4(),
+            pest_resistance_traits={
+                "Corn Borer": {"level": "High"},
+                "Rootworm": "Moderate"
+            }
+        )
+
+        resistance_level = filtering.get_pest_resistance_level("corn borer")
+        assert resistance_level is not None
+        assert resistance_level.lower() == "high"
+        assert filtering.resists_pest_at_least("corn borer", "moderate") is True
+        assert filtering.resists_pest_at_least("rootworm", "high") is False
+        assert filtering.get_pest_resistance_level("cutworm") is None
+
+    def test_market_and_certification_helpers(self):
+        """Ensure market class and certification helpers interpret data effectively."""
+        filtering = CropFilteringAttributes(
+            crop_id=uuid4(),
+            market_class_filters={
+                "premium": ["Farmers Market", "Direct"],
+                "export": {"channels": ["Asia"]},
+                "commodity": False
+            },
+            certification_filters={
+                "organic": True,
+                "gap": {"status": "Approved"},
+                "gmo_free": False
+            }
+        )
+
+        assert filtering.supports_market_class("premium direct") is True
+        assert filtering.supports_market_class("export") is True
+        assert filtering.supports_market_class("commodity") is False
+        assert filtering.has_certification("Organic") is True
+        assert filtering.has_certification("GAP") is True
+        assert filtering.has_certification("GMO Free") is False
+
+    def test_seed_availability_checks(self):
+        """Confirm seed availability logic respects regions and suppliers."""
+        filtering = CropFilteringAttributes(
+            crop_id=uuid4(),
+            seed_availability_filters={
+                "status": "available",
+                "regions": ["Midwest", "Great Lakes"],
+                "suppliers": ["SeedCo", "AgriSeed"],
+                "supplier_status": {
+                    "SeedCo": "available",
+                    "LimitedCo": "unavailable"
+                }
+            }
+        )
+
+        assert filtering.is_seed_available(region="Midwest") is True
+        assert filtering.is_seed_available(region="Prairie Provinces") is False
+        assert filtering.is_seed_available(supplier="SeedCo") is True
+        assert filtering.is_seed_available(supplier="LimitedCo") is False
+        assert filtering.is_seed_available(region="Great Lakes", supplier="AgriSeed") is True
+
+    def test_invalid_advanced_filter_inputs(self):
+        """Ensure invalid advanced filter data raises validation errors."""
+        with pytest.raises(ValueError):
+            CropFilteringAttributes(
+                crop_id=uuid4(),
+                pest_resistance_traits=["invalid"]
+            )
+
+        with pytest.raises(ValueError):
+            CropFilteringAttributes(
+                crop_id=uuid4(),
+                market_class_filters="invalid"
+            )
+
+        with pytest.raises(ValueError):
+            CropFilteringAttributes(
+                crop_id=uuid4(),
+                certification_filters="yes"
+            )
+
+        with pytest.raises(ValueError):
+            CropFilteringAttributes(
+                crop_id=uuid4(),
+                seed_availability_filters="available"
+            )
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

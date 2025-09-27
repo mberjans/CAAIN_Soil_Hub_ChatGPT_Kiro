@@ -16,6 +16,46 @@ if TYPE_CHECKING:  # pragma: no cover - type checking helper
     from .crop_filtering_models import CropFilteringAttributes
 
 
+def _ensure_forward_ref_compatibility():
+    """Patch typing.ForwardRef for Python 3.13 compatibility with Pydantic v1."""
+    try:
+        from typing import ForwardRef  # type: ignore
+        evaluate_method = getattr(ForwardRef, '_evaluate', None)
+        if evaluate_method is None:
+            return
+        original_evaluate = evaluate_method
+
+        def _patched_evaluate(self, *args, **kwargs):  # type: ignore
+            try:
+                return original_evaluate(self, *args, **kwargs)  # type: ignore
+            except TypeError:
+                globalns = None
+                localns = None
+                recursive_guard = None
+                if len(args) >= 2:
+                    globalns = args[0]
+                    localns = args[1]
+                    if len(args) >= 3:
+                        recursive_guard = args[2]
+                else:
+                    if 'globalns' in kwargs:
+                        globalns = kwargs['globalns']
+                    if 'localns' in kwargs:
+                        localns = kwargs['localns']
+                    if 'recursive_guard' in kwargs:
+                        recursive_guard = kwargs['recursive_guard']
+                if recursive_guard is None:
+                    recursive_guard = set()
+                return original_evaluate(self, globalns, localns, recursive_guard=recursive_guard)
+
+        setattr(ForwardRef, '_evaluate', _patched_evaluate)
+    except Exception:
+        pass
+
+
+_ensure_forward_ref_compatibility()
+
+
 def _ensure_model_dump_compatibility():
     """Add model_dump helpers when running on Pydantic v1."""
     if hasattr(BaseModel, "model_dump"):
