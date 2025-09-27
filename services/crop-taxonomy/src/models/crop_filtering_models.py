@@ -739,6 +739,14 @@ class CropSearchResult(BaseModel):
     # Search-specific data
     search_highlights: Dict[str, List[str]] = Field(default_factory=dict, description="Search term highlights")
     similarity_factors: Dict[str, float] = Field(default_factory=dict, description="Similarity scores by factor")
+    score_breakdown: Dict[str, float] = Field(
+        default_factory=dict,
+        description="Per-filter score contributions for visualization"
+    )
+    ranking_details: Optional[ResultRankingDetails] = Field(
+        None,
+        description="Detailed breakdown of ranking metrics"
+    )
     
     # Recommendations
     recommendation_notes: List[str] = Field(default_factory=list, description="Specific recommendation notes")
@@ -773,6 +781,80 @@ class SearchStatistics(BaseModel):
     # Quality metrics
     average_relevance_score: float = Field(default=0.0, description="Average relevance score")
     result_quality_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall result quality")
+
+
+class FilterScoreBreakdown(BaseModel):
+    """Score contribution details for an individual filter dimension."""
+
+    name: str = Field(..., description="Filter dimension name")
+    weight: float = Field(..., ge=0.0, description="Weight applied during scoring")
+    score: float = Field(..., ge=0.0, le=1.0, description="Normalized score for the filter")
+    matched: bool = Field(..., description="Indicates the filter fully matched")
+    partial: bool = Field(..., description="Indicates the filter partially matched")
+    notes: List[str] = Field(default_factory=list, description="Relevant notes for the filter evaluation")
+
+
+class ResultRankingDetails(BaseModel):
+    """Detailed ranking insight for an individual search result."""
+
+    active_filters: int = Field(0, ge=0, description="Number of filters applied to this result")
+    matched_filters: int = Field(0, ge=0, description="Number of filters fully matched")
+    partial_filters: int = Field(0, ge=0, description="Number of filters partially matched")
+    missing_filters: int = Field(0, ge=0, description="Number of filters not satisfied")
+    coverage: float = Field(0.0, ge=0.0, le=1.0, description="Ratio of matched filters to active filters")
+    filter_scores: List[FilterScoreBreakdown] = Field(
+        default_factory=list,
+        description="Score contributions for each filter dimension"
+    )
+
+
+class ScoreBucket(BaseModel):
+    """Bucket representing a range of scores for visualization."""
+
+    label: str = Field(..., description="Bucket label for display")
+    count: int = Field(..., ge=0, description="Number of results within the bucket")
+    minimum: float = Field(..., ge=0.0, le=1.0, description="Minimum score for the bucket")
+    maximum: float = Field(..., ge=0.0, le=1.0, description="Maximum score for the bucket")
+
+
+class FilterContributionAggregate(BaseModel):
+    """Aggregate statistics for a filter dimension across all results."""
+
+    name: str = Field(..., description="Filter dimension name")
+    average_score: float = Field(..., ge=0.0, le=1.0, description="Average normalized score")
+    matched_results: int = Field(..., ge=0, description="Results with full matches")
+    partial_results: int = Field(..., ge=0, description="Results with partial matches")
+    weight: float = Field(..., ge=0.0, description="Weight applied to the filter during scoring")
+
+
+class SearchRankingOverview(BaseModel):
+    """High-level ranking indicators for the search execution."""
+
+    best_score: float = Field(0.0, ge=0.0, le=1.0, description="Highest relevance score returned")
+    worst_score: float = Field(0.0, ge=0.0, le=1.0, description="Lowest relevance score returned")
+    median_score: float = Field(0.0, ge=0.0, le=1.0, description="Median relevance score")
+    average_coverage: float = Field(0.0, ge=0.0, le=1.0, description="Average matched filter coverage")
+
+
+class SearchVisualizationSummary(BaseModel):
+    """Visualization-friendly summary of search ranking data."""
+
+    score_distribution: List[ScoreBucket] = Field(
+        default_factory=list,
+        description="Distribution of scores for charting"
+    )
+    filter_contributions: List[FilterContributionAggregate] = Field(
+        default_factory=list,
+        description="Average filter performance for stacked visualizations"
+    )
+    match_summary: Dict[str, int] = Field(
+        default_factory=dict,
+        description="Counts of perfect, partial, and missing matches"
+    )
+    highlights: List[str] = Field(
+        default_factory=list,
+        description="Narrative highlights for presenting the ranking"
+    )
 
 
 
@@ -970,6 +1052,14 @@ class CropSearchResponse(BaseModel):
     # Metadata
     statistics: SearchStatistics = Field(..., description="Search execution statistics")
     applied_filters: Dict[str, Any] = Field(default_factory=dict, description="Summary of applied filters")
+    ranking_overview: Optional[SearchRankingOverview] = Field(
+        None,
+        description="High-level ranking metrics for the result set"
+    )
+    visualization_summary: SearchVisualizationSummary = Field(
+        default_factory=SearchVisualizationSummary,
+        description="Visualization-friendly summary of the ranking data"
+    )
     
     # Pagination
     has_more_results: bool = Field(..., description="More results available")
