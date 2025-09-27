@@ -347,6 +347,29 @@ CREATE TABLE crop_filtering_attributes (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE crop_attribute_tags (
+    tag_id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    crop_id UUID NOT NULL REFERENCES crops(crop_id) ON DELETE CASCADE,
+    tag_name TEXT NOT NULL,
+    normalized_tag TEXT NOT NULL,
+    tag_category VARCHAR(50) NOT NULL CHECK (tag_category IN (
+        'taxonomy', 'agronomic', 'management', 'market', 'climate', 'soil',
+        'disease', 'sustainability', 'risk', 'nutritional', 'specialty'
+    )),
+    tag_type VARCHAR(20) NOT NULL DEFAULT 'auto' CHECK (tag_type IN ('auto', 'manual', 'validated')),
+    validation_status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (validation_status IN ('pending', 'validated', 'rejected')),
+    confidence_score REAL CHECK (confidence_score >= 0 AND confidence_score <= 1),
+    source VARCHAR(100),
+    usage_count INTEGER DEFAULT 0 CHECK (usage_count >= 0),
+    last_used_at TIMESTAMP WITH TIME ZONE,
+    last_generated_at TIMESTAMP WITH TIME ZONE,
+    parent_tag_id UUID REFERENCES crop_attribute_tags(tag_id) ON DELETE SET NULL,
+    validation_notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (crop_id, normalized_tag, tag_category)
+);
+
 -- ============================================================================
 -- UPDATE EXISTING CROPS TABLE TO REFERENCE NEW TAXONOMY SYSTEM
 -- ============================================================================
@@ -414,6 +437,12 @@ CREATE INDEX idx_filtering_seasons ON crop_filtering_attributes USING GIN(planti
 CREATE INDEX idx_filtering_systems ON crop_filtering_attributes USING GIN(farming_systems);
 CREATE INDEX idx_filtering_complexity ON crop_filtering_attributes(management_complexity);
 
+-- Attribute tagging indexes
+CREATE INDEX idx_crop_attribute_tags_crop ON crop_attribute_tags(crop_id);
+CREATE INDEX idx_crop_attribute_tags_category ON crop_attribute_tags(tag_category);
+CREATE INDEX idx_crop_attribute_tags_normalized ON crop_attribute_tags(normalized_tag);
+CREATE INDEX idx_crop_attribute_tags_parent ON crop_attribute_tags(parent_tag_id);
+
 -- Enhanced crops table indexes
 CREATE INDEX idx_crops_taxonomy_id ON crops(taxonomy_id);
 CREATE INDEX idx_crops_agricultural_classification ON crops(agricultural_classification_id);
@@ -468,6 +497,10 @@ CREATE TRIGGER update_crop_regional_adaptations_updated_at
 
 CREATE TRIGGER update_crop_filtering_attributes_updated_at 
     BEFORE UPDATE ON crop_filtering_attributes
+    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+CREATE TRIGGER update_crop_attribute_tags_updated_at 
+    BEFORE UPDATE ON crop_attribute_tags
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- ============================================================================

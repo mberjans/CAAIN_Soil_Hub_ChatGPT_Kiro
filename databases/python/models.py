@@ -586,6 +586,55 @@ class CropFilteringAttributes(Base):
         return f"<CropFilteringAttributes(crop_id='{self.crop_id}', complexity='{self.management_complexity}')>"
 
 
+class CropAttributeTag(Base):
+    """Attribute tags applied to crops with validation and usage tracking."""
+
+    __tablename__ = 'crop_attribute_tags'
+
+    tag_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    crop_id = Column(UUID(as_uuid=True), ForeignKey('crops.crop_id', ondelete='CASCADE'), nullable=False)
+    tag_name = Column(String(120), nullable=False)
+    normalized_tag = Column(String(120), nullable=False)
+    tag_category = Column(String(50), nullable=False)
+    tag_type = Column(String(20), nullable=False, default='auto')
+    validation_status = Column(String(20), nullable=False, default='pending')
+    confidence_score = Column(Float)
+    source = Column(String(100))
+    usage_count = Column(Integer, default=0)
+    last_used_at = Column(DateTime(timezone=True))
+    last_generated_at = Column(DateTime(timezone=True))
+    parent_tag_id = Column(UUID(as_uuid=True), ForeignKey('crop_attribute_tags.tag_id', ondelete='SET NULL'))
+    validation_notes = Column(Text)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+    crop = relationship("Crop", back_populates="attribute_tags")
+    parent_tag = relationship("CropAttributeTag", remote_side=[tag_id], backref="child_tags")
+
+    __table_args__ = (
+        CheckConstraint(
+            "tag_category IN ('taxonomy', 'agronomic', 'management', 'market', 'climate', 'soil', 'disease', 'sustainability', 'risk', 'nutritional', 'specialty')",
+            name='check_crop_tag_category'
+        ),
+        CheckConstraint(
+            "tag_type IN ('auto', 'manual', 'validated')",
+            name='check_crop_tag_type'
+        ),
+        CheckConstraint(
+            "validation_status IN ('pending', 'validated', 'rejected')",
+            name='check_crop_tag_validation_status'
+        ),
+        UniqueConstraint('crop_id', 'normalized_tag', 'tag_category', name='uq_crop_attribute_tag_unique'),
+        Index('idx_crop_attribute_tags_crop', 'crop_id'),
+        Index('idx_crop_attribute_tags_category', 'tag_category'),
+        Index('idx_crop_attribute_tags_normalized', 'normalized_tag'),
+        Index('idx_crop_attribute_tags_parent', 'parent_tag_id'),
+    )
+
+    def __repr__(self):
+        return f"<CropAttributeTag(tag='{self.tag_name}', category='{self.tag_category}', type='{self.tag_type}')>"
+
+
 class EnhancedCropVarieties(Base):
     """Enhanced crop varieties with detailed characteristics."""
     
@@ -782,6 +831,7 @@ class Crop(Base):
     soil_requirements = relationship("CropSoilRequirements", back_populates="crops")
     nutritional_profile = relationship("CropNutritionalProfiles", back_populates="crops")
     filtering_attributes = relationship("CropFilteringAttributes", back_populates="crop", uselist=False)
+    attribute_tags = relationship("CropAttributeTag", back_populates="crop", cascade="all, delete-orphan")
     
     # Relationships to varieties and history
     varieties = relationship("CropVariety", back_populates="crop", cascade="all, delete-orphan")
@@ -1378,7 +1428,7 @@ __all__ = [
     # Enhanced Crop Taxonomy Models
     'CropTaxonomicHierarchy', 'CropAgriculturalClassification', 'CropClimateAdaptations',
     'CropSoilRequirements', 'CropNutritionalProfiles', 'CropFilteringAttributes',
-    'EnhancedCropVarieties', 'CropRegionalAdaptations',
+    'CropAttributeTag', 'EnhancedCropVarieties', 'CropRegionalAdaptations',
     'FertilizerProduct', 'FertilizerApplication',
     'QuestionType', 'Recommendation',
     'EquipmentType', 'FarmEquipment',

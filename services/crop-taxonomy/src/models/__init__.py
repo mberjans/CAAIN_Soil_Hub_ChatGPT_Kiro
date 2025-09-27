@@ -12,6 +12,7 @@ from types import ModuleType
 from .crop_taxonomy_models import *
 from .crop_filtering_models import *
 from .crop_variety_models import *
+from .service_models import *
 
 __all__ = [
     # Core taxonomy models
@@ -37,6 +38,12 @@ __all__ = [
     'CropTaxonomyResponse',
     'CropClassificationRequest',
     'CropClassificationResponse',
+    'AutoTagGenerationRequest',
+    'AutoTagGenerationResponse',
+    'TagManagementRequest',
+    'TagManagementResponse',
+    'CropAttributeTagPayload',
+    'TagManagementInstruction',
     
     # Enumerations
     'CropCategory',
@@ -48,7 +55,11 @@ __all__ = [
     'DroughtTolerance',
     'ConfidenceLevel',
     'ManagementComplexity',
-    'InputRequirements'
+    'InputRequirements',
+    'TagCategory',
+    'TagType',
+    'TagValidationStatus',
+    'TagManagementAction'
 ]
 
 

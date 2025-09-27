@@ -11,6 +11,7 @@ Date: 2024
 """
 
 import logging
+from datetime import datetime
 from typing import List, Optional, Dict, Any, Tuple
 from uuid import UUID
 from sqlalchemy import create_engine, and_, or_, func, text
@@ -26,7 +27,7 @@ sys.path.append('/Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro
 from models import (
     Base, Crop, CropTaxonomicHierarchy, CropAgriculturalClassification,
     CropClimateAdaptations, CropSoilRequirements, CropNutritionalProfiles,
-    CropFilteringAttributes, EnhancedCropVarieties, CropRegionalAdaptations
+    CropFilteringAttributes, CropAttributeTag, EnhancedCropVarieties, CropRegionalAdaptations
 )
 
 # Import Pydantic models from our service
@@ -119,7 +120,8 @@ class CropTaxonomyDatabase:
                     joinedload(Crop.climate_adaptations),
                     joinedload(Crop.soil_requirements),
                     joinedload(Crop.nutritional_profile),
-                    joinedload(Crop.filtering_attributes)
+                    joinedload(Crop.filtering_attributes),
+                    joinedload(Crop.attribute_tags)
                 ).filter(Crop.crop_status == 'active')
                 
                 # Apply text search
@@ -271,7 +273,8 @@ class CropTaxonomyDatabase:
                     joinedload(Crop.climate_adaptations),
                     joinedload(Crop.soil_requirements),
                     joinedload(Crop.nutritional_profile),
-                    joinedload(Crop.filtering_attributes)
+                    joinedload(Crop.filtering_attributes),
+                    joinedload(Crop.attribute_tags)
                 ).filter(Crop.crop_id == crop_id).first()
                 
                 if crop:
@@ -492,21 +495,35 @@ class CropTaxonomyDatabase:
             'is_companion_crop': crop.is_companion_crop,
             'search_keywords': crop.search_keywords or [],
             'tags': crop.tags or [],
-            
-            # Legacy fields
-            'nitrogen_fixing': crop.nitrogen_fixing,
-            'typical_yield_range': {
+        }
+
+        attribute_tags_data = []
+        if crop.attribute_tags:
+            for tag in crop.attribute_tags:
+                attribute_tags_data.append(self._tag_to_dict(tag))
+
+        crop_dict['attribute_tags'] = attribute_tags_data
+
+        crop_dict['nitrogen_fixing'] = crop.nitrogen_fixing
+        if crop.typical_yield_range_min:
+            crop_dict['typical_yield_range'] = {
                 'min': crop.typical_yield_range_min,
                 'max': crop.typical_yield_range_max,
                 'units': crop.yield_units
-            } if crop.typical_yield_range_min else None,
-            'maturity_days_range': {
+            }
+        else:
+            crop_dict['typical_yield_range'] = None
+
+        if crop.maturity_days_min:
+            crop_dict['maturity_days_range'] = {
                 'min': crop.maturity_days_min,
                 'max': crop.maturity_days_max
-            } if crop.maturity_days_min else None,
-            'growing_degree_days': crop.growing_degree_days,
-        }
-        
+            }
+        else:
+            crop_dict['maturity_days_range'] = None
+
+        crop_dict['growing_degree_days'] = crop.growing_degree_days
+
         # Add taxonomic hierarchy if available
         if crop.taxonomic_hierarchy:
             th = crop.taxonomic_hierarchy
@@ -523,7 +540,7 @@ class CropTaxonomyDatabase:
                 'cultivar': th.cultivar,
                 'common_synonyms': th.common_synonyms or []
             }
-        
+
         # Add agricultural classification if available
         if crop.agricultural_classification:
             ac = crop.agricultural_classification
@@ -549,7 +566,7 @@ class CropTaxonomyDatabase:
                 },
                 'root_system_type': ac.root_system_type
             }
-        
+
         # Add climate adaptations if available
         if crop.climate_adaptations:
             ca = crop.climate_adaptations
@@ -656,6 +673,234 @@ class CropTaxonomyDatabase:
             }
 
         return crop_dict
+
+    def _tag_to_dict(self, tag: CropAttributeTag) -> Dict[str, Any]:
+        """Convert a CropAttributeTag model to dictionary."""
+        tag_dict = {
+            'tag_id': str(tag.tag_id),
+            'crop_id': str(tag.crop_id),
+            'tag_name': tag.tag_name,
+            'normalized_tag': tag.normalized_tag,
+            'tag_category': tag.tag_category,
+            'tag_type': tag.tag_type,
+            'validation_status': tag.validation_status,
+            'confidence_score': tag.confidence_score,
+            'source': tag.source,
+            'usage_count': tag.usage_count,
+            'last_used_at': tag.last_used_at.isoformat() if tag.last_used_at else None,
+            'last_generated_at': tag.last_generated_at.isoformat() if tag.last_generated_at else None,
+            'parent_tag_id': str(tag.parent_tag_id) if tag.parent_tag_id else None,
+            'validation_notes': tag.validation_notes,
+            'created_at': tag.created_at.isoformat() if tag.created_at else None,
+            'updated_at': tag.updated_at.isoformat() if tag.updated_at else None
+        }
+        return tag_dict
+
+    # ========================================================================
+    # ATTRIBUTE TAG OPERATIONS
+    # ========================================================================
+
+    def get_attribute_tags(self, crop_id: UUID) -> List[Dict[str, Any]]:
+        """Retrieve attribute tags for a crop."""
+        try:
+            with self.get_session() as session:
+                query = session.query(CropAttributeTag).filter(
+                    CropAttributeTag.crop_id == crop_id
+                ).order_by(
+                    CropAttributeTag.tag_category.asc(),
+                    CropAttributeTag.tag_name.asc()
+                )
+                tag_dicts: List[Dict[str, Any]] = []
+                for tag in query.all():
+                    tag_dicts.append(self._tag_to_dict(tag))
+                return tag_dicts
+        except SQLAlchemyError as exc:
+            logger.error("Error retrieving attribute tags for %s: %s", crop_id, exc)
+            raise
+
+    def bulk_upsert_attribute_tags(
+        self,
+        crop_id: UUID,
+        tag_payloads: List[Dict[str, Any]]
+    ) -> List[Dict[str, Any]]:
+        """Create or update attribute tags for a crop."""
+        if not tag_payloads:
+            return []
+
+        try:
+            with self.get_session() as session:
+                saved_tags: List[Dict[str, Any]] = []
+                for payload in tag_payloads:
+                    if payload is None:
+                        continue
+
+                    payload_category = payload.get('tag_category')
+                    if hasattr(payload_category, 'value'):
+                        payload_category = payload_category.value
+
+                    payload_type = payload.get('tag_type')
+                    if hasattr(payload_type, 'value'):
+                        payload_type = payload_type.value
+
+                    payload_status = payload.get('validation_status')
+                    if hasattr(payload_status, 'value'):
+                        payload_status = payload_status.value
+
+                    normalized_value = payload.get('normalized_tag')
+                    tag_identifier = payload.get('tag_id')
+                    existing_tag = None
+
+                    if tag_identifier:
+                        existing_tag = session.query(CropAttributeTag).filter(
+                            CropAttributeTag.tag_id == tag_identifier
+                        ).first()
+
+                    if existing_tag is None and normalized_value and payload_category:
+                        existing_tag = session.query(CropAttributeTag).filter(
+                            CropAttributeTag.crop_id == crop_id,
+                            CropAttributeTag.normalized_tag == normalized_value,
+                            CropAttributeTag.tag_category == payload_category
+                        ).first()
+
+                    if existing_tag:
+                        if payload.get('tag_name') is not None:
+                            existing_tag.tag_name = payload.get('tag_name')
+                        if normalized_value is not None:
+                            existing_tag.normalized_tag = normalized_value
+                        if payload_category is not None:
+                            existing_tag.tag_category = payload_category
+                        if payload_type is not None:
+                            existing_tag.tag_type = payload_type
+                        if payload_status is not None:
+                            existing_tag.validation_status = payload_status
+                        if 'confidence_score' in payload:
+                            existing_tag.confidence_score = payload.get('confidence_score')
+                        if 'source' in payload:
+                            existing_tag.source = payload.get('source')
+                        if 'usage_count' in payload and payload.get('usage_count') is not None:
+                            existing_count = payload.get('usage_count')
+                            existing_tag.usage_count = existing_count
+                        if payload.get('last_used_at') is not None:
+                            existing_tag.last_used_at = payload.get('last_used_at')
+                        if payload.get('last_generated_at') is not None:
+                            existing_tag.last_generated_at = payload.get('last_generated_at')
+                        if payload.get('parent_tag_id') is not None:
+                            existing_tag.parent_tag_id = payload.get('parent_tag_id')
+                        if 'validation_notes' in payload:
+                            existing_tag.validation_notes = payload.get('validation_notes')
+                        existing_tag.updated_at = datetime.utcnow()
+                        session.add(existing_tag)
+                        session.flush()
+                        saved_tags.append(self._tag_to_dict(existing_tag))
+                        continue
+
+                    new_tag = CropAttributeTag(
+                        crop_id=crop_id,
+                        tag_name=payload.get('tag_name'),
+                        normalized_tag=normalized_value,
+                        tag_category=payload_category,
+                        tag_type=payload_type or 'auto',
+                        validation_status=payload_status or 'pending',
+                        confidence_score=payload.get('confidence_score'),
+                        source=payload.get('source'),
+                        usage_count=payload.get('usage_count') or 0,
+                        last_used_at=payload.get('last_used_at'),
+                        last_generated_at=payload.get('last_generated_at'),
+                        parent_tag_id=payload.get('parent_tag_id'),
+                        validation_notes=payload.get('validation_notes')
+                    )
+                    session.add(new_tag)
+                    session.flush()
+                    saved_tags.append(self._tag_to_dict(new_tag))
+
+                return saved_tags
+
+        except IntegrityError as exc:
+            logger.error("Integrity error while upserting attribute tags for %s: %s", crop_id, exc)
+            raise
+        except SQLAlchemyError as exc:
+            logger.error("Database error while upserting attribute tags for %s: %s", crop_id, exc)
+            raise
+
+    def remove_attribute_tags(self, crop_id: UUID, tag_ids: List[UUID]) -> int:
+        """Remove attribute tags for a crop."""
+        if not tag_ids:
+            return 0
+
+        try:
+            with self.get_session() as session:
+                removed_count = 0
+                for tag_id in tag_ids:
+                    tag = session.query(CropAttributeTag).filter(
+                        CropAttributeTag.crop_id == crop_id,
+                        CropAttributeTag.tag_id == tag_id
+                    ).first()
+                    if tag is None:
+                        continue
+                    session.delete(tag)
+                    removed_count += 1
+                return removed_count
+        except SQLAlchemyError as exc:
+            logger.error("Error removing attribute tags for %s: %s", crop_id, exc)
+            raise
+
+    def update_attribute_tag_validation(
+        self,
+        tag_id: UUID,
+        validation_status: str,
+        notes: Optional[str] = None,
+        usage_increment: int = 0
+    ) -> Optional[Dict[str, Any]]:
+        """Update validation status and optionally usage metrics for a tag."""
+        try:
+            with self.get_session() as session:
+                tag = session.query(CropAttributeTag).filter(
+                    CropAttributeTag.tag_id == tag_id
+                ).first()
+                if tag is None:
+                    return None
+
+                tag.validation_status = validation_status
+                if notes is not None:
+                    tag.validation_notes = notes
+                if usage_increment and usage_increment > 0:
+                    if tag.usage_count is None:
+                        tag.usage_count = usage_increment
+                    else:
+                        tag.usage_count = tag.usage_count + usage_increment
+                    tag.last_used_at = datetime.utcnow()
+                tag.updated_at = datetime.utcnow()
+                session.add(tag)
+                session.flush()
+                return self._tag_to_dict(tag)
+        except SQLAlchemyError as exc:
+            logger.error("Error updating attribute tag validation for %s: %s", tag_id, exc)
+            raise
+
+    def increment_tag_usage(self, tag_ids: List[UUID]) -> None:
+        """Increment usage counters for specified tags."""
+        if not tag_ids:
+            return
+
+        try:
+            with self.get_session() as session:
+                now = datetime.utcnow()
+                for tag_id in tag_ids:
+                    tag = session.query(CropAttributeTag).filter(
+                        CropAttributeTag.tag_id == tag_id
+                    ).first()
+                    if tag is None:
+                        continue
+                    if tag.usage_count is None:
+                        tag.usage_count = 1
+                    else:
+                        tag.usage_count = tag.usage_count + 1
+                    tag.last_used_at = now
+                    tag.updated_at = now
+                    session.add(tag)
+        except SQLAlchemyError as exc:
+            logger.error("Error incrementing tag usage: %s", exc)
+            raise
     
     def _variety_to_dict(self, variety: EnhancedCropVarieties) -> Dict[str, Any]:
         """Convert SQLAlchemy EnhancedCropVarieties model to dictionary."""

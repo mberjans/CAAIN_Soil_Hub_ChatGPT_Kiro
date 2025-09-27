@@ -10,11 +10,16 @@ from uuid import UUID
 
 try:
     from ..services.crop_taxonomy_service import crop_taxonomy_service
+    from ..services.crop_attribute_service import crop_attribute_tagging_service
     from ..models.service_models import (
         TaxonomicClassificationRequest,
         TaxonomicClassificationResponse,
         CropValidationRequest,
-        CropValidationResponse
+        CropValidationResponse,
+        AutoTagGenerationRequest,
+        AutoTagGenerationResponse,
+        TagManagementRequest,
+        TagManagementResponse
     )
     from ..models.crop_taxonomy_models import (
         BulkCropDataRequest,
@@ -23,11 +28,16 @@ try:
     )
 except ImportError:
     from services.crop_taxonomy_service import crop_taxonomy_service
+    from services.crop_attribute_service import crop_attribute_tagging_service
     from models.service_models import (
         TaxonomicClassificationRequest,
         TaxonomicClassificationResponse,
         CropValidationRequest,
-        CropValidationResponse
+        CropValidationResponse,
+        AutoTagGenerationRequest,
+        AutoTagGenerationResponse,
+        TagManagementRequest,
+        TagManagementResponse
     )
     from models.crop_taxonomy_models import (
         BulkCropDataRequest,
@@ -98,6 +108,34 @@ async def process_bulk_crop_data(
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Bulk processing error: {str(e)}")
+
+
+@router.post("/tags/auto-generate", response_model=AutoTagGenerationResponse)
+async def auto_generate_crop_tags(
+    request: AutoTagGenerationRequest
+):
+    """Automatically generate crop attribute tags."""
+    if crop_attribute_tagging_service is None:
+        raise HTTPException(status_code=503, detail="Attribute tagging service unavailable")
+    try:
+        response = await crop_attribute_tagging_service.auto_generate_tags(request)
+        return response
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Auto-tagging error: {str(exc)}")
+
+
+@router.put("/tags/manage", response_model=TagManagementResponse)
+async def manage_crop_tags(
+    request: TagManagementRequest
+):
+    """Manage crop attribute tags (add, update, remove, validate)."""
+    if crop_attribute_tagging_service is None:
+        raise HTTPException(status_code=503, detail="Attribute tagging service unavailable")
+    try:
+        response = await crop_attribute_tagging_service.manage_tags(request)
+        return response
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Tag management error: {str(exc)}")
 
 
 @router.get("/crop/{crop_id}", response_model=ComprehensiveCropData)
