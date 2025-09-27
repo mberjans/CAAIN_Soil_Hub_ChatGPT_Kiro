@@ -859,7 +859,12 @@ class CropFilteringManager {
         
         // Add preset management buttons if they exist
         this.addPresetManagement();
+        
+        // Add quick filter button event listeners
+        this.addQuickFilterEventListeners();
     }
+    
+    addQuickFilterEventListeners() {\n        // Add event listeners to quick filter buttons if they exist\n        document.querySelectorAll('[data-quick-filter]').forEach(btn => {\n            btn.addEventListener('click', (event) => {\n                const filterType = event.target.getAttribute('data-quick-filter') || \n                                  event.target.closest('[data-quick-filter]').getAttribute('data-quick-filter');\n                this.applyQuickFilter(filterType);\n            });\n        });\n        \n        // Add event listeners for smart action buttons\n        const voiceSearchBtn = document.getElementById('voice-search-btn');\n        if (voiceSearchBtn) {\n            voiceSearchBtn.addEventListener('click', this.handleVoiceSearch.bind(this));\n        }\n        \n        const currentLocationBtn = document.getElementById('current-location-btn');\n        if (currentLocationBtn) {\n            currentLocationBtn.addEventListener('click', this.handleCurrentLocation.bind(this));\n        }\n        \n        const cameraScanBtn = document.getElementById('camera-scan-btn');\n        if (cameraScanBtn) {\n            cameraScanBtn.addEventListener('click', this.handleCameraScan.bind(this));\n        }\n        \n        const weatherIntegrationBtn = document.getElementById('weather-integration-btn');\n        if (weatherIntegrationBtn) {\n            weatherIntegrationBtn.addEventListener('click', this.handleWeatherIntegration.bind(this));\n        }\n    }\n    \n    // Handle voice search functionality\n    handleVoiceSearch() {\n        if ('speechRecognition' in window || 'webkitSpeechRecognition' in window) {\n            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;\n            const recognition = new SpeechRecognition();\n            \n            recognition.continuous = false;\n            recognition.interimResults = false;\n            recognition.lang = 'en-US';\n            \n            recognition.start();\n            \n            recognition.onresult = (event) => {\n                const transcript = event.results[0][0].transcript.toLowerCase();\n                console.log('Voice command:', transcript);\n                \n                // Process voice command to apply filters\n                this.processVoiceCommand(transcript);\n            };\n            \n            recognition.onerror = (event) => {\n                console.error('Voice recognition error:', event.error);\n                alert('Could not recognize your voice command. Please try typing your filters instead.');\n            };\n        } else {\n            // Fallback for browsers that don't support speech recognition\n            const voiceCommand = prompt('Enter your voice command (e.g., \"drought tolerant crops\", \"low maintenance crops\"):');\n            if (voiceCommand) {\n                this.processVoiceCommand(voiceCommand.toLowerCase());\n            }\n        }\n    }\n    \n    // Process voice commands to apply corresponding filters\n    processVoiceCommand(command) {\n        // Simple keyword matching for demonstration purposes\n        if (command.includes('drought') || command.includes('dry')) {\n            this.applyQuickFilter('drought');\n        } else if (command.includes('nitrogen') || command.includes('fixing')) {\n            this.applyQuickFilter('nitrogen');\n        } else if (command.includes('low') && command.includes('maint')) {\n            this.applyQuickFilter('low-maintenance');\n        } else if (command.includes('high') && command.includes('yield')) {\n            this.applyQuickFilter('high-yield');\n        } else if (command.includes('organic')) {\n            this.applyQuickFilter('organic');\n        } else if (command.includes('cover') && command.includes('crop')) {\n            this.applyQuickFilter('cover-crop');\n        } else if (command.includes('early')) {\n            this.applyQuickFilter('early-season');\n        } else if (command.includes('late')) {\n            this.applyQuickFilter('late-season');\n        } else if (command.includes('disease')) {\n            this.applyQuickFilter('disease-resistant');\n        } else if (command.includes('pest')) {\n            this.applyQuickFilter('pest-resistant');\n        } else {\n            alert(`Unrecognized voice command: ${command}. Try phrases like \"drought tolerant crops\" or \"low maintenance\".`);\n        }\n    }\n    \n    // Handle getting current location to set climate filters\n    handleCurrentLocation() {\n        if (navigator.geolocation) {\n            navigator.geolocation.getCurrentPosition(\n                (position) => {\n                    const { latitude, longitude } = position.coords;\n                    \n                    // In a real app, we would call an API to get climate zone for these coordinates\n                    // For this demo, we'll just show an alert\n                    alert(`Location detected: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}\\nIn a real app, this would auto-set climate filters based on your location.`);\n                    \n                    // Example: Set climate zone based on location (would require API in real app)\n                    // this.setClimateZoneFromLocation(latitude, longitude);\n                },\n                (error) => {\n                    console.error('Error getting location:', error);\n                    alert('Could not get your location. Please make sure location services are enabled.');\n                }\n            );\n        } else {\n            alert('Geolocation is not supported by your browser. Please enable location services.');\n        }\n    }\n    \n    // Handle camera scan functionality (placeholder)\n    handleCameraScan() {\n        alert('Camera scan functionality would open device camera to scan QR codes or barcodes for crop information. This would require camera API access in a real implementation.');\n    }\n    \n    // Handle weather-based filters (placeholder)\n    handleWeatherIntegration() {\n        alert('Weather-based filtering would integrate with current weather conditions to suggest appropriate crops. In a real app, this would connect to weather APIs.');\n    }\n
     
     addFilterChangeListeners() {
         // Add change listeners to all filter elements to trigger auto-save
@@ -1445,6 +1450,10 @@ class CropFilteringManager {
             return;
         }
         
+        // Update summary cards
+        this.updateSummaryCards();
+        
+        // Render all charts
         this.renderFilterImpactChart();
         this.renderCategoryDistributionChart();
         this.renderDroughtToleranceChart();
@@ -1452,6 +1461,8 @@ class CropFilteringManager {
         this.renderCostAnalysisChart();
         this.renderGeographicDistributionChart();
         this.renderSeasonalTrendChart();
+        this.renderSuitabilityDistributionChart();
+        this.renderManagementComplexityChart();
     }
 
     renderFilterImpactChart() {
@@ -2351,6 +2362,311 @@ class CropFilteringManager {
                 }
             }
         });
+    }
+
+    renderSuitabilityDistributionChart() {
+        const ctx = document.getElementById('suitability-distribution-chart');
+        if (!ctx) return;
+
+        // Destroy existing chart if it exists
+        if (this.charts.suitabilityDistributionChart) {
+            this.charts.suitabilityDistributionChart.destroy();
+        }
+
+        // Create bins for suitability scores (0-100% in 20% increments)
+        const bins = [
+            { label: '0-20%', count: 0 },
+            { label: '21-40%', count: 0 },
+            { label: '41-60%', count: 0 },
+            { label: '61-80%', count: 0 },
+            { label: '81-100%', count: 0 }
+        ];
+
+        this.currentResults.forEach(crop => {
+            const score = crop.suitability_score * 100;
+            if (score <= 20) bins[0].count++;
+            else if (score <= 40) bins[1].count++;
+            else if (score <= 60) bins[2].count++;
+            else if (score <= 80) bins[3].count++;
+            else bins[4].count++;
+        });
+
+        const labels = bins.map(bin => bin.label);
+        const data = bins.map(bin => bin.count);
+
+        this.charts.suitabilityDistributionChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Number of Crops',
+                    data: data,
+                    backgroundColor: [
+                        'rgba(220, 53, 69, 0.6)', // Red for low suitability
+                        'rgba(255, 193, 7, 0.6)',  // Yellow for low-medium
+                        'rgba(255, 193, 7, 0.6)',  // Yellow for medium
+                        'rgba(40, 167, 69, 0.6)',   // Green for high-medium
+                        'rgba(40, 167, 69, 0.6)'    // Green for high
+                    ],
+                    borderColor: [
+                        'rgba(220, 53, 69, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(255, 193, 7, 1)',
+                        'rgba(40, 167, 69, 1)',
+                        'rgba(40, 167, 69, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Suitability Score Distribution'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Number of Crops'
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Apply quick filter based on type
+    applyQuickFilter(filterType) {
+        // Reset all filter UI elements first
+        this.clearAllQuickFilters();
+        
+        switch(filterType) {
+            case 'drought':
+                // Apply high drought tolerance
+                document.querySelectorAll('#drought-filters input[type="checkbox"]').forEach(checkbox => {
+                    if (checkbox.value === 'high' || checkbox.value === 'very_high') {
+                        checkbox.checked = true;
+                    }
+                });
+                break;
+                
+            case 'nitrogen':
+                // Select legume crops which are nitrogen fixing
+                const legumeOption = Array.from(document.getElementById('crop-categories').options)
+                    .find(option => option.value === 'legume_crops');
+                if (legumeOption) legumeOption.selected = true;
+                break;
+                
+            case 'low-maintenance':
+                // Select low management complexity
+                const lowComplexityRadio = document.querySelector('input[name="management-complexity"][value="low"]');
+                if (lowComplexityRadio) lowComplexityRadio.checked = true;
+                break;
+                
+            case 'high-yield':
+                // This would typically involve more complex logic in a real app
+                // For now, we'll just ensure grain and oilseed crops are selected
+                const categorySelect = document.getElementById('crop-categories');
+                ['grain_crops', 'oilseed_crops'].forEach(cat => {
+                    const option = Array.from(categorySelect.options).find(opt => opt.value === cat);
+                    if (option) option.selected = true;
+                });
+                break;
+                
+            case 'organic':
+                // Select crops suitable for organic farming
+                const organicCheck = document.getElementById('market-organic');
+                if (organicCheck) organicCheck.checked = true;
+                break;
+                
+            case 'early-season':
+                // Set shorter growing season
+                document.getElementById('growing-season-min').value = 60;
+                document.getElementById('growing-season-max').value = 100;
+                this.updateSliderValue({target: document.getElementById('growing-season-min')});
+                this.updateSliderValue({target: document.getElementById('growing-season-max')});
+                break;
+                
+            case 'late-season':
+                // Set longer growing season
+                document.getElementById('growing-season-min').value = 120;
+                document.getElementById('growing-season-max').value = 180;
+                this.updateSliderValue({target: document.getElementById('growing-season-min')});
+                this.updateSliderValue({target: document.getElementById('growing-season-max')});
+                break;
+                
+            case 'disease-resistant':
+                // Select crops with disease resistance
+                const diseaseResOption = Array.from(document.getElementById('pest-resistance').options)
+                    .find(option => option.value === 'disease');
+                if (diseaseResOption) diseaseResOption.selected = true;
+                break;
+                
+            case 'heat-tolerant':
+                // Apply heat tolerance (similar to drought)
+                document.querySelectorAll('#drought-filters input[type="checkbox"]').forEach(checkbox => {
+                    if (checkbox.value === 'high' || checkbox.value === 'very_high') {
+                        checkbox.checked = true;
+                    }
+                });
+                break;
+                
+            case 'water-efficient':
+                // Similar to drought tolerance
+                document.querySelectorAll('#drought-filters input[type="checkbox"]').forEach(checkbox => {
+                    if (checkbox.value === 'high' || checkbox.value === 'very_high') {
+                        checkbox.checked = true;
+                    }
+                });
+                // Also prefer crops with lower water requirements
+                break;
+                
+            case 'pest-resistant':
+                // Select crops with pest resistance
+                const pestResOption = Array.from(document.getElementById('pest-resistance').options)
+                    .find(option => option.value === 'insect');
+                if (pestResOption) pestResOption.selected = true;
+                break;
+                
+            case 'cover-crop':
+                // Focus on cover crops
+                const coverCropOption = Array.from(document.getElementById('crop-categories').options)
+                    .find(option => option.value === 'cover_crops');
+                if (coverCropOption) coverCropOption.selected = true;
+                break;
+                
+            case 'rotation-friendly':
+                // Select crops that are good for rotation
+                const rotationOptions = Array.from(document.getElementById('crop-categories').options)
+                    .filter(option => ['legume_crops', 'cover_crops'].includes(option.value));
+                rotationOptions.forEach(option => option.selected = true);
+                break;
+                
+            default:
+                console.warn(`Unknown quick filter type: ${filterType}`);
+        }
+        
+        // Update filters in state manager
+        const newFilters = this.getFiltersFromUI();
+        this.filterStateManager.currentFilters = newFilters;
+        
+        // Add to filter history for undo/redo functionality
+        this.filterStateManager.addToHistory();
+        this.updateHistoryButtons();
+        
+        // Apply the filters
+        this.applyFilters();
+    }
+    
+    // Clear all quick filter selections
+    clearAllQuickFilters() {
+        // Reset drought tolerance checkboxes
+        document.querySelectorAll('#drought-filters input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        
+        // Reset management complexity radios
+        document.querySelectorAll('input[name="management-complexity"]').forEach(radio => {
+            radio.checked = false;
+        });
+        
+        // Reset market class checkboxes
+        document.querySelectorAll('#market-filters input[type="checkbox"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
+
+    renderManagementComplexityChart() {
+        const ctx = document.getElementById('management-complexity-chart');
+        if (!ctx) return;
+
+        // Destroy existing chart if it exists
+        if (this.charts.managementComplexityChart) {
+            this.charts.managementComplexityChart.destroy();
+        }
+
+        // Count management complexity levels
+        const complexityCounts = {
+            low: 0,
+            moderate: 0,
+            high: 0
+        };
+
+        this.currentResults.forEach(crop => {
+            if (crop.management_complexity && complexityCounts[crop.management_complexity] !== undefined) {
+                complexityCounts[crop.management_complexity]++;
+            }
+        });
+
+        const labels = Object.keys(complexityCounts);
+        const data = Object.values(complexityCounts);
+
+        this.charts.managementComplexityChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: labels.map(label => label.replace('_', ' ')),
+                datasets: [{
+                    label: 'Management Complexity',
+                    data: data,
+                    backgroundColor: [
+                        'rgba(40, 167, 69, 0.8)',   // Green for low complexity
+                        'rgba(255, 193, 7, 0.8)',   // Yellow for moderate
+                        'rgba(220, 53, 69, 0.8)'    // Red for high
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Management Complexity Distribution'
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+    }
+
+    updateSummaryCards() {
+        // Update total results count
+        const totalResultsCount = document.getElementById('total-results-count');
+        if (totalResultsCount) {
+            totalResultsCount.textContent = this.currentResults.length;
+        }
+
+        // Update active filters count
+        const activeFiltersCount = document.getElementById('active-filters-count');
+        if (activeFiltersCount) {
+            const filters = this.filterStateManager.getFilters();
+            activeFiltersCount.textContent = Object.keys(filters).length;
+        }
+
+        // Calculate and update dataset reduction percentage
+        // Assuming original dataset size is 1000 for this example (this should come from your data source)
+        const originalDatasetSize = 1000; // This should be dynamic based on your actual data
+        const reductionPercentage = document.getElementById('reduction-percentage');
+        if (reductionPercentage) {
+            const reduction = originalDatasetSize - this.currentResults.length;
+            const reductionPercent = ((reduction / originalDatasetSize) * 100).toFixed(2);
+            reductionPercentage.textContent = `${reductionPercent}%`;
+        }
+
+        // Calculate and update average suitability score
+        const avgSuitabilityScore = document.getElementById('avg-suitability-score');
+        if (avgSuitabilityScore && this.currentResults.length > 0) {
+            const totalScore = this.currentResults.reduce((sum, crop) => sum + crop.suitability_score, 0);
+            const average = (totalScore / this.currentResults.length).toFixed(2);
+            avgSuitabilityScore.textContent = average;
+        }
     }
 }
 
