@@ -530,6 +530,31 @@ class SmartCropRecommendation(BaseModel):
     backup_options: List[str] = Field(default_factory=list, description="Backup crop options")
 
 
+# Filter Preset Models
+class FilterPresetSummary(BaseModel):
+    """Summary information for a filter preset."""
+    
+    key: str = Field(..., description="Unique identifier for the preset")
+    name: str = Field(..., description="Display name for the preset")
+    description: str = Field(..., description="Description of what the preset does")
+    rationale: List[str] = Field(default_factory=list, description="Rationale for the preset")
+
+
+class FilterPreset(BaseModel):
+    """Detailed filter preset for saving and sharing."""
+    
+    preset_id: Optional[UUID] = Field(None, description="Unique identifier for the preset")
+    user_id: Optional[UUID] = Field(None, description="User who created the preset")
+    name: str = Field(..., description="Display name for the preset")
+    description: Optional[str] = Field(None, description="Detailed description of the preset")
+    filter_config: TaxonomyFilterCriteria = Field(..., description="The filter configuration")
+    is_public: bool = Field(default=False, description="Whether the preset is publicly visible")
+    tags: List[str] = Field(default_factory=list, description="Tags for categorizing the preset")
+    usage_count: int = Field(default=0, description="Number of times the preset has been used")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+    updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
+
+
 # Resolve forward references now that dependent models are loaded
 try:  # pragma: no cover - defensive guard during import cycles
     ComprehensiveCropData.model_rebuild(

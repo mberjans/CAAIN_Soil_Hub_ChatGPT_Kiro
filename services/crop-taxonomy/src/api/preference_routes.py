@@ -7,6 +7,7 @@ Includes comprehensive farmer preference storage with hierarchical preferences a
 
 from typing import Optional, List, Dict, Any
 from uuid import UUID
+from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, Query, Body
 from pydantic import BaseModel
@@ -14,6 +15,7 @@ from pydantic import BaseModel
 try:  # pragma: no cover - support package imports
     from ..services import CropPreferenceService, crop_preference_service
     from ..services.preference_manager import FarmerPreferenceManager, farmer_preference_manager, PreferenceCategory
+    from ..services.filter_preset_service import FilterPresetService, filter_preset_service
     from ..models.preference_models import (
         PreferenceProfileResponse,
         PreferenceUpdateRequest,
@@ -21,9 +23,12 @@ try:  # pragma: no cover - support package imports
         PreferenceType,
         PreferenceProfile
     )
+    from ..models.crop_filtering_models import FilterPreset, FilterPresetSummary, TaxonomyFilterCriteria
+    from ..services.filter_engine import filter_combination_engine
 except ImportError:  # pragma: no cover
     from services import CropPreferenceService, crop_preference_service
     from services.preference_manager import FarmerPreferenceManager, farmer_preference_manager, PreferenceCategory
+    from services.filter_preset_service import FilterPresetService, filter_preset_service
     from models.preference_models import (
         PreferenceProfileResponse,
         PreferenceUpdateRequest,
@@ -31,6 +36,8 @@ except ImportError:  # pragma: no cover
         PreferenceType,
         PreferenceProfile
     )
+    from models.crop_filtering_models import FilterPreset, FilterPresetSummary, TaxonomyFilterCriteria
+    from services.filter_engine import filter_combination_engine
 
 router = APIRouter(prefix="/crop-taxonomy", tags=["preferences"])
 
@@ -267,3 +274,244 @@ async def get_preference_categories():
             "economic_factors": "Economic sensitivity and ROI preferences"
         }
     }
+
+
+# Filter Preset API Endpoints
+
+class FilterPresetRequest(BaseModel):
+    """Request model for creating a filter preset."""
+    name: str = Field(..., description="Display name for the preset")
+    description: Optional[str] = Field(None, description="Detailed description of the preset")
+    filter_config: TaxonomyFilterCriteria = Field(..., description="The filter configuration to save")
+    is_public: bool = Field(default=False, description="Whether the preset is publicly visible")
+    tags: List[str] = Field(default_factory=list, description="Tags for categorizing the preset")
+
+
+class FilterPresetResponse(BaseModel):
+    """Response model for filter preset operations."""
+    preset_id: UUID
+    name: str
+    description: Optional[str]
+    user_id: Optional[UUID]
+    filter_config: TaxonomyFilterCriteria
+    is_public: bool
+    tags: List[str]
+    usage_count: int
+    created_at: str
+    updated_at: str
+
+
+class FilterPresetListResponse(BaseModel):
+    """Response model for filter preset list operations."""
+    presets: List[FilterPresetResponse]
+    total_count: int
+    filtered_by_user: Optional[bool] = None
+    filtered_by_public: Optional[bool] = None
+
+
+def _get_filter_preset_service() -> FilterPresetService:
+    return filter_preset_service
+
+
+@router.post("/preferences/filter-presets", response_model=FilterPresetResponse)
+async def save_filter_preset(
+    request: FilterPresetRequest,
+    user_id: Optional[UUID] = Query(None, description="User ID for personal presets")
+):
+    """Save a filter preset for later use."""
+    service = _get_filter_preset_service()
+    try:
+        preset = await service.save_preset(
+            name=request.name,
+            description=request.description,
+            filter_config=request.filter_config,
+            user_id=user_id,
+            is_public=request.is_public,
+            tags=request.tags
+        )
+        
+        return FilterPresetResponse(
+            preset_id=preset.preset_id,
+            name=preset.name,
+            description=preset.description,
+            user_id=preset.user_id,
+            filter_config=preset.filter_config,
+            is_public=preset.is_public,
+            tags=preset.tags,
+            usage_count=preset.usage_count,
+            created_at=preset.created_at.isoformat(),
+            updated_at=preset.updated_at.isoformat()
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save filter preset: {str(e)}")
+
+
+@router.get("/preferences/filter-presets", response_model=FilterPresetListResponse)
+async def get_saved_filter_presets(
+    user_id: Optional[UUID] = Query(None, description="Filter by user ID"),
+    is_public: Optional[bool] = Query(None, description="Filter by public/private status"),
+    tags: Optional[str] = Query(None, description="Filter by tags (comma-separated)"),
+    limit: int = Query(50, ge=1, le=100, description="Maximum number of presets to return"),
+    offset: int = Query(0, ge=0, description="Offset for pagination")
+):
+    """Get saved filter presets with optional filtering."""
+    service = _get_filter_preset_service()
+    try:
+        # Process tags parameter if provided
+        tag_list = None
+        if tags:
+            tag_list = [tag.strip() for tag in tags.split(',')]
+        
+        presets = await service.get_presets(
+            user_id=user_id,
+            is_public=is_public,
+            tags=tag_list,
+            limit=limit,
+            offset=offset
+        )
+        
+        # Convert to response format
+        preset_responses = []
+        for preset in presets:
+            preset_responses.append(FilterPresetResponse(
+                preset_id=preset.preset_id,
+                name=preset.name,
+                description=preset.description,
+                user_id=preset.user_id,
+                filter_config=preset.filter_config,
+                is_public=preset.is_public,
+                tags=preset.tags,
+                usage_count=preset.usage_count,
+                created_at=preset.created_at.isoformat(),
+                updated_at=preset.updated_at.isoformat()
+            ))
+        
+        # Count total presets that match the filter criteria (without pagination)
+        all_matching_presets = await service.get_presets(
+            user_id=user_id,
+            is_public=is_public,
+            tags=tag_list,
+            limit=10000,  # Use a large limit to get all
+            offset=0
+        )
+        
+        return FilterPresetListResponse(
+            presets=preset_responses,
+            total_count=len(all_matching_presets),
+            filtered_by_user=(user_id is not None),
+            filtered_by_public=is_public
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve filter presets: {str(e)}")
+
+
+@router.get("/preferences/filter-presets/{preset_id}", response_model=FilterPresetResponse)
+async def get_filter_preset_by_id(preset_id: UUID):
+    """Get a specific filter preset by ID."""
+    service = _get_filter_preset_service()
+    try:
+        preset = await service.get_preset_by_id(preset_id)
+        if not preset:
+            raise HTTPException(status_code=404, detail="Filter preset not found")
+        
+        # Increment usage count
+        await service.increment_usage_count(preset_id)
+        
+        return FilterPresetResponse(
+            preset_id=preset.preset_id,
+            name=preset.name,
+            description=preset.description,
+            user_id=preset.user_id,
+            filter_config=preset.filter_config,
+            is_public=preset.is_public,
+            tags=preset.tags,
+            usage_count=preset.usage_count,
+            created_at=preset.created_at.isoformat(),
+            updated_at=preset.updated_at.isoformat()
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve filter preset: {str(e)}")
+
+
+@router.put("/preferences/filter-presets/{preset_id}", response_model=FilterPresetResponse)
+async def update_filter_preset(
+    preset_id: UUID,
+    request: FilterPresetRequest,
+    user_id: Optional[UUID] = Query(None, description="User ID for authorization check")
+):
+    """Update an existing filter preset."""
+    service = _get_filter_preset_service()
+    try:
+        updated_preset = await service.update_preset(
+            preset_id=preset_id,
+            name=request.name,
+            description=request.description,
+            filter_config=request.filter_config,
+            is_public=request.is_public,
+            tags=request.tags,
+            user_id=user_id
+        )
+        
+        if not updated_preset:
+            raise HTTPException(status_code=404, detail="Filter preset not found")
+        
+        return FilterPresetResponse(
+            preset_id=updated_preset.preset_id,
+            name=updated_preset.name,
+            description=updated_preset.description,
+            user_id=updated_preset.user_id,
+            filter_config=updated_preset.filter_config,
+            is_public=updated_preset.is_public,
+            tags=updated_preset.tags,
+            usage_count=updated_preset.usage_count,
+            created_at=updated_preset.created_at.isoformat(),
+            updated_at=updated_preset.updated_at.isoformat()
+        )
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update filter preset: {str(e)}")
+
+
+@router.delete("/preferences/filter-presets/{preset_id}")
+async def delete_filter_preset(
+    preset_id: UUID,
+    user_id: Optional[UUID] = Query(None, description="User ID for authorization check")
+):
+    """Delete a filter preset."""
+    service = _get_filter_preset_service()
+    try:
+        success = await service.delete_preset(preset_id, user_id)
+        if not success:
+            raise HTTPException(status_code=404, detail="Filter preset not found")
+        
+        return {"message": "Filter preset deleted successfully", "preset_id": str(preset_id)}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete filter preset: {str(e)}")
+
+
+@router.get("/preferences/filter-presets/preset-summaries")
+async def get_filter_preset_summaries():
+    """Get summary information for all available filter presets."""
+    service = _get_filter_preset_service()
+    try:
+        # Get all presets (with a reasonable limit)
+        all_presets = await service.get_presets(limit=100, offset=0)
+        
+        summaries = []
+        for preset in all_presets:
+            summary = FilterPresetSummary(
+                key=str(preset.preset_id),
+                name=preset.name,
+                description=preset.description or f"Filter preset: {preset.name}",
+                rationale=["Saved filter configuration", "Reusable for similar searches"]
+            )
+            summaries.append(summary)
+        
+        return {"presets": summaries, "total_count": len(summaries)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to retrieve filter preset summaries: {str(e)}")

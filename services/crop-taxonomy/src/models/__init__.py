@@ -32,6 +32,7 @@ __all__ = [
     'FilterCombinationRequest',
     'FilterCombinationResponse',
     'FilterPresetSummary',
+    'FilterPreset',
     'FilterSuggestionRequest',
     'FilterSuggestionResponse',
     'FilterSuggestion',
