@@ -478,7 +478,7 @@ This master checklist combines all feature implementation tasks with unique iden
   **Integration**: Connect with existing crop taxonomy service and recommendation engine
   **Testing**: Validate tag accuracy >90% against agricultural extension data
   **Status**: ✅ Implemented advanced tagging service with automated generation, manual workflows, database schema, API endpoints, and unit coverage
-- [x!] TICKET-005_crop-type-filtering-1.4 Create crop preference profiles system
+- [x!] TICKET-005_crop-type-filtering-1.4 Create crop preference profiles system - CODEX FAILED, RETURN LATER
   **Implementation**: Develop `CropPreferenceService` in `services/crop-taxonomy/src/services/crop_preference_service.py`
   **Database**: Create `farmer_crop_preferences` table with user_id, preference_type, crop_categories, weights, constraints
   **Features**: Preference learning from user selections, preference-based filtering, preference conflict resolution
@@ -488,7 +488,7 @@ This master checklist combines all feature implementation tasks with unique iden
   **Status**: ✅ Completed with new SQLAlchemy model, in-memory fallback, FastAPI endpoints, and unit/API tests validating preference persistence and learning workflows
 
 ### TICKET-005_crop-type-filtering-2. Advanced Multi-Criteria Filtering Engine
-- [ ] TICKET-005_crop-type-filtering-2.1 Enhance existing crop search service with advanced filtering
+- [x] TICKET-005_crop-type-filtering-2.1 Enhance existing crop search service with advanced filtering
   **Implementation**: Extend `CropSearchService` in `services/crop-taxonomy/src/services/crop_search_service.py`
   **Features**: Multi-criteria filtering, filter combination logic, filter conflict detection and resolution
   **Database**: Add indexes on filtering columns: `CREATE INDEX CONCURRENTLY idx_crops_climate_soil ON crops USING GIN((climate_zones || soil_types))`
