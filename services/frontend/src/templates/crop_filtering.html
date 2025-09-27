@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Filtering - CAAIN Soil Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='css/agricultural.css') }}">
+    <style>
+        .filter-section {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: #f8f9fa;
+        }
+        
+        .filter-section.active {
+            border-color: #0d6efd;
+            background-color: #e7f1ff;
+        }
+        
+        .filter-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .filter-header {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 7px 7px 0 0;
+            cursor: pointer;
+        }
+        
+        .filter-content {
+            padding: 15px;
+        }
+        
+        .result-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 15px;
+        }
+        
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .result-score {
+            background-color: #0d6efd;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+        
+        .tag {
+            display: inline-block;
+            background-color: #e9ecef;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin: 2px;
+        }
+        
+        .range-slider {
+            width: 100%;
+            margin: 10px 0;
+        }
+        
+        .filter-badge {
+            margin: 3px;
+            font-size: 0.8em;
+        }
+        
+        .applied-filters-container {
+            margin-bottom: 20px;
+        }
+        
+        .filter-preview {
+            display: inline-block;
+            background-color: #e7f1ff;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 3px;
+            border: 1px solid #0d6efd;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-seedling"></i> CAAIN Soil Hub
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-link" href="{{ url_for('crop_selection') }}">Crop Selection</a>
+                <a class="nav-link" href="{{ url_for('soil_fertility') }}">Soil Fertility</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-md-4">
+                <h3><i class="fas fa-filter"></i> Crop Filters</h3>
+                
+                <!-- Applied Filters Display -->
+                <div class="applied-filters-container bg-light p-3 rounded mb-3">
+                    <h6><i class="fas fa-check-circle"></i> Applied Filters</h6>
+                    <div id="applied-filters-list">
+                        <!-- Applied filters will be displayed here -->
+                    </div>
+                    <button id="clear-all-filters" class="btn btn-sm btn-outline-danger mt-2">
+                        <i class="fas fa-times"></i> Clear All
+                    </button>
+                </div>
+                
+                <!-- Climate Filters -->
+                <div class="filter-card">
+                    <div class="filter-header" onclick="toggleFilterSection('climate-filters')">
+                        <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-temperature-high"></i> Climate & Zone</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </h5>
+                    </div>
+                    <div id="climate-filters" class="filter-content" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">USDA Hardiness Zones</label>
+                            <select multiple class="form-control" id="climate-zones">
+                                <option value="1a">Zone 1a (-60°F to -55°F)</option>
+                                <option value="1b">Zone 1b (-55°F to -50°F)</option>
+                                <option value="2a">Zone 2a (-50°F to -45°F)</option>
+                                <option value="2b">Zone 2b (-45°F to -40°F)</option>
+                                <option value="3a">Zone 3a (-40°F to -35°F)</option>
+                                <option value="3b">Zone 3b (-35°F to -30°F)</option>
+                                <option value="4a">Zone 4a (-30°F to -25°F)</option>
+                                <option value="4b">Zone 4b (-25°F to -20°F)</option>
+                                <option value="5a">Zone 5a (-20°F to -15°F)</option>
+                                <option value="5b">Zone 5b (-15°F to -10°F)</option>
+                                <option value="6a">Zone 6a (-10°F to -5°F)</option>
+                                <option value="6b">Zone 6b (-5°F to 0°F)</option>
+                                <option value="7a">Zone 7a (0°F to 5°F)</option>
+                                <option value="7b">Zone 7b (5°F to 10°F)</option>
+                                <option value="8a">Zone 8a (10°F to 15°F)</option>
+                                <option value="8b">Zone 8b (15°F to 20°F)</option>
+                                <option value="9a">Zone 9a (20°F to 25°F)</option>
+                                <option value="9b">Zone 9b (25°F to 30°F)</option>
+                                <option value="10a">Zone 10a (30°F to 35°F)</option>
+                                <option value="10b">Zone 10b (35°F to 40°F)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Growing Season Length (days)</label>
+                            <div>
+                                <input type="range" class="form-range range-slider" id="growing-season-min" min="30" max="200" value="60">
+                                <span>Min: <span id="growing-season-min-value">60</span> days</span>
+                            </div>
+                            <div>
+                                <input type="range" class="form-range range-slider" id="growing-season-max" min="30" max="200" value="150">
+                                <span>Max: <span id="growing-season-max-value">150</span> days</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Drought Tolerance</label>
+                            <div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="drought-low" value="low">
+                                    <label class="form-check-label" for="drought-low">Low</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="drought-moderate" value="moderate">
+                                    <label class="form-check-label" for="drought-moderate">Moderate</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="drought-high" value="high">
+                                    <label class="form-check-label" for="drought-high">High</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="drought-very-high" value="very_high">
+                                    <label class="form-check-label" for="drought-very-high">Very High</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Soil Filters -->
+                <div class="filter-card">
+                    <div class="filter-header" onclick="toggleFilterSection('soil-filters')">
+                        <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-seedling"></i> Soil Requirements</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </h5>
+                    </div>
+                    <div id="soil-filters" class="filter-content" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">pH Range</label>
+                            <div>
+                                <input type="range" class="form-range range-slider" id="ph-min" min="3" max="9" step="0.1" value="5.5">
+                                <span>Min: <span id="ph-min-value">5.5</span></span>
+                            </div>
+                            <div>
+                                <input type="range" class="form-range range-slider" id="ph-max" min="3" max="9" step="0.1" value="7.5">
+                                <span>Max: <span id="ph-max-value">7.5</span></span>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Soil Types</label>
+                            <select multiple class="form-control" id="soil-types">
+                                <option value="clay">Clay</option>
+                                <option value="silty_clay">Silty Clay</option>
+                                <option value="clay_loam">Clay Loam</option>
+                                <option value="silty_clay_loam">Silty Clay Loam</option>
+                                <option value="sandy_clay">Sandy Clay</option>
+                                <option value="sandy_clay_loam">Sandy Clay Loam</option>
+                                <option value="loam">Loam</option>
+                                <option value="silty_loam">Silty Loam</option>
+                                <option value="sandy_loam">Sandy Loam</option>
+                                <option value="sand">Sand</option>
+                                <option value="loamy_sand">Loamy Sand</option>
+                                <option value="sandy">Sandy</option>
+                                <option value="silty">Silty</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Drainage Classes</label>
+                            <div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="well_drained" value="well_drained">
+                                    <label class="form-check-label" for="well_drained">Well Drained</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="moderately_drained" value="moderately_drained">
+                                    <label class="form-check-label" for="moderately_drained">Moderately Drained</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="poorly_drained" value="poorly_drained">
+                                    <label class="form-check-label" for="poorly_drained">Poorly Drained</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="very_poorly_drained" value="very_poorly_drained">
+                                    <label class="form-check-label" for="very_poorly_drained">Very Poorly Drained</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Agricultural Filters -->
+                <div class="filter-card">
+                    <div class="filter-header" onclick="toggleFilterSection('agricultural-filters')">
+                        <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-tractor"></i> Agricultural</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </h5>
+                    </div>
+                    <div id="agricultural-filters" class="filter-content" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Crop Categories</label>
+                            <select multiple class="form-control" id="crop-categories">
+                                <option value="grain_crops">Grain Crops</option>
+                                <option value="oilseed_crops">Oilseed Crops</option>
+                                <option value="legume_crops">Legume Crops</option>
+                                <option value="forage_crops">Forage Crops</option>
+                                <option value="cover_crops">Cover Crops</option>
+                                <option value="vegetables">Vegetables</option>
+                                <option value="fruits">Fruits</option>
+                                <option value="tuber_crops">Tuber Crops</option>
+                                <option value="fibre_crops">Fibre Crops</option>
+                                <option value="sugar_crops">Sugar Crops</option>
+                                <option value="feed_crops">Feed Crops</option>
+                                <option value="specialty_crops">Specialty Crops</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Management Complexity</label>
+                            <div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="management-complexity" id="management-low" value="low">
+                                    <label class="form-check-label" for="management-low">Low</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="management-complexity" id="management-moderate" value="moderate">
+                                    <label class="form-check-label" for="management-moderate">Moderate</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="management-complexity" id="management-high" value="high">
+                                    <label class="form-check-label" for="management-high">High</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Pest Resistance</label>
+                            <select multiple class="form-control" id="pest-resistance">
+                                <option value="corn_borer">Corn Borer</option>
+                                <option value="aphids">Aphids</option>
+                                <option value="spider_mites">Spider Mites</option>
+                                <option value="cutworms">Cutworms</option>
+                                <option value="wireworms">Wireworms</option>
+                                <option value="rust">Rust</option>
+                                <option value="blight">Blight</option>
+                                <option value="mildew">Mildew</option>
+                                <option value="scab">Scab</option>
+                                <option value="smut">Smut</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Market Filters -->
+                <div class="filter-card">
+                    <div class="filter-header" onclick="toggleFilterSection('market-filters')">
+                        <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                            <span><i class="fas fa-dollar-sign"></i> Market & Economic</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </h5>
+                    </div>
+                    <div id="market-filters" class="filter-content" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label">Market Class</label>
+                            <div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="organic_eligible" value="organic_eligible">
+                                    <label class="form-check-label" for="organic_eligible">Organic Eligible</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="non_gmo" value="non_gmo">
+                                    <label class="form-check-label" for="non_gmo">Non-GMO</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="identity_preserved" value="identity_preserved">
+                                    <label class="form-check-label" for="identity_preserved">Identity Preserved</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="specialty_contract" value="specialty_contract">
+                                    <label class="form-check-label" for="specialty_contract">Specialty Contract</label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Market Stability</label>
+                            <div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="market-stability" id="stable" value="stable">
+                                    <label class="form-check-label" for="stable">Stable</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="market-stability" id="moderate-stable" value="moderate">
+                                    <label class="form-check-label" for="moderate-stable">Moderate</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="market-stability" id="volatile" value="volatile">
+                                    <label class="form-check-label" for="volatile">Volatile</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button id="apply-filters" class="btn btn-primary w-100 mt-3">
+                    <i class="fas fa-search"></i> Apply Filters
+                </button>
+            </div>
+            
+            <div class="col-md-8">
+                <!-- Visualization Tabs -->
+                <ul class="nav nav-tabs mb-3">
+                    <li class="nav-item">
+                        <a class="nav-link active" id="results-tab" data-bs-toggle="tab" href="#results-panel">
+                            <i class="fas fa-list"></i> Results
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="visualization-tab" data-bs-toggle="tab" href="#visualization-panel">
+                            <i class="fas fa-chart-bar"></i> Visualizations
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="comparison-tab" data-bs-toggle="tab" href="#comparison-panel">
+                            <i class="fas fa-balance-scale"></i> Compare
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="tab-content">
+                    <!-- Results Panel -->
+                    <div class="tab-pane fade show active" id="results-panel">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h3><i class="fas fa-list"></i> Filtered Crops</h3>
+                            <div>
+                                <span class="text-muted">Results: <span id="results-count">0</span></span>
+                                <select id="sort-options" class="form-select form-select-sm" style="display: inline-block; width: auto; margin-left: 10px;">
+                                    <option value="suitability_score">Suitability Score</option>
+                                    <option value="name">Alphabetical</option>
+                                    <option value="popularity">Popularity</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div id="filter-validation-alert" class="alert alert-warning d-none" role="alert">
+                            <i class="fas fa-exclamation-triangle"></i> <strong>Filter Validation Warnings:</strong>
+                            <ul id="validation-messages"></ul>
+                        </div>
+                        
+                        <div id="results-container">
+                            <!-- Loading indicator -->
+                            <div id="loading-indicator" class="text-center d-none">
+                                <div class="spinner-border" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p>Searching for crops...</p>
+                            </div>
+                            
+                            <!-- Results will be populated here -->
+                            <div id="crop-results-list">
+                                <!-- Crop results will appear here -->
+                            </div>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <nav aria-label="Crop results navigation">
+                            <ul class="pagination justify-content-center" id="pagination-container">
+                                <!-- Pagination will be generated here -->
+                            </ul>
+                        </nav>
+                        
+                        <!-- No results message -->
+                        <div id="no-results-message" class="text-center d-none">
+                            <h4><i class="fas fa-search"></i> No crops match your filters</h4>
+                            <p>Try adjusting your filters to see more results</p>
+                            <button id="reset-filters" class="btn btn-outline-primary">
+                                <i class="fas fa-redo"></i> Reset Filters
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Visualization Panel -->
+                    <div class="tab-pane fade" id="visualization-panel">
+                        <h3><i class="fas fa-chart-bar"></i> Filter Results Visualization</h3>
+                        
+                        <!-- Filter Impact Visualization -->
+                        <div class="card mb-4">
+                            <div class="card-header d-flex justify-content-between align-items-center">
+                                <h5><i class="fas fa-filter"></i> Filter Impact Analysis</h5>
+                                <div>
+                                    <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="filterImpactChart">
+                                        <i class="fas fa-download"></i> Export
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="filterImpactChart" width="400" height="200"></canvas>
+                                <div class="mt-3">
+                                    <button id="export-results-btn" class="btn btn-outline-success">
+                                        <i class="fas fa-download"></i> Export Results
+                                    </button>
+                                    <button id="export-chart-btn" class="btn btn-outline-primary ms-2 export-chart-btn" data-chart="filterImpactChart">
+                                        <i class="fas fa-image"></i> Export Chart
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Crop Distribution Charts Row 1 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5><i class="fas fa-seedling"></i> Crop Categories</h5>
+                                        <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="categoryDistributionChart">
+                                            <i class="fas fa-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="categoryDistributionChart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5><i class="fas fa-tint"></i> Drought Tolerance</h5>
+                                        <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="droughtToleranceChart">
+                                            <i class="fas fa-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="droughtToleranceChart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Crop Distribution Charts Row 2 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5><i class="fas fa-chart-line"></i> Yield Potential</h5>
+                                        <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="yield-potential-chart">
+                                            <i class="fas fa-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="yield-potential-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5><i class="fas fa-dollar-sign"></i> Cost Analysis</h5>
+                                        <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="cost-analysis-chart">
+                                            <i class="fas fa-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="cost-analysis-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Crop Distribution Charts Row 3 -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5><i class="fas fa-globe-americas"></i> Climate Zones</h5>
+                                        <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="geographic-distribution-chart">
+                                            <i class="fas fa-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="geographic-distribution-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5><i class="fas fa-calendar-alt"></i> Seasonal Distribution</h5>
+                                        <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="seasonal-trend-chart">
+                                            <i class="fas fa-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="seasonal-trend-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Data Export Options -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-file-export"></i> Export Data</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-primary w-100 download-data-btn" data-type="results">
+                                            <i class="fas fa-table"></i> Results CSV
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-success w-100 download-data-btn" data-type="summary">
+                                            <i class="fas fa-chart-bar"></i> Summary CSV
+                                        </button>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-outline-info w-100 download-data-btn" data-type="detailed">
+                                            <i class="fas fa-file-alt"></i> Detailed CSV
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Comparison Panel -->
+                    <div class="tab-pane fade" id="comparison-panel">
+                        <h3><i class="fas fa-balance-scale"></i> Crop Comparison</h3>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-layer-group"></i> Select Crops to Compare</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Select crops for comparison (up to 3)</label>
+                                    <select multiple class="form-control" id="crop-comparison-select">
+                                        <!-- Options will be populated dynamically -->
+                                    </select>
+                                </div>
+                                <button id="compare-selected-btn" class="btn btn-primary">
+                                    <i class="fas fa-sync-alt"></i> Compare Selected Crops
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="comparison-results" class="mt-4">
+                            <!-- Comparison charts will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', path='js/crop-filtering.js') }}"></script>
+    <script src="{{ url_for('static', path='js/enhanced-crop-visualization.js') }}"></script>
+</body>
+</html>
