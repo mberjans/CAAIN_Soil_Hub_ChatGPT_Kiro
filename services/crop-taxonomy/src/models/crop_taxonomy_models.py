@@ -12,6 +12,24 @@ from enum import Enum
 from uuid import UUID
 
 
+def _ensure_model_dump_compatibility():
+    """Add model_dump helpers when running on Pydantic v1."""
+    if hasattr(BaseModel, "model_dump"):
+        return
+
+    def _model_dump(self, *args, **kwargs):
+        return self.dict(*args, **kwargs)
+
+    def _model_dump_json(self, *args, **kwargs):
+        return self.json(*args, **kwargs)
+
+    setattr(BaseModel, "model_dump", _model_dump)
+    setattr(BaseModel, "model_dump_json", _model_dump_json)
+
+
+_ensure_model_dump_compatibility()
+
+
 # ============================================================================
 # ENUMERATIONS AND CONSTANTS
 # ============================================================================
@@ -177,7 +195,7 @@ class NutrientRequirement(str, Enum):
 
 class CropTaxonomicHierarchy(BaseModel):
     """Botanical classification hierarchy following Linnaean taxonomy."""
-    
+
     taxonomy_id: Optional[UUID] = Field(None, description="Unique taxonomy identifier")
     
     # Botanical hierarchy (following scientific classification)
@@ -201,12 +219,20 @@ class CropTaxonomicHierarchy(BaseModel):
     created_at: Optional[datetime] = Field(None, description="Creation timestamp")
     updated_at: Optional[datetime] = Field(None, description="Last update timestamp")
     
-    @validator('genus', 'species')
-    def validate_scientific_names(cls, v):
-        """Validate scientific name formatting."""
-        if not v or len(v.strip()) < 2:
+    @validator('genus')
+    def validate_genus(cls, value):
+        """Validate and normalize genus names."""
+        if not value or len(value.strip()) < 2:
             raise ValueError("Scientific names must be at least 2 characters")
-        return v.strip().title()
+        cleaned = value.strip()
+        return cleaned[0].upper() + cleaned[1:].lower() if len(cleaned) > 1 else cleaned.upper()
+
+    @validator('species')
+    def validate_species(cls, value):
+        """Validate and normalize species names."""
+        if not value or len(value.strip()) < 2:
+            raise ValueError("Scientific names must be at least 2 characters")
+        return value.strip().lower()
     
     @validator('family', 'order_name')
     def validate_higher_taxonomy(cls, v):
@@ -230,6 +256,10 @@ class CropTaxonomicHierarchy(BaseModel):
         """Generate binomial name (genus + species)."""
         return f"{self.genus} {self.species}"
 
+    class Config:
+        allow_population_by_field_name = True
+        allow_population_by_alias = True
+
 
 class CropAgriculturalClassification(BaseModel):
     """Agricultural classification and characteristics for crop categorization."""
@@ -247,7 +277,7 @@ class CropAgriculturalClassification(BaseModel):
     # Growth characteristics
     growth_habit: GrowthHabit = Field(..., description="Growth habit classification")
     plant_type: PlantType = Field(..., description="Basic plant type")
-    growth_form: GrowthForm = Field(..., description="Growth form characteristics")
+    growth_form: Optional[GrowthForm] = Field(None, description="Growth form characteristics")
     
     # Physical characteristics for space planning
     mature_height_min_inches: Optional[int] = Field(None, ge=0, description="Minimum mature height (inches)")

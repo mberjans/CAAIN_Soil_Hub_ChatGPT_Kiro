@@ -31,7 +31,8 @@ try:
         ValidationResponse,
         OperationType,
         DataSource,
-        BulkOperationResponse
+        BulkOperationResponse,
+        ConfidenceLevel
     )
 except ImportError:
     from ..data.reference_crops import build_reference_crops_dataset
@@ -53,18 +54,17 @@ except ImportError:
         ValidationResponse,
         OperationType,
         DataSource,
-        BulkOperationResponse
+        BulkOperationResponse,
+        ConfidenceLevel
     )
 
-# Define enum for confidence levels used in the service
-from enum import Enum
-
-class ConfidenceLevel(str, Enum):
-    LOW = "low"
-    MEDIUM = "medium"
-    HIGH = "high"
-    VERY_HIGH = "very_high"
-
+try:  # pragma: no cover - import paths differ during testing
+    from database.crop_taxonomy_db import CropTaxonomyDatabase  # type: ignore
+except ImportError:
+    try:
+        from ..database.crop_taxonomy_db import CropTaxonomyDatabase  # type: ignore
+    except ImportError:
+        CropTaxonomyDatabase = None  # type: ignore
 
 logger = logging.getLogger(__name__)
 
@@ -87,12 +87,20 @@ class CropTaxonomyService:
 
     def __init__(self, database_url: Optional[str] = None):
         """Initialize the crop taxonomy service with database integration."""
-        try:
-            from ..database.crop_taxonomy_db import CropTaxonomyDatabase
-            self.db = CropTaxonomyDatabase(database_url)
-            self.database_available = self.db.test_connection()
-            logger.info(f"Database connection: {'successful' if self.database_available else 'failed'}")
-        except ImportError:
+        db_class = CropTaxonomyDatabase
+        if db_class is not None:
+            try:
+                self.db = db_class(database_url)
+                self.database_available = self.db.test_connection()
+                logger.info(
+                    "Database connection: %s",
+                    'successful' if self.database_available else 'failed'
+                )
+            except Exception as exc:
+                logger.warning("Database integration not available, using fallback mode: %s", exc)
+                self.db = None
+                self.database_available = False
+        else:
             logger.warning("Database integration not available, using fallback mode")
             self.db = None
             self.database_available = False
