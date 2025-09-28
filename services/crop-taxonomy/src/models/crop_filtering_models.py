@@ -553,7 +553,7 @@ class FilterSuggestionRequest(BaseModel):
     user_feedback_weight: float = Field(default=0.3, ge=0.0, le=1.0, description="Weight of user feedback in suggestions")
     seasonal_adjustment: bool = Field(default=True, description="Adjust suggestions based on seasonal factors")
     
-    @validator('focus_areas')
+    @validator('focus_areas', allow_reuse=True)
     def validate_focus_areas(cls, v: List[str]) -> List[str]:
         """Validate focus areas list."""
         if v is None:

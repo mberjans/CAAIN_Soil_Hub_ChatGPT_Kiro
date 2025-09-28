@@ -1,4 +1,4 @@
-"""Filter combination and suggestion engine for crop taxonomy filtering."""
+"""Filter combination and suggestion engine for crop taxonomy filtering with performance optimization."""
 
 from __future__ import annotations
 
@@ -9,15 +9,18 @@ from importlib import import_module
 
 logger = logging.getLogger(__name__)
 
+# Performance monitoring import
+from .performance_monitor import performance_monitor
+
 # ---------------------------------------------------------------------------
 # Dynamic imports for models and enumerations
 # ---------------------------------------------------------------------------
 
 _filter_model_module = None
 for _candidate in (
+    'models.crop_filtering_models',
     'src.models.crop_filtering_models',
-    '..models.crop_filtering_models',
-    'models.crop_filtering_models'
+    '..models.crop_filtering_models'
 ):
     try:  # pragma: no cover - dynamic import resolution
         if _candidate.startswith('..'):
@@ -56,6 +59,17 @@ CarbonSequestrationPotential = getattr(_filter_model_module, 'CarbonSequestratio
 MarketStability = getattr(_filter_model_module, 'MarketStability')
 PrimaryUse = getattr(_filter_model_module, 'PrimaryUse', None)
 
+# Resolve forward references for suggestion models
+try:  # pragma: no cover - defensive resolution
+    FilterSuggestion.update_forward_refs(FilterDirective=FilterDirective)
+    FilterSuggestionResponse.update_forward_refs(
+        FilterDirective=FilterDirective,
+        FilterPresetSummary=FilterPresetSummary,
+        FilterSuggestion=FilterSuggestion
+    )
+except Exception as forward_error:  # pragma: no cover
+    logger.debug('Unable to finalize forward references: %s', forward_error)
+
 # Optional regional service integration
 _regional_service = None
 for _candidate in (
@@ -78,6 +92,9 @@ for _candidate in (
         logger.debug('Regional adaptation service unavailable: %s', exc)
         continue
 
+# Caching import
+from .filter_cache_service import filter_cache_service
+
 
 class FilterCombinationEngine:
     """Applies dynamic combinations of crop filtering criteria with guidance."""
@@ -99,6 +116,20 @@ class FilterCombinationEngine:
 
     def combine_filters(self, request: FilterCombinationRequest) -> FilterCombinationResponse:
         """Combine base criteria, directives, and presets into final criteria."""
+        operation_start = performance_monitor.start_timer()
+
+        cached_payload = filter_cache_service.get_filter_combination(request.request_id)
+        if cached_payload is not None:
+            cached_response = FilterCombinationResponse(**cached_payload)
+            execution_time = performance_monitor.stop_timer(operation_start)
+            performance_monitor.record_operation(
+                operation="filter_combination",
+                execution_time_ms=execution_time,
+                cache_hit=True
+            )
+            logger.info(f"Cache hit for filter combination {request.request_id}")
+            return cached_response
+
         logger.debug('Combining filters for request %s', request.request_id)
         base_criteria = self._clone_criteria(request.base_criteria)
         applied_presets: List[str] = []
@@ -154,10 +185,37 @@ class FilterCombinationEngine:
             suggested_directives=suggested_directives,
             metadata=metadata
         )
+
+        ttl_seconds = 7200  # 2 hours for filter combinations
+        filter_cache_service.cache_filter_combination(request.request_id, response.dict(), ttl_seconds)
+
+        execution_time = performance_monitor.stop_timer(operation_start)
+        performance_monitor.record_operation(
+            operation="filter_combination",
+            execution_time_ms=execution_time,
+            cache_hit=False
+        )
+
+        logger.info(f"Filter combination for {request.request_id} took {execution_time:.2f}ms")
+
         return response
 
     def suggest_filters(self, request: FilterSuggestionRequest) -> FilterSuggestionResponse:
         """Generate intelligent filter suggestions based on context."""
+        operation_start = performance_monitor.start_timer()
+
+        cached_payload = filter_cache_service.get_suggestion_result(request.request_id)
+        if cached_payload is not None:
+            cached_response = FilterSuggestionResponse(**cached_payload)
+            execution_time = performance_monitor.stop_timer(operation_start)
+            performance_monitor.record_operation(
+                operation="filter_suggestions",
+                execution_time_ms=execution_time,
+                cache_hit=True
+            )
+            logger.info(f"Cache hit for filter suggestions {request.request_id}")
+            return cached_response
+
         logger.debug('Generating filter suggestions for %s', request.request_id)
         suggestions: List[FilterSuggestion] = []
         context_summary = self._summarize_context(request)
@@ -179,7 +237,6 @@ class FilterCombinationEngine:
         for suggestion in sustainability_suggestions:
             suggestions.append(suggestion)
 
-        # Trim to requested limit while preserving order
         if request.max_suggestions >= 0 and len(suggestions) > request.max_suggestions:
             limited: List[FilterSuggestion] = []
             index = 0
@@ -188,13 +245,29 @@ class FilterCombinationEngine:
                 index += 1
             suggestions = limited
 
+        execution_time = performance_monitor.stop_timer(operation_start)
+
         response = FilterSuggestionResponse(
             request_id=request.request_id,
             suggestions=suggestions,
             preset_summaries=relevant_presets,
             context_summary=context_summary,
+            identified_patterns=[],
+            processing_time_ms=execution_time,
             metadata={}
         )
+
+        ttl_seconds = 3600  # 1 hour for suggestions
+        filter_cache_service.cache_suggestion_result(request.request_id, response.dict(), ttl_seconds)
+
+        performance_monitor.record_operation(
+            operation="filter_suggestions",
+            execution_time_ms=execution_time,
+            cache_hit=False
+        )
+
+        logger.info(f"Filter suggestions for {request.request_id} took {execution_time:.2f}ms")
+
         return response
 
     # ------------------------------------------------------------------

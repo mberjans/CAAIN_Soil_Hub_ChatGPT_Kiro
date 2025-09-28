@@ -13,14 +13,16 @@ if _SRC_PARENT not in sys.path:
 if _SRC_DIR not in sys.path:
     sys.path.insert(0, _SRC_DIR)
 
-from src.services.filter_engine import filter_combination_engine  # type: ignore
-from models.crop_filtering_models import (  # type: ignore
-    FilterCombinationRequest,
-    FilterDirective,
-    FilterSuggestionRequest,
-    MarketStability,
-    WaterUseEfficiency
-)
+import src.services.filter_engine as _filter_engine_module  # type: ignore
+
+filter_combination_engine = _filter_engine_module.filter_combination_engine
+filter_cache_service = _filter_engine_module.filter_cache_service
+FilterCombinationRequest = _filter_engine_module.FilterCombinationRequest
+FilterDirective = _filter_engine_module.FilterDirective
+FilterSuggestionRequest = _filter_engine_module.FilterSuggestionRequest
+MarketStability = _filter_engine_module.MarketStability
+WaterUseEfficiency = _filter_engine_module.WaterUseEfficiency
+TaxonomyFilterCriteria = _filter_engine_module.TaxonomyFilterCriteria
 
 
 def test_combine_filters_applies_presets_and_directives():
@@ -46,6 +48,7 @@ def test_combine_filters_applies_presets_and_directives():
 
     request = FilterCombinationRequest(
         request_id='unit-001',
+        base_criteria=TaxonomyFilterCriteria(),
         preset_keys=['drought_prone_operations'],
         directives=directives,
         context={'climate_zone': '4b'}
@@ -74,6 +77,7 @@ def test_dependency_rules_adjust_values():
 
     request = FilterCombinationRequest(
         request_id='unit-002',
+        base_criteria=TaxonomyFilterCriteria(),
         directives=directives
     )
 
@@ -97,6 +101,7 @@ def test_water_efficiency_dependency_upgrades_value():
 
     request = FilterCombinationRequest(
         request_id='unit-003',
+        base_criteria=TaxonomyFilterCriteria(),
         preset_keys=['drought_prone_operations'],
         directives=directives
     )
@@ -142,6 +147,7 @@ def test_conflict_detection_flags_unrealistic_profitability():
 
     request = FilterCombinationRequest(
         request_id='unit-003b',
+        base_criteria=TaxonomyFilterCriteria(),
         directives=directives
     )
 
@@ -240,6 +246,7 @@ def test_combination_handles_multiple_agricultural_scenarios():
         directives.append(scenario['directive'])
         request = FilterCombinationRequest(
             request_id=f'scenario-{index}',
+            base_criteria=TaxonomyFilterCriteria(),
             preset_keys=[scenario['preset']],
             directives=directives,
             context={'climate_zone': scenario['zone']}
@@ -250,3 +257,22 @@ def test_combination_handles_multiple_agricultural_scenarios():
         index += 1
 
     assert len(scenarios) >= 20
+
+
+def test_filter_combination_cache_hit_updates_local_stats():
+    request = FilterCombinationRequest(
+        request_id='cache-unit-001',
+        base_criteria=TaxonomyFilterCriteria()
+    )
+
+    filter_cache_service.invalidate_filter_combination(request.request_id)
+    stats_before = filter_cache_service.get_local_cache_stats()
+
+    first_response = filter_combination_engine.combine_filters(request)
+    assert first_response.request_id == request.request_id
+
+    second_response = filter_combination_engine.combine_filters(request)
+    assert second_response.request_id == request.request_id
+
+    stats_after = filter_cache_service.get_local_cache_stats()
+    assert stats_after.get('hits', 0) >= stats_before.get('hits', 0)
