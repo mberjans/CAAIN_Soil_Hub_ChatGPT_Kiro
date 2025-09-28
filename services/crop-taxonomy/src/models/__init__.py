@@ -41,6 +41,12 @@ __all__ = [
     'EnhancedCropVariety',
     'CropRegionalAdaptation',
     'VarietyRecommendation',
+    'VarietyComparisonMatrix',
+    'VarietyComparisonDetail',
+    'VarietyTradeOff',
+    'VarietyComparisonSummary',
+    'VarietyComparisonRequest',
+    'VarietyComparisonResponse',
 
     # Service request/response models
     'CropTaxonomyRequest',

@@ -484,6 +484,99 @@ class VarietyComparisonMatrix(BaseModel):
     selection_guidance: List[str] = Field(default_factory=list, description="Selection guidance notes")
 
 
+class VarietyComparisonDetail(BaseModel):
+    """Detailed comparison metrics for a specific variety."""
+
+    variety_id: Optional[UUID] = Field(None, description="Unique identifier for the variety")
+    variety_name: str = Field(..., description="Display name for the variety")
+    overall_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Overall comparison score")
+    criteria_scores: Dict[str, float] = Field(default_factory=dict, description="Scores by evaluation criterion")
+    qualitative_insights: Dict[str, str] = Field(default_factory=dict, description="Narrative insights by criterion")
+    strengths: List[str] = Field(default_factory=list, description="Key strengths for the variety")
+    considerations: List[str] = Field(default_factory=list, description="Considerations or watch-outs")
+    best_fit_scenarios: List[str] = Field(default_factory=list, description="Scenarios where variety performs best")
+    risk_rating: Optional[str] = Field(None, description="Risk profile description")
+
+
+class VarietyTradeOff(BaseModel):
+    """Trade-off guidance between varieties for specific focus areas."""
+
+    focus_area: str = Field(..., description="Area of focus for the trade-off (yield, disease, etc.)")
+    preferred_variety_name: str = Field(..., description="Variety preferred for this focus area")
+    rationale: str = Field(..., description="Reason for the recommendation")
+
+
+class VarietyComparisonSummary(BaseModel):
+    """High-level summary of comparison insights."""
+
+    best_overall_variety: Optional[str] = Field(None, description="Best overall variety name")
+    confidence_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Overall confidence score")
+    key_takeaways: List[str] = Field(default_factory=list, description="Key insights from the comparison")
+    recommended_actions: List[str] = Field(default_factory=list, description="Recommended next actions")
+
+
+class VarietyComparisonRequest(BaseModel):
+    """Request payload for comparing multiple varieties."""
+
+    request_id: str = Field(..., description="Unique request identifier")
+    variety_ids: List[UUID] = Field(default_factory=list, description="Variety identifiers to compare")
+    provided_varieties: List[EnhancedCropVariety] = Field(
+        default_factory=list,
+        description="Optional pre-fetched variety records to use directly"
+    )
+    crop_id: Optional[UUID] = Field(None, description="Associated crop identifier for context")
+    comparison_context: Dict[str, Any] = Field(default_factory=dict, description="Environmental and management context")
+    prioritized_factors: List[str] = Field(default_factory=list, description="Factors to prioritize in analysis")
+    include_trade_offs: bool = Field(default=True, description="Include trade-off analysis in response")
+    include_management_analysis: bool = Field(default=True, description="Include management requirement analysis")
+    include_economic_analysis: bool = Field(default=True, description="Include economic considerations")
+
+    @validator('request_id')
+    def validate_request_id(cls, value: str) -> str:
+        """Ensure request identifier is not empty."""
+        if not value:
+            raise ValueError("Request identifier cannot be empty")
+        trimmed_value = value.strip()
+        if len(trimmed_value) == 0:
+            raise ValueError("Request identifier cannot be empty")
+        return trimmed_value
+
+
+class VarietyComparisonResponse(BaseModel):
+    """Response containing comprehensive variety comparison analysis."""
+
+    request_id: str = Field(..., description="Original request identifier")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when response was generated")
+    success: bool = Field(default=True, description="Whether comparison succeeded")
+    message: Optional[str] = Field(None, description="Status or error message")
+    comparison_matrix: Optional[VarietyComparisonMatrix] = Field(
+        None,
+        description="Structured matrix of comparison metrics"
+    )
+    detailed_results: List[VarietyComparisonDetail] = Field(
+        default_factory=list,
+        description="Detailed comparison results for each variety"
+    )
+    trade_offs: List[VarietyTradeOff] = Field(default_factory=list, description="Identified trade-offs")
+    summary: Optional[VarietyComparisonSummary] = Field(None, description="Summary of comparison insights")
+    comparisons: List[Dict[str, Any]] = Field(
+        default_factory=list,
+        description="Legacy comparison entries for backward compatibility"
+    )
+    comparison_summary: Optional[Dict[str, Any]] = Field(
+        None,
+        description="Legacy summary data for backward compatibility"
+    )
+    context_used: Dict[str, Any] = Field(default_factory=dict, description="Context information applied in analysis")
+    data_sources: List[str] = Field(default_factory=list, description="Data sources referenced in analysis")
+
+    class Config:
+        json_encoders = {
+            datetime: lambda value: value.isoformat(),
+            date: lambda value: value.isoformat()
+        }
+
+
 class VarietyRecommendationResponse(BaseModel):
     """Response containing variety recommendations."""
     
