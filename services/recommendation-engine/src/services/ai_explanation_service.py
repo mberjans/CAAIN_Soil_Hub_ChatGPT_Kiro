@@ -328,6 +328,425 @@ class AIExplanationService:
         
         return variables
     
+    def _build_variety_insights(
+        self,
+        recommendation_data: Dict[str, Any],
+        context: Dict[str, Any]
+    ) -> List[str]:
+        """Build variety-specific insight messages."""
+        insights: List[str] = []
+        try:
+            candidates = self._extract_variety_candidates(recommendation_data)
+            if len(candidates) == 0:
+                return insights
+
+            summary = self._generate_variety_summary(candidates, context)
+            if summary:
+                insights.append(summary)
+
+            comparison = self._generate_variety_comparison(candidates)
+            if comparison:
+                insights.append(comparison)
+
+            trade_offs = self._generate_variety_trade_offs(candidates)
+            if trade_offs:
+                insights.append(trade_offs)
+
+        except Exception as exc:
+            logger.warning(f"Variety insight generation failed: {exc}")
+
+        return insights
+
+    def _extract_variety_candidates(self, recommendation_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+        """Extract variety candidate data from recommendation payload."""
+        candidates: List[Dict[str, Any]] = []
+
+        raw_collections: List[Any] = []
+        raw_lists = [
+            recommendation_data.get('variety_suggestions'),
+            recommendation_data.get('recommended_varieties'),
+            recommendation_data.get('variety_recommendations')
+        ]
+
+        index = 0
+        while index < len(raw_lists):
+            raw_collection = raw_lists[index]
+            raw_collections.append(raw_collection)
+            index += 1
+
+        collection_index = 0
+        while collection_index < len(raw_collections):
+            entries = raw_collections[collection_index]
+            if isinstance(entries, list):
+                entry_index = 0
+                while entry_index < len(entries):
+                    entry = entries[entry_index]
+                    processed = self._convert_variety_entry(entry)
+                    if processed:
+                        candidates.append(processed)
+                    entry_index += 1
+            collection_index += 1
+
+        return candidates
+
+    def _convert_variety_entry(self, entry: Any) -> Optional[Dict[str, Any]]:
+        """Convert variety entry into dictionary representation."""
+        if entry is None:
+            return None
+
+        if isinstance(entry, dict):
+            return entry
+
+        if hasattr(entry, 'dict'):
+            try:
+                return entry.dict()
+            except Exception:
+                try:
+                    return entry.model_dump()  # type: ignore[attr-defined]
+                except Exception:
+                    pass
+
+        if hasattr(entry, '__dict__') and isinstance(entry.__dict__, dict):
+            return dict(entry.__dict__)
+
+        return None
+
+    def _generate_variety_summary(
+        self,
+        candidates: List[Dict[str, Any]],
+        context: Dict[str, Any]
+    ) -> str:
+        """Generate summary statement for top variety."""
+        if len(candidates) == 0:
+            return ""
+
+        top_variety = candidates[0]
+
+        try:
+            variety_name = top_variety.get('variety_name')
+        except Exception:
+            variety_name = None
+
+        if not variety_name:
+            variety_name = top_variety.get('name')
+
+        summary_parts: List[str] = []
+
+        if variety_name:
+            summary_parts.append(f"Top variety focus: {variety_name}.")
+        else:
+            summary_parts.append("Top variety focus identified from recommendation data.")
+
+        attribute_description = self._describe_variety_attributes(top_variety)
+        if attribute_description:
+            summary_parts.append(attribute_description)
+
+        fit_description = self._describe_variety_fit(top_variety, context)
+        if fit_description:
+            summary_parts.append(fit_description)
+
+        key_advantages = top_variety.get('key_advantages')
+        if isinstance(key_advantages, list) and len(key_advantages) > 0:
+            highlighted: List[str] = []
+            advantage_index = 0
+            while advantage_index < len(key_advantages) and advantage_index < 3:
+                advantage = key_advantages[advantage_index]
+                if advantage:
+                    highlighted.append(str(advantage))
+                advantage_index += 1
+            combined_advantages = self._combine_phrases(highlighted, '; ')
+            if combined_advantages:
+                summary_parts.append(f"Key strengths include {combined_advantages}.")
+
+        combined_summary = self._combine_phrases(summary_parts, ' ')
+        return combined_summary
+
+    def _describe_variety_attributes(self, variety_data: Dict[str, Any]) -> str:
+        """Create descriptive sentence for variety attributes."""
+        detail_parts: List[str] = []
+
+        maturity_value = variety_data.get('maturity_days')
+        if not maturity_value:
+            maturity_value = variety_data.get('relative_maturity')
+        if maturity_value:
+            detail_parts.append(f"{maturity_value}-day maturity")
+
+        yield_value = variety_data.get('yield_potential_bu_per_acre')
+        if not yield_value:
+            yield_value = variety_data.get('yield_expectation')
+        if yield_value:
+            try:
+                if isinstance(yield_value, (int, float)):
+                    detail_parts.append(f"approximately {yield_value} bu/ac potential")
+                else:
+                    detail_parts.append(str(yield_value))
+            except Exception:
+                detail_parts.append(str(yield_value))
+
+        drought_tolerance = variety_data.get('drought_tolerance')
+        if drought_tolerance:
+            detail_parts.append(f"{drought_tolerance} drought tolerance")
+
+        stress_traits = variety_data.get('abiotic_stress_tolerances')
+        if stress_traits and hasattr(stress_traits, '__dict__'):
+            stress_info = []
+            for attribute_name, attribute_value in stress_traits.__dict__.items():
+                if attribute_value:
+                    stress_info.append(f"{attribute_name.replace('_', ' ')} rating {attribute_value}")
+            stress_summary = self._combine_phrases(stress_info, ', ')
+            if stress_summary:
+                detail_parts.append(stress_summary)
+
+        detail_sentence = self._combine_phrases(detail_parts, ', ')
+        description = ""
+        if detail_sentence:
+            description = f"It offers {detail_sentence}."
+
+        trait_phrases = self._extract_variety_traits(variety_data)
+        traits_sentence = self._combine_phrases(trait_phrases, '; ')
+        if traits_sentence:
+            if description:
+                description = f"{description} Strengths include {traits_sentence}."
+            else:
+                description = f"Strengths include {traits_sentence}."
+
+        return description
+
+    def _describe_variety_fit(
+        self,
+        variety_data: Dict[str, Any],
+        context: Dict[str, Any]
+    ) -> str:
+        """Summarize how the variety fits farm conditions."""
+        fit_parts: List[str] = []
+
+        climate_targets = variety_data.get('suitable_climate_zones')
+        if not climate_targets:
+            climate_targets = variety_data.get('compatible_climate_zones')
+        if not climate_targets:
+            climate_targets = variety_data.get('climate_zones')
+
+        if climate_targets:
+            try:
+                combined_zones = self._combine_phrases(list(climate_targets), ', ')
+            except Exception:
+                combined_zones = None
+            if combined_zones:
+                fit_parts.append(f"Adapted to climate zones {combined_zones}.")
+
+        soil_preferences = variety_data.get('soil_adaptation')
+        if not soil_preferences:
+            soil_preferences = variety_data.get('soil_preferences')
+        if not soil_preferences:
+            soil_preferences = variety_data.get('soil_types')
+
+        if soil_preferences:
+            try:
+                combined_soils = self._combine_phrases(list(soil_preferences), ', ')
+            except Exception:
+                combined_soils = None
+            if combined_soils:
+                fit_parts.append(f"Performs well on {combined_soils} soils.")
+
+        ph_range = variety_data.get('soil_ph_range')
+        if ph_range and isinstance(ph_range, dict):
+            minimum_ph = ph_range.get('min')
+            maximum_ph = ph_range.get('max')
+            if minimum_ph is not None and maximum_ph is not None:
+                fit_parts.append(f"Best within soil pH {minimum_ph}-{maximum_ph} range.")
+
+        location_profile = context.get('farm_profile', {}) if isinstance(context, dict) else {}
+        irrigation_available = location_profile.get('irrigation_available')
+        irrigation_notes = variety_data.get('water_requirements')
+        if irrigation_notes and not irrigation_available:
+            fit_parts.append("Plan for supplemental irrigation to reach full potential.")
+
+        return self._combine_phrases(fit_parts, ' ')
+
+    def _extract_variety_traits(self, variety_data: Dict[str, Any]) -> List[str]:
+        """Extract notable trait descriptions from variety data."""
+        traits: List[str] = []
+
+        key_advantages = variety_data.get('key_advantages')
+        if isinstance(key_advantages, list):
+            index = 0
+            while index < len(key_advantages) and index < 3:
+                item = key_advantages[index]
+                if item:
+                    traits.append(str(item))
+                index += 1
+
+        special_traits = variety_data.get('special_traits')
+        if isinstance(special_traits, list):
+            trait_index = 0
+            while trait_index < len(special_traits) and trait_index < 2:
+                trait_value = special_traits[trait_index]
+                if trait_value:
+                    traits.append(str(trait_value))
+                trait_index += 1
+
+        disease_resistance = variety_data.get('disease_resistance')
+        if isinstance(disease_resistance, dict):
+            noted = []
+            for disease_name, resistance in disease_resistance.items():
+                if resistance:
+                    noted.append(f"{disease_name} resistance")
+            disease_summary = self._combine_phrases(noted, ', ')
+            if disease_summary:
+                traits.append(disease_summary)
+
+        return traits
+
+    def _generate_variety_comparison(self, candidates: List[Dict[str, Any]]) -> str:
+        """Generate comparison overview across top varieties."""
+        if len(candidates) < 2:
+            return ""
+
+        comparison_sentences: List[str] = []
+        primary_variety = candidates[0]
+
+        candidate_index = 1
+        while candidate_index < len(candidates) and candidate_index <= 2:
+            other_variety = candidates[candidate_index]
+            comparison_sentence = self._compare_variety_profiles(primary_variety, other_variety)
+            if comparison_sentence:
+                comparison_sentences.append(comparison_sentence)
+            candidate_index += 1
+
+        combined_comparison = self._combine_phrases(comparison_sentences, ' ')
+        if combined_comparison:
+            return f"Variety comparison: {combined_comparison}"
+
+        return ""
+
+    def _compare_variety_profiles(
+        self,
+        primary_variety: Dict[str, Any],
+        other_variety: Dict[str, Any]
+    ) -> str:
+        """Compare primary variety with an alternative option."""
+        try:
+            primary_name = primary_variety.get('variety_name', 'primary variety')
+        except Exception:
+            primary_name = 'primary variety'
+
+        try:
+            other_name = other_variety.get('variety_name', 'alternative variety')
+        except Exception:
+            other_name = 'alternative variety'
+
+        primary_strength = self._summarize_primary_strength(primary_variety)
+        alternative_strength = self._summarize_primary_strength(other_variety)
+
+        if alternative_strength and primary_strength and alternative_strength != primary_strength:
+            return (
+                f"{primary_name} emphasizes {primary_strength}, while {other_name} provides {alternative_strength}."
+            )
+
+        if alternative_strength:
+            return (
+                f"{other_name} offers {alternative_strength} as an alternative to {primary_name}."
+            )
+
+        return ""
+
+    def _summarize_primary_strength(self, variety_data: Dict[str, Any]) -> str:
+        """Summarize primary strength for a variety."""
+        traits = self._extract_variety_traits(variety_data)
+        if len(traits) > 0:
+            return traits[0]
+
+        yield_value = variety_data.get('yield_potential_bu_per_acre')
+        if yield_value:
+            try:
+                if isinstance(yield_value, (int, float)):
+                    return f"high yield potential around {yield_value} bu/ac"
+            except Exception:
+                pass
+
+        maturity = variety_data.get('maturity_days')
+        if maturity:
+            return f"{maturity}-day maturity fit"
+
+        management_notes = variety_data.get('management_recommendations')
+        if isinstance(management_notes, list) and len(management_notes) > 0:
+            return management_notes[0]
+
+        return "balanced agronomic performance"
+
+    def _generate_variety_trade_offs(self, candidates: List[Dict[str, Any]]) -> str:
+        """Highlight trade-offs between top varieties."""
+        if len(candidates) < 2:
+            return ""
+
+        trade_off_statements: List[str] = []
+        primary = candidates[0]
+
+        index = 1
+        while index < len(candidates) and index <= 2:
+            alternative = candidates[index]
+            trade_off_text = self._identify_trade_off(primary, alternative)
+            if trade_off_text:
+                trade_off_statements.append(trade_off_text)
+            index += 1
+
+        combined_trade_offs = self._combine_phrases(trade_off_statements, ' ')
+        if combined_trade_offs:
+            return f"Variety trade-offs: {combined_trade_offs}"
+
+        return ""
+
+    def _identify_trade_off(
+        self,
+        primary: Dict[str, Any],
+        alternative: Dict[str, Any]
+    ) -> str:
+        """Identify trade-off message between two varieties."""
+        primary_name = primary.get('variety_name', 'primary variety')
+        alternative_name = alternative.get('variety_name', 'alternative variety')
+
+        primary_strength = self._summarize_primary_strength(primary)
+        alternative_strength = self._summarize_primary_strength(alternative)
+
+        if alternative_strength and primary_strength and alternative_strength != primary_strength:
+            return (
+                f"Choose {primary_name} when prioritizing {primary_strength}, "
+                f"or {alternative_name} for {alternative_strength}."
+            )
+
+        alternative_risk = alternative.get('risk_assessment')
+        if isinstance(alternative_risk, dict):
+            risk_level = alternative_risk.get('overall_risk_level')
+            if risk_level:
+                return (
+                    f"{alternative_name} carries {risk_level} risk; balance it against the higher production "+
+                    f"focus of {primary_name}."
+                )
+
+        return ""
+
+    def _combine_phrases(self, phrases: List[Any], separator: str = ', ') -> str:
+        """Combine phrases into a single string using separator."""
+        normalized: List[str] = []
+
+        index = 0
+        while index < len(phrases):
+            phrase = phrases[index]
+            if phrase:
+                normalized.append(str(phrase))
+            index += 1
+
+        if len(normalized) == 0:
+            return ""
+
+        combined = normalized[0]
+        combine_index = 1
+        while combine_index < len(normalized):
+            combined += separator + normalized[combine_index]
+            combine_index += 1
+
+        return combined
+
     def _generate_climate_zone_context(self, recommendation_data: Dict[str, Any], context: Dict[str, Any]) -> str:
         """
         Generate climate zone context for recommendations.
@@ -454,6 +873,12 @@ class AIExplanationService:
         if timing:
             enhancements.append(f"Recommended timing: {timing}.")
         
+        # Add variety-specific insights
+        variety_insights = self._build_variety_insights(recommendation_data, context)
+        if variety_insights:
+            for insight in variety_insights:
+                enhancements.append(insight)
+
         # Add climate zone specific notes
         climate_zone = self._extract_climate_zone(recommendation_data, context)
         if climate_zone:
@@ -480,7 +905,14 @@ class AIExplanationService:
             "Ensure equipment is suitable for chosen crop and field conditions",
             "Consider crop insurance options and market contracts"
         ]
-        
+
+        variety_candidates = self._extract_variety_candidates(recommendation_data)
+        if len(variety_candidates) > 0:
+            steps.insert(
+                2,
+                "Review recommended varieties to align yield goals with risk tolerance and field conditions"
+            )
+
         # Add specific steps based on recommendation
         crop_name = recommendation_data.get('crop_name', '').lower()
         if 'corn' in crop_name:

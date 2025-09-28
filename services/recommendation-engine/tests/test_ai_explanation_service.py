@@ -8,16 +8,28 @@ Date: December 2024
 This module contains comprehensive unit tests for the AI explanation service.
 """
 
-import pytest
-import sys
+import importlib.util
 import os
+import sys
 from datetime import datetime
 from unittest.mock import patch
 
-# Add src directory to path
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
+import pytest
 
-from services.ai_explanation_service import AIExplanationService, create_ai_explanation_service
+# Load AI explanation service directly to avoid heavy package imports
+SRC_DIR = os.path.join(os.path.dirname(__file__), '..', 'src')
+if SRC_DIR not in sys.path:
+    sys.path.append(SRC_DIR)
+
+AI_EXPLANATION_PATH = os.path.join(SRC_DIR, 'services', 'ai_explanation_service.py')
+AI_SPEC = importlib.util.spec_from_file_location('ai_explanation_service', AI_EXPLANATION_PATH)
+AI_MODULE = importlib.util.module_from_spec(AI_SPEC)
+if AI_SPEC and AI_SPEC.loader:
+    AI_SPEC.loader.exec_module(AI_MODULE)
+    sys.modules['ai_explanation_service'] = AI_MODULE
+
+AIExplanationService = AI_MODULE.AIExplanationService
+create_ai_explanation_service = AI_MODULE.create_ai_explanation_service
 
 
 class TestAIExplanationService:
@@ -36,7 +48,23 @@ class TestAIExplanationService:
             'confidence_score': 0.87,
             'agricultural_sources': ['Iowa State University Extension', 'USDA Guidelines'],
             'cost_per_acre': 45.50,
-            'timing': 'early May planting'
+            'timing': 'early May planting',
+            'variety_suggestions': [
+                {
+                    'variety_name': 'Pioneer P1197AM',
+                    'maturity_days': 111,
+                    'yield_potential_bu_per_acre': 185,
+                    'drought_tolerance': 'good',
+                    'key_advantages': ['consistent yield performance', 'strong standability']
+                },
+                {
+                    'variety_name': 'Dekalb DKC64-35',
+                    'maturity_days': 114,
+                    'yield_potential_bu_per_acre': 178,
+                    'drought_tolerance': 'very good',
+                    'key_advantages': ['enhanced stress tolerance']
+                }
+            ]
         }
     
     @pytest.fixture
@@ -72,7 +100,12 @@ class TestAIExplanationService:
         assert 'corn' in explanation.lower()
         assert 'suitable' in explanation.lower()
         assert 'ph' in explanation.lower()
-        
+
+        # Should highlight top variety details and trade-off insights
+        assert 'Pioneer P1197AM' in explanation
+        assert 'variety comparison' in explanation.lower()
+        assert 'variety trade-offs' in explanation.lower()
+
         # Should include source attribution
         assert 'Iowa State' in explanation or 'USDA' in explanation
     
@@ -148,6 +181,12 @@ class TestAIExplanationService:
         assert any('soil' in step.lower() for step in steps)
         assert any('variety' in step.lower() for step in steps)
         assert any('nitrogen' in step.lower() for step in steps)  # Corn-specific
+
+        alignment_step_found = False
+        for step in steps:
+            if 'align yield goals' in step.lower():
+                alignment_step_found = True
+        assert alignment_step_found
     
     def test_generate_implementation_steps_soil_fertility(self, ai_service):
         """Test implementation steps for soil fertility."""
@@ -169,7 +208,7 @@ class TestAIExplanationService:
     def test_seasonal_timing_advice(self, ai_service, sample_crop_recommendation):
         """Test seasonal timing advice generation."""
         # Test different seasons by mocking datetime
-        with patch('services.ai_explanation_service.datetime') as mock_datetime:
+        with patch('ai_explanation_service.datetime') as mock_datetime:
             # Test spring planting season (May)
             mock_datetime.now.return_value.month = 5
             
