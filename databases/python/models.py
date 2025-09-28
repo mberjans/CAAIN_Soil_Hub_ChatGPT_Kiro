@@ -7,7 +7,7 @@ Date: December 2024
 
 from sqlalchemy import (
     Column, String, Integer, Float, Boolean, DateTime, Date, Text, 
-    ForeignKey, CheckConstraint, UniqueConstraint, Index, ARRAY, JSON
+    ForeignKey, CheckConstraint, UniqueConstraint, Index, ARRAY, JSON, Numeric
 )
 from sqlalchemy.dialects.postgresql import UUID, JSONB, INET
 from sqlalchemy.ext.declarative import declarative_base
@@ -705,6 +705,7 @@ class EnhancedCropVarieties(Base):
     variety_code = Column(String(50))
     breeder_company = Column(String(150))
     parent_varieties = Column(ARRAY(Text))
+    seed_companies = Column(JSONB, default=list)
     
     # Maturity and timing
     relative_maturity = Column(Integer)
@@ -715,7 +716,8 @@ class EnhancedCropVarieties(Base):
     
     # Performance characteristics
     yield_potential_percentile = Column(Integer)
-    yield_stability_rating = Column(Integer)
+    yield_stability_rating = Column(Numeric(4, 2))
+    market_acceptance_score = Column(Numeric(4, 2))
     standability_rating = Column(Integer)
     
     # Resistance and tolerance traits
@@ -723,6 +725,7 @@ class EnhancedCropVarieties(Base):
     pest_resistances = Column(JSONB)
     herbicide_tolerances = Column(ARRAY(Text))
     stress_tolerances = Column(ARRAY(Text))
+    trait_stack = Column(JSONB, default=list)
     
     # Quality traits
     quality_characteristics = Column(JSONB)
@@ -732,10 +735,12 @@ class EnhancedCropVarieties(Base):
     # Adaptation and recommendations
     adapted_regions = Column(ARRAY(Text))
     recommended_planting_populations = Column(JSONB)
+    regional_performance_data = Column(JSONB, default=list)
     special_management_notes = Column(Text)
     
     # Commercial information
     seed_availability = Column(String(20))
+    seed_availability_status = Column(String(50))
     relative_seed_cost = Column(String(20))
     technology_package = Column(String(100))
     
@@ -743,34 +748,39 @@ class EnhancedCropVarieties(Base):
     organic_approved = Column(Boolean)
     non_gmo_certified = Column(Boolean)
     registration_year = Column(Integer)
+    release_year = Column(Integer)
     patent_protected = Column(Boolean, default=False)
+    patent_status = Column(String(50))
     
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     
-    # Relationships
     crop = relationship("Crop", back_populates="enhanced_varieties")
     
-    # Constraints
     __table_args__ = (
         CheckConstraint("yield_potential_percentile >= 0 AND yield_potential_percentile <= 100", name='check_yield_percentile'),
-        CheckConstraint("yield_stability_rating >= 1 AND yield_stability_rating <= 10", name='check_yield_stability'),
+        CheckConstraint("yield_stability_rating >= 0 AND yield_stability_rating <= 10", name='check_yield_stability'),
+        CheckConstraint("market_acceptance_score IS NULL OR (market_acceptance_score >= 0 AND market_acceptance_score <= 5)", name='check_market_acceptance'),
         CheckConstraint("standability_rating >= 1 AND standability_rating <= 10", name='check_standability'),
         CheckConstraint("seed_availability IN ('widely_available', 'limited', 'specialty', 'research_only')", name='check_seed_availability'),
         CheckConstraint("relative_seed_cost IN ('low', 'moderate', 'high', 'premium')", name='check_seed_cost'),
+        CheckConstraint("seed_availability_status IS NULL OR seed_availability_status IN ('in_stock', 'limited', 'preorder', 'retired', 'discontinued')", name='check_seed_availability_status'),
+        CheckConstraint("patent_status IS NULL OR patent_status IN ('none', 'pending', 'active', 'expired', 'waived')", name='check_patent_status'),
+        CheckConstraint("release_year IS NULL OR (release_year >= 1900 AND release_year <= 2100)", name='check_release_year'),
         UniqueConstraint('crop_id', 'variety_name', 'breeder_company', name='uq_crop_variety_company'),
         Index('idx_enhanced_varieties_crop_id', 'crop_id'),
         Index('idx_enhanced_varieties_maturity', 'relative_maturity'),
         Index('idx_enhanced_varieties_active', 'is_active'),
         Index('idx_enhanced_varieties_regions', 'adapted_regions', postgresql_using='gin'),
-        Index('idx_enhanced_varieties_name_search', 'variety_name', postgresql_using='gin', 
-              postgresql_ops={'variety_name': 'gin_trgm_ops'}),
+        Index('idx_enhanced_varieties_trait_stack', 'trait_stack', postgresql_using='gin'),
+        Index('idx_enhanced_varieties_market_acceptance', 'market_acceptance_score'),
+        Index('idx_enhanced_varieties_yield_stability', 'yield_stability_rating'),
+        Index('idx_enhanced_varieties_name_search', 'variety_name', postgresql_using='gin', postgresql_ops={'variety_name': 'gin_trgm_ops'}),
     )
     
     def __repr__(self):
         return f"<EnhancedCropVarieties(name='{self.variety_name}', company='{self.breeder_company}')>"
-
 
 class CropRegionalAdaptations(Base):
     """Regional crop adaptations and recommendations."""

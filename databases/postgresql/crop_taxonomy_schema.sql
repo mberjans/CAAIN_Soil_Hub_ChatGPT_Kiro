@@ -216,6 +216,7 @@ CREATE TABLE enhanced_crop_varieties (
     variety_code VARCHAR(50),
     breeder_company VARCHAR(150),
     parent_varieties TEXT[],
+    seed_companies JSONB DEFAULT '[]'::jsonb,
     
     -- Maturity and timing
     relative_maturity INTEGER, -- Relative maturity units or days
@@ -226,7 +227,8 @@ CREATE TABLE enhanced_crop_varieties (
     
     -- Performance characteristics
     yield_potential_percentile INTEGER CHECK (yield_potential_percentile >= 0 AND yield_potential_percentile <= 100),
-    yield_stability_rating INTEGER CHECK (yield_stability_rating >= 1 AND yield_stability_rating <= 10),
+    yield_stability_rating NUMERIC(4,2) CHECK (yield_stability_rating >= 0 AND yield_stability_rating <= 10),
+    market_acceptance_score NUMERIC(4,2) CHECK (market_acceptance_score >= 0 AND market_acceptance_score <= 5),
     standability_rating INTEGER CHECK (standability_rating >= 1 AND standability_rating <= 10),
     
     -- Resistance and tolerance traits
@@ -234,6 +236,7 @@ CREATE TABLE enhanced_crop_varieties (
     pest_resistances JSONB, -- Structured pest resistance data
     herbicide_tolerances TEXT[],
     stress_tolerances TEXT[], -- drought, heat, cold, etc.
+    trait_stack JSONB DEFAULT '[]'::jsonb,
     
     -- Quality traits
     quality_characteristics JSONB, -- Structured quality data
@@ -243,10 +246,12 @@ CREATE TABLE enhanced_crop_varieties (
     -- Adaptation and recommendations
     adapted_regions TEXT[],
     recommended_planting_populations JSONB, -- By region/conditions
+    regional_performance_data JSONB DEFAULT '[]'::jsonb,
     special_management_notes TEXT,
     
     -- Commercial information
     seed_availability VARCHAR(20) CHECK (seed_availability IN ('widely_available', 'limited', 'specialty', 'research_only')),
+    seed_availability_status VARCHAR(50) CHECK (seed_availability_status IS NULL OR seed_availability_status IN ('in_stock', 'limited', 'preorder', 'retired', 'discontinued')),
     relative_seed_cost VARCHAR(20) CHECK (relative_seed_cost IN ('low', 'moderate', 'high', 'premium')),
     technology_package VARCHAR(100), -- Associated tech package if any
     
@@ -254,7 +259,9 @@ CREATE TABLE enhanced_crop_varieties (
     organic_approved BOOLEAN DEFAULT NULL,
     non_gmo_certified BOOLEAN DEFAULT NULL,
     registration_year INTEGER,
+    release_year INTEGER CHECK (release_year IS NULL OR (release_year >= 1900 AND release_year <= 2100)),
     patent_protected BOOLEAN DEFAULT false,
+    patent_status VARCHAR(50) CHECK (patent_status IS NULL OR patent_status IN ('none', 'pending', 'active', 'expired', 'waived')),
     
     is_active BOOLEAN DEFAULT true,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -424,69 +431,12 @@ CREATE INDEX idx_enhanced_varieties_crop_id ON enhanced_crop_varieties(crop_id);
 CREATE INDEX idx_enhanced_varieties_maturity ON enhanced_crop_varieties(relative_maturity);
 CREATE INDEX idx_enhanced_varieties_active ON enhanced_crop_varieties(is_active);
 CREATE INDEX idx_enhanced_varieties_regions ON enhanced_crop_varieties USING GIN(adapted_regions);
-
--- Regional adaptations indexes
-CREATE INDEX idx_regional_adaptations_crop_id ON crop_regional_adaptations(crop_id);
-CREATE INDEX idx_regional_adaptations_region ON crop_regional_adaptations(region_name, region_type);
-CREATE INDEX idx_regional_adaptations_bounds ON crop_regional_adaptations USING GIST(region_bounds);
-CREATE INDEX idx_regional_adaptations_score ON crop_regional_adaptations(adaptation_score);
-
--- Filtering attributes indexes
-CREATE INDEX idx_filtering_crop_id ON crop_filtering_attributes(crop_id);
-CREATE INDEX idx_filtering_seasons ON crop_filtering_attributes USING GIN(planting_season);
-CREATE INDEX idx_filtering_systems ON crop_filtering_attributes USING GIN(farming_systems);
-CREATE INDEX idx_filtering_complexity ON crop_filtering_attributes(management_complexity);
-
--- Attribute tagging indexes
-CREATE INDEX idx_crop_attribute_tags_crop ON crop_attribute_tags(crop_id);
-CREATE INDEX idx_crop_attribute_tags_category ON crop_attribute_tags(tag_category);
-CREATE INDEX idx_crop_attribute_tags_normalized ON crop_attribute_tags(normalized_tag);
-CREATE INDEX idx_crop_attribute_tags_parent ON crop_attribute_tags(parent_tag_id);
-
--- Enhanced crops table indexes
-CREATE INDEX idx_crops_taxonomy_id ON crops(taxonomy_id);
-CREATE INDEX idx_crops_agricultural_classification ON crops(agricultural_classification_id);
-CREATE INDEX idx_crops_climate_adaptation ON crops(climate_adaptation_id);
-CREATE INDEX idx_crops_filtering_attributes ON crops(filtering_attributes_id);
-CREATE INDEX idx_crops_code ON crops(crop_code);
-CREATE INDEX idx_crops_tags ON crops USING GIN(tags);
-CREATE INDEX idx_crops_keywords ON crops USING GIN(search_keywords);
-CREATE INDEX idx_crops_cover_crop ON crops(is_cover_crop);
-CREATE INDEX idx_crops_status ON crops(crop_status);
-
--- Full-text search indexes for enhanced search capabilities
-CREATE INDEX idx_crop_taxonomy_name_search ON crop_taxonomic_hierarchy USING gin(
-    (genus || ' ' || species) gin_trgm_ops
-);
+CREATE INDEX idx_enhanced_varieties_trait_stack ON enhanced_crop_varieties USING GIN(trait_stack);
+CREATE INDEX idx_enhanced_varieties_market_acceptance ON enhanced_crop_varieties(market_acceptance_score);
+CREATE INDEX idx_enhanced_varieties_yield_stability ON enhanced_crop_varieties(yield_stability_rating);
 CREATE INDEX idx_enhanced_varieties_name_search ON enhanced_crop_varieties USING gin(
-    variety_name gin_trgm_ops
+    (variety_name) gin_trgm_ops
 );
-
--- ============================================================================
--- TRIGGERS FOR MAINTAINING DATA INTEGRITY
--- ============================================================================
-
--- Update timestamp triggers for new tables
-CREATE TRIGGER update_crop_taxonomic_hierarchy_updated_at 
-    BEFORE UPDATE ON crop_taxonomic_hierarchy
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_crop_agricultural_classification_updated_at 
-    BEFORE UPDATE ON crop_agricultural_classification
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_crop_climate_adaptations_updated_at 
-    BEFORE UPDATE ON crop_climate_adaptations
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_crop_soil_requirements_updated_at 
-    BEFORE UPDATE ON crop_soil_requirements
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_crop_nutritional_profiles_updated_at 
-    BEFORE UPDATE ON crop_nutritional_profiles
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_enhanced_crop_varieties_updated_at 
     BEFORE UPDATE ON enhanced_crop_varieties
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();

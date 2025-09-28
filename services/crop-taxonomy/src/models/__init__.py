@@ -79,6 +79,11 @@ __all__ = [
     'TagType',
     'TagValidationStatus',
     'TagManagementAction',
+    'SeedAvailabilityStatus',
+    'PatentStatus',
+    'SeedCompanyOffering',
+    'TraitStackEntry',
+    'RegionalPerformanceEntry',
 
     # Preference models
     'PreferenceType',

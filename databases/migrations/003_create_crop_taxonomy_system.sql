@@ -232,9 +232,10 @@ BEGIN
             variety_code VARCHAR(50),
             breeder_company VARCHAR(150),
             parent_varieties TEXT[],
+            seed_companies JSONB DEFAULT '[]'::jsonb,
             
             -- Maturity and timing
-            relative_maturity INTEGER, -- Relative maturity units or days
+            relative_maturity INTEGER,
             maturity_group VARCHAR(10),
             days_to_emergence INTEGER,
             days_to_flowering INTEGER,
@@ -242,35 +243,41 @@ BEGIN
             
             -- Performance characteristics
             yield_potential_percentile INTEGER CHECK (yield_potential_percentile >= 0 AND yield_potential_percentile <= 100),
-            yield_stability_rating INTEGER CHECK (yield_stability_rating >= 1 AND yield_stability_rating <= 10),
+            yield_stability_rating NUMERIC(4,2) CHECK (yield_stability_rating >= 0 AND yield_stability_rating <= 10),
+            market_acceptance_score NUMERIC(4,2) CHECK (market_acceptance_score >= 0 AND market_acceptance_score <= 5),
             standability_rating INTEGER CHECK (standability_rating >= 1 AND standability_rating <= 10),
             
             -- Resistance and tolerance traits
-            disease_resistances JSONB, -- Structured disease resistance data
-            pest_resistances JSONB, -- Structured pest resistance data
+            disease_resistances JSONB,
+            pest_resistances JSONB,
             herbicide_tolerances TEXT[],
-            stress_tolerances TEXT[], -- drought, heat, cold, etc.
+            stress_tolerances TEXT[],
+            trait_stack JSONB DEFAULT '[]'::jsonb,
             
             -- Quality traits
-            quality_characteristics JSONB, -- Structured quality data
+            quality_characteristics JSONB,
             protein_content_range VARCHAR(20),
             oil_content_range VARCHAR(20),
             
             -- Adaptation and recommendations
             adapted_regions TEXT[],
-            recommended_planting_populations JSONB, -- By region/conditions
+            recommended_planting_populations JSONB,
+            regional_performance_data JSONB DEFAULT '[]'::jsonb,
             special_management_notes TEXT,
             
             -- Commercial information
             seed_availability VARCHAR(20) CHECK (seed_availability IN ('widely_available', 'limited', 'specialty', 'research_only')),
+            seed_availability_status VARCHAR(50) CHECK (seed_availability_status IS NULL OR seed_availability_status IN ('in_stock', 'limited', 'preorder', 'retired', 'discontinued')),
             relative_seed_cost VARCHAR(20) CHECK (relative_seed_cost IN ('low', 'moderate', 'high', 'premium')),
-            technology_package VARCHAR(100), -- Associated tech package if any
+            technology_package VARCHAR(100),
             
             -- Regulatory and certification
             organic_approved BOOLEAN DEFAULT NULL,
             non_gmo_certified BOOLEAN DEFAULT NULL,
             registration_year INTEGER,
+            release_year INTEGER CHECK (release_year IS NULL OR (release_year >= 1900 AND release_year <= 2100)),
             patent_protected BOOLEAN DEFAULT false,
+            patent_status VARCHAR(50) CHECK (patent_status IS NULL OR patent_status IN ('none', 'pending', 'active', 'expired', 'waived')),
             
             is_active BOOLEAN DEFAULT true,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -652,6 +659,36 @@ BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_enhanced_varieties_active') THEN
         CREATE INDEX idx_enhanced_varieties_active ON enhanced_crop_varieties(is_active);
         RAISE NOTICE 'Created index idx_enhanced_varieties_active';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_enhanced_varieties_maturity') THEN
+        CREATE INDEX idx_enhanced_varieties_maturity ON enhanced_crop_varieties(relative_maturity);
+        RAISE NOTICE 'Created index idx_enhanced_varieties_maturity';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_enhanced_varieties_regions') THEN
+        CREATE INDEX idx_enhanced_varieties_regions ON enhanced_crop_varieties USING GIN(adapted_regions);
+        RAISE NOTICE 'Created index idx_enhanced_varieties_regions';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_enhanced_varieties_trait_stack') THEN
+        CREATE INDEX idx_enhanced_varieties_trait_stack ON enhanced_crop_varieties USING GIN(trait_stack);
+        RAISE NOTICE 'Created index idx_enhanced_varieties_trait_stack';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_enhanced_varieties_market_acceptance') THEN
+        CREATE INDEX idx_enhanced_varieties_market_acceptance ON enhanced_crop_varieties(market_acceptance_score);
+        RAISE NOTICE 'Created index idx_enhanced_varieties_market_acceptance';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_enhanced_varieties_yield_stability') THEN
+        CREATE INDEX idx_enhanced_varieties_yield_stability ON enhanced_crop_varieties(yield_stability_rating);
+        RAISE NOTICE 'Created index idx_enhanced_varieties_yield_stability';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_enhanced_varieties_name_search') THEN
+        CREATE INDEX idx_enhanced_varieties_name_search ON enhanced_crop_varieties USING gin((variety_name) gin_trgm_ops);
+        RAISE NOTICE 'Created index idx_enhanced_varieties_name_search';
     END IF;
     
     -- Regional adaptations indexes

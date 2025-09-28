@@ -32,6 +32,61 @@ class RelativeSeedCost(str, Enum):
     PREMIUM = "premium"
 
 
+class SeedAvailabilityStatus(str, Enum):
+    """Detailed seed availability status values."""
+    IN_STOCK = "in_stock"
+    LIMITED = "limited"
+    PREORDER = "preorder"
+    RETIRED = "retired"
+    DISCONTINUED = "discontinued"
+
+
+class PatentStatus(str, Enum):
+    """Patent lifecycle states for varieties."""
+    NONE = "none"
+    PENDING = "pending"
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    WAIVED = "waived"
+
+
+class SeedCompanyOffering(BaseModel):
+    """Seed company offering information for a variety."""
+
+    company_name: str = Field(..., description="Seed company name")
+    product_code: Optional[str] = Field(None, description="Company-specific product identifier")
+    availability_status: SeedAvailabilityStatus = Field(
+        SeedAvailabilityStatus.IN_STOCK, description="Detailed availability status"
+    )
+    distribution_regions: List[str] = Field(default_factory=list, description="Regions where seed is offered")
+    price_per_unit: Optional[float] = Field(None, ge=0.0, description="Price per standard unit")
+    price_unit: Optional[str] = Field(None, description="Unit used for pricing (e.g., bag, unit)")
+    last_updated: Optional[datetime] = Field(None, description="Last update timestamp")
+    notes: Optional[str] = Field(None, description="Additional notes about availability")
+
+
+class TraitStackEntry(BaseModel):
+    """Stacked trait information for a variety."""
+
+    trait_name: str = Field(..., description="Trait or technology name")
+    trait_category: Optional[str] = Field(None, description="Trait category (herbicide tolerance, insect resistance, etc.)")
+    trait_description: Optional[str] = Field(None, description="Description of the trait benefits")
+    trait_source: Optional[str] = Field(None, description="Source or provider of the trait")
+
+
+class RegionalPerformanceEntry(BaseModel):
+    """Regional performance information for a variety."""
+
+    region_name: str = Field(..., description="Region name or code")
+    climate_zone: Optional[str] = Field(None, description="Primary climate zone")
+    soil_types: List[str] = Field(default_factory=list, description="Supported soil types")
+    performance_index: Optional[float] = Field(None, ge=0.0, le=1.0, description="Normalized performance index")
+    average_yield: Optional[float] = Field(None, ge=0.0, description="Average yield in regional trials")
+    trials_count: Optional[int] = Field(None, ge=0, description="Number of supporting trials")
+    last_validation: Optional[datetime] = Field(None, description="Last validation timestamp")
+    notes: Optional[str] = Field(None, description="Additional performance notes")
+
+
 class RegionType(str, Enum):
     """Types of regional classifications."""
     STATE = "state"
@@ -140,6 +195,8 @@ class EnhancedCropVariety(BaseModel):
     variety_code: Optional[str] = Field(None, description="Variety code or number")
     breeder_company: Optional[str] = Field(None, description="Breeding company")
     parent_varieties: List[str] = Field(default_factory=list, description="Parent variety names")
+    seed_companies: List[SeedCompanyOffering] = Field(default_factory=list, description="Seed company offerings")
+
     
     # Maturity and timing characteristics
     relative_maturity: Optional[int] = Field(None, description="Relative maturity (days or units)")
@@ -150,7 +207,8 @@ class EnhancedCropVariety(BaseModel):
     
     # Performance characteristics
     yield_potential_percentile: Optional[int] = Field(None, ge=0, le=100, description="Yield potential percentile")
-    yield_stability_rating: Optional[int] = Field(None, ge=1, le=10, description="Yield stability (1-10)")
+    yield_stability_rating: Optional[float] = Field(None, ge=0.0, le=10.0, description="Yield stability (0-10)")
+    market_acceptance_score: Optional[float] = Field(None, ge=0.0, le=5.0, description="Market acceptance score (0-5)")
     standability_rating: Optional[int] = Field(None, ge=1, le=10, description="Standability rating (1-10)")
     
     # Resistance and tolerance traits
@@ -170,9 +228,12 @@ class EnhancedCropVariety(BaseModel):
         default_factory=list, description="Planting population recommendations"
     )
     special_management_notes: Optional[str] = Field(None, description="Special management requirements")
+    trait_stack: List[TraitStackEntry] = Field(default_factory=list, description="Stacked trait packages")
+    regional_performance_data: List[RegionalPerformanceEntry] = Field(default_factory=list, description="Regional performance metrics")
     
     # Commercial information
     seed_availability: Optional[SeedAvailability] = Field(None, description="Seed availability level")
+    seed_availability_status: Optional[SeedAvailabilityStatus] = Field(None, description="Detailed seed availability status")
     relative_seed_cost: Optional[RelativeSeedCost] = Field(None, description="Relative seed cost")
     technology_package: Optional[str] = Field(None, description="Associated technology package")
     
@@ -180,7 +241,9 @@ class EnhancedCropVariety(BaseModel):
     organic_approved: Optional[bool] = Field(None, description="Approved for organic production")
     non_gmo_certified: Optional[bool] = Field(None, description="Non-GMO certified")
     registration_year: Optional[int] = Field(None, ge=1900, description="Year of registration")
+    release_year: Optional[int] = Field(None, ge=1900, description="Year of commercial release")
     patent_protected: bool = Field(default=False, description="Under patent protection")
+    patent_status: Optional[PatentStatus] = Field(None, description="Patent lifecycle status")
     
     # Status and metadata
     is_active: bool = Field(default=True, description="Variety is actively available")
@@ -194,12 +257,13 @@ class EnhancedCropVariety(BaseModel):
             raise ValueError("Variety name cannot be empty")
         return v.strip()
     
-    @validator('registration_year')
-    def validate_registration_year(cls, v):
-        """Validate registration year is reasonable."""
+    @validator('registration_year', 'release_year')
+    def validate_year_fields(cls, v, field):
+        """Validate registration and release year ranges."""
         current_year = datetime.now().year
         if v is not None and (v < 1900 or v > current_year + 5):
-            raise ValueError(f"Registration year must be between 1900 and {current_year + 5}")
+            field_label = field.name.replace('_', ' ')
+            raise ValueError(f"{field_label.capitalize()} must be between 1900 and {current_year + 5}")
         return v
 
     def get_disease_resistance_summary(self) -> Dict[str, str]:

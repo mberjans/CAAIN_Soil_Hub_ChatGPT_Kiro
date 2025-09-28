@@ -1,11 +1,12 @@
 """
 Search API Routes
 
-FastAPI routes for advanced crop search, filtering, and smart recommendations.
+FastAPI routes for advanced crop search, filtering, and smart recommendations with performance optimization.
 """
 
 from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict, Any
+import hashlib
 
 try:
     from ..services.crop_search_service import crop_search_service
@@ -17,19 +18,35 @@ try:
         TaxonomyFilterCriteria,
         SearchResultItem
     )
-except ImportError:
-    from services.crop_search_service import crop_search_service
-    from models.crop_filtering_models import (
-        CropSearchRequest,
-        CropSearchResponse,
-        SmartRecommendationRequest,
-        SmartRecommendationResponse,
-        TaxonomyFilterCriteria,
-        SearchResultItem
-    )
+    from ..services.filter_cache_service import filter_cache_service
+from ..services.performance_monitor import performance_monitor
+from ..services.result_processor import FilterResultProcessor
 
 
 router = APIRouter(prefix="/search", tags=["search"])
+
+
+@router.post("/processed-search", response_model=Dict[str, Any])
+async def processed_search_crops(
+    request: CropSearchRequest
+):
+    """
+    Execute comprehensive crop search and return processed results.
+    
+    This endpoint provides intelligent ranking, clustering, and suggestions
+    for the search results.
+    """
+    try:
+        # First, perform the regular search
+        search_result = await crop_search_service.search_crops(request)
+        
+        # Now, process the results for intelligent presentation
+        result_processor = FilterResultProcessor(crop_search_service.variety_recommendation_service)
+        processed_results = result_processor.process_results(search_result.results, request.filter_criteria)
+        
+        return processed_results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Processed search error: {str(e)}")
 
 
 @router.post("/crops", response_model=CropSearchResponse)
@@ -313,6 +330,20 @@ async def get_dynamic_filter_options(
     **Caching:** Redis cache with 1-hour TTL, location-based cache keys
     """
     try:
+        # Generate cache key based on location parameters
+        location_hash = f"{latitude or 'none'}:{longitude or 'none'}:{climate_zone or 'none'}"
+        cached_result = await filter_cache_service.get_filter_options(location_hash)
+        
+        if cached_result:
+            performance_monitor.record_operation(
+                operation="filter_options_cached",
+                execution_time_ms=0,  # Cache retrieval is fast
+                cache_hit=True
+            )
+            return cached_result
+        
+        operation_start = performance_monitor.start_timer()
+        
         from ..services.crop_search_service import crop_search_service
         
         filter_options = {
@@ -373,6 +404,16 @@ async def get_dynamic_filter_options(
                 filter_options["climate_zones"]["recommended"] = ["6a", "6b", "7a", "7b", "8a"]
             else:
                 filter_options["climate_zones"]["recommended"] = ["8a", "8b", "9a", "9b", "10a", "10b"]
+        
+        # Cache the result
+        await filter_cache_service.cache_filter_options(location_hash, filter_options)
+        
+        execution_time = performance_monitor.stop_timer(operation_start)
+        performance_monitor.record_operation(
+            operation="filter_options",
+            execution_time_ms=execution_time,
+            cache_hit=False
+        )
         
         return filter_options
         

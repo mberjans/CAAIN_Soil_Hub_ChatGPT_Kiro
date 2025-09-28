@@ -984,6 +984,26 @@ class CropTaxonomyDatabase:
     
     def _variety_to_dict(self, variety: EnhancedCropVarieties) -> Dict[str, Any]:
         """Convert SQLAlchemy EnhancedCropVarieties model to dictionary."""
+        yield_stability_value = None
+        if variety.yield_stability_rating is not None:
+            yield_stability_value = float(variety.yield_stability_rating)
+
+        market_acceptance_value = None
+        if variety.market_acceptance_score is not None:
+            market_acceptance_value = float(variety.market_acceptance_score)
+
+        trait_stack_data = variety.trait_stack
+        if trait_stack_data is None:
+            trait_stack_data = []
+
+        regional_performance = variety.regional_performance_data
+        if regional_performance is None:
+            regional_performance = {}
+
+        seed_company_data = variety.seed_companies
+        if seed_company_data is None:
+            seed_company_data = []
+
         return {
             'variety_id': str(variety.variety_id),
             'crop_id': str(variety.crop_id),
@@ -991,6 +1011,7 @@ class CropTaxonomyDatabase:
             'variety_code': variety.variety_code,
             'breeder_company': variety.breeder_company,
             'parent_varieties': variety.parent_varieties or [],
+            'seed_companies': seed_company_data,
             'maturity': {
                 'relative_maturity': variety.relative_maturity,
                 'maturity_group': variety.maturity_group,
@@ -1000,14 +1021,16 @@ class CropTaxonomyDatabase:
             },
             'performance': {
                 'yield_potential_percentile': variety.yield_potential_percentile,
-                'yield_stability_rating': variety.yield_stability_rating,
-                'standability_rating': variety.standability_rating
+                'yield_stability_rating': yield_stability_value,
+                'standability_rating': variety.standability_rating,
+                'market_acceptance_score': market_acceptance_value
             },
             'traits': {
                 'disease_resistances': variety.disease_resistances or {},
                 'pest_resistances': variety.pest_resistances or {},
                 'herbicide_tolerances': variety.herbicide_tolerances or [],
-                'stress_tolerances': variety.stress_tolerances or []
+                'stress_tolerances': variety.stress_tolerances or [],
+                'trait_stack': trait_stack_data
             },
             'quality': {
                 'quality_characteristics': variety.quality_characteristics or {},
@@ -1017,20 +1040,24 @@ class CropTaxonomyDatabase:
             'adaptation': {
                 'adapted_regions': variety.adapted_regions or [],
                 'recommended_planting_populations': variety.recommended_planting_populations or {},
+                'regional_performance_data': regional_performance,
                 'special_management_notes': variety.special_management_notes
             },
             'commercial': {
                 'seed_availability': variety.seed_availability,
+                'seed_availability_status': variety.seed_availability_status,
                 'relative_seed_cost': variety.relative_seed_cost,
                 'technology_package': variety.technology_package,
+                'seed_companies': seed_company_data,
                 'organic_approved': variety.organic_approved,
                 'non_gmo_certified': variety.non_gmo_certified,
                 'registration_year': variety.registration_year,
-                'patent_protected': variety.patent_protected
+                'release_year': variety.release_year,
+                'patent_protected': variety.patent_protected,
+                'patent_status': variety.patent_status
             },
             'is_active': variety.is_active
         }
-    
     def _adaptation_to_dict(self, adaptation: CropRegionalAdaptations) -> Dict[str, Any]:
         """Convert SQLAlchemy CropRegionalAdaptations model to dictionary."""
         return {
