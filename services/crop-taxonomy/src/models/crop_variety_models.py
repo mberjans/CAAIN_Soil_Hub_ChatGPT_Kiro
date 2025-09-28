@@ -6,7 +6,7 @@ and variety-specific recommendations within the crop taxonomy system.
 """
 
 from pydantic import BaseModel, Field, validator
-from typing import Optional, List, Dict, Any, Union
+from typing import Optional, List, Dict, Any, Union, Tuple
 from datetime import date, datetime
 from enum import Enum
 from uuid import UUID
@@ -418,19 +418,29 @@ class VarietyRecommendationCriteria(BaseModel):
 
 
 class VarietyRecommendation(BaseModel):
-    """Individual variety recommendation with scoring."""
+    """Individual variety recommendation with scoring and confidence context."""
     
-    # Recommended variety
-    variety: EnhancedCropVariety = Field(..., description="Recommended variety")
+    # Recommended variety identifiers
+    variety: Optional[EnhancedCropVariety] = Field(None, description="Full variety record if available")
+    variety_id: Optional[UUID] = Field(None, description="Unique identifier for the variety")
+    variety_name: Optional[str] = Field(None, description="Display name for the variety")
+    variety_code: Optional[str] = Field(None, description="Breeder or seed company code")
     
     # Recommendation scoring
     overall_score: float = Field(..., ge=0.0, le=1.0, description="Overall recommendation score")
-    suitability_factors: Dict[str, float] = Field(..., description="Suitability factors with scores")
+    suitability_factors: Dict[str, float] = Field(default_factory=dict, description="Suitability factors with scores")
+    individual_scores: Dict[str, float] = Field(default_factory=dict, description="Raw factor scoring details")
+    weighted_contributions: Dict[str, float] = Field(default_factory=dict, description="Weighted contribution of each factor")
+    score_details: Dict[str, str] = Field(default_factory=dict, description="Narrative descriptions for each factor")
     
     # Specific assessments
     yield_expectation: Optional[str] = Field(None, description="Expected yield performance")
-    risk_assessment: Optional[str] = Field(None, description="Risk level assessment")
+    risk_assessment: Optional[Any] = Field(None, description="Detailed risk assessment output")
     management_difficulty: Optional[str] = Field(None, description="Management difficulty level")
+    performance_prediction: Optional[Dict[str, Any]] = Field(None, description="Performance prediction details")
+    adaptation_strategies: List[Dict[str, Any]] = Field(default_factory=list, description="Adaptation strategy guidance")
+    recommended_practices: List[str] = Field(default_factory=list, description="Recommended management practices")
+    economic_analysis: Dict[str, Any] = Field(default_factory=dict, description="Economic analysis summary")
     
     # Advantages and considerations
     key_advantages: List[str] = Field(default_factory=list, description="Key advantages of this variety")
@@ -442,8 +452,16 @@ class VarietyRecommendation(BaseModel):
     cost_benefit_notes: Optional[str] = Field(None, description="Cost-benefit considerations")
     
     # Confidence and validation
-    confidence_level: float = Field(default=0.8, ge=0.0, le=1.0, description="Recommendation confidence")
-    data_quality_score: float = Field(default=0.8, ge=0.0, le=1.0, description="Data quality score")
+    confidence_level: float = Field(default=0.8, ge=0.0, le=1.0, description="Recommendation confidence score")
+    data_quality_score: float = Field(default=0.8, ge=0.0, le=1.0, description="Contribution from data quality")
+    confidence_interval: Optional[Tuple[float, float]] = Field(None, description="Lower and upper bounds for confidence")
+    uncertainty_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="Overall uncertainty measure")
+    confidence_breakdown: Dict[str, float] = Field(default_factory=dict, description="Confidence contribution by factor")
+    confidence_explanations: List[str] = Field(default_factory=list, description="Narrative explanations for confidence scoring")
+    reliability_indicators: Dict[str, str] = Field(default_factory=dict, description="Reliability indicators for UI display")
+
+    class Config:
+        extra = "allow"
 
 
 class VarietyComparisonMatrix(BaseModel):

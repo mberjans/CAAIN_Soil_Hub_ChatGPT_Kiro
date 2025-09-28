@@ -13,6 +13,7 @@ import statistics
 import math
 
 from .advanced_variety_ranking import AdvancedVarietyRanking
+from .confidence_calculation_service import ConfidenceCalculationService
 
 try:
     from ..models.crop_variety_models import (
@@ -118,6 +119,7 @@ class VarietyRecommendationService:
         self.performance_models = {}
         self._initialize_recommendation_algorithms()
         self.ranking_engine = AdvancedVarietyRanking(self.scoring_weights)
+        self.confidence_service = ConfidenceCalculationService()
 
     def _initialize_recommendation_algorithms(self):
         """Initialize variety recommendation algorithms and scoring systems."""
@@ -735,18 +737,62 @@ class VarietyRecommendationService:
         # Generate adaptation strategies
         adaptation_strategies = await self._generate_adaptation_strategies(variety, regional_context)
         
-        return VarietyRecommendation(
-            variety_id=variety.id,
-            variety_name=variety.variety_name,
-            variety_code=variety.variety_code,
-            overall_score=score_data["overall_score"],
-            individual_scores=score_data["individual_scores"],
+        suitability_factors: Dict[str, float] = {}
+        individual_scores_dict: Dict[str, float] = {}
+        raw_individual_scores = score_data.get("individual_scores", {})
+        if isinstance(raw_individual_scores, dict):
+            for key, value in raw_individual_scores.items():
+                if isinstance(value, (int, float)):
+                    float_value = float(value)
+                    suitability_factors[str(key)] = float_value
+                    individual_scores_dict[str(key)] = float_value
+
+        weighted_contributions: Dict[str, float] = {}
+        score_contributions = score_data.get("weighted_contributions", {})
+        if isinstance(score_contributions, dict):
+            for key, value in score_contributions.items():
+                if isinstance(value, (int, float)):
+                    weighted_contributions[str(key)] = float(value)
+
+        score_explanations: Dict[str, str] = {}
+        score_details = score_data.get("score_details", {})
+        if isinstance(score_details, dict):
+            for key, value in score_details.items():
+                score_explanations[str(key)] = str(value)
+
+        confidence_assessment = self.confidence_service.calculate(
+            variety=variety,
+            score_data=score_data,
+            regional_context=regional_context,
             performance_prediction=performance_prediction,
-            risk_assessment=risk_assessment,
-            adaptation_strategies=adaptation_strategies,
-            recommended_practices=await self._generate_recommended_practices(variety),
-            economic_analysis=await self._generate_economic_analysis(variety, regional_context),
-            confidence_level=self._determine_confidence_level(score_data["overall_score"])
+            risk_assessment=risk_assessment
+        )
+
+        recommended_practices = await self._generate_recommended_practices(variety)
+        economic_analysis = await self._generate_economic_analysis(variety, regional_context)
+
+        return VarietyRecommendation(
+            variety=variety,
+            variety_id=getattr(variety, "id", None),
+            variety_name=getattr(variety, "variety_name", None),
+            variety_code=getattr(variety, "variety_code", None),
+            overall_score=score_data["overall_score"],
+            suitability_factors=suitability_factors,
+            individual_scores=individual_scores_dict,
+            weighted_contributions=weighted_contributions,
+            score_details=score_explanations,
+            performance_prediction=self._serialize_prediction(performance_prediction),
+            risk_assessment=self._serialize_risk(risk_assessment),
+            adaptation_strategies=self._serialize_adaptation_strategies(adaptation_strategies),
+            recommended_practices=recommended_practices,
+            economic_analysis=economic_analysis,
+            confidence_level=confidence_assessment.overall_confidence,
+            data_quality_score=confidence_assessment.data_quality_score,
+            confidence_interval=confidence_assessment.confidence_interval,
+            uncertainty_score=confidence_assessment.uncertainty_score,
+            confidence_breakdown=confidence_assessment.factor_breakdown,
+            confidence_explanations=confidence_assessment.explanations,
+            reliability_indicators=confidence_assessment.reliability_indicators
         )
 
     async def _predict_variety_performance(
@@ -898,14 +944,14 @@ class VarietyRecommendationService:
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
         """Generate economic analysis for the variety."""
-        
+
         analysis = {
             "seed_cost_premium": 0.0,
             "expected_revenue": 0.0,
             "input_cost_adjustments": {},
             "roi_factors": []
         }
-        
+
         # Calculate seed cost premium
         if variety.market_attributes and variety.market_attributes.premium_potential:
             analysis["seed_cost_premium"] = variety.market_attributes.premium_potential * 0.1
@@ -916,8 +962,86 @@ class VarietyRecommendationService:
             "Improved disease resistance reduces fungicide costs", 
             "Market class commands premium prices"
         ]
-        
+
         return analysis
+
+    def _serialize_prediction(self, prediction: Optional[Any]) -> Optional[Dict[str, Any]]:
+        """Convert prediction objects into serializable dictionaries."""
+        if prediction is None:
+            return None
+
+        if isinstance(prediction, dict):
+            return prediction
+
+        serialized: Dict[str, Any] = {}
+        fields = [
+            "predicted_yield_range",
+            "yield_confidence",
+            "quality_prediction",
+            "performance_factors"
+        ]
+        index = 0
+        while index < len(fields):
+            attribute_name = fields[index]
+            if hasattr(prediction, attribute_name):
+                serialized[attribute_name] = getattr(prediction, attribute_name)
+            index += 1
+
+        if len(serialized) == 0:
+            return None
+        return serialized
+
+    def _serialize_risk(self, risk: Optional[Any]) -> Optional[Dict[str, Any]]:
+        """Convert risk assessment objects into dictionaries."""
+        if risk is None:
+            return None
+
+        if isinstance(risk, dict):
+            return risk
+
+        serialized: Dict[str, Any] = {}
+        fields = [
+            "overall_risk_level",
+            "specific_risks",
+            "mitigation_strategies"
+        ]
+        index = 0
+        while index < len(fields):
+            attribute_name = fields[index]
+            if hasattr(risk, attribute_name):
+                serialized[attribute_name] = getattr(risk, attribute_name)
+            index += 1
+
+        if len(serialized) == 0:
+            return None
+        return serialized
+
+    def _serialize_adaptation_strategies(self, strategies: Optional[List[Any]]) -> List[Dict[str, Any]]:
+        """Ensure adaptation strategy objects are represented as dictionaries."""
+        if strategies is None:
+            return []
+
+        serialized_list: List[Dict[str, Any]] = []
+        for strategy in strategies:
+            if isinstance(strategy, dict):
+                serialized_list.append(strategy)
+            else:
+                serialized_entry: Dict[str, Any] = {}
+                attributes = [
+                    "strategy_type",
+                    "description",
+                    "implementation_details",
+                    "expected_benefit"
+                ]
+                index = 0
+                while index < len(attributes):
+                    attribute_name = attributes[index]
+                    if hasattr(strategy, attribute_name):
+                        serialized_entry[attribute_name] = getattr(strategy, attribute_name)
+                    index += 1
+                if len(serialized_entry) > 0:
+                    serialized_list.append(serialized_entry)
+        return serialized_list
 
     def _determine_confidence_level(self, overall_score: float) -> ConfidenceLevel:
         """Determine confidence level based on overall score."""
