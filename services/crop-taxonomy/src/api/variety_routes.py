@@ -19,29 +19,51 @@ try:
         EnhancedCropVariety
     )
     from ..models.crop_taxonomy_models import ComprehensiveCropData
-except ImportError:
-    from services.variety_recommendation_service import variety_recommendation_service
-    from services.variety_comparison_service import variety_comparison_service
-    from models.crop_variety_models import (
-        VarietyRecommendation,
-        VarietyComparisonRequest,
-        VarietyComparisonResponse,
-        EnhancedCropVariety
-    )
-    from models.crop_taxonomy_models import ComprehensiveCropData
-
-
-router = APIRouter(prefix="/varieties", tags=["varieties"])
-
-
-@router.post("/recommend", response_model=List[VarietyRecommendation])
-async def recommend_varieties(
-    crop_id: UUID,
-    regional_context: Dict[str, Any],
-    farmer_preferences: Optional[Dict[str, Any]] = None,
-    max_recommendations: int = Query(10, description="Maximum number of recommendations")
-):
-    """
+    from ..models.variety_recommendation_request_models import AdvancedVarietyRecommendationRequest
+    except ImportError:
+        from services.variety_recommendation_service import variety_recommendation_service
+        from services.variety_comparison_service import variety_comparison_service
+        from models.crop_variety_models import (
+            VarietyRecommendation,
+            VarietyComparisonRequest,
+            VarietyComparisonResponse,
+            EnhancedCropVariety
+        )
+        from models.crop_taxonomy_models import ComprehensiveCropData
+        from models.variety_recommendation_request_models import AdvancedVarietyRecommendationRequest
+    
+    
+    router = APIRouter(prefix="/varieties", tags=["varieties"])
+    
+    
+    @router.post("/recommend", response_model=List[VarietyRecommendation])
+    async def recommend_varieties_advanced(
+        request: AdvancedVarietyRecommendationRequest
+    ):
+        """
+        Get advanced variety recommendations for a specific crop and regional context.
+        """
+        try:
+            # This would get crop data from database
+            # For now, return error since we don't have database implementation
+            raise HTTPException(
+                status_code=501, 
+                detail="Advanced variety recommendations require database integration - not yet implemented"
+            )
+            
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Recommendation error: {str(e)}")
+    
+    
+    @router.post("/recommend/simple", response_model=List[VarietyRecommendation])
+    async def recommend_varieties_simple(
+        crop_id: UUID,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]] = None,
+        max_recommendations: int = Query(10, description="Maximum number of recommendations")
+    ):    """
     Get variety recommendations for a specific crop and regional context.
     
     **Regional Context Required:**
