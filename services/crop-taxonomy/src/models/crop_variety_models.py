@@ -258,12 +258,11 @@ class EnhancedCropVariety(BaseModel):
         return v.strip()
     
     @validator('registration_year', 'release_year')
-    def validate_year_fields(cls, v, field):
+    def validate_year_fields(cls, v):
         """Validate registration and release year ranges."""
         current_year = datetime.now().year
         if v is not None and (v < 1900 or v > current_year + 5):
-            field_label = field.name.replace('_', ' ')
-            raise ValueError(f"{field_label.capitalize()} must be between 1900 and {current_year + 5}")
+            raise ValueError(f"Year value must be between 1900 and {current_year + 5}")
         return v
 
     def get_disease_resistance_summary(self) -> Dict[str, str]:
