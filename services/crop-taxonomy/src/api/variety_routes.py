@@ -260,14 +260,20 @@ async def compare_varieties(
         raise HTTPException(status_code=500, detail=f"Comparison error: {str(e)}")
 
 
-@router.get("/crop/{crop_id}", response_model=List[EnhancedCropVariety])
+from ..models.pagination_models import PaginatedResponse
+
+
+@router.get("/crop/{crop_id}", response_model=PaginatedResponse[EnhancedCropVariety])
 async def get_varieties_for_crop(
     crop_id: UUID,
     region: Optional[str] = Query(None, description="Filter by regional adaptation"),
     maturity_class: Optional[str] = Query(None, description="Filter by maturity class"),
     market_class: Optional[str] = Query(None, description="Filter by market class"),
     min_yield_rating: Optional[float] = Query(None, description="Minimum yield rating"),
-    disease_resistance: Optional[List[str]] = Query(None, description="Required disease resistances")
+    disease_resistance: Optional[List[str]] = Query(None, description="Required disease resistances"),
+    sort_by: Optional[str] = Query(None, description="Field to sort by"),
+    page: int = Query(1, ge=1, description="Page number"),
+    size: int = Query(10, ge=1, le=100, description="Page size")
 ):
     """
     Get all available varieties for a specific crop with optional filtering.
