@@ -21,6 +21,11 @@ except ImportError:  # pragma: no cover
     VarietyRecommendationService = None
 
 try:
+    from .suitability_service import CropSuitabilityMatrixService
+except ImportError:  # pragma: no cover
+    CropSuitabilityMatrixService = None
+
+try:
     from .regional_adaptation_service import RegionalAdaptationService
 except ImportError:  # pragma: no cover
     RegionalAdaptationService = None
@@ -59,6 +64,7 @@ for _name in [
     "CropTaxonomyService",
     "CropSearchService",
     "VarietyRecommendationService",
+    "CropSuitabilityMatrixService",
     "RegionalAdaptationService",
     "CropAttributeTaggingService",
     "CropPreferenceService",
