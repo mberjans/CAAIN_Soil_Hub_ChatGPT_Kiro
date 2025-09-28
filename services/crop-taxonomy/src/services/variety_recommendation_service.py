@@ -10,10 +10,10 @@ from typing import List, Dict, Any, Optional, Tuple, Union
 from datetime import datetime, date, timedelta
 from uuid import UUID
 import statistics
-import math
 
 from .advanced_variety_ranking import AdvancedVarietyRanking
 from .confidence_calculation_service import ConfidenceCalculationService
+from .yield_calculator import YieldPotentialCalculator, YieldPotentialResult
 
 try:
     from ..models.crop_variety_models import (
@@ -24,7 +24,6 @@ try:
         VarietyComparisonResponse,
         RegionalAdaptationRequest,
         RegionalAdaptationResponse,
-        PerformancePrediction,
         RiskAssessment,
         AdaptationStrategy,
         VarietyCharacteristics,
@@ -58,7 +57,6 @@ except ImportError:
         VarietyComparisonResponse,
         RegionalAdaptationRequest,
         RegionalAdaptationResponse,
-        PerformancePrediction,
         RiskAssessment,
         AdaptationStrategy,
         VarietyCharacteristics,
@@ -120,6 +118,7 @@ class VarietyRecommendationService:
         self._initialize_recommendation_algorithms()
         self.ranking_engine = AdvancedVarietyRanking(self.scoring_weights)
         self.confidence_service = ConfidenceCalculationService()
+        self.yield_calculator = YieldPotentialCalculator()
 
     def _initialize_recommendation_algorithms(self):
         """Initialize variety recommendation algorithms and scoring systems."""
@@ -515,6 +514,44 @@ class VarietyRecommendationService:
         # Placeholder implementation  
         return []
 
+    def _get_yield_result(
+        self,
+        variety: EnhancedCropVariety,
+        context: Dict[str, Any]
+    ) -> YieldPotentialResult:
+        """Retrieve cached yield calculation or compute a new one."""
+        calculator = getattr(self, "yield_calculator", None)
+        if calculator is None:
+            calculator = YieldPotentialCalculator()
+            self.yield_calculator = calculator
+
+        cache_container: Optional[Dict[str, YieldPotentialResult]] = None
+        if isinstance(context, dict):
+            cache_container = context.get("_yield_cache")
+            if cache_container is None:
+                cache_container = {}
+                context["_yield_cache"] = cache_container
+
+        cache_key = None
+        if hasattr(variety, "variety_id") and getattr(variety, "variety_id") is not None:
+            cache_key = str(getattr(variety, "variety_id"))
+        elif hasattr(variety, "id") and getattr(variety, "id") is not None:
+            cache_key = str(getattr(variety, "id"))
+        elif hasattr(variety, "variety_name") and getattr(variety, "variety_name") is not None:
+            cache_key = str(getattr(variety, "variety_name"))
+        else:
+            cache_key = str(id(variety))
+
+        if cache_container is not None and cache_key in cache_container:
+            existing_result = cache_container.get(cache_key)
+            if isinstance(existing_result, YieldPotentialResult):
+                return existing_result
+
+        result = calculator.calculate(variety, context)
+        if cache_container is not None:
+            cache_container[cache_key] = result
+        return result
+
     async def _score_variety_for_context(
         self,
         variety: EnhancedCropVariety,
@@ -566,21 +603,23 @@ class VarietyRecommendationService:
 
     async def _score_yield_potential(self, variety: EnhancedCropVariety, context: Dict[str, Any]) -> float:
         """Score variety's yield potential in the given context."""
+        try:
+            yield_result = self._get_yield_result(variety, context)
+            score = self.yield_calculator.score_from_result(yield_result)
+            return max(0.0, min(1.0, score))
+        except Exception as exc:  # pragma: no cover - defensive fallback
+            logger.debug("Falling back to legacy yield scoring: %s", exc)
+
         if not variety.yield_potential:
-            return 0.5  # Neutral score if no data
-            
-        base_score = 0.7  # Base score
-        
-        # Adjust based on yield stability
+            return 0.5
+
+        base_score = 0.7
         if variety.yield_potential.yield_stability_rating:
             stability_bonus = (variety.yield_potential.yield_stability_rating - 3.0) * 0.1
             base_score += stability_bonus
-            
-        # Adjust based on regional yield potential
         if "regional_yield_modifier" in context:
             regional_modifier = context["regional_yield_modifier"]
             base_score *= (1.0 + regional_modifier)
-            
         return max(0.0, min(1.0, base_score))
 
     async def _score_disease_resistance(self, variety: EnhancedCropVariety, context: Dict[str, Any]) -> float:
@@ -688,16 +727,19 @@ class VarietyRecommendationService:
     async def _score_risk_tolerance(self, variety: EnhancedCropVariety, context: Dict[str, Any]) -> float:
         """Score variety's risk profile for the region."""
         risk_score = 0.6  # Base risk tolerance
-        
-        # Lower risk with better yield stability
-        if variety.yield_potential and variety.yield_potential.yield_stability_rating:
-            stability_factor = variety.yield_potential.yield_stability_rating / 5.0
-            risk_score += stability_factor * 0.3
-            
-        # Lower risk with better disease resistance
+
+        try:
+            yield_result = self._get_yield_result(variety, context)
+            risk_score -= yield_result.risk_index * 0.3
+            risk_score += yield_result.stability_score * 0.2
+        except Exception:
+            if variety.yield_potential and variety.yield_potential.yield_stability_rating:
+                stability_factor = variety.yield_potential.yield_stability_rating / 5.0
+                risk_score += stability_factor * 0.3
+
         disease_score = await self._score_disease_resistance(variety, context)
         risk_score += disease_score * 0.1
-        
+
         return max(0.0, min(1.0, risk_score))
 
     async def _generate_score_explanations(
@@ -799,34 +841,64 @@ class VarietyRecommendationService:
         self, 
         variety: EnhancedCropVariety, 
         context: Dict[str, Any]
-    ) -> PerformancePrediction:
+    ) -> Dict[str, Any]:
         """Predict variety performance in the given context."""
-        
-        # Base yield prediction
+        try:
+            yield_result = self._get_yield_result(variety, context)
+            payload = self.yield_calculator.build_prediction_payload(yield_result)
+
+            quality_prediction: Dict[str, Any] = {}
+            if variety.quality_attributes:
+                quality_prediction["protein_content"] = "high"
+            else:
+                quality_prediction["protein_content"] = "medium"
+            quality_prediction["test_weight"] = "good"
+            quality_prediction["overall_grade"] = "no. 1"
+            payload["quality_prediction"] = quality_prediction
+
+            performance_factors: List[str] = []
+            historical_modifier = yield_result.component_breakdown.get("historical_trials") if yield_result.component_breakdown else None
+            if isinstance(historical_modifier, (int, float)):
+                if historical_modifier > 0.02:
+                    performance_factors.append("Regional trials indicate reliable high yield performance.")
+                elif historical_modifier < -0.02:
+                    performance_factors.append("Regional trials signal lower yield; monitor closely.")
+            weather_modifier = yield_result.component_breakdown.get("weather_outlook") if yield_result.component_breakdown else None
+            if isinstance(weather_modifier, (int, float)) and weather_modifier < -0.02:
+                performance_factors.append("Weather outlook suggests potential yield pressure from seasonal conditions.")
+            soil_modifier = yield_result.component_breakdown.get("soil_conditions") if yield_result.component_breakdown else None
+            if isinstance(soil_modifier, (int, float)) and soil_modifier > 0.02:
+                performance_factors.append("Soil conditions support strong yield response.")
+            if len(performance_factors) == 0:
+                performance_factors.append("Yield influenced by standard seasonal and management factors.")
+            payload["performance_factors"] = performance_factors
+
+            return payload
+        except Exception as exc:  # pragma: no cover - fallback path
+            logger.debug("Performance prediction fallback triggered: %s", exc)
+
         if variety.yield_potential and variety.yield_potential.average_yield_range:
             avg_min, avg_max = variety.yield_potential.average_yield_range
             predicted_yield = statistics.mean([avg_min, avg_max])
-            
-            # Adjust for regional factors
             regional_modifier = context.get("regional_yield_modifier", 0.0)
             predicted_yield *= (1.0 + regional_modifier)
         else:
-            predicted_yield = 4.0  # Default yield estimate
-            
-        return PerformancePrediction(
-            predicted_yield_range=(predicted_yield * 0.8, predicted_yield * 1.2),
-            yield_confidence=0.75,
-            quality_prediction={
+            predicted_yield = 4.0
+
+        return {
+            "predicted_yield_range": (predicted_yield * 0.8, predicted_yield * 1.2),
+            "yield_confidence": 0.75,
+            "quality_prediction": {
                 "protein_content": "medium" if not variety.quality_attributes else "high",
                 "test_weight": "good",
                 "overall_grade": "no. 1"
             },
-            performance_factors=[
+            "performance_factors": [
                 "Weather conditions will significantly impact yield",
                 "Disease pressure expected to be moderate",
                 "Market conditions favor this variety class"
             ]
-        )
+        }
 
     async def _assess_variety_risks(
         self, 

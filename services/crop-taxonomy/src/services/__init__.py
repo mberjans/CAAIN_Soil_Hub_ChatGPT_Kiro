@@ -55,6 +55,11 @@ except ImportError:  # pragma: no cover
     smart_filter_suggestion_service = None
 
 try:
+    from .yield_calculator import YieldPotentialCalculator
+except ImportError:  # pragma: no cover
+    YieldPotentialCalculator = None
+
+try:
     from .result_processor import FilterResultProcessor
 except ImportError: # pragma: no cover
     FilterResultProcessor = None
@@ -70,7 +75,8 @@ for _name in [
     "CropPreferenceService",
     "FilterCombinationEngine",
     "SmartFilterSuggestionService",
-    "FilterResultProcessor"
+    "FilterResultProcessor",
+    "YieldPotentialCalculator"
 ]:
     if globals().get(_name) is not None:
         __all__.append(_name)
