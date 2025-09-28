@@ -5,6 +5,7 @@ Provides crop selection and variety recommendations based on soil and climate da
 """
 
 from typing import List, Dict, Any, Tuple, Optional
+from datetime import datetime
 import numpy as np
 try:
     from ..models.agricultural_models import (
@@ -61,6 +62,19 @@ class CropRecommendationService:
                 self.planting_date_service = planting_date_service
             except ImportError:
                 self.planting_date_service = None
+
+        # Initialize variety intelligence components
+        self.variety_database = self._build_variety_database()
+
+        try:
+            from .market_price_service import MarketPriceService
+            self.market_price_service = MarketPriceService()
+        except ImportError:
+            try:
+                from services.market_price_service import MarketPriceService
+                self.market_price_service = MarketPriceService()
+            except ImportError:
+                self.market_price_service = None
     
     def _build_crop_database(self) -> Dict[str, Dict[str, Any]]:
         """Build crop characteristics database."""
@@ -130,6 +144,493 @@ class CropRecommendationService:
                 "acceptable": 0.7,
                 "marginal": 0.5
             }
+        }
+
+    def _build_variety_database(self) -> Dict[str, List[Dict[str, Any]]]:
+        """Build in-memory database of representative crop varieties."""
+        variety_database: Dict[str, List[Dict[str, Any]]] = {}
+
+        corn_varieties: List[Dict[str, Any]] = []
+
+        corn_variety_one = {
+            "name": "Pioneer P1197AMXT",
+            "company": "Pioneer",
+            "relative_maturity": 119,
+            "yield_potential_percentile": 95,
+            "yield_stability_rating": 8.5,
+            "market_acceptance_score": 4.2,
+            "standability_rating": 8.0,
+            "expected_yield_bu_acre": 205,
+            "yield_range_bu_acre": (190, 215),
+            "seed_cost_per_unit": 320.0,
+            "units_per_acre": 1.0,
+            "additional_management_cost_per_acre": 45.0,
+            "disease_resistances": {
+                "northern_corn_leaf_blight": "resistant",
+                "gray_leaf_spot": "moderately_resistant",
+                "rust": "resistant",
+                "anthracnose": "moderately_resistant"
+            },
+            "stress_tolerances": ["drought", "heat"],
+            "trait_stack": ["Roundup Ready 2", "LibertyLink", "XtendFlex"],
+            "adapted_regions": ["Iowa", "Illinois", "Indiana", "Ohio"],
+            "recommended_climate_zones": ["4a", "4b", "5a", "5b", "6a"],
+            "optimal_ph_range": (6.0, 6.8),
+            "minimum_ph": 5.8,
+            "maximum_ph": 7.4,
+            "seed_availability": "high",
+            "release_year": 2020,
+            "management_notes": [
+                "Responds well to intensive fertility programs",
+                "Monitor canopy for gray leaf spot if humidity remains high"
+            ]
+        }
+        corn_varieties.append(corn_variety_one)
+
+        corn_variety_two = {
+            "name": "Dekalb DKC62-08",
+            "company": "Bayer/Dekalb",
+            "relative_maturity": 108,
+            "yield_potential_percentile": 88,
+            "yield_stability_rating": 7.8,
+            "market_acceptance_score": 3.8,
+            "standability_rating": 8.0,
+            "expected_yield_bu_acre": 192,
+            "yield_range_bu_acre": (178, 200),
+            "seed_cost_per_unit": 295.0,
+            "units_per_acre": 1.0,
+            "additional_management_cost_per_acre": 35.0,
+            "disease_resistances": {
+                "northern_corn_leaf_blight": "moderately_resistant",
+                "gray_leaf_spot": "resistant",
+                "goss_wilt": "moderately_resistant"
+            },
+            "stress_tolerances": ["drought"],
+            "trait_stack": ["Roundup Ready 2"],
+            "adapted_regions": ["Iowa", "Nebraska", "Minnesota"],
+            "recommended_climate_zones": ["3b", "4a", "4b", "5a"],
+            "optimal_ph_range": (5.8, 7.0),
+            "minimum_ph": 5.5,
+            "maximum_ph": 7.4,
+            "seed_availability": "high",
+            "release_year": 2019,
+            "management_notes": [
+                "Prefers well-drained soils with medium organic matter",
+                "Scout for northern corn leaf blight under prolonged humidity"
+            ]
+        }
+        corn_varieties.append(corn_variety_two)
+
+        corn_variety_three = {
+            "name": "Syngenta NK603",
+            "company": "Syngenta",
+            "relative_maturity": 105,
+            "yield_potential_percentile": 90,
+            "yield_stability_rating": 8.0,
+            "market_acceptance_score": 3.9,
+            "standability_rating": 7.0,
+            "expected_yield_bu_acre": 188,
+            "yield_range_bu_acre": (170, 198),
+            "seed_cost_per_unit": 285.0,
+            "units_per_acre": 1.0,
+            "additional_management_cost_per_acre": 30.0,
+            "disease_resistances": {
+                "northern_corn_leaf_blight": "moderately_resistant",
+                "gray_leaf_spot": "moderately_resistant",
+                "southern_rust": "susceptible"
+            },
+            "stress_tolerances": ["drought", "heat"],
+            "trait_stack": ["Roundup Ready 2"],
+            "adapted_regions": ["Kansas", "Missouri", "Nebraska"],
+            "recommended_climate_zones": ["5a", "5b", "6a", "6b"],
+            "optimal_ph_range": (5.9, 6.9),
+            "minimum_ph": 5.5,
+            "maximum_ph": 7.2,
+            "seed_availability": "moderate",
+            "release_year": 2018,
+            "management_notes": [
+                "Consider fungicide for rust pressure in hot, humid seasons",
+                "Maintain residue management to support standability"
+            ]
+        }
+        corn_varieties.append(corn_variety_three)
+
+        variety_database["corn"] = corn_varieties
+
+        soybean_varieties: List[Dict[str, Any]] = []
+
+        soybean_variety_one = {
+            "name": "Asgrow AG3431",
+            "company": "Bayer/Asgrow",
+            "relative_maturity": 33,
+            "yield_potential_percentile": 92,
+            "yield_stability_rating": 8.2,
+            "market_acceptance_score": 4.0,
+            "standability_rating": 8.0,
+            "expected_yield_bu_acre": 66,
+            "yield_range_bu_acre": (60, 70),
+            "seed_cost_per_unit": 63.0,
+            "units_per_acre": 1.0,
+            "additional_management_cost_per_acre": 18.0,
+            "disease_resistances": {
+                "sudden_death_syndrome": "resistant",
+                "brown_stem_rot": "moderately_resistant",
+                "white_mold": "moderately_resistant"
+            },
+            "stress_tolerances": ["drought"],
+            "trait_stack": ["Roundup Ready 2"],
+            "adapted_regions": ["Illinois", "Indiana", "Ohio"],
+            "recommended_climate_zones": ["5a", "5b", "6a"],
+            "optimal_ph_range": (6.0, 7.2),
+            "minimum_ph": 5.8,
+            "maximum_ph": 7.5,
+            "seed_availability": "high",
+            "release_year": 2021,
+            "management_notes": [
+                "Select fields with strong drainage to protect against white mold",
+                "Consider SDS seed treatment if planting early in cool soils"
+            ]
+        }
+        soybean_varieties.append(soybean_variety_one)
+
+        soybean_variety_two = {
+            "name": "Pioneer P39T67R",
+            "company": "Pioneer",
+            "relative_maturity": 39,
+            "yield_potential_percentile": 88,
+            "yield_stability_rating": 7.8,
+            "market_acceptance_score": 3.7,
+            "standability_rating": 7.0,
+            "expected_yield_bu_acre": 62,
+            "yield_range_bu_acre": (56, 67),
+            "seed_cost_per_unit": 61.0,
+            "units_per_acre": 1.0,
+            "additional_management_cost_per_acre": 15.0,
+            "disease_resistances": {
+                "sudden_death_syndrome": "moderately_resistant",
+                "brown_stem_rot": "resistant",
+                "phytophthora": "moderately_resistant"
+            },
+            "stress_tolerances": ["drought"],
+            "trait_stack": ["Roundup Ready 2"],
+            "adapted_regions": ["Iowa", "Illinois", "Indiana"],
+            "recommended_climate_zones": ["4b", "5a", "5b"],
+            "optimal_ph_range": (5.9, 7.0),
+            "minimum_ph": 5.5,
+            "maximum_ph": 7.4,
+            "seed_availability": "high",
+            "release_year": 2020,
+            "management_notes": [
+                "Use resistant seed treatment in phytophthora-prone fields",
+                "Adapted to reduced tillage systems with residue cover"
+            ]
+        }
+        soybean_varieties.append(soybean_variety_two)
+
+        soybean_varieties_third = {
+            "name": "Syngenta Soybean 215",
+            "company": "Syngenta",
+            "relative_maturity": 32,
+            "yield_potential_percentile": 85,
+            "yield_stability_rating": 7.5,
+            "market_acceptance_score": 3.5,
+            "standability_rating": 7.0,
+            "expected_yield_bu_acre": 58,
+            "yield_range_bu_acre": (52, 63),
+            "seed_cost_per_unit": 59.0,
+            "units_per_acre": 1.0,
+            "additional_management_cost_per_acre": 14.0,
+            "disease_resistances": {
+                "sudden_death_syndrome": "moderately_resistant",
+                "brown_stem_rot": "moderately_resistant",
+                "white_mold": "susceptible"
+            },
+            "stress_tolerances": ["drought", "heat"],
+            "trait_stack": ["LibertyLink"],
+            "adapted_regions": ["Kansas", "Missouri", "Nebraska"],
+            "recommended_climate_zones": ["5b", "6a", "6b"],
+            "optimal_ph_range": (5.8, 7.1),
+            "minimum_ph": 5.4,
+            "maximum_ph": 7.3,
+            "seed_availability": "moderate",
+            "release_year": 2019,
+            "management_notes": [
+                "Rotate fungicide modes of action for white mold management",
+                "Maintain residue cover for heat stress mitigation"
+            ]
+        }
+        soybean_varieties.append(soybean_varieties_third)
+
+        variety_database["soybean"] = soybean_varieties
+
+        wheat_varieties: List[Dict[str, Any]] = []
+
+        wheat_variety_one = {
+            "name": "WestBred WB9653",
+            "company": "WestBred",
+            "relative_maturity": 95,
+            "yield_potential_percentile": 90,
+            "yield_stability_rating": 8.3,
+            "market_acceptance_score": 4.0,
+            "standability_rating": 8.0,
+            "expected_yield_bu_acre": 82,
+            "yield_range_bu_acre": (75, 90),
+            "seed_cost_per_unit": 24.0,
+            "units_per_acre": 1.5,
+            "additional_management_cost_per_acre": 22.0,
+            "disease_resistances": {
+                "stripe_rust": "resistant",
+                "leaf_rust": "moderately_resistant",
+                "fusarium_head_blight": "moderately_resistant"
+            },
+            "stress_tolerances": ["cold", "heat"],
+            "trait_stack": [],
+            "adapted_regions": ["Kansas", "Oklahoma", "Colorado"],
+            "recommended_climate_zones": ["5a", "5b", "6a"],
+            "optimal_ph_range": (6.0, 7.3),
+            "minimum_ph": 5.5,
+            "maximum_ph": 7.8,
+            "seed_availability": "high",
+            "release_year": 2019,
+            "management_notes": [
+                "Achieves highest yields with split nitrogen applications",
+                "Scout for fusarium during humid flowering conditions"
+            ]
+        }
+        wheat_varieties.append(wheat_variety_one)
+
+        wheat_variety_two = {
+            "name": "Syngenta SY Monument",
+            "company": "Syngenta",
+            "relative_maturity": 92,
+            "yield_potential_percentile": 87,
+            "yield_stability_rating": 7.9,
+            "market_acceptance_score": 3.6,
+            "standability_rating": 7.0,
+            "expected_yield_bu_acre": 78,
+            "yield_range_bu_acre": (70, 84),
+            "seed_cost_per_unit": 23.0,
+            "units_per_acre": 1.5,
+            "additional_management_cost_per_acre": 20.0,
+            "disease_resistances": {
+                "stripe_rust": "moderately_resistant",
+                "leaf_rust": "resistant",
+                "powdery_mildew": "moderately_resistant"
+            },
+            "stress_tolerances": ["drought"],
+            "trait_stack": [],
+            "adapted_regions": ["Nebraska", "South Dakota", "Minnesota"],
+            "recommended_climate_zones": ["3b", "4a", "4b", "5a"],
+            "optimal_ph_range": (5.8, 7.2),
+            "minimum_ph": 5.2,
+            "maximum_ph": 7.6,
+            "seed_availability": "moderate",
+            "release_year": 2018,
+            "management_notes": [
+                "Responds to timely fungicide at flag leaf for rust suppression",
+                "Maintain residue management for snow mold prone areas"
+            ]
+        }
+        wheat_varieties.append(wheat_variety_two)
+
+        wheat_variety_three = {
+            "name": "University Explorer",
+            "company": "University Extension",
+            "relative_maturity": 98,
+            "yield_potential_percentile": 83,
+            "yield_stability_rating": 7.4,
+            "market_acceptance_score": 3.3,
+            "standability_rating": 7.5,
+            "expected_yield_bu_acre": 75,
+            "yield_range_bu_acre": (68, 82),
+            "seed_cost_per_unit": 21.0,
+            "units_per_acre": 1.6,
+            "additional_management_cost_per_acre": 18.0,
+            "disease_resistances": {
+                "stripe_rust": "moderately_resistant",
+                "leaf_rust": "moderately_resistant",
+                "fusarium_head_blight": "susceptible"
+            },
+            "stress_tolerances": ["cold"],
+            "trait_stack": [],
+            "adapted_regions": ["Montana", "North Dakota"],
+            "recommended_climate_zones": ["3a", "3b", "4a"],
+            "optimal_ph_range": (6.2, 7.4),
+            "minimum_ph": 5.8,
+            "maximum_ph": 7.8,
+            "seed_availability": "limited",
+            "release_year": 2020,
+            "management_notes": [
+                "Target well-drained soils to mitigate fusarium pressure",
+                "Consider resistant companion crop for snow mold suppression"
+            ]
+        }
+        wheat_varieties.append(wheat_variety_three)
+
+        variety_database["wheat"] = wheat_varieties
+
+        return variety_database
+
+    def _get_variety_records_for_crop(self, crop_name: str) -> List[Dict[str, Any]]:
+        """Retrieve stored variety profiles for a given crop."""
+        if not crop_name:
+            return []
+
+        crop_key = crop_name.lower()
+        if crop_key in self.variety_database:
+            return self.variety_database[crop_key]
+
+        return []
+
+    def _match_variety_to_location(self, variety: Dict[str, Any], location_data) -> bool:
+        """Determine if a variety aligns with the farm location."""
+        if not variety:
+            return False
+
+        if not location_data:
+            return True
+
+        if 'adapted_regions' in variety:
+            state = getattr(location_data, 'state', None)
+            county = getattr(location_data, 'county', None)
+            if state:
+                for region in variety['adapted_regions']:
+                    if isinstance(region, str) and region.lower() == state.lower():
+                        return True
+            if county:
+                for region in variety['adapted_regions']:
+                    if isinstance(region, str) and region.lower() == county.lower():
+                        return True
+
+        climate_zone = getattr(location_data, 'climate_zone', None)
+        if climate_zone and variety.get('recommended_climate_zones'):
+            for zone in variety['recommended_climate_zones']:
+                if zone == climate_zone:
+                    return True
+                compatibility_score = self._calculate_adjacent_zone_compatibility(climate_zone, [zone])
+                if compatibility_score >= 0.8:
+                    return True
+            return False
+
+        return True
+
+    def _calculate_variety_performance_score(
+        self,
+        variety: Dict[str, Any],
+        request: RecommendationRequest
+    ) -> float:
+        """Calculate performance score for a variety based on multiple factors."""
+        score_total = 0.0
+        weight_total = 0.0
+
+        percentile = variety.get('yield_potential_percentile')
+        if percentile is not None:
+            normalized = float(percentile) / 100.0
+            score_total += normalized * 0.45
+            weight_total += 0.45
+
+        stability = variety.get('yield_stability_rating')
+        if stability is not None:
+            capped_stability = float(stability)
+            if capped_stability > 10.0:
+                capped_stability = 10.0
+            normalized_stability = capped_stability / 10.0
+            score_total += normalized_stability * 0.25
+            weight_total += 0.25
+
+        acceptance = variety.get('market_acceptance_score')
+        if acceptance is not None:
+            capped_acceptance = float(acceptance)
+            if capped_acceptance > 5.0:
+                capped_acceptance = 5.0
+            normalized_acceptance = capped_acceptance / 5.0
+            score_total += normalized_acceptance * 0.15
+            weight_total += 0.15
+
+        climate_alignment = 0.7
+        if variety.get('recommended_climate_zones') and request and request.location:
+            climate_crop_data = {"climate_zones": variety['recommended_climate_zones']}
+            climate_alignment = self._calculate_climate_zone_suitability(
+                request.location,
+                climate_crop_data
+            )
+        score_total += climate_alignment * 0.10
+        weight_total += 0.10
+
+        soil_alignment = 0.7
+        if variety.get('optimal_ph_range') and request and request.soil_data and request.soil_data.ph:
+            ph_crop_data = {
+                "optimal_ph_range": variety['optimal_ph_range'],
+                "minimum_ph": variety.get('minimum_ph', variety['optimal_ph_range'][0]),
+                "maximum_ph": variety.get('maximum_ph', variety['optimal_ph_range'][1])
+            }
+            soil_alignment = self._calculate_ph_suitability(
+                request.soil_data.ph,
+                ph_crop_data
+            )
+        score_total += soil_alignment * 0.05
+        weight_total += 0.05
+
+        if weight_total == 0.0:
+            return 0.6
+
+        calculated_score = score_total / weight_total
+        if calculated_score > 1.0:
+            return 1.0
+        if calculated_score < 0.0:
+            return 0.0
+        return calculated_score
+
+    def _assess_variety_risk(self, variety: Dict[str, Any]) -> Dict[str, Any]:
+        """Assess risk profile for a variety based on agronomic indicators."""
+        risk_score = 0.0
+        risk_factors: List[str] = []
+
+        stability_rating = variety.get('yield_stability_rating')
+        if stability_rating is not None and float(stability_rating) < 7.0:
+            risk_score += 1.0
+            risk_factors.append("Yield stability below 7.0 rating")
+
+        standability_rating = variety.get('standability_rating')
+        if standability_rating is not None and float(standability_rating) < 7.0:
+            risk_score += 0.5
+            risk_factors.append("Standability rating indicates lodging vigilance")
+
+        disease_resistances = variety.get('disease_resistances')
+        if isinstance(disease_resistances, dict):
+            for disease_name, status in disease_resistances.items():
+                if isinstance(status, str):
+                    cleaned_status = status.lower()
+                    if cleaned_status.startswith('susceptible'):
+                        risk_score += 0.7
+                        readable_name = disease_name.replace('_', ' ')
+                        risk_factors.append(f"Susceptible to {readable_name}")
+                    elif cleaned_status.startswith('moderately_susceptible'):
+                        risk_score += 0.6
+                        readable_name = disease_name.replace('_', ' ')
+                        risk_factors.append(f"Moderate susceptibility to {readable_name}")
+
+        stress_tolerances = variety.get('stress_tolerances')
+        if isinstance(stress_tolerances, list):
+            has_drought = False
+            for tolerance in stress_tolerances:
+                if isinstance(tolerance, str) and tolerance.lower() == 'drought':
+                    has_drought = True
+            if not has_drought:
+                risk_score += 0.4
+                risk_factors.append("Limited drought tolerance")
+
+        if risk_score <= 1.0:
+            level = "low"
+        elif risk_score <= 2.0:
+            level = "moderate"
+        else:
+            level = "elevated"
+
+        return {
+            "risk_level": level,
+            "risk_score": risk_score,
+            "risk_factors": risk_factors
         }
     
     async def get_crop_recommendations(self, request: RecommendationRequest) -> List[RecommendationItem]:
