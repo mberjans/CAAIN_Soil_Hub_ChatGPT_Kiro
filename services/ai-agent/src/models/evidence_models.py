@@ -73,6 +73,21 @@ class EvidenceSummary(BaseModel):
     source_distribution: Dict[EvidenceSourceType, int] = Field(default_factory=dict, description="Distribution by source type")
     strength_distribution: Dict[EvidenceStrengthLevel, int] = Field(default_factory=dict, description="Distribution by strength level")
     latest_publication: Optional[datetime] = Field(None, description="Most recent publication date among evidence")
+    high_credibility_records: int = Field(0, description="Count of records with high credibility scores")
+    recent_evidence_ratio: float = Field(0.0, ge=0.0, le=1.0, description="Ratio of evidence within recency window")
+
+
+class EvidenceCitation(BaseModel):
+    """Structured citation entry for supporting evidence references."""
+
+    citation_id: str = Field(..., description="Stable citation identifier")
+    label: str = Field(..., description="Citation label for display (e.g., [1])")
+    source_name: str = Field(..., description="Primary citation display name")
+    source_type: EvidenceSourceType = Field(default=EvidenceSourceType.UNKNOWN, description="Evidence source classification")
+    source_link: Optional[str] = Field(None, description="Link or reference for the citation")
+    published_at: Optional[datetime] = Field(None, description="Publication date if available")
+    strength_level: EvidenceStrengthLevel = Field(default=EvidenceStrengthLevel.LIMITED, description="Dominant strength level")
+    categories: List[str] = Field(default_factory=list, description="Evidence categories supported by this citation")
 
 
 class EvidencePackage(BaseModel):
@@ -82,3 +97,4 @@ class EvidencePackage(BaseModel):
     records: List[EvidenceRecord] = Field(default_factory=list, description="Evidence records")
     summary: EvidenceSummary = Field(default_factory=EvidenceSummary, description="Aggregated evidence summary")
     coverage_notes: List[str] = Field(default_factory=list, description="Coverage or follow-up notes")
+    citations: List[EvidenceCitation] = Field(default_factory=list, description="Formatted citation references")

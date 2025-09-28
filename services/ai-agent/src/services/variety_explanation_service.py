@@ -138,6 +138,9 @@ class VarietyExplanationService:
         payload["evidence_summary"] = self._serialize_evidence_summary(
             evidence_package.summary
         )
+        payload["evidence_citations"] = self._serialize_evidence_citations(
+            evidence_package.citations
+        )
         payload["evidence_notes"] = self._serialize_evidence_notes(
             evidence_package.coverage_notes
         )
@@ -217,6 +220,8 @@ class VarietyExplanationService:
         summary_dict["total_records"] = getattr(summary, "total_records", 0)
         summary_dict["average_credibility"] = getattr(summary, "average_credibility", 0.0)
         summary_dict["average_strength"] = getattr(summary, "average_strength", 0.0)
+        summary_dict["high_credibility_records"] = getattr(summary, "high_credibility_records", 0)
+        summary_dict["recent_evidence_ratio"] = getattr(summary, "recent_evidence_ratio", 0.0)
 
         source_distribution: Dict[str, int] = {}
         raw_sources = getattr(summary, "source_distribution", {})
@@ -259,6 +264,64 @@ class VarietyExplanationService:
                 index += 1
         elif isinstance(notes, str) and len(notes.strip()) > 0:
             serialized.append(notes.strip())
+        return serialized
+
+    def _serialize_evidence_citations(self, citations: Any) -> List[Dict[str, Any]]:
+        serialized: List[Dict[str, Any]] = []
+        if not isinstance(citations, list):
+            return serialized
+
+        index = 0
+        while index < len(citations):
+            citation = citations[index]
+            if citation is None:
+                index += 1
+                continue
+
+            entry: Dict[str, Any] = {}
+            entry["citation_id"] = getattr(citation, "citation_id", None)
+            entry["label"] = getattr(citation, "label", None)
+            entry["source_name"] = getattr(citation, "source_name", None)
+
+            source_type = getattr(citation, "source_type", None)
+            if source_type is not None and hasattr(source_type, "value"):
+                entry["source_type"] = source_type.value
+            elif source_type is not None:
+                entry["source_type"] = str(source_type)
+            else:
+                entry["source_type"] = None
+
+            entry["source_link"] = getattr(citation, "source_link", None)
+
+            published_at = getattr(citation, "published_at", None)
+            if isinstance(published_at, datetime):
+                entry["published_at"] = published_at.isoformat()
+            else:
+                entry["published_at"] = None
+
+            strength_level = getattr(citation, "strength_level", None)
+            if strength_level is not None and hasattr(strength_level, "value"):
+                entry["strength_level"] = strength_level.value
+            elif strength_level is not None:
+                entry["strength_level"] = str(strength_level)
+            else:
+                entry["strength_level"] = None
+
+            categories_value = getattr(citation, "categories", [])
+            if isinstance(categories_value, list):
+                categories_serialized: List[str] = []
+                category_index = 0
+                while category_index < len(categories_value):
+                    category_entry = categories_value[category_index]
+                    if isinstance(category_entry, str) and len(category_entry.strip()) > 0:
+                        categories_serialized.append(category_entry.strip())
+                    category_index += 1
+                entry["categories"] = categories_serialized
+            else:
+                entry["categories"] = []
+
+            serialized.append(entry)
+            index += 1
         return serialized
 
     def build_fallback_text(self, payload: Dict[str, Any]) -> str:

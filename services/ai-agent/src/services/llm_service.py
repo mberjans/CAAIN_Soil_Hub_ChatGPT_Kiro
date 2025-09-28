@@ -14,6 +14,7 @@ import os
 from pydantic import BaseModel, Field
 
 from .openrouter_client import OpenRouterClient, LLMRequest, LLMResponse
+from .variety_explanation_service import VarietyExplanationService
 
 logger = logging.getLogger(__name__)
 
@@ -54,13 +55,13 @@ class LLMService:
             api_key=config.openrouter_api_key,
             base_url=config.openrouter_base_url
         )
-        
+
         # Conversation management
         self.active_conversations: Dict[str, ConversationContext] = {}
-        
+
         # Response cache
         self.response_cache: Dict[str, Any] = {}
-        
+
         # Agricultural prompt templates
         self.prompt_templates = {
             "crop_selection": """Based on the provided soil data and farm conditions, recommend suitable crop varieties.
@@ -127,6 +128,8 @@ Analyze:
 
 Provide confidence levels for each diagnosis."""
         }
+
+        self.variety_explanation_service = VarietyExplanationService()
 
     async def __aenter__(self):
         await self.openrouter_client.__aenter__()
@@ -361,18 +364,58 @@ Provide confidence levels for each diagnosis."""
             Human-readable explanation
         """
         try:
+            if self.variety_explanation_service.is_variety_recommendation(recommendation):
+                return await self._generate_variety_explanation(recommendation, context, user_id)
+
             explanation = await self.openrouter_client.explain_recommendation(
                 recommendation, context
             )
-            
+
             logger.info(f"Generated agricultural explanation for recommendation type: "
                        f"{recommendation.get('type', 'unknown')}")
-            
+
             return explanation
-            
+
         except Exception as e:
             logger.error(f"Agricultural explanation generation failed: {e}")
             return "Unable to generate explanation at this time. Please try again later."
+
+    async def _generate_variety_explanation(
+        self,
+        recommendation: Dict[str, Any],
+        context: Dict[str, Any],
+        user_id: Optional[str] = None
+    ) -> str:
+        """Generate explanation specifically for variety recommendations."""
+        user_preferences: Optional[Dict[str, Any]] = None
+        if isinstance(context, dict):
+            preferences_from_context = context.get("user_preferences")
+            if isinstance(preferences_from_context, dict):
+                user_preferences = preferences_from_context
+
+        payload = self.variety_explanation_service.build_explanation_payload(
+            recommendation,
+            context,
+            user_preferences
+        )
+
+        if user_id:
+            payload["user_id"] = user_id
+
+        try:
+            explanation = await self.openrouter_client.generate_variety_explanation(
+                payload
+            )
+            if isinstance(explanation, str) and len(explanation.strip()) > 0:
+                logger.info("Generated variety explanation using LLM")
+                return explanation
+
+        except Exception as error:
+            logger.error(f"Variety explanation via LLM failed: {error}")
+
+        fallback_text = self.variety_explanation_service.build_fallback_text(payload)
+        logger.info("Returning fallback variety explanation text")
+        return fallback_text
 
     async def generate_structured_recommendation(
         self,

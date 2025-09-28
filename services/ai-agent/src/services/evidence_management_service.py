@@ -8,10 +8,11 @@ from __future__ import annotations
 
 import logging
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
 from ..models.evidence_models import (
+    EvidenceCitation,
     EvidencePackage,
     EvidenceRecord,
     EvidenceSourceType,
@@ -67,21 +68,26 @@ class EvidenceManagementService:
                 record_index += 1
             index += 1
 
+        records = self._deduplicate_records(records)
+
         if len(records) < self.minimum_records:
             fallback_records = self._build_fallback_records(variety_entries, context_data)
             fallback_index = 0
             while fallback_index < len(fallback_records):
                 records.append(fallback_records[fallback_index])
                 fallback_index += 1
+            records = self._deduplicate_records(records)
 
         summary = self._aggregate_summary(records)
         coverage_notes = self._compose_coverage_notes(records, summary, context_data)
+        citations = self._build_citations(records)
 
         package = EvidencePackage()
         package.records = records
         package.summary = summary
         package.variety_names = variety_names
         package.coverage_notes = coverage_notes
+        package.citations = citations
 
         logger.debug(
             "Evidence package created",
@@ -462,12 +468,54 @@ class EvidenceManagementService:
                 first = guidance[0]
                 if isinstance(first, str) and len(first.strip()) > 0:
                     return first.strip()
+            recommended_practices = raw_data.get("recommended_practices")
+            if isinstance(recommended_practices, list) and len(recommended_practices) > 0:
+                practice = recommended_practices[0]
+                if isinstance(practice, str) and len(practice.strip()) > 0:
+                    return practice.strip()
         if category == "climate_adaptation":
             regions = raw_data.get("adapted_regions")
             if isinstance(regions, list) and len(regions) > 0:
                 first_region = regions[0]
                 if isinstance(first_region, str) and len(first_region.strip()) > 0:
                     return f"Adapted to region: {first_region.strip()}"
+        if category == "market_analysis":
+            analysis = raw_data.get("economic_analysis")
+            if isinstance(analysis, dict):
+                for key, value in analysis.items():
+                    formatted = self._format_key_value(key, value)
+                    if formatted:
+                        return formatted
+            market_score = raw_data.get("market_acceptance_score")
+            if isinstance(market_score, (int, float)):
+                rounded_score = round(float(market_score), 2)
+                return f"Market acceptance score: {rounded_score}"
+        if category == "general_support":
+            overall_score = self._extract_float(raw_data.get("overall_score"))
+            if overall_score is not None:
+                percent_value = round(overall_score * 100)
+                return f"Overall suitability score of {percent_value}% based on AFAS evaluation"
+            advantages = raw_data.get("key_advantages")
+            if isinstance(advantages, list) and len(advantages) > 0:
+                advantage = advantages[0]
+                if isinstance(advantage, str) and len(advantage.strip()) > 0:
+                    return advantage.strip()
+        return None
+
+    def _format_key_value(self, key: Any, value: Any) -> Optional[str]:
+        if not isinstance(key, str):
+            return None
+
+        normalized_key = key.replace("_", " ")
+        if isinstance(value, (int, float)):
+            rounded_value = round(float(value), 2)
+            return f"{normalized_key}: {rounded_value}"
+
+        if isinstance(value, str):
+            stripped_value = value.strip()
+            if len(stripped_value) > 0:
+                return f"{normalized_key}: {stripped_value}"
+
         return None
 
     def _calculate_credibility(self, record: EvidenceRecord, payload: Dict[str, Any]) -> float:
@@ -487,9 +535,13 @@ class EvidenceManagementService:
 
         published_at = record.published_at
         if published_at:
-            now = datetime.utcnow()
+            adjusted_publication = published_at
+            if adjusted_publication.tzinfo is None:
+                adjusted_publication = adjusted_publication.replace(tzinfo=timezone.utc)
+
+            now = datetime.now(timezone.utc)
             recency_threshold = now - timedelta(days=365 * self.recency_window_years)
-            if published_at >= recency_threshold:
+            if adjusted_publication >= recency_threshold:
                 score += 0.05
 
         reliability_flag = payload.get("reliability")
@@ -621,17 +673,34 @@ class EvidenceManagementService:
                 if isinstance(raw_data.get("adapted_regions"), list):
                     has_data = True
             elif category_name == "management_guidance":
-                if isinstance(raw_data.get("management_recommendations"), list):
+                management_content = raw_data.get("management_recommendations")
+                if isinstance(management_content, list) and len(management_content) > 0:
                     has_data = True
+                else:
+                    recommended_practices = raw_data.get("recommended_practices")
+                    if isinstance(recommended_practices, list) and len(recommended_practices) > 0:
+                        has_data = True
             elif category_name == "market_analysis":
-                if isinstance(raw_data.get("market_acceptance_score"), (int, float)):
+                market_score = raw_data.get("market_acceptance_score")
+                if isinstance(market_score, (int, float)):
                     has_data = True
+                else:
+                    economic_data = raw_data.get("economic_analysis")
+                    if isinstance(economic_data, dict) and len(economic_data) > 0:
+                        has_data = True
             elif category_name == "soil_fit":
-                if isinstance(raw_data.get("soil_fit"), list):
+                soil_data = raw_data.get("soil_fit")
+                if isinstance(soil_data, list) and len(soil_data) > 0:
                     has_data = True
+                else:
+                    soil_preferences = raw_data.get("soil_preferences")
+                    if isinstance(soil_preferences, list) and len(soil_preferences) > 0:
+                        has_data = True
 
             if has_data:
                 categories.append(category_name)
+        if len(categories) == 0:
+            categories.append("general_support")
         return categories
 
     def _build_fallback_records(
@@ -701,6 +770,11 @@ class EvidenceManagementService:
         credibility_sum = 0.0
         strength_sum = 0.0
         latest_publication: Optional[datetime] = None
+        high_credibility_count = 0
+        recent_evidence_count = 0
+
+        now = datetime.now(timezone.utc)
+        recency_threshold = now - timedelta(days=365 * self.recency_window_years)
 
         index = 0
         while index < total_records:
@@ -721,13 +795,25 @@ class EvidenceManagementService:
                 summary.strength_distribution[record.strength_level] = level_count + 1
 
             if record.published_at:
-                if latest_publication is None or record.published_at > latest_publication:
-                    latest_publication = record.published_at
+                adjusted_publication = record.published_at
+                if adjusted_publication.tzinfo is None:
+                    adjusted_publication = adjusted_publication.replace(tzinfo=timezone.utc)
+
+                if latest_publication is None or adjusted_publication > latest_publication:
+                    latest_publication = adjusted_publication
+                if adjusted_publication >= recency_threshold:
+                    recent_evidence_count += 1
+
+            if record.credibility_score >= 0.8:
+                high_credibility_count += 1
             index += 1
 
         summary.average_credibility = round(credibility_sum / total_records, 3)
         summary.average_strength = round(strength_sum / total_records, 3)
         summary.latest_publication = latest_publication
+        summary.high_credibility_records = high_credibility_count
+        if total_records > 0:
+            summary.recent_evidence_ratio = round(recent_evidence_count / total_records, 3)
         return summary
 
     def _compose_coverage_notes(
@@ -741,6 +827,16 @@ class EvidenceManagementService:
             notes.append(
                 "Limited supporting evidence detected; consider adding regional trial data."
             )
+
+        if summary.total_records > 0:
+            if summary.recent_evidence_ratio < 0.5:
+                notes.append(
+                    "Most supporting evidence predates the preferred recency window; incorporate newer trial data."
+                )
+            if summary.high_credibility_records == 0:
+                notes.append(
+                    "No high-credibility sources detected; add university or extension references for stronger validation."
+                )
 
         location = context.get("location") if isinstance(context, dict) else None
         if isinstance(location, dict):
@@ -773,3 +869,129 @@ class EvidenceManagementService:
                     f"Add evidence for {category_name.replace('_', ' ')} to enhance recommendation transparency."
                 )
         return notes
+
+    def _deduplicate_records(
+        self,
+        records: List[EvidenceRecord],
+    ) -> List[EvidenceRecord]:
+        if not isinstance(records, list):
+            return []
+
+        unique_records: Dict[str, EvidenceRecord] = {}
+        index = 0
+        while index < len(records):
+            record = records[index]
+            if record is None:
+                index += 1
+                continue
+
+            identity_values: List[Any] = [
+                record.source_name,
+                record.category,
+                record.summary,
+                record.source_link,
+            ]
+            key = self._build_identity_key(identity_values)
+            existing = unique_records.get(key)
+            if existing is None:
+                unique_records[key] = record
+            else:
+                if record.credibility_score > existing.credibility_score:
+                    unique_records[key] = record
+                elif record.credibility_score == existing.credibility_score:
+                    if record.strength_score > existing.strength_score:
+                        unique_records[key] = record
+            index += 1
+
+        deduplicated: List[EvidenceRecord] = []
+        for stored in unique_records.values():
+            deduplicated.append(stored)
+        return deduplicated
+
+    def _build_citations(
+        self,
+        records: List[EvidenceRecord],
+    ) -> List[EvidenceCitation]:
+        citations_map: Dict[str, EvidenceCitation] = {}
+        index = 0
+        while index < len(records):
+            record = records[index]
+            if record is None:
+                index += 1
+                continue
+
+            identity_values: List[Any] = [
+                record.source_name,
+                record.source_link,
+                record.source_type,
+            ]
+            key = self._build_identity_key(identity_values)
+            citation = citations_map.get(key)
+            if citation is None:
+                citation = EvidenceCitation(
+                    citation_id=f"citation-{uuid.uuid4()}",
+                    label="",
+                    source_name=record.source_name or "Supporting evidence",
+                    source_type=record.source_type,
+                    source_link=record.source_link,
+                    published_at=record.published_at,
+                    strength_level=record.strength_level,
+                    categories=[],
+                )
+                citations_map[key] = citation
+            else:
+                base_existing = self.source_base_scores.get(citation.source_type, 0.0)
+                base_new = self.source_base_scores.get(record.source_type, 0.0)
+                if base_new > base_existing:
+                    citation.source_type = record.source_type
+
+                if record.published_at:
+                    if citation.published_at is None or record.published_at > citation.published_at:
+                        citation.published_at = record.published_at
+
+                existing_level_value = self.strength_thresholds.get(citation.strength_level, 0.0)
+                new_level_value = self.strength_thresholds.get(record.strength_level, 0.0)
+                if new_level_value > existing_level_value:
+                    citation.strength_level = record.strength_level
+
+            self._append_unique_category(citation.categories, record.category)
+            index += 1
+
+        citations: List[EvidenceCitation] = []
+        for stored_citation in citations_map.values():
+            citations.append(stored_citation)
+
+        label_index = 0
+        while label_index < len(citations):
+            citation = citations[label_index]
+            citation.label = f"[{label_index + 1}]"
+            label_index += 1
+        return citations
+
+    def _build_identity_key(self, values: List[Any]) -> str:
+        parts: List[str] = []
+        index = 0
+        while index < len(values):
+            value = values[index]
+            if value is None:
+                parts.append("-")
+            else:
+                string_value = str(value).strip().lower()
+                parts.append(string_value)
+            index += 1
+        return "|".join(parts)
+
+    def _append_unique_category(self, categories: List[str], category: Optional[str]) -> None:
+        if not isinstance(category, str):
+            return
+        normalized = category.strip()
+        if len(normalized) == 0:
+            return
+
+        index = 0
+        while index < len(categories):
+            entry = categories[index]
+            if entry == normalized:
+                return
+            index += 1
+        categories.append(normalized)

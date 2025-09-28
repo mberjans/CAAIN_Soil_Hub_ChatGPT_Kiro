@@ -1,6 +1,14 @@
 """Tests for variety explanation service."""
 
+from pathlib import Path
+import sys
+
 import pytest
+
+SERVICE_ROOT_PATH = Path(__file__).resolve().parents[1]
+SERVICE_ROOT_STR = str(SERVICE_ROOT_PATH)
+if SERVICE_ROOT_STR not in sys.path:
+    sys.path.insert(0, SERVICE_ROOT_STR)
 
 from src.services.variety_explanation_service import VarietyExplanationService
 
@@ -67,6 +75,27 @@ def test_build_explanation_payload_language_preference():
     assert "accuracy_flags" in metrics
     assert "comprehension_notes" in metrics
 
+    assert "supporting_evidence" in payload
+    evidence_records = payload["supporting_evidence"]
+    assert isinstance(evidence_records, list)
+    assert len(evidence_records) > 0
+
+    evidence_summary = payload.get("evidence_summary")
+    assert isinstance(evidence_summary, dict)
+    assert evidence_summary.get("total_records", 0) >= len(evidence_records)
+    assert "high_credibility_records" in evidence_summary
+    assert "recent_evidence_ratio" in evidence_summary
+
+    evidence_notes = payload.get("evidence_notes")
+    assert isinstance(evidence_notes, list)
+
+    evidence_citations = payload.get("evidence_citations")
+    assert isinstance(evidence_citations, list)
+    assert len(evidence_citations) > 0
+    first_citation = evidence_citations[0]
+    assert "label" in first_citation
+    assert "categories" in first_citation
+
 
 def test_build_fallback_text_spanish_heading():
     service = VarietyExplanationService()
@@ -86,3 +115,4 @@ def test_build_fallback_text_spanish_heading():
     assert "Disease and pest notes" in fallback_text
     assert "Climate adaptation" in fallback_text
     assert "Quality metrics" in fallback_text
+    assert "Supporting evidence" in fallback_text
