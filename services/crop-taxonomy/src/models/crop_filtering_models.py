@@ -575,7 +575,7 @@ class FilterSuggestion(BaseModel):
     description: str = Field(..., description="Detailed description of the suggestion")
     
     # Suggestion content
-    directives: List[FilterDirective] = Field(default_factory=list, description="Filter directives to apply")
+    directives: List['FilterDirective'] = Field(default_factory=list, description="Filter directives to apply")
     rationale: List[str] = Field(default_factory=list, description="Rationale for the suggestion")
     
     # AI scoring and categorization
@@ -603,8 +603,8 @@ class FilterSuggestionResponse(BaseModel):
     generated_at: datetime = Field(default_factory=datetime.utcnow, description="Response generation time")
     
     # Suggestions
-    suggestions: List[FilterSuggestion] = Field(default_factory=list, description="Filter suggestions")
-    preset_summaries: List[FilterPresetSummary] = Field(default_factory=list, description="Relevant preset summaries")
+    suggestions: List['FilterSuggestion'] = Field(default_factory=list, description="Filter suggestions")
+    preset_summaries: List['FilterPresetSummary'] = Field(default_factory=list, description="Relevant preset summaries")
     
     # Context analysis
     context_summary: Dict[str, Any] = Field(default_factory=dict, description="Summary of analyzed context")
@@ -646,7 +646,7 @@ class FilterCombinationRequest(BaseModel):
     
     # Combination inputs
     preset_keys: List[str] = Field(default_factory=list, description="Preset keys to apply")
-    directives: List[FilterDirective] = Field(default_factory=list, description="Directives to apply")
+    directives: List['FilterDirective'] = Field(default_factory=list, description="Directives to apply")
     
     # Combination options
     search_operator: SearchOperator = Field(default=SearchOperator.AND, description="Operator for combining criteria")
@@ -754,7 +754,7 @@ class FilterSuggestion(BaseModel):
     description: str = Field(..., description="Detailed description of the suggestion")
     
     # Suggestion content
-    directives: List[FilterDirective] = Field(default_factory=list, description="Filter directives to apply")
+    directives: List['FilterDirective'] = Field(default_factory=list, description="Filter directives to apply")
     rationale: List[str] = Field(default_factory=list, description="Rationale for the suggestion")
     
     # AI scoring and categorization
@@ -782,8 +782,8 @@ class FilterSuggestionResponse(BaseModel):
     generated_at: datetime = Field(default_factory=datetime.utcnow, description="Response generation time")
     
     # Suggestions
-    suggestions: List[FilterSuggestion] = Field(default_factory=list, description="Filter suggestions")
-    preset_summaries: List[FilterPresetSummary] = Field(default_factory=list, description="Relevant preset summaries")
+    suggestions: List['FilterSuggestion'] = Field(default_factory=list, description="Filter suggestions")
+    preset_summaries: List['FilterPresetSummary'] = Field(default_factory=list, description="Relevant preset summaries")
     
     # Context analysis
     context_summary: Dict[str, Any] = Field(default_factory=dict, description="Summary of analyzed context")
