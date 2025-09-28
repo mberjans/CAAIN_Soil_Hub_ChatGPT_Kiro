@@ -530,6 +530,280 @@ class SmartCropRecommendation(BaseModel):
     backup_options: List[str] = Field(default_factory=list, description="Backup crop options")
 
 
+# Filter Suggestion Models
+class FilterSuggestionRequest(BaseModel):
+    """Request for intelligent filter suggestions based on context."""
+    
+    request_id: str = Field(..., description="Unique request identifier")
+    
+    # Context for suggestions
+    context: Dict[str, Any] = Field(default_factory=dict, description="Contextual information for suggestions")
+    climate_zone: Optional[str] = Field(None, description="Primary climate zone (e.g., 5b)")
+    location_coordinates: Optional[Dict[str, float]] = Field(None, description="GPS coordinates (lat, lng)")
+    focus_areas: List[str] = Field(default_factory=list, description="Focus areas such as organic, drought, profit")
+    
+    # Suggestion preferences
+    max_suggestions: int = Field(default=5, ge=0, le=20, description="Maximum number of suggestions to return")
+    include_presets: bool = Field(default=True, description="Include preset recommendations")
+    suggestion_categories: List[str] = Field(default_factory=list, description="Specific suggestion categories to include")
+    
+    # AI enhancement options
+    use_ml_enhancement: bool = Field(default=True, description="Use machine learning for enhanced suggestions")
+    user_feedback_weight: float = Field(default=0.3, ge=0.0, le=1.0, description="Weight of user feedback in suggestions")
+    seasonal_adjustment: bool = Field(default=True, description="Adjust suggestions based on seasonal factors")
+    
+    @validator('focus_areas')
+    def validate_focus_areas(cls, v: List[str]) -> List[str]:
+        """Validate focus areas list."""
+        if v is None:
+            return []
+        validated: List[str] = []
+        for item in v:
+            if item is None:
+                continue
+            cleaned = str(item).strip().lower()
+            if cleaned:
+                validated.append(cleaned)
+        return validated
+
+
+class FilterSuggestion(BaseModel):
+    """Intelligent filter suggestion with AI-powered insights."""
+    
+    key: str = Field(..., description="Unique identifier for the suggestion")
+    title: str = Field(..., description="Display title for the suggestion")
+    description: str = Field(..., description="Detailed description of the suggestion")
+    
+    # Suggestion content
+    directives: List[FilterDirective] = Field(default_factory=list, description="Filter directives to apply")
+    rationale: List[str] = Field(default_factory=list, description="Rationale for the suggestion")
+    
+    # AI scoring and categorization
+    score: float = Field(..., ge=0.0, le=1.0, description="Confidence/relevance score")
+    category: str = Field(..., description="Suggestion category (climate, soil, market, etc.)")
+    priority: float = Field(default=0.5, ge=0.0, le=1.0, description="Suggestion priority level")
+    
+    # Context awareness
+    context_relevance: Dict[str, float] = Field(default_factory=dict, description="Relevance to context factors")
+    seasonal_appropriateness: Optional[float] = Field(None, ge=0.0, le=1.0, description="Seasonal appropriateness score")
+    
+    # Learning factors
+    user_feedback_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="User feedback aggregation")
+    historical_success_rate: Optional[float] = Field(None, ge=0.0, le=1.0, description="Historical success rate")
+    
+    # Metadata
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Generation timestamp")
+    source: str = Field(default="ai_suggestion_engine", description="Source of the suggestion")
+
+
+class FilterSuggestionResponse(BaseModel):
+    """Response containing intelligent filter suggestions."""
+    
+    request_id: str = Field(..., description="Original request identifier")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Response generation time")
+    
+    # Suggestions
+    suggestions: List[FilterSuggestion] = Field(default_factory=list, description="Filter suggestions")
+    preset_summaries: List[FilterPresetSummary] = Field(default_factory=list, description="Relevant preset summaries")
+    
+    # Context analysis
+    context_summary: Dict[str, Any] = Field(default_factory=dict, description="Summary of analyzed context")
+    identified_patterns: List[str] = Field(default_factory=list, description="Patterns identified in context")
+    
+    # AI insights
+    ml_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Machine learning confidence score")
+    suggestion_diversity: Optional[float] = Field(None, ge=0.0, le=1.0, description="Diversity of suggestion categories")
+    
+    # Metadata
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            date: lambda v: v.isoformat()
+        }
+
+
+# Filter Directive Models
+class FilterDirective(BaseModel):
+    """Directive for applying specific filter adjustments."""
+    
+    category: str = Field(..., description="Filter category (climate, soil, management, etc.)")
+    attribute: str = Field(..., description="Specific attribute within the category")
+    value: Any = Field(..., description="Value to apply to the attribute")
+    priority: float = Field(default=0.5, ge=0.0, le=1.0, description="Directive priority level")
+    rationale: Optional[str] = Field(None, description="Reasoning behind the directive")
+
+
+class FilterCombinationRequest(BaseModel):
+    """Request for combining filter directives and presets."""
+    
+    request_id: str = Field(..., description="Unique request identifier")
+    
+    # Base criteria
+    base_criteria: TaxonomyFilterCriteria = Field(..., description="Base filter criteria")
+    
+    # Combination inputs
+    preset_keys: List[str] = Field(default_factory=list, description="Preset keys to apply")
+    directives: List[FilterDirective] = Field(default_factory=list, description="Directives to apply")
+    
+    # Combination options
+    search_operator: SearchOperator = Field(default=SearchOperator.AND, description="Operator for combining criteria")
+    include_suggestions: bool = Field(default=True, description="Include follow-up suggestions")
+    
+    # Context
+    context: Dict[str, Any] = Field(default_factory=dict, description="Contextual information")
+    
+    @validator('preset_keys')
+    def validate_preset_keys(cls, v: List[str]) -> List[str]:
+        """Validate preset keys list."""
+        if v is None:
+            return []
+        validated: List[str] = []
+        for item in v:
+            if item is None:
+                continue
+            cleaned = str(item).strip()
+            if cleaned:
+                validated.append(cleaned)
+        return validated
+
+    @validator('directives')
+    def validate_directives(cls, v: List[FilterDirective]) -> List[FilterDirective]:
+        """Validate directives list."""
+        if v is None:
+            return []
+        validated: List[FilterDirective] = []
+        for item in v:
+            if item is None:
+                continue
+            if not item.category or not item.attribute:
+                continue
+            validated.append(item)
+        return validated
+
+
+class FilterCombinationResponse(BaseModel):
+    """Response containing combined filter criteria."""
+    
+    request_id: str = Field(..., description="Original request identifier")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Response generation time")
+    
+    # Combined results
+    combined_criteria: TaxonomyFilterCriteria = Field(..., description="Combined filter criteria")
+    applied_presets: List[str] = Field(default_factory=list, description="Preset keys that were applied")
+    
+    # Guidance and assistance
+    dependency_notes: List[str] = Field(default_factory=list, description="Dependency resolution notes")
+    conflicts: List[str] = Field(default_factory=list, description="Detected conflicts")
+    warnings: List[str] = Field(default_factory=list, description="Processing warnings")
+    suggested_directives: List[FilterDirective] = Field(default_factory=list, description="Follow-up suggestions")
+    
+    # Metadata
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            date: lambda v: v.isoformat()
+        }
+
+
+# Filter Suggestion Models
+class FilterSuggestionRequest(BaseModel):
+    """Request for intelligent filter suggestions based on context."""
+    
+    request_id: str = Field(..., description="Unique request identifier")
+    
+    # Context for suggestions
+    context: Dict[str, Any] = Field(default_factory=dict, description="Contextual information for suggestions")
+    climate_zone: Optional[str] = Field(None, description="Primary climate zone (e.g., 5b)")
+    location_coordinates: Optional[Dict[str, float]] = Field(None, description="GPS coordinates (lat, lng)")
+    focus_areas: List[str] = Field(default_factory=list, description="Focus areas such as organic, drought, profit")
+    
+    # Suggestion preferences
+    max_suggestions: int = Field(default=5, ge=0, le=20, description="Maximum number of suggestions to return")
+    include_presets: bool = Field(default=True, description="Include preset recommendations")
+    
+    # AI enhancement options
+    use_ml_enhancement: bool = Field(default=True, description="Use machine learning for enhanced suggestions")
+    user_feedback_weight: float = Field(default=0.3, ge=0.0, le=1.0, description="Weight of user feedback in suggestions")
+    seasonal_adjustment: bool = Field(default=True, description="Adjust suggestions based on seasonal factors")
+    
+    @validator('focus_areas')
+    def validate_focus_areas(cls, v: List[str]) -> List[str]:
+        """Validate focus areas list."""
+        if v is None:
+            return []
+        validated: List[str] = []
+        for item in v:
+            if item is None:
+                continue
+            cleaned = str(item).strip().lower()
+            if cleaned:
+                validated.append(cleaned)
+        return validated
+
+
+class FilterSuggestion(BaseModel):
+    """Intelligent filter suggestion with AI-powered insights."""
+    
+    key: str = Field(..., description="Unique identifier for the suggestion")
+    title: str = Field(..., description="Display title for the suggestion")
+    description: str = Field(..., description="Detailed description of the suggestion")
+    
+    # Suggestion content
+    directives: List[FilterDirective] = Field(default_factory=list, description="Filter directives to apply")
+    rationale: List[str] = Field(default_factory=list, description="Rationale for the suggestion")
+    
+    # AI scoring and categorization
+    score: float = Field(..., ge=0.0, le=1.0, description="Confidence/relevance score")
+    category: str = Field(..., description="Suggestion category (climate, soil, market, etc.)")
+    priority: float = Field(default=0.5, ge=0.0, le=1.0, description="Suggestion priority level")
+    
+    # Context awareness
+    context_relevance: Dict[str, float] = Field(default_factory=dict, description="Relevance to context factors")
+    seasonal_appropriateness: Optional[float] = Field(None, ge=0.0, le=1.0, description="Seasonal appropriateness score")
+    
+    # Learning factors
+    user_feedback_score: Optional[float] = Field(None, ge=0.0, le=1.0, description="User feedback aggregation")
+    historical_success_rate: Optional[float] = Field(None, ge=0.0, le=1.0, description="Historical success rate")
+    
+    # Metadata
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Generation timestamp")
+    source: str = Field(default="ai_suggestion_engine", description="Source of the suggestion")
+
+
+class FilterSuggestionResponse(BaseModel):
+    """Response containing intelligent filter suggestions."""
+    
+    request_id: str = Field(..., description="Original request identifier")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Response generation time")
+    
+    # Suggestions
+    suggestions: List[FilterSuggestion] = Field(default_factory=list, description="Filter suggestions")
+    preset_summaries: List[FilterPresetSummary] = Field(default_factory=list, description="Relevant preset summaries")
+    
+    # Context analysis
+    context_summary: Dict[str, Any] = Field(default_factory=dict, description="Summary of analyzed context")
+    identified_patterns: List[str] = Field(default_factory=list, description="Patterns identified in context")
+    
+    # AI insights
+    ml_confidence: Optional[float] = Field(None, ge=0.0, le=1.0, description="Machine learning confidence score")
+    suggestion_diversity: Optional[float] = Field(None, ge=0.0, le=1.0, description="Diversity of suggestion categories")
+    
+    # Metadata
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    
+    class Config:
+        json_encoders = {
+            datetime: lambda v: v.isoformat(),
+            date: lambda v: v.isoformat()
+        }
+
+
 # Filter Preset Models
 class FilterPresetSummary(BaseModel):
     """Summary information for a filter preset."""
