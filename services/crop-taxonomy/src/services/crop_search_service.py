@@ -6,6 +6,7 @@ import logging
 import os
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
+from uuid import UUID
 
 try:  # pragma: no cover - runtime import resolution
     from ..data.reference_crops import build_reference_crops_dataset
@@ -78,6 +79,7 @@ class FilterEvaluation:
 
 
 from .result_processor import FilterResultProcessor
+from .variety_recommendation_service import VarietyRecommendationService
 
 class CropSearchService:
     """Advanced search service for crop taxonomy data."""
@@ -86,13 +88,15 @@ class CropSearchService:
         from .filter_cache_service import filter_cache_service
         from .performance_monitor import performance_monitor
         self.scoring_weights = self._initialize_scoring_weights()
-        self.result_processor = FilterResultProcessor(self.scoring_weights)
+        self.variety_recommendation_service = VarietyRecommendationService(database_url)
+        self.result_processor = FilterResultProcessor(self.variety_recommendation_service)
         self.search_cache: Dict[str, CropSearchResponse] = {}
         self.reference_crops: List[ComprehensiveCropData] = []
         self.db = None
         self.database_available = False
         self.cache_service = filter_cache_service
         self.performance_monitor = performance_monitor
+        self._optimizations_initialized = False
         self._initialise_database(database_url)
         self._load_reference_dataset()
 
@@ -109,10 +113,27 @@ class CropSearchService:
                 database_url = os.getenv("DATABASE_URL")
             self.db = CropTaxonomyDatabase(database_url)
             self.database_available = self.db.test_connection()
+            if self.database_available:
+                self._run_database_optimizations()
         except Exception as exc:  # pragma: no cover - connection failure path
             logger.warning("Crop taxonomy database unavailable: %s", str(exc))
             self.db = None
             self.database_available = False
+            self._optimizations_initialized = False
+
+    def _run_database_optimizations(self) -> None:
+        """Run database optimization routines if available."""
+        if self.db is None or not self.database_available:
+            return
+        if self._optimizations_initialized:
+            return
+        try:
+            from .database_optimizer import DatabaseOptimizer
+            optimizer = DatabaseOptimizer(self.db)
+            optimizer.run_all_optimizations()
+            self._optimizations_initialized = True
+        except Exception as exc:  # pragma: no cover - best effort
+            logger.debug("Database optimizations skipped: %s", str(exc))
 
     def _load_reference_dataset(self) -> None:
         """Load fallback dataset for searches."""
@@ -165,9 +186,9 @@ class CropSearchService:
         sorted_results = self._sort_results(matched_results, request.sort_by, request.sort_order)
         paginated_results = self._paginate_results(sorted_results, request.offset, request.max_results)
 
-        processed_results = self.result_processor.process_results(paginated_results, regional_context=request.regional_context)
+        processed_results = self.result_processor.process_results(paginated_results, request.filter_criteria)
         ranked_results = processed_results["ranked_results"]
-        visualization_summary = processed_results["visualization_data"]
+        visualization_summary = self._build_visualization_summary(ranked_results)
 
         facets = self._build_facets(sorted_results)
         statistics = self._build_statistics(start_time, matched_results, ranked_results)
@@ -219,13 +240,21 @@ class CropSearchService:
     async def _get_candidate_crops(self, request: CropSearchRequest) -> List[ComprehensiveCropData]:
         """Retrieve initial candidate crops from database or reference dataset."""
         candidates: List[ComprehensiveCropData] = []
+        existing_ids = set()
 
         if self.database_available and self.db is not None:
             try:
-                # Optimize database query based on available filters
+                optimized_candidates = self._load_optimized_candidates(request.filter_criteria)
+                index = 0
+                while index < len(optimized_candidates):
+                    optimized_crop = optimized_candidates[index]
+                    candidates.append(optimized_crop)
+                    crop_identifier = optimized_crop.crop_id
+                    if crop_identifier is not None:
+                        existing_ids.add(str(crop_identifier))
+                    index += 1
+
                 search_text = self._primary_search_text(request.filter_criteria)
-                
-                # Use optimized database functions if available
                 filters = self._prepare_optimized_filters(request.filter_criteria)
                 db_results = self.db.search_crops(
                     search_text=search_text,
@@ -237,7 +266,15 @@ class CropSearchService:
                 while index < len(db_results):
                     crop_dict = db_results[index]
                     crop = self._convert_db_to_comprehensive_crop_data(crop_dict)
-                    candidates.append(crop)
+                    if crop is not None:
+                        crop_identifier = crop.crop_id
+                        identifier_string = None
+                        if crop_identifier is not None:
+                            identifier_string = str(crop_identifier)
+                        if identifier_string is None or identifier_string not in existing_ids:
+                            candidates.append(crop)
+                            if identifier_string is not None:
+                                existing_ids.add(identifier_string)
                     index += 1
             except Exception as exc:  # pragma: no cover - database fallback path
                 logger.warning("Database search failed, using reference dataset: %s", str(exc))
@@ -283,6 +320,146 @@ class CropSearchService:
         )
         
         return optimized_filters
+
+    def _load_optimized_candidates(self, criteria: TaxonomyFilterCriteria) -> List[ComprehensiveCropData]:
+        """Load candidate crops using optimized database paths."""
+        optimized_candidates: List[ComprehensiveCropData] = []
+        if self.db is None:
+            return optimized_candidates
+        if not hasattr(self.db, 'run_complex_filter'):
+            return optimized_candidates
+
+        arguments = self._build_optimized_filter_arguments(criteria)
+        if arguments is None:
+            return optimized_candidates
+
+        ph_range = arguments['ph_range']
+        results = self.db.run_complex_filter(
+            climate_zones=arguments['climate_zones'],
+            ph_range=ph_range,
+            drought_tolerance=arguments['drought_tolerance'],
+            management_complexity=arguments['management_complexity'],
+            crop_categories=arguments['crop_categories'],
+            limit=200,
+            offset=0
+        )
+
+        if len(results) == 0:
+            return optimized_candidates
+
+        crop_ids: List[UUID] = []
+        index = 0
+        while index < len(results):
+            row = results[index]
+            crop_identifier = row.get('crop_id')
+            if crop_identifier is not None:
+                crop_ids.append(crop_identifier)
+            index += 1
+
+        if len(crop_ids) == 0:
+            return optimized_candidates
+
+        if hasattr(self.db, 'get_crops_by_ids'):
+            detailed_records = self.db.get_crops_by_ids(crop_ids)
+        else:
+            detailed_records = []
+
+        record_index = 0
+        while record_index < len(detailed_records):
+            record = detailed_records[record_index]
+            converted = self._convert_db_to_comprehensive_crop_data(record)
+            if converted is not None:
+                score_value = None
+                if record_index < len(results):
+                    row = results[record_index]
+                    score_value = row.get('overall_score')
+                if score_value is not None:
+                    try:
+                        converted.confidence_score = float(score_value)
+                    except Exception:
+                        pass
+                optimized_candidates.append(converted)
+            record_index += 1
+
+        return optimized_candidates
+
+    def _build_optimized_filter_arguments(self, criteria: TaxonomyFilterCriteria) -> Optional[Dict[str, Any]]:
+        """Build arguments for optimized database filter execution."""
+        has_parameter = False
+        arguments: Dict[str, Any] = {}
+        arguments['climate_zones'] = None
+        arguments['ph_range'] = None
+        arguments['drought_tolerance'] = None
+        arguments['management_complexity'] = None
+        arguments['crop_categories'] = None
+
+        climate_filter = criteria.climate_filter
+        if climate_filter is not None:
+            if climate_filter.hardiness_zones:
+                zones: List[str] = []
+                zone_index = 0
+                while zone_index < len(climate_filter.hardiness_zones):
+                    zone_value = climate_filter.hardiness_zones[zone_index]
+                    if zone_value is not None:
+                        zones.append(str(zone_value))
+                    zone_index += 1
+                if len(zones) > 0:
+                    arguments['climate_zones'] = zones
+                    has_parameter = True
+            if climate_filter.drought_tolerance_required is not None:
+                tolerance_value = climate_filter.drought_tolerance_required
+                if hasattr(tolerance_value, 'value'):
+                    arguments['drought_tolerance'] = tolerance_value.value
+                else:
+                    arguments['drought_tolerance'] = str(tolerance_value)
+                has_parameter = True
+
+        soil_filter = criteria.soil_filter
+        if soil_filter is not None and soil_filter.ph_range:
+            min_ph = None
+            max_ph = None
+            ph_range_value = soil_filter.ph_range
+            if isinstance(ph_range_value, dict):
+                min_ph = ph_range_value.get('min') or ph_range_value.get('min_ph')
+                max_ph = ph_range_value.get('max') or ph_range_value.get('max_ph')
+            elif isinstance(ph_range_value, (list, tuple)):
+                if len(ph_range_value) > 0:
+                    min_ph = ph_range_value[0]
+                if len(ph_range_value) > 1:
+                    max_ph = ph_range_value[1]
+            if min_ph is not None or max_ph is not None:
+                arguments['ph_range'] = (min_ph, max_ph)
+                has_parameter = True
+
+        management_filter = criteria.management_filter
+        if management_filter is not None and management_filter.max_management_complexity is not None:
+            complexity_value = management_filter.max_management_complexity
+            if hasattr(complexity_value, 'value'):
+                arguments['management_complexity'] = complexity_value.value
+            else:
+                arguments['management_complexity'] = str(complexity_value)
+            has_parameter = True
+
+        agricultural_filter = criteria.agricultural_filter
+        if agricultural_filter is not None and agricultural_filter.categories is not None:
+            categories: List[str] = []
+            category_index = 0
+            while category_index < len(agricultural_filter.categories):
+                category_value = agricultural_filter.categories[category_index]
+                if category_value is not None:
+                    if hasattr(category_value, 'value'):
+                        categories.append(str(category_value.value))
+                    else:
+                        categories.append(str(category_value))
+                category_index += 1
+            if len(categories) > 0:
+                arguments['crop_categories'] = categories
+                has_parameter = True
+
+        if not has_parameter:
+            return None
+
+        return arguments
 
     def _primary_search_text(self, criteria: TaxonomyFilterCriteria) -> Optional[str]:
         """Select primary search text from criteria."""

@@ -156,7 +156,7 @@ class CropTaxonomyDatabase:
     
     def _apply_crop_filters(self, query, filters: CropSearchFilters):
         """Apply filtering criteria to crop query."""
-        
+
         # Geographic filters
         if filters.geographic_filters:
             geo = filters.geographic_filters
@@ -261,8 +261,87 @@ class CropTaxonomyDatabase:
                 query = query.join(CropFilteringAttributes).filter(
                     CropFilteringAttributes.labor_requirements.in_(mgmt.labor_requirements)
                 )
-        
+
         return query
+
+    def get_crops_by_ids(self, crop_ids: List[UUID]) -> List[Dict[str, Any]]:
+        """Fetch multiple crops by their identifiers."""
+        results: List[Dict[str, Any]] = []
+        if crop_ids is None or len(crop_ids) == 0:
+            return results
+        try:
+            with self.get_session() as session:
+                query = session.query(Crop).options(
+                    joinedload(Crop.taxonomic_hierarchy),
+                    joinedload(Crop.agricultural_classification),
+                    joinedload(Crop.climate_adaptations),
+                    joinedload(Crop.soil_requirements),
+                    joinedload(Crop.nutritional_profile),
+                    joinedload(Crop.filtering_attributes),
+                    joinedload(Crop.attribute_tags)
+                ).filter(Crop.crop_id.in_(crop_ids))
+
+                crops = query.all()
+                index = 0
+                while index < len(crops):
+                    crop_record = crops[index]
+                    crop_dict = self._crop_to_dict(crop_record)
+                    results.append(crop_dict)
+                    index += 1
+        except Exception as error:
+            logger.error(f"Error fetching crops by ids: {error}")
+            raise
+        return results
+
+    def run_complex_filter(
+        self,
+        climate_zones: Optional[List[str]] = None,
+        ph_range: Optional[Tuple[Optional[float], Optional[float]]] = None,
+        drought_tolerance: Optional[str] = None,
+        management_complexity: Optional[str] = None,
+        crop_categories: Optional[List[str]] = None,
+        limit: int = 200,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """Execute the optimized complex crop filter function."""
+        results: List[Dict[str, Any]] = []
+        try:
+            with self.get_session() as session:
+                min_ph = None
+                max_ph = None
+                if ph_range is not None:
+                    min_ph = ph_range[0]
+                    max_ph = ph_range[1]
+
+                query_text = (
+                    "SELECT * FROM complex_crop_filter("
+                    ":climate_zones, :min_ph, :max_ph, :drought_tolerance, "
+                    ":management_complexity, :crop_categories) "
+                    "LIMIT :limit OFFSET :offset"
+                )
+                parameters = {
+                    "climate_zones": climate_zones,
+                    "min_ph": min_ph,
+                    "max_ph": max_ph,
+                    "drought_tolerance": drought_tolerance,
+                    "management_complexity": management_complexity,
+                    "crop_categories": crop_categories,
+                    "limit": limit,
+                    "offset": offset
+                }
+                query = session.execute(text(query_text), parameters)
+                for row in query:
+                    row_dict: Dict[str, Any] = {}
+                    row_dict['crop_id'] = row[0]
+                    row_dict['crop_name'] = row[1]
+                    row_dict['overall_score'] = row[2]
+                    row_dict['climate_match'] = row[3]
+                    row_dict['soil_match'] = row[4]
+                    row_dict['management_match'] = row[5]
+                    results.append(row_dict)
+        except Exception as error:
+            logger.error(f"Error executing complex crop filter: {error}")
+        return results
     
     def get_crop_by_id(self, crop_id: UUID) -> Optional[Dict[str, Any]]:
         """Get comprehensive crop information by ID."""
