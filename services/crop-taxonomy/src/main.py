@@ -5,16 +5,43 @@ Main FastAPI application for comprehensive crop taxonomy, classification,
 variety recommendations, and regional adaptation services.
 """
 
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
-import logging
+from fastapi import FastAPI
 import sys
 from pathlib import Path
+import logging
+
+from .api import (
+    taxonomy_routes,
+    search_routes,
+    filtering_routes,
+    preference_routes,
+    learning_routes,
+    smart_filter_routes,
+    regional_routes,
+    variety_routes,
+    community_routes,
+    filter_analytics_routes,
+    explanation_routes,
+    result_processor_routes
+)
+
+# Add services to Python path for imports
+services_path = Path(__file__).parent / "services"
+sys.path.insert(0, str(services_path))
+
+# Setup performance optimizations
+from .services.performance_optimization import setup_performance_optimizations
 
 # Add src to Python path
 src_path = Path(__file__).parent
 sys.path.insert(0, str(src_path))
+
+# Initialize performance optimizations
+try:
+    from services.performance_optimization import setup_performance_optimizations
+    setup_performance_optimizations()
+except Exception as e:
+    logging.error(f"Performance optimization setup error: {e}")
 
 try:
     from api.taxonomy_routes import router as taxonomy_router
@@ -139,17 +166,18 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(taxonomy_router, prefix="/api/v1")
-app.include_router(search_router, prefix="/api/v1/crop-taxonomy")
-app.include_router(variety_router, prefix="/api/v1") 
-app.include_router(regional_router, prefix="/api/v1")
-app.include_router(preference_router, prefix="/api/v1")
-app.include_router(filter_router, prefix="/api/v1")
-app.include_router(learning_router, prefix="/api/v1")
-app.include_router(preference_recommendation_router)
-app.include_router(filtering_router)  # Include the new filtering routes with no prefix (handles full paths)
-app.include_router(smart_filter_router, prefix="/api/v1/crop-taxonomy")  # Include smart filter routes
-app.include_router(analytics_router, prefix="/api/v1/crop-taxonomy")  # Include analytics routes
+app.include_router(taxonomy_routes.router)
+app.include_router(search_routes.router)
+app.include_router(filtering_routes.router)
+app.include_router(preference_routes.router)
+app.include_router(learning_routes.router)
+app.include_router(smart_filter_routes.router)
+app.include_router(regional_routes.router)
+app.include_router(variety_routes.router)
+app.include_router(community_routes.router)
+app.include_router(filter_analytics_routes.router)
+app.include_router(explanation_routes.router)
+app.include_router(result_processor_routes.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
