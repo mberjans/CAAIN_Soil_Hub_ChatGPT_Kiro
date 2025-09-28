@@ -919,7 +919,7 @@ This master checklist combines all feature implementation tasks with unique iden
     **Features**: Filtering, sorting, pagination, availability status, regional performance data
     **Integration**: Connect with seed company data, regional adaptation service
     **Response**: Complete variety information with performance metrics, availability, pricing
-  - [ ] TICKET-005_crop-variety-recommendations-5.1.3 Create POST `/api/v1/crop-taxonomy/varieties/compare` - Advanced variety comparison
+  - [!] TICKET-005_crop-variety-recommendations-5.1.3 Create POST `/api/v1/crop-taxonomy/varieties/compare` - Advanced variety comparison
     **Features**: Multi-variety comparison, trade-off analysis, decision support
     **Request**: List of variety IDs, comparison criteria, weighting preferences
     **Response**: Structured comparison data, visualization data, recommendation summary
