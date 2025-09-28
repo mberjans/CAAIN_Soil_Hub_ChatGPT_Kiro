@@ -153,6 +153,7 @@ class CropRecommendationService:
         corn_varieties: List[Dict[str, Any]] = []
 
         corn_variety_one = {
+            "crop_name": "corn",
             "name": "Pioneer P1197AMXT",
             "company": "Pioneer",
             "relative_maturity": 119,
@@ -188,6 +189,7 @@ class CropRecommendationService:
         corn_varieties.append(corn_variety_one)
 
         corn_variety_two = {
+            "crop_name": "corn",
             "name": "Dekalb DKC62-08",
             "company": "Bayer/Dekalb",
             "relative_maturity": 108,
@@ -222,6 +224,7 @@ class CropRecommendationService:
         corn_varieties.append(corn_variety_two)
 
         corn_variety_three = {
+            "crop_name": "corn",
             "name": "Syngenta NK603",
             "company": "Syngenta",
             "relative_maturity": 105,
@@ -260,6 +263,7 @@ class CropRecommendationService:
         soybean_varieties: List[Dict[str, Any]] = []
 
         soybean_variety_one = {
+            "crop_name": "soybean",
             "name": "Asgrow AG3431",
             "company": "Bayer/Asgrow",
             "relative_maturity": 33,
@@ -294,6 +298,7 @@ class CropRecommendationService:
         soybean_varieties.append(soybean_variety_one)
 
         soybean_variety_two = {
+            "crop_name": "soybean",
             "name": "Pioneer P39T67R",
             "company": "Pioneer",
             "relative_maturity": 39,
@@ -328,6 +333,7 @@ class CropRecommendationService:
         soybean_varieties.append(soybean_variety_two)
 
         soybean_varieties_third = {
+            "crop_name": "soybean",
             "name": "Syngenta Soybean 215",
             "company": "Syngenta",
             "relative_maturity": 32,
@@ -366,6 +372,7 @@ class CropRecommendationService:
         wheat_varieties: List[Dict[str, Any]] = []
 
         wheat_variety_one = {
+            "crop_name": "wheat",
             "name": "WestBred WB9653",
             "company": "WestBred",
             "relative_maturity": 95,
@@ -400,6 +407,7 @@ class CropRecommendationService:
         wheat_varieties.append(wheat_variety_one)
 
         wheat_variety_two = {
+            "crop_name": "wheat",
             "name": "Syngenta SY Monument",
             "company": "Syngenta",
             "relative_maturity": 92,
@@ -434,6 +442,7 @@ class CropRecommendationService:
         wheat_varieties.append(wheat_variety_two)
 
         wheat_variety_three = {
+            "crop_name": "wheat",
             "name": "University Explorer",
             "company": "University Extension",
             "relative_maturity": 98,
@@ -514,6 +523,38 @@ class CropRecommendationService:
 
         return True
 
+    def _calculate_variety_alignment_scores(
+        self,
+        variety: Dict[str, Any],
+        request: RecommendationRequest
+    ) -> Dict[str, float]:
+        """Calculate climate and soil alignment scores for a variety."""
+        results: Dict[str, float] = {}
+
+        climate_alignment = 0.7
+        if variety.get('recommended_climate_zones') and request and request.location:
+            climate_crop_data = {"climate_zones": variety['recommended_climate_zones']}
+            climate_alignment = self._calculate_climate_zone_suitability(
+                request.location,
+                climate_crop_data
+            )
+        results['climate_alignment'] = climate_alignment
+
+        soil_alignment = 0.7
+        if variety.get('optimal_ph_range') and request and request.soil_data and request.soil_data.ph:
+            ph_crop_data = {
+                "optimal_ph_range": variety['optimal_ph_range'],
+                "minimum_ph": variety.get('minimum_ph', variety['optimal_ph_range'][0]),
+                "maximum_ph": variety.get('maximum_ph', variety['optimal_ph_range'][1])
+            }
+            soil_alignment = self._calculate_ph_suitability(
+                request.soil_data.ph,
+                ph_crop_data
+            )
+        results['soil_alignment'] = soil_alignment
+
+        return results
+
     def _calculate_variety_performance_score(
         self,
         variety: Dict[str, Any],
@@ -547,27 +588,12 @@ class CropRecommendationService:
             score_total += normalized_acceptance * 0.15
             weight_total += 0.15
 
-        climate_alignment = 0.7
-        if variety.get('recommended_climate_zones') and request and request.location:
-            climate_crop_data = {"climate_zones": variety['recommended_climate_zones']}
-            climate_alignment = self._calculate_climate_zone_suitability(
-                request.location,
-                climate_crop_data
-            )
+        alignment_scores = self._calculate_variety_alignment_scores(variety, request)
+        climate_alignment = alignment_scores.get('climate_alignment', 0.7)
         score_total += climate_alignment * 0.10
         weight_total += 0.10
 
-        soil_alignment = 0.7
-        if variety.get('optimal_ph_range') and request and request.soil_data and request.soil_data.ph:
-            ph_crop_data = {
-                "optimal_ph_range": variety['optimal_ph_range'],
-                "minimum_ph": variety.get('minimum_ph', variety['optimal_ph_range'][0]),
-                "maximum_ph": variety.get('maximum_ph', variety['optimal_ph_range'][1])
-            }
-            soil_alignment = self._calculate_ph_suitability(
-                request.soil_data.ph,
-                ph_crop_data
-            )
+        soil_alignment = alignment_scores.get('soil_alignment', 0.7)
         score_total += soil_alignment * 0.05
         weight_total += 0.05
 
@@ -632,6 +658,318 @@ class CropRecommendationService:
             "risk_score": risk_score,
             "risk_factors": risk_factors
         }
+
+    def _determine_alignment_label(self, score: float) -> str:
+        """Convert numeric alignment score to descriptive label."""
+        if score >= 0.9:
+            return "optimal"
+        if score >= 0.75:
+            return "strong"
+        if score >= 0.6:
+            return "adequate"
+        return "limited"
+
+    def _format_variety_summary_step(self, variety_entry: Dict[str, Any]) -> str:
+        """Create concise summary string for implementation steps."""
+        if not variety_entry:
+            return ""
+
+        summary_parts: List[str] = []
+
+        name = variety_entry.get('variety_name')
+        company = variety_entry.get('company')
+        if name:
+            if company:
+                summary_parts.append(f"{name} ({company})")
+            else:
+                summary_parts.append(str(name))
+
+        roi_info = variety_entry.get('roi', {})
+        roi_percent = roi_info.get('roi_percent')
+        if roi_percent is not None:
+            rounded_roi = round(roi_percent)
+            summary_parts.append(f"ROI {rounded_roi}%")
+
+        performance_score = variety_entry.get('performance_score')
+        if performance_score is not None:
+            summary_parts.append(f"performance {round(performance_score * 100)}%")
+
+        risk_info = variety_entry.get('risk', {})
+        risk_level = risk_info.get('risk_level')
+        if risk_level:
+            summary_parts.append(f"risk {risk_level}")
+
+        if not summary_parts:
+            return ""
+
+        combined_summary = ", ".join(summary_parts)
+        return f"Variety focus: {combined_summary}"
+
+    def _extract_crop_name_from_title(self, title: str) -> str:
+        """Extract crop name from recommendation title text."""
+        if not title:
+            return ""
+
+        lower_title = title.lower()
+
+        for crop_name in self.crop_database.keys():
+            if crop_name in lower_title:
+                return crop_name
+
+        tokens = lower_title.replace(',', ' ').split()
+        for token in tokens:
+            if token in self.crop_database:
+                return token
+
+        if tokens:
+            last_token = tokens[-1]
+            if last_token in self.crop_database:
+                return last_token
+        return ""
+
+    def _get_fallback_crop_price(self, crop_name: str) -> Dict[str, Any]:
+        """Provide fallback price data when market service is unavailable."""
+        fallback_prices: Dict[str, Dict[str, Any]] = {
+            "corn": {
+                "price_per_unit": 4.30,
+                "unit": "bushel",
+                "confidence": 0.45,
+                "source": "internal_fallback"
+            },
+            "soybean": {
+                "price_per_unit": 12.60,
+                "unit": "bushel",
+                "confidence": 0.45,
+                "source": "internal_fallback"
+            },
+            "wheat": {
+                "price_per_unit": 6.90,
+                "unit": "bushel",
+                "confidence": 0.42,
+                "source": "internal_fallback"
+            }
+        }
+
+        crop_key = crop_name.lower() if crop_name else ""
+        if crop_key in fallback_prices:
+            return fallback_prices[crop_key]
+
+        return {
+            "price_per_unit": 8.0,
+            "unit": "bushel",
+            "confidence": 0.35,
+            "source": "internal_fallback"
+        }
+
+    async def calculate_variety_roi(
+        self,
+        variety: Dict[str, Any],
+        farm_context: RecommendationRequest
+    ) -> Dict[str, Any]:
+        """Calculate ROI metrics for a variety using market and cost data."""
+        crop_name = variety.get('crop_name', '')
+        region = 'US'
+
+        if farm_context and farm_context.location:
+            if farm_context.location.state:
+                region = farm_context.location.state
+            elif farm_context.location.county:
+                region = farm_context.location.county
+
+        price_per_unit = None
+        price_unit = 'bushel'
+        price_source = 'unknown'
+        price_confidence = 0.0
+
+        if self.market_price_service and crop_name:
+            try:
+                market_price = await self.market_price_service.get_current_price(crop_name, region)
+            except Exception:
+                market_price = None
+            if market_price:
+                price_per_unit = float(market_price.price_per_unit)
+                price_unit = market_price.unit
+                price_source = market_price.source
+                price_confidence = market_price.confidence
+
+        if price_per_unit is None:
+            fallback_price = self._get_fallback_crop_price(crop_name)
+            price_per_unit = float(fallback_price['price_per_unit'])
+            price_unit = fallback_price['unit']
+            price_source = fallback_price['source']
+            price_confidence = fallback_price['confidence']
+
+        units_per_acre = variety.get('units_per_acre', 1.0)
+        if units_per_acre is None:
+            units_per_acre = 1.0
+
+        seed_cost_per_unit = variety.get('seed_cost_per_unit', 0.0)
+        seed_cost_per_acre = float(seed_cost_per_unit) * float(units_per_acre)
+
+        management_cost = float(variety.get('additional_management_cost_per_acre', 0.0))
+
+        total_cost = seed_cost_per_acre + management_cost
+
+        expected_yield = variety.get('expected_yield_bu_acre')
+        if expected_yield is None:
+            yield_range = variety.get('yield_range_bu_acre')
+            if isinstance(yield_range, tuple) or isinstance(yield_range, list):
+                values: List[float] = []
+                for entry in yield_range:
+                    try:
+                        values.append(float(entry))
+                    except (TypeError, ValueError):
+                        continue
+                total_values = 0.0
+                count_values = 0
+                for value in values:
+                    total_values += value
+                    count_values += 1
+                if count_values > 0:
+                    expected_yield = total_values / count_values
+        if expected_yield is None:
+            expected_yield = 0.0
+
+        expected_revenue = float(expected_yield) * float(price_per_unit)
+        net_return = expected_revenue - total_cost
+
+        if total_cost > 0:
+            roi_percent = (net_return / total_cost) * 100.0
+        else:
+            roi_percent = 0.0
+
+        if price_per_unit > 0:
+            break_even_yield = total_cost / price_per_unit
+        else:
+            break_even_yield = 0.0
+
+        result = {
+            "seed_cost_per_acre": seed_cost_per_acre,
+            "management_cost_per_acre": management_cost,
+            "total_cost_per_acre": total_cost,
+            "price_per_unit": price_per_unit,
+            "price_unit": price_unit,
+            "price_source": price_source,
+            "price_confidence": price_confidence,
+            "expected_revenue_per_acre": expected_revenue,
+            "net_return_per_acre": net_return,
+            "roi_percent": roi_percent,
+            "break_even_yield_bu_acre": break_even_yield,
+            "calculation_timestamp": datetime.utcnow().isoformat()
+        }
+
+        return result
+
+    async def get_variety_aware_recommendations(
+        self,
+        request: RecommendationRequest
+    ) -> Dict[str, Any]:
+        """Generate crop recommendations enriched with variety intelligence."""
+        base_recommendations = await self.get_crop_recommendations(request)
+
+        variety_recommendations: List[Dict[str, Any]] = []
+        risk_distribution: Dict[str, int] = {
+            "low": 0,
+            "moderate": 0,
+            "elevated": 0
+        }
+
+        for recommendation in base_recommendations:
+            crop_name = self._extract_crop_name_from_title(recommendation.title)
+            if not crop_name:
+                continue
+
+            variety_records = self._get_variety_records_for_crop(crop_name)
+            if not variety_records:
+                continue
+
+            candidate_varieties: List[Dict[str, Any]] = []
+
+            for variety in variety_records:
+                if not self._match_variety_to_location(variety, request.location):
+                    continue
+
+                alignment_scores = self._calculate_variety_alignment_scores(variety, request)
+                performance_score = self._calculate_variety_performance_score(variety, request)
+                risk_info = self._assess_variety_risk(variety)
+                roi_info = await self.calculate_variety_roi(variety, request)
+
+                entry: Dict[str, Any] = {}
+                entry['crop_name'] = crop_name
+                entry['variety_name'] = variety.get('name')
+                entry['company'] = variety.get('company')
+                entry['performance_score'] = performance_score
+                entry['yield_potential_percentile'] = variety.get('yield_potential_percentile')
+                entry['expected_yield_bu_acre'] = variety.get('expected_yield_bu_acre')
+                entry['risk'] = risk_info
+                entry['roi'] = roi_info
+                entry['alignment'] = alignment_scores
+                entry['management_notes'] = variety.get('management_notes')
+                entry['trait_stack'] = variety.get('trait_stack')
+                entry['stress_tolerances'] = variety.get('stress_tolerances')
+                entry['disease_resistances'] = variety.get('disease_resistances')
+                entry['seed_availability'] = variety.get('seed_availability')
+                candidate_varieties.append(entry)
+
+            if not candidate_varieties:
+                continue
+
+            candidate_varieties.sort(key=lambda item: item['performance_score'], reverse=True)
+
+            top_varieties: List[Dict[str, Any]] = []
+            index = 0
+            while index < len(candidate_varieties) and index < 3:
+                top_varieties.append(candidate_varieties[index])
+                risk_level = candidate_varieties[index]['risk'].get('risk_level', 'moderate')
+                if risk_level not in risk_distribution:
+                    risk_distribution[risk_level] = 0
+                risk_distribution[risk_level] += 1
+                index += 1
+
+            primary_variety = top_varieties[0]
+            summary_step = self._format_variety_summary_step(primary_variety)
+            if summary_step:
+                recommendation.implementation_steps.insert(0, summary_step)
+
+            risk_label = primary_variety['risk'].get('risk_level', 'moderate')
+            risk_note = f"Primary variety risk profile: {risk_label}"
+            recommendation.expected_outcomes.append(risk_note)
+
+            alignment_scores = primary_variety['alignment']
+            climate_alignment_label = self._determine_alignment_label(
+                alignment_scores.get('climate_alignment', 0.7)
+            )
+            soil_alignment_label = self._determine_alignment_label(
+                alignment_scores.get('soil_alignment', 0.7)
+            )
+
+            crop_entry = {
+                "crop_name": crop_name,
+                "variety_candidates": top_varieties,
+                "climate_alignment": climate_alignment_label,
+                "soil_alignment": soil_alignment_label,
+                "recommendation_title": recommendation.title
+            }
+
+            variety_recommendations.append(crop_entry)
+
+        analysis_notes: List[str] = []
+        for level, count in risk_distribution.items():
+            if count > 0:
+                analysis_notes.append(f"{level.title()} risk varieties: {count}")
+
+        variety_summary = {
+            "request_id": request.request_id,
+            "generated_at": datetime.utcnow().isoformat(),
+            "crop_recommendations": base_recommendations,
+            "variety_recommendations": variety_recommendations,
+            "analysis_summary": {
+                "risk_distribution": risk_distribution,
+                "notes": analysis_notes
+            }
+        }
+
+        return variety_summary
     
     async def get_crop_recommendations(self, request: RecommendationRequest) -> List[RecommendationItem]:
         """
