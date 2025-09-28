@@ -10,6 +10,9 @@ from typing import List, Dict, Any, Optional, Tuple, Union
 from datetime import datetime, date, timedelta
 from uuid import UUID
 import statistics
+import math
+
+from .advanced_variety_ranking import AdvancedVarietyRanking
 
 try:
     from ..models.crop_variety_models import (
@@ -114,6 +117,7 @@ class VarietyRecommendationService:
         self.regional_data = {}
         self.performance_models = {}
         self._initialize_recommendation_algorithms()
+        self.ranking_engine = AdvancedVarietyRanking(self.scoring_weights)
 
     def _initialize_recommendation_algorithms(self):
         """Initialize variety recommendation algorithms and scoring systems."""
@@ -136,6 +140,9 @@ class VarietyRecommendationService:
             "pest_pressure": 0.15,
             "market_access": 0.10
         }
+
+        if hasattr(self, "ranking_engine") and self.ranking_engine:
+            self.ranking_engine.update_base_weights(self.scoring_weights)
 
     async def recommend_varieties(
         self, 
@@ -163,24 +170,91 @@ class VarietyRecommendationService:
                 return []
 
             # Score each variety for the specific context
-            scored_varieties = []
+            candidate_entries: List[Dict[str, Any]] = []
+            ranking_candidates: List[Dict[str, Any]] = []
             for variety in available_varieties:
                 score_data = await self._score_variety_for_context(
                     variety, regional_context, farmer_preferences
                 )
-                
+
                 if score_data:
-                    recommendation = await self._create_variety_recommendation(
-                        variety, score_data, regional_context
-                    )
-                    scored_varieties.append(recommendation)
+                    entry: Dict[str, Any] = {}
+                    entry["variety"] = variety
+                    entry["score_data"] = score_data
+                    candidate_entries.append(entry)
+
+                    ranking_descriptor: Dict[str, Any] = {}
+                    ranking_descriptor["identifier"] = str(variety.id)
+                    ranking_descriptor["scores"] = score_data.get("individual_scores", {})
+                    baseline_score = score_data.get("baseline_score")
+                    if isinstance(baseline_score, (int, float)):
+                        ranking_descriptor["baseline_score"] = float(baseline_score)
+                    ranking_candidates.append(ranking_descriptor)
+
+            if not candidate_entries:
+                return []
+
+            ranking_results = self.ranking_engine.rank_varieties(
+                ranking_candidates,
+                regional_context,
+                farmer_preferences
+            )
+
+            results_map = ranking_results.get("results", {})
+            global_weights = ranking_results.get("weights", {})
+            normalized_weights = ranking_results.get("normalized_weights", {})
+            ideal_best = ranking_results.get("ideal_best", {})
+            ideal_worst = ranking_results.get("ideal_worst", {})
+
+            scored_varieties: List[VarietyRecommendation] = []
+            entry_index = 0
+            while entry_index < len(candidate_entries):
+                candidate_entry = candidate_entries[entry_index]
+                variety = candidate_entry["variety"]
+                score_data = candidate_entry["score_data"]
+                candidate_id = str(variety.id)
+                ranking_info = results_map.get(candidate_id)
+
+                if ranking_info:
+                    score_value = ranking_info.get("score")
+                    if isinstance(score_value, (int, float)):
+                        score_data["overall_score"] = float(score_value)
+                    else:
+                        baseline_value = score_data.get("baseline_score", 0.0)
+                        score_data["overall_score"] = float(baseline_value)
+
+                    ranking_details: Dict[str, Any] = {}
+                    for key, value in ranking_info.items():
+                        ranking_details[key] = value
+                    ranking_details["weights"] = global_weights
+                    ranking_details["normalized_weights"] = normalized_weights
+                    ranking_details["ideal_best"] = ideal_best
+                    ranking_details["ideal_worst"] = ideal_worst
+                    ranking_details["baseline_contributions"] = score_data.get("weighted_contributions", {})
+                    score_data["ranking_details"] = ranking_details
+                else:
+                    baseline_value = score_data.get("baseline_score", 0.0)
+                    score_data["overall_score"] = float(baseline_value)
+                    fallback_details: Dict[str, Any] = {}
+                    fallback_details["baseline_contributions"] = score_data.get("weighted_contributions", {})
+                    fallback_details["weights"] = global_weights
+                    fallback_details["normalized_weights"] = normalized_weights
+                    fallback_details["ideal_best"] = ideal_best
+                    fallback_details["ideal_worst"] = ideal_worst
+                    score_data["ranking_details"] = fallback_details
+
+                recommendation = await self._create_variety_recommendation(
+                    variety, score_data, regional_context
+                )
+                scored_varieties.append(recommendation)
+                entry_index += 1
 
             # Sort by overall recommendation score
             scored_varieties.sort(key=lambda x: x.overall_score, reverse=True)
-            
+
             # Apply diversity filtering to ensure variety in recommendations
             final_recommendations = await self._apply_diversity_filtering(scored_varieties)
-            
+
             return final_recommendations
 
         except Exception as e:
@@ -471,17 +545,22 @@ class VarietyRecommendationService:
         scores["risk_tolerance"] = await self._score_risk_tolerance(variety, regional_context)
         
         # Calculate weighted overall score
-        overall_score = sum(
-            scores[factor] * self.scoring_weights[factor] 
-            for factor in scores.keys() 
-            if factor in self.scoring_weights
-        )
-        
-        return {
-            "individual_scores": scores,
-            "overall_score": overall_score,
-            "score_details": await self._generate_score_explanations(variety, scores)
-        }
+        overall_score = 0.0
+        weighted_contributions: Dict[str, float] = {}
+        for factor_key in scores.keys():
+            if factor_key in self.scoring_weights:
+                contribution = scores[factor_key] * self.scoring_weights[factor_key]
+                weighted_contributions[factor_key] = contribution
+                overall_score += contribution
+
+        score_summary: Dict[str, Any] = {}
+        score_summary["individual_scores"] = scores
+        score_summary["baseline_score"] = overall_score
+        score_summary["overall_score"] = overall_score
+        score_summary["weighted_contributions"] = weighted_contributions
+        score_summary["score_details"] = await self._generate_score_explanations(variety, scores)
+
+        return score_summary
 
     async def _score_yield_potential(self, variety: EnhancedCropVariety, context: Dict[str, Any]) -> float:
         """Score variety's yield potential in the given context."""
