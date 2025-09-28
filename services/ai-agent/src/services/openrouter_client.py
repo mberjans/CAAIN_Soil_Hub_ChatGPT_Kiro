@@ -87,6 +87,12 @@ class OpenRouterClient:
                 "max_tokens": 1000,
                 "top_p": 0.8,
             },
+            "variety_explanation": {
+                "model": "anthropic/claude-3-sonnet",
+                "temperature": 0.25,
+                "max_tokens": 2200,
+                "top_p": 0.9,
+            },
             "fallback": {
                 "model": "meta-llama/llama-3-8b-instruct",
                 "temperature": 0.3,
@@ -573,6 +579,108 @@ Use farmer-friendly language and include specific, actionable advice."""
             agricultural_context=context
         )
         
+        response = await self.complete(request)
+        return response.content
+
+    async def generate_variety_explanation(
+        self,
+        structured_payload: Dict[str, Any]
+    ) -> str:
+        """Generate variety-focused explanation using structured payload."""
+        language_code = structured_payload.get("language", "en")
+        tone = structured_payload.get("audience_level", "farmer_friendly")
+
+        language_label = "English"
+        if language_code == "es":
+            language_label = "Spanish"
+        elif language_code == "fr":
+            language_label = "French"
+
+        prompt_sections: List[str] = []
+        prompt_sections.append("You are an expert crop variety advisor supporting farmers with clear, actionable recommendations.")
+        prompt_sections.append(f"Respond in {language_label} language.")
+        prompt_sections.append(f"Audience expertise level: {tone}.")
+        prompt_sections.append("Create a comprehensive explanation covering: summary, fit with farm context, management guidance, risks, economics, and next steps.")
+        prompt_sections.append("Ensure explanations remain accurate to the data, highlight important trade-offs, and keep language farmer-friendly.")
+
+        yield_insights = structured_payload.get("yield_insights")
+        if isinstance(yield_insights, list) and len(yield_insights) > 0:
+            prompt_sections.append("Yield considerations to feature:")
+            index = 0
+            while index < len(yield_insights):
+                insight = yield_insights[index]
+                if isinstance(insight, str) and len(insight) > 0:
+                    prompt_sections.append(f"- {insight}")
+                index += 1
+
+        disease_highlights = structured_payload.get("disease_highlights")
+        if isinstance(disease_highlights, list) and len(disease_highlights) > 0:
+            prompt_sections.append("Disease and pest highlights:")
+            index = 0
+            while index < len(disease_highlights):
+                highlight = disease_highlights[index]
+                if isinstance(highlight, str) and len(highlight) > 0:
+                    prompt_sections.append(f"- {highlight}")
+                index += 1
+
+        climate_adaptation = structured_payload.get("climate_adaptation")
+        if isinstance(climate_adaptation, list) and len(climate_adaptation) > 0:
+            prompt_sections.append("Climate adaptation notes:")
+            index = 0
+            while index < len(climate_adaptation):
+                adaptation = climate_adaptation[index]
+                if isinstance(adaptation, str) and len(adaptation) > 0:
+                    prompt_sections.append(f"- {adaptation}")
+                index += 1
+
+        economic_summary = structured_payload.get("economic_summary")
+        if isinstance(economic_summary, list) and len(economic_summary) > 0:
+            prompt_sections.append("Economic considerations:")
+            index = 0
+            while index < len(economic_summary):
+                economic_point = economic_summary[index]
+                if isinstance(economic_point, str) and len(economic_point) > 0:
+                    prompt_sections.append(f"- {economic_point}")
+                index += 1
+
+        quality_metrics = structured_payload.get("quality_metrics")
+        if isinstance(quality_metrics, dict):
+            coherence = quality_metrics.get("coherence_score")
+            coverage = quality_metrics.get("coverage_score")
+            prompt_sections.append("Quality metrics for the explanation:")
+            if isinstance(coherence, (int, float)):
+                prompt_sections.append(f"- Coherence score: {round(float(coherence) * 100)}%")
+            if isinstance(coverage, (int, float)):
+                prompt_sections.append(f"- Coverage score: {round(float(coverage) * 100)}%")
+            flags = quality_metrics.get("accuracy_flags")
+            if isinstance(flags, list) and len(flags) > 0:
+                prompt_sections.append("- Accuracy considerations:")
+                index = 0
+                while index < len(flags):
+                    flag = flags[index]
+                    if isinstance(flag, str) and len(flag) > 0:
+                        prompt_sections.append(f"  * {flag}")
+                    index += 1
+
+        key_points = structured_payload.get("key_points")
+        if isinstance(key_points, list) and len(key_points) > 0:
+            prompt_sections.append("Key points to reinforce:")
+            for point in key_points:
+                prompt_sections.append(f"- {point}")
+
+        prompt_sections.append("Structured data for reference:")
+        json_payload = json.dumps(structured_payload, indent=2, default=str)
+        prompt_sections.append(json_payload)
+        prompt_sections.append("Use the structure above to craft the final explanation. Where appropriate, use brief headings and bullet lists. Provide implementation steps the farmer can take this season.")
+
+        prompt_text = "\n".join(prompt_sections)
+
+        request = LLMRequest(
+            messages=[{"role": "user", "content": prompt_text}],
+            use_case="variety_explanation",
+            agricultural_context={"variety_payload": structured_payload}
+        )
+
         response = await self.complete(request)
         return response.content
 

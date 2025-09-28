@@ -424,7 +424,7 @@ class TestLLMService:
         mock_client.explain_recommendation.return_value = (
             "This nitrogen recommendation is based on your soil test results..."
         )
-        
+
         recommendation = {
             "type": "nitrogen_rate",
             "rate_lbs_per_acre": 150,
@@ -435,16 +435,51 @@ class TestLLMService:
             "crop": "corn",
             "yield_goal": 180
         }
-        
+
         explanation = await llm_service.generate_agricultural_explanation(
             recommendation, context
         )
-        
+
         assert "nitrogen recommendation" in explanation
         assert len(explanation) > 50
-        
+
         mock_client.explain_recommendation.assert_called_once_with(recommendation, context)
-    
+
+    @pytest.mark.asyncio
+    @patch('src.services.llm_service.LLMService.openrouter_client')
+    async def test_generate_variety_explanation(self, mock_client, llm_service):
+        """Ensure variety explanations use specialized generation."""
+        mock_client.generate_variety_explanation.return_value = "Variety explanation output"
+
+        recommendation = {
+            "recommended_varieties": [
+                {
+                    "variety_name": "Hybrid Advantage",
+                    "overall_score": 0.92,
+                    "key_advantages": ["Excellent drought tolerance"]
+                }
+            ]
+        }
+        context = {
+            "user_preferences": {
+                "language": "fr"
+            }
+        }
+
+        explanation = await llm_service.generate_agricultural_explanation(
+            recommendation,
+            context
+        )
+
+        assert explanation == "Variety explanation output"
+        mock_client.generate_variety_explanation.assert_called_once()
+        call_args = mock_client.generate_variety_explanation.call_args
+        payload = call_args[0][0]
+        assert "yield_insights" in payload
+        assert "disease_highlights" in payload
+        assert "climate_adaptation" in payload
+        assert "quality_metrics" in payload
+
     @pytest.mark.asyncio
     @patch('src.services.llm_service.LLMService.openrouter_client')
     async def test_generate_structured_recommendation(self, mock_client, llm_service):
