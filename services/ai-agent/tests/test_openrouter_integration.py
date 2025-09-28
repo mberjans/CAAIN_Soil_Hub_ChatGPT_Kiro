@@ -446,10 +446,11 @@ class TestLLMService:
         mock_client.explain_recommendation.assert_called_once_with(recommendation, context)
 
     @pytest.mark.asyncio
-    @patch('src.services.llm_service.LLMService.openrouter_client')
-    async def test_generate_variety_explanation(self, mock_client, llm_service):
+    async def test_generate_variety_explanation(self, llm_service):
         """Ensure variety explanations use specialized generation."""
-        mock_client.generate_variety_explanation.return_value = "Variety explanation output"
+        mock_client = MagicMock()
+        mock_client.generate_variety_explanation = AsyncMock(return_value="Variety explanation output")
+        llm_service.openrouter_client = mock_client
 
         recommendation = {
             "recommended_varieties": [
@@ -481,8 +482,7 @@ class TestLLMService:
         assert "quality_metrics" in payload
 
     @pytest.mark.asyncio
-    @patch('src.services.llm_service.LLMService.openrouter_client')
-    async def test_generate_structured_recommendation(self, mock_client, llm_service):
+    async def test_generate_structured_recommendation(self, llm_service):
         """Test structured recommendation generation."""
         # Mock LLM response
         mock_response = LLMResponse(
@@ -494,7 +494,9 @@ class TestLLMService:
             confidence_score=0.90,
             agricultural_metadata={"topics_mentioned": ["corn", "soil", "nitrogen"]}
         )
-        mock_client.complete.return_value = mock_response
+        mock_client = MagicMock()
+        mock_client.complete = AsyncMock(return_value=mock_response)
+        llm_service.openrouter_client = mock_client
         
         input_data = {
             "crop_type": "corn",
