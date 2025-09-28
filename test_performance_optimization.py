@@ -79,6 +79,15 @@ async def test_performance_optimizations():
         elapsed = performance_monitor.stop_timer(start)
         assert elapsed > 0 and elapsed < 100, f"Timer returned unexpected value: {elapsed}ms"
         print(f"✓ Performance timer test passed (elapsed time: {elapsed:.2f}ms)")
+
+        performance_monitor.reset_metrics()
+        performance_monitor.record_operation('unit_history_op', 120.0, cache_hit=False)
+        performance_monitor.record_operation('unit_history_op', 80.0, cache_hit=True)
+        history = performance_monitor.get_recent_history('unit_history_op', limit=5)
+        assert len(history) == 2, "History tracking failed"
+        top_operations = performance_monitor.get_top_operations(limit=1)
+        assert len(top_operations) == 1 and top_operations[0][0] == 'unit_history_op', "Top operation tracking failed"
+        print("✓ Performance monitor history tracking test passed")
     except Exception as e:
         print(f"✗ Performance monitor test failed: {e}")
         return False
