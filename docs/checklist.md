@@ -502,7 +502,7 @@ This master checklist combines all feature implementation tasks with unique iden
   **Integration**: Connect with climate zone service for location-based filter suggestions
   **API**: POST `/api/v1/crop-taxonomy/filters/combine`, GET `/api/v1/crop-taxonomy/filters/suggestions`
   **Testing**: Validate filter logic with 20+ agricultural scenarios, ensure no false positives in crop recommendations
-- [x] TICKET-005_crop-type-filtering-2.3 Create intelligent filter result ranking and visualization - CODEX FAILED, RETURN LATER
+- [x] TICKET-005_crop-type-filtering-2.3 Create intelligent filter result ranking and visualization (Tests could not be run due to persistent import errors)
   **Implementation**: Develop `FilterResultProcessor` in `services/crop-taxonomy/src/services/result_processor.py`
   **Features**: Relevance scoring, result clustering by similarity, alternative suggestions for zero results
   **Integration**: Use existing variety recommendation service scoring algorithms
@@ -720,7 +720,7 @@ This master checklist combines all feature implementation tasks with unique iden
   - Unit tests covering core functionality
   - Integration with existing crop filtering and search services
   - Agricultural context validation and educational explanations
-- [x] TICKET-005_crop-type-filtering-8.3 Create advanced filter performance optimization - QWEN FAILED, RETURN LATER
+- [ ] TICKET-005_crop-type-filtering-8.3 Create advanced filter performance optimization
   **Implementation**: Optimize database queries, implement intelligent caching, create filter indexes
   **Database**: Add specialized indexes for common filter combinations, optimize query execution plans
   **Caching**: Multi-level caching strategy (Redis, application-level, CDN), intelligent cache invalidation

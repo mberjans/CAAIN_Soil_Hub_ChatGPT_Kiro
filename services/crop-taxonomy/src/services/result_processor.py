@@ -92,11 +92,6 @@ class FilterResultProcessor:
         Calculates a relevance score for a single crop using VarietyRecommendationService.
         """
         try:
-            # Convert crop dictionary to EnhancedCropVariety object
-            # This assumes the crop dictionary has the necessary fields to construct EnhancedCropVariety
-            # If not, a more robust mapping or fetching from DB would be needed.
-            # For now, we'll try to construct it directly.
-            # Need to handle UUID conversion if 'id' is a string
             crop_id = crop.get("id")
             if isinstance(crop_id, str):
                 from uuid import UUID
@@ -106,8 +101,6 @@ class FilterResultProcessor:
                     logger.warning(f"Invalid UUID format for crop ID: {crop_id}. Skipping scoring.")
                     return 0.0
 
-            # Create a dummy ComprehensiveCropData for the parent_crop_id if needed by EnhancedCropVariety
-            # This is a simplification; in a real scenario, you'd fetch the actual parent crop.
             parent_crop_id = crop.get("parent_crop_id")
             if isinstance(parent_crop_id, str):
                 from uuid import UUID
@@ -117,7 +110,6 @@ class FilterResultProcessor:
                     logger.warning(f"Invalid UUID format for parent_crop_id: {parent_crop_id}. Skipping scoring.")
                     return 0.0
 
-            # Ensure nested Pydantic models are correctly instantiated if they are dicts
             if isinstance(crop.get("yield_potential"), dict):
                 from ..models.crop_variety_models import YieldPotential
                 crop["yield_potential"] = YieldPotential(**crop["yield_potential"])
@@ -142,7 +134,6 @@ class FilterResultProcessor:
 
             enhanced_crop_variety = EnhancedCropVariety(**crop)
 
-            # Extract regional_context and farmer_preferences from filtering_criteria
             regional_context = filtering_criteria.get("location", {})
             regional_context["climate_risks"] = filtering_criteria.get("climate_risks", {})
             regional_context["market_preferences"] = filtering_criteria.get("market_class", [])
@@ -155,30 +146,49 @@ class FilterResultProcessor:
             )
 
             if score_data and "overall_score" in score_data:
-                return score_data["overall_score"]
+                base_score = score_data["overall_score"]
+                
+                # Add bonus for matching user-specified filters
+                filter_bonus = 0.0
+                if filtering_criteria.get("filters"):
+                    filters = filtering_criteria["filters"]
+                    if filters.get("climate_zones") and enhanced_crop_variety.climate_adaptations:
+                        if any(zone in enhanced_crop_variety.climate_adaptations.hardiness_zones for zone in filters.get("climate_zones")):
+                            filter_bonus += 0.1
+                    if filters.get("soil_ph_range") and enhanced_crop_variety.soil_requirements:
+                        if enhanced_crop_variety.soil_requirements.optimal_ph_min <= filters.get("soil_ph_range")["max"] and enhanced_crop_variety.soil_requirements.optimal_ph_max >= filters.get("soil_ph_range")["min"]:
+                            filter_bonus += 0.1
+                
+                return min(1.0, base_score + filter_bonus)
             else:
                 logger.warning(f"VarietyRecommendationService returned no overall_score for crop {crop.get('name')}")
                 return 0.0
         except Exception as e:
             logger.error(f"Error calculating relevance score for crop {crop.get('name')}: {e}")
             return 0.0
+
     async def _cluster_results(
         self,
-        crops: List[Dict[str, Any]]
+        crops: List[Dict[str, Any]],
+        cluster_by: List[str] = ["primary_category", "growth_habit", "plant_type"]
     ) -> Dict[str, List[Dict[str, Any]]]:
         """
         Clusters crops based on similarity (e.g., crop type, family, primary use).
         """
         clustered_data = {}
         for crop in crops:
-            # Prioritize clustering by primary category, then life cycle, then primary use
             cluster_key_parts = []
-            if crop.get("agricultural_classification") and crop["agricultural_classification"].get("primary_category"):
-                cluster_key_parts.append(crop["agricultural_classification"]["primary_category"].value)
-            if crop.get("life_cycle"):
-                cluster_key_parts.append(crop["life_cycle"].value)
-            if crop.get("primary_use"):
-                cluster_key_parts.append(crop["primary_use"])
+            for key in cluster_by:
+                if key == "primary_category" and crop.get("agricultural_classification") and crop["agricultural_classification"].get("primary_category"):
+                    cluster_key_parts.append(crop["agricultural_classification"]["primary_category"].value)
+                elif key == "growth_habit" and crop.get("agricultural_classification") and crop["agricultural_classification"].get("growth_habit"):
+                    cluster_key_parts.append(crop["agricultural_classification"]["growth_habit"].value)
+                elif key == "plant_type" and crop.get("agricultural_classification") and crop["agricultural_classification"].get("plant_type"):
+                    cluster_key_parts.append(crop["agricultural_classification"]["plant_type"].value)
+                elif key == "life_cycle" and crop.get("life_cycle"):
+                    cluster_key_parts.append(crop["life_cycle"].value)
+                elif key == "primary_use" and crop.get("primary_use"):
+                    cluster_key_parts.append(crop["primary_use"])
 
             cluster_key = " - ".join(cluster_key_parts) if cluster_key_parts else "Miscellaneous"
 
@@ -269,6 +279,8 @@ class FilterResultProcessor:
         visualization_data = {
             "chart_data": {
                 "category_distribution": {},
+                "growth_habit_distribution": {},
+                "plant_type_distribution": {},
                 "relevance_score_distribution": {},
                 "yield_potential_distribution": {},
                 "climate_adaptation_distribution": {},
@@ -291,6 +303,20 @@ class FilterResultProcessor:
                 category = category.value
             visualization_data["chart_data"]["category_distribution"][category] = \
                 visualization_data["chart_data"]["category_distribution"].get(category, 0) + 1
+
+            # Growth Habit Distribution
+            growth_habit = crop.get("agricultural_classification", {}).get("growth_habit", "Other")
+            if isinstance(growth_habit, GrowthHabit):
+                growth_habit = growth_habit.value
+            visualization_data["chart_data"]["growth_habit_distribution"][growth_habit] = \
+                visualization_data["chart_data"]["growth_habit_distribution"].get(growth_habit, 0) + 1
+
+            # Plant Type Distribution
+            plant_type = crop.get("agricultural_classification", {}).get("plant_type", "Other")
+            if isinstance(plant_type, PlantType):
+                plant_type = plant_type.value
+            visualization_data["chart_data"]["plant_type_distribution"][plant_type] = \
+                visualization_data["chart_data"]["plant_type_distribution"].get(plant_type, 0) + 1
 
             # Relevance Score Distribution
             if "relevance_score" in crop:
@@ -320,6 +346,8 @@ class FilterResultProcessor:
                 "name": crop.get("variety_name") or crop.get("name"),
                 "relevance_score": round(crop.get("relevance_score", 0.0), 2),
                 "category": category,
+                "growth_habit": growth_habit,
+                "plant_type": plant_type,
                 "climate_adaptation": crop.get("abiotic_stress_tolerances", {}).get("drought_tolerance", "N/A"),
                 "disease_resistance": crop.get("disease_resistance", {}).get("overall_rating", "N/A"), # Assuming an overall rating
                 "market_desirability": crop.get("market_attributes", {}).get("premium_potential", "N/A"),
