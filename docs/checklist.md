@@ -915,7 +915,7 @@ This master checklist combines all feature implementation tasks with unique iden
     ```
     **Response**: Ranked variety recommendations with scores, explanations, economic analysis
     **Performance**: <3s response time, support for complex multi-criteria analysis
-  - [ ] TICKET-005_crop-variety-recommendations-5.1.2 Enhance GET `/api/v1/crop-taxonomy/crops/{crop_id}/varieties` - Comprehensive variety listing
+  - [x] TICKET-005_crop-variety-recommendations-5.1.2 Enhance GET `/api/v1/crop-taxonomy/crops/{crop_id}/varieties` - Comprehensive variety listing
     **Features**: Filtering, sorting, pagination, availability status, regional performance data
     **Integration**: Connect with seed company data, regional adaptation service
     **Response**: Complete variety information with performance metrics, availability, pricing
