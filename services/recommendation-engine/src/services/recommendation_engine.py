@@ -16,14 +16,19 @@ try:
         RecommendationItem,
         ConfidenceFactors
     )
-    from .crop_recommendation_service import CropRecommendationService
-    from .fertilizer_recommendation_service import FertilizerRecommendationService
-    from .soil_management_service import SoilManagementService
-    from .nutrient_deficiency_service import NutrientDeficiencyService
-    from .crop_rotation_service import CropRotationService
-    from .rule_engine import AgriculturalRuleEngine, RuleType
-    from .ai_explanation_service import AIExplanationService
-    from .climate_integration_service import climate_integration_service
+    from ..models.recommendation_filtering_models import (
+        RecommendationRequestWithFiltering,
+        FilteredRecommendationResponse,
+        FilterImpactAnalysis
+    )
+    from ..services.enhanced_crop_recommendation_service import EnhancedCropRecommendationService
+    from ..services.fertilizer_recommendation_service import FertilizerRecommendationService
+    from ..services.soil_management_service import SoilManagementService
+    from ..services.nutrient_deficiency_service import NutrientDeficiencyService
+    from ..services.crop_rotation_service import CropRotationService
+    from ..services.rule_engine import AgriculturalRuleEngine, RuleType
+    from ..services.ai_explanation_service import AIExplanationService
+    from ..services.climate_integration_service import climate_integration_service
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
@@ -31,7 +36,12 @@ except ImportError:
         RecommendationItem,
         ConfidenceFactors
     )
-    from services.crop_recommendation_service import CropRecommendationService
+    from models.recommendation_filtering_models import (
+        RecommendationRequestWithFiltering,
+        FilteredRecommendationResponse,
+        FilterImpactAnalysis
+    )
+    from services.enhanced_crop_recommendation_service import EnhancedCropRecommendationService
     from services.fertilizer_recommendation_service import FertilizerRecommendationService
     from services.soil_management_service import SoilManagementService
     from services.nutrient_deficiency_service import NutrientDeficiencyService
@@ -54,6 +64,7 @@ class RecommendationEngine:
     def __init__(self):
         """Initialize recommendation engine with all service components."""
         self.crop_service = CropRecommendationService()
+        self.enhanced_crop_service = EnhancedCropRecommendationService()
         self.fertilizer_service = FertilizerRecommendationService()
         self.soil_service = SoilManagementService()
         self.nutrient_service = NutrientDeficiencyService()
@@ -68,6 +79,7 @@ class RecommendationEngine:
         # Question type mapping to service methods
         self.question_handlers = {
             "crop_selection": self._handle_crop_selection,
+            "crop_selection_with_filtering": self._handle_crop_selection_with_filtering,
             "soil_fertility": self._handle_soil_fertility,
             "crop_rotation": self._handle_crop_rotation,
             "nutrient_deficiency": self._handle_nutrient_deficiency,
@@ -121,6 +133,11 @@ class RecommendationEngine:
                 except Exception as e:
                     logger.warning(f"Climate zone detection failed, proceeding without: {str(e)}")
             
+            # Check if this involves filtering and generate impact analysis if requested
+            filter_impact_analysis = None
+            filter_warnings = []
+            filter_optimization_suggestions = []
+            
             # Get handler for question type
             handler = self.question_handlers.get(request.question_type)
             if not handler:
@@ -129,9 +146,27 @@ class RecommendationEngine:
             # Generate recommendations using appropriate handler
             recommendations = await handler(request)
             
+            # SPECIAL: If request includes filtering and wants impact analysis
+            if (hasattr(request, 'filter_criteria') and 
+                request.filter_criteria and 
+                hasattr(request, 'request_filter_impact_analysis') and 
+                request.request_filter_impact_analysis):
+                
+                try:
+                    filter_impact_analysis = await self.enhanced_crop_service.get_filter_impact_analysis(
+                        request, request.filter_criteria
+                    )
+                    
+                    # Extract warnings and suggestions from impact analysis
+                    filter_warnings = filter_impact_analysis.get("filter_warnings", [])
+                    filter_optimization_suggestions = filter_impact_analysis.get("filter_optimization_recommendations", [])
+                    
+                except Exception as e:
+                    logger.warning(f"Filter impact analysis failed: {str(e)}")
+            
             # CLIMATE ZONE INTEGRATION: Adjust recommendations based on climate data
             if climate_data and recommendations:
-                if request.question_type in ["crop_selection", "crop_rotation"]:
+                if request.question_type in ["crop_selection", "crop_selection_with_filtering", "crop_rotation"]:
                     recommendations = climate_integration_service.get_climate_adjusted_crop_recommendations(
                         [rec.dict() for rec in recommendations], climate_data
                     )
@@ -156,19 +191,40 @@ class RecommendationEngine:
             
             # Generate warnings and next steps (enhanced with climate warnings)
             warnings = self._generate_warnings(request, recommendations, climate_data)
+            # Add filter-specific warnings if any
+            if hasattr(request, 'filter_criteria') and request.filter_criteria:
+                warnings.extend(filter_warnings)
+            
             next_steps = self._generate_next_steps(request, recommendations)
+            # Add filter optimization suggestions to next steps if any
+            if filter_optimization_suggestions:
+                next_steps.extend([f"Filter optimization: {suggestion}" for suggestion in filter_optimization_suggestions])
+            
             follow_up_questions = self._generate_follow_up_questions(request.question_type)
             
-            response = RecommendationResponse(
-                request_id=request.request_id,
-                question_type=request.question_type,
-                overall_confidence=overall_confidence,
-                confidence_factors=confidence_factors,
-                recommendations=recommendations,
-                warnings=warnings,
-                next_steps=next_steps,
-                follow_up_questions=follow_up_questions
-            )
+            # Create appropriate response based on whether filtering was used
+            response_params = {
+                "request_id": request.request_id,
+                "question_type": request.question_type,
+                "overall_confidence": overall_confidence,
+                "confidence_factors": confidence_factors,
+                "recommendations": recommendations,
+                "warnings": warnings,
+                "next_steps": next_steps,
+                "follow_up_questions": follow_up_questions
+            }
+            
+            # Use enhanced response if filtering was applied
+            if filter_impact_analysis:
+                from ..models.recommendation_filtering_models import FilteredRecommendationResponse
+                response = FilteredRecommendationResponse(
+                    **response_params,
+                    filter_impact_analysis=self._convert_impact_analysis(filter_impact_analysis),
+                    filter_warnings=filter_warnings,
+                    filter_optimization_suggestions=filter_optimization_suggestions
+                )
+            else:
+                response = RecommendationResponse(**response_params)
             
             logger.info(f"Generated {len(recommendations)} recommendations with confidence {overall_confidence:.2f}")
             return response
@@ -176,6 +232,27 @@ class RecommendationEngine:
         except Exception as e:
             logger.error(f"Error generating recommendations: {str(e)}")
             raise
+    
+    def _convert_impact_analysis(self, analysis_dict: Dict[str, Any]) -> FilterImpactAnalysis:
+        """
+        Convert impact analysis dictionary to FilterImpactAnalysis model.
+        
+        Args:
+            analysis_dict: Dictionary containing impact analysis data
+            
+        Returns:
+            FilterImpactAnalysis model instance
+        """
+        return FilterImpactAnalysis(
+            original_count=analysis_dict.get('original_count', 0),
+            filtered_count=analysis_dict.get('filtered_count', 0),
+            filter_reduction_percentage=analysis_dict.get('filter_reduction_percentage', 0.0),
+            most_affected_criteria=analysis_dict.get('most_affected_criteria', []),
+            alternative_suggestions=analysis_dict.get('alternative_suggestions', []),
+            filter_optimization_recommendations=analysis_dict.get('filter_optimization_recommendations', []),
+            baseline_recommendations=analysis_dict.get('baseline_recommendations', []),
+            filtered_recommendations=analysis_dict.get('filtered_recommendations', [])
+        )
     
     async def _handle_crop_selection(self, request: RecommendationRequest) -> List[RecommendationItem]:
         """Handle crop selection recommendations (Question 1)."""
@@ -191,6 +268,33 @@ class RecommendationEngine:
         )
         
         return enhanced_recommendations
+
+    async def _handle_crop_selection_with_filtering(self, request: RecommendationRequest) -> List[RecommendationItem]:
+        """Handle crop selection with advanced filtering integration."""
+        try:
+            # Check if request has filter criteria (this would come from the enhanced request model)
+            filter_criteria = getattr(request, 'filter_criteria', None)
+            
+            if filter_criteria:
+                # Use the enhanced service with filtering
+                recommendations = await self.enhanced_crop_service.get_crop_recommendations_with_filters(
+                    request, filter_criteria
+                )
+                
+                # Apply rule-based enhancements
+                rule_recommendations = self._get_rule_based_recommendations(request, RuleType.CROP_SUITABILITY)
+                enhanced_recommendations = self._enhance_with_rule_insights(
+                    recommendations, rule_recommendations, request
+                )
+                
+                return enhanced_recommendations
+            else:
+                # Fallback to standard crop selection
+                return await self._handle_crop_selection(request)
+        except Exception as e:
+            logger.error(f"Error in crop selection with filtering: {e}")
+            # Fallback to standard crop selection if filtering fails
+            return await self._handle_crop_selection(request)
     
     async def _handle_soil_fertility(self, request: RecommendationRequest) -> List[RecommendationItem]:
         """Handle soil fertility improvement recommendations (Question 2)."""

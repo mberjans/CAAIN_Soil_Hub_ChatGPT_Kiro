@@ -108,6 +108,53 @@ async def get_crop_recommendations(request: RecommendationRequest):
         )
 
 
+@router.post("/recommendations/crop-selection-with-filtering", response_model=RecommendationResponse)
+async def get_crop_recommendations_with_filtering(request: RecommendationRequest):
+    """
+    Get crop selection recommendations with advanced filtering integration.
+    
+    This endpoint enhances the basic crop selection with multi-criteria filtering
+    capabilities from the crop taxonomy service.
+    
+    Features:
+    - Pre-filter crops before recommendation generation 
+    - Apply complex multi-dimensional filtering criteria
+    - Rank recommendations based on filter compatibility
+    - Provide detailed explanations of filter impact
+    """
+    try:
+        logger.info(f"Processing crop selection with filtering request: {request.request_id}")
+        
+        # Validate location data for climate zone detection
+        if not request.location:
+            raise HTTPException(
+                status_code=400,
+                detail="Location data is required for crop selection recommendations"
+            )
+        
+        # Check if request has filter criteria
+        has_filters = hasattr(request, 'filter_criteria') and request.filter_criteria is not None
+        
+        if has_filters:
+            logger.info(f"Applying filter criteria to request: {request.request_id}")
+            request.question_type = "crop_selection_with_filtering"
+        else:
+            # Fallback to standard processing if no filters provided
+            logger.info(f"No filters found, using standard processing for request: {request.request_id}")
+            request.question_type = "crop_selection"
+        
+        return await recommendation_engine.generate_recommendations(request)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating crop recommendations with filtering: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating crop recommendations with filtering: {str(e)}"
+        )
+
+
 @router.post("/recommendations/fertilizer-strategy", response_model=RecommendationResponse)
 async def get_fertilizer_recommendations(request: RecommendationRequest):
     """

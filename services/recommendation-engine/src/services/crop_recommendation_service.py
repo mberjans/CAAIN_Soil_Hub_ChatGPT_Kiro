@@ -12,12 +12,25 @@ try:
         RecommendationItem,
         ConfidenceFactors
     )
+    # Import filter models for extended functionality
+    try:
+        from ...crop_taxonomy.src.models.crop_filtering_models import (
+            TaxonomyFilterCriteria
+        )
+    except ImportError:
+        from services.crop_taxonomy.src.models.crop_filtering_models import (
+            TaxonomyFilterCriteria
+        )
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
         RecommendationItem,
         ConfidenceFactors
     )
+    # Define minimal filter models as fallback
+    from pydantic import BaseModel
+    class TaxonomyFilterCriteria(BaseModel):
+        pass
 
 
 class CropRecommendationService:
