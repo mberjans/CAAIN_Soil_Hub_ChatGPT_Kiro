@@ -117,6 +117,13 @@ class VarietyExplanationService:
         self._populate_key_points(structured_key_points, primary_variety, agronomic_considerations, economic_summary)
         payload["key_points"] = structured_key_points
 
+        quality_metrics = self._evaluate_quality_metrics(
+            payload,
+            varieties,
+            audience_level
+        )
+        payload["quality_metrics"] = quality_metrics
+
         return payload
 
     def build_fallback_text(self, payload: Dict[str, Any]) -> str:
@@ -190,6 +197,24 @@ class VarietyExplanationService:
         if isinstance(key_points, list):
             for point in key_points:
                 lines.append(f"- {point}")
+
+        metrics = payload.get("quality_metrics")
+        if isinstance(metrics, dict):
+            coherence = metrics.get("coherence_score")
+            coverage = metrics.get("coverage_score")
+            comprehension = metrics.get("comprehension_notes")
+            lines.append("Quality metrics")
+            if isinstance(coherence, (int, float)):
+                lines.append(f"- Coherence score: {round(float(coherence) * 100)}%")
+            if isinstance(coverage, (int, float)):
+                lines.append(f"- Coverage score: {round(float(coverage) * 100)}%")
+            if isinstance(comprehension, list):
+                index = 0
+                while index < len(comprehension):
+                    note = comprehension[index]
+                    if isinstance(note, str) and len(note) > 0:
+                        lines.append(f"- {note}")
+                    index += 1
 
         return "\n".join(lines)
 
@@ -584,6 +609,115 @@ class VarietyExplanationService:
         if language == "en":
             return label
         return label
+
+    def _evaluate_quality_metrics(
+        self,
+        payload: Dict[str, Any],
+        varieties: List[Dict[str, Any]],
+        audience_level: str
+    ) -> Dict[str, Any]:
+        metrics: Dict[str, Any] = {}
+
+        sections = [
+            payload.get("agronomic_considerations"),
+            payload.get("yield_insights"),
+            payload.get("disease_highlights"),
+            payload.get("climate_adaptation"),
+            payload.get("economic_summary"),
+            payload.get("risk_notes"),
+            payload.get("management_actions")
+        ]
+
+        non_empty_sections = 0
+        total_sections = 0
+        index = 0
+        while index < len(sections):
+            section = sections[index]
+            if section is not None:
+                total_sections += 1
+                if isinstance(section, list) and len(section) > 0:
+                    non_empty_sections += 1
+            index += 1
+
+        coverage_score = 0.0
+        if total_sections > 0:
+            coverage_score = non_empty_sections / float(total_sections)
+        metrics["coverage_score"] = min(1.0, max(0.0, coverage_score))
+
+        confidence_summary = payload.get("confidence_summary")
+        confidence_value = None
+        if isinstance(confidence_summary, dict):
+            confidence_value = confidence_summary.get("average_confidence")
+
+        coherence_score = coverage_score
+        if isinstance(confidence_value, (int, float)):
+            confidence_adjusted = (coverage_score + float(confidence_value)) / 2.0
+            coherence_score = min(1.0, max(0.0, confidence_adjusted))
+        metrics["coherence_score"] = coherence_score
+
+        accuracy_flags: List[str] = []
+        if not isinstance(confidence_value, (int, float)):
+            accuracy_flags.append("Confidence indicators unavailable; verify with extension agronomist")
+
+        disease_list = payload.get("disease_highlights")
+        if isinstance(disease_list, list) and len(disease_list) == 1:
+            entry = disease_list[0]
+            if isinstance(entry, str) and "no specific resistance" in entry.lower():
+                accuracy_flags.append("Disease resistance data limited; plan proactive scouting")
+
+        risk_entries = payload.get("risk_notes")
+        if isinstance(risk_entries, list) and len(risk_entries) == 0:
+            accuracy_flags.append("Risk notes not provided; review management plan for gaps")
+
+        metrics["accuracy_flags"] = accuracy_flags
+
+        comprehension_notes: List[str] = []
+        if coherence_score < 0.7:
+            comprehension_notes.append("Schedule discussion with advisor to clarify variety trade-offs")
+
+        if audience_level in ("beginner", "farmer_friendly"):
+            comprehension_notes.append("Use plain language summary when sharing with field crew")
+        else:
+            comprehension_notes.append("Include technical appendices for advanced audience as needed")
+
+        metrics["comprehension_notes"] = comprehension_notes
+
+        reliability_observations = self._summarize_reliability(varieties)
+        if isinstance(reliability_observations, list) and len(reliability_observations) > 0:
+            metrics["reliability_observations"] = reliability_observations
+
+        return metrics
+
+    def _summarize_reliability(self, varieties: List[Dict[str, Any]]) -> List[str]:
+        notes: List[str] = []
+
+        index = 0
+        while index < len(varieties):
+            variety = varieties[index]
+            raw = variety.get("raw")
+            confidence = None
+            if isinstance(variety, dict):
+                confidence = variety.get("confidence")
+
+            variety_details = None
+            if isinstance(raw, dict):
+                variety_details = raw.get("variety")
+
+            variety_name = variety.get("name")
+
+            if isinstance(confidence, (int, float)) and confidence < 0.6:
+                if isinstance(variety_name, str):
+                    notes.append(f"Confidence for {variety_name} below typical threshold; gather local trial data")
+
+            if isinstance(variety_details, dict):
+                regional_data = variety_details.get("regional_performance_data")
+                if isinstance(regional_data, list) and len(regional_data) < 2:
+                    if isinstance(variety_name, str):
+                        notes.append(f"Limited regional trial coverage for {variety_name}")
+
+            index += 1
+
+        return notes
 
     def _build_yield_insights(
         self,

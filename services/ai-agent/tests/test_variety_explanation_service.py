@@ -59,6 +59,13 @@ def test_build_explanation_payload_language_preference():
     assert "climate_adaptation" in payload
     assert isinstance(payload["climate_adaptation"], list)
     assert len(payload["climate_adaptation"]) > 0
+    assert "quality_metrics" in payload
+    metrics = payload["quality_metrics"]
+    assert isinstance(metrics, dict)
+    assert "coherence_score" in metrics
+    assert "coverage_score" in metrics
+    assert "accuracy_flags" in metrics
+    assert "comprehension_notes" in metrics
 
 
 def test_build_fallback_text_spanish_heading():
@@ -78,3 +85,4 @@ def test_build_fallback_text_spanish_heading():
     assert "Yield outlook" in fallback_text
     assert "Disease and pest notes" in fallback_text
     assert "Climate adaptation" in fallback_text
+    assert "Quality metrics" in fallback_text
