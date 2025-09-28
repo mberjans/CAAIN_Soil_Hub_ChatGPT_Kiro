@@ -77,15 +77,22 @@ class FilterEvaluation:
         self.highlights: Dict[str, List[str]] = {}
 
 
+from .result_processor import FilterResultProcessor
+
 class CropSearchService:
     """Advanced search service for crop taxonomy data."""
 
     def __init__(self, database_url: Optional[str] = None) -> None:
+        from .filter_cache_service import filter_cache_service
+        from .performance_monitor import performance_monitor
         self.scoring_weights = self._initialize_scoring_weights()
+        self.result_processor = FilterResultProcessor(self.scoring_weights)
         self.search_cache: Dict[str, CropSearchResponse] = {}
         self.reference_crops: List[ComprehensiveCropData] = []
         self.db = None
         self.database_available = False
+        self.cache_service = filter_cache_service
+        self.performance_monitor = performance_monitor
         self._initialise_database(database_url)
         self._load_reference_dataset()
 
@@ -132,18 +139,42 @@ class CropSearchService:
 
     async def search_crops(self, request: CropSearchRequest) -> CropSearchResponse:
         """Execute comprehensive crop search with filtering and scoring."""
+        # Monitor the entire search operation
+        operation_start = self.performance_monitor.start_timer()
+        
+        # Check cache first
+        cached_result = await self.cache_service.get_search_result(request.request_id)
+        if cached_result:
+            # Update statistics to reflect cache hit
+            cached_result.statistics.cache_hit = True
+            execution_time = self.performance_monitor.stop_timer(operation_start)
+            logger.info(f"Cache hit for search request {request.request_id}, took {execution_time:.2f}ms")
+            
+            # Record performance metrics for cache hit
+            self.performance_monitor.record_operation(
+                operation="crop_search_cached",
+                execution_time_ms=execution_time,
+                cache_hit=True
+            )
+            
+            return cached_result
+
         start_time = datetime.utcnow()
         candidates = await self._get_candidate_crops(request)
         matched_results = self._evaluate_candidates(candidates, request.filter_criteria)
         sorted_results = self._sort_results(matched_results, request.sort_by, request.sort_order)
         paginated_results = self._paginate_results(sorted_results, request.offset, request.max_results)
+
+        processed_results = self.result_processor.process_results(paginated_results, regional_context=request.regional_context)
+        ranked_results = processed_results["ranked_results"]
+        visualization_summary = processed_results["visualization_data"]
+
         facets = self._build_facets(sorted_results)
-        statistics = self._build_statistics(start_time, matched_results, paginated_results)
+        statistics = self._build_statistics(start_time, matched_results, ranked_results)
         filters_summary = self._summarize_filters(request.filter_criteria)
         ranking_overview = self._build_ranking_overview(sorted_results)
-        visualization_summary = self._build_visualization_summary(sorted_results)
         total_count = len(matched_results)
-        returned_count = len(paginated_results)
+        returned_count = len(ranked_results)
         offset_value = request.offset
         has_more_results = False
         next_offset = None
@@ -153,7 +184,7 @@ class CropSearchService:
 
         response = CropSearchResponse(
             request_id=request.request_id,
-            results=paginated_results,
+            results=ranked_results,
             total_count=total_count,
             returned_count=returned_count,
             facets=facets,
@@ -166,6 +197,23 @@ class CropSearchService:
             has_more_results=has_more_results,
             next_offset=next_offset,
         )
+        
+        # Cache the result with a TTL based on complexity (1-24 hours)
+        ttl_seconds = self._calculate_cache_ttl(request)
+        await self.cache_service.cache_search_result(request.request_id, response, ttl_seconds)
+        
+        # Record performance metrics for the search operation
+        execution_time = self.performance_monitor.stop_timer(operation_start)
+        self.performance_monitor.record_operation(
+            operation="crop_search_full",
+            execution_time_ms=execution_time,
+            cache_hit=False,
+            database_query_count=1,  # Simplified count
+            memory_usage_mb=0.0  # Placeholder for now
+        )
+        
+        logger.info(f"Full search for request {request.request_id} took {execution_time:.2f}ms")
+        
         return response
 
     async def _get_candidate_crops(self, request: CropSearchRequest) -> List[ComprehensiveCropData]:
@@ -174,10 +222,14 @@ class CropSearchService:
 
         if self.database_available and self.db is not None:
             try:
+                # Optimize database query based on available filters
                 search_text = self._primary_search_text(request.filter_criteria)
+                
+                # Use optimized database functions if available
+                filters = self._prepare_optimized_filters(request.filter_criteria)
                 db_results = self.db.search_crops(
                     search_text=search_text,
-                    filters=None,
+                    filters=filters,
                     limit=request.max_results * 6,
                     offset=request.offset,
                 )
@@ -197,6 +249,40 @@ class CropSearchService:
                 index += 1
 
         return candidates
+
+    def _prepare_optimized_filters(self, criteria):
+        """Prepare optimized filter parameters for database query."""
+        from ..models.crop_taxonomy_models import CropSearchFilters, CropClimateFilters, CropSoilFilters
+        from ..models.crop_taxonomy_models import CropAgriculturalFilters, CropSearchFilters
+        
+        # Create optimized filters based on the criteria
+        climate_filters = None
+        if criteria.climate_filter:
+            climate_filters = CropClimateFilters(
+                drought_tolerance=[criteria.climate_filter.drought_tolerance_required.value] if criteria.climate_filter.drought_tolerance_required else None,
+                temperature_range=criteria.climate_filter.temperature_range_f,
+                hardiness_zones=criteria.climate_filter.hardiness_zones
+            )
+        
+        soil_filters = None
+        if criteria.soil_filter and criteria.soil_filter.ph_range:
+            soil_filters = CropSoilFilters(
+                ph_range=criteria.soil_filter.ph_range
+            )
+        
+        agricultural_filters = None
+        if criteria.agricultural_filter and criteria.agricultural_filter.categories:
+            agricultural_filters = CropAgriculturalFilters(
+                crop_categories=criteria.agricultural_filter.categories
+            )
+        
+        optimized_filters = CropSearchFilters(
+            climate_filters=climate_filters,
+            soil_filters=soil_filters,
+            agricultural_filters=agricultural_filters
+        )
+        
+        return optimized_filters
 
     def _primary_search_text(self, criteria: TaxonomyFilterCriteria) -> Optional[str]:
         """Select primary search text from criteria."""
@@ -1069,7 +1155,43 @@ class CropSearchService:
             return matched_filters > 0 or partial_filters > 0
         if operator == SearchOperator.NOT:
             return matched_filters == 0 and partial_filters == 0
-        return matched_filters > 0
+        return matched_count > 0
+
+    def _calculate_cache_ttl(self, request: CropSearchRequest) -> int:
+        """Calculate cache TTL based on query complexity and filters."""
+        # Base TTL: 1 hour
+        ttl = 3600
+        
+        # Extend TTL if query is more general (fewer specific filters)
+        filter_count = 0
+        criteria = request.filter_criteria
+        if criteria.text_search: filter_count += 1
+        if criteria.families: filter_count += 1
+        if criteria.genera: filter_count += 1
+        if criteria.geographic_filter: filter_count += 1
+        if criteria.climate_filter: filter_count += 1
+        if criteria.soil_filter: filter_count += 1
+        if criteria.agricultural_filter: filter_count += 1
+        if criteria.management_filter: filter_count += 1
+        if criteria.sustainability_filter: filter_count += 1
+        if criteria.economic_filter: filter_count += 1
+        
+        if filter_count <= 2:
+            # General queries get longer cache time (24 hours)
+            ttl = 86400
+        elif filter_count <= 4:
+            # Moderate queries get medium cache time (4 hours)
+            ttl = 14400
+        else:
+            # Specific queries get shorter cache time (1 hour)
+            ttl = 3600
+            
+        # Adjust for time-sensitive data
+        if criteria.geographic_filter and criteria.geographic_filter.latitude_range:
+            # Geographic queries may need more frequent updates
+            ttl = min(ttl, 7200)  # Max 2 hours for geographic queries
+            
+        return ttl
 
     def _compile_scores(
         self,

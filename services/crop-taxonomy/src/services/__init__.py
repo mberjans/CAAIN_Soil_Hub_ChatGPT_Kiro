@@ -49,6 +49,11 @@ except ImportError:  # pragma: no cover
     SmartFilterSuggestionService = None
     smart_filter_suggestion_service = None
 
+try:
+    from .result_processor import FilterResultProcessor
+except ImportError: # pragma: no cover
+    FilterResultProcessor = None
+
 __all__ = []
 for _name in [
     "CropTaxonomyService",
@@ -58,7 +63,8 @@ for _name in [
     "CropAttributeTaggingService",
     "CropPreferenceService",
     "FilterCombinationEngine",
-    "SmartFilterSuggestionService"
+    "SmartFilterSuggestionService",
+    "FilterResultProcessor"
 ]:
     if globals().get(_name) is not None:
         __all__.append(_name)

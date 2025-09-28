@@ -343,6 +343,7 @@ class CropSearchRequest(BaseModel):
     
     # Search criteria
     filter_criteria: TaxonomyFilterCriteria = Field(..., description="Search and filter criteria")
+    regional_context: Optional[Dict[str, Any]] = Field(None, description="Regional context for scoring")
     
     # Result options
     max_results: int = Field(default=50, ge=1, le=500, description="Maximum results to return")
@@ -829,12 +830,179 @@ class FilterPreset(BaseModel):
     updated_at: datetime = Field(default_factory=datetime.utcnow, description="Last update timestamp")
 
 
+# Filter Explanation Models
+class FilterExplanation(BaseModel):
+    """Explanation for why a crop was included or excluded by filters."""
+    
+    filter_name: str = Field(..., description="Name of the filter")
+    filter_category: str = Field(..., description="Category of the filter")
+    crop_value: Any = Field(..., description="Value of the crop for this filter")
+    filter_requirement: Any = Field(..., description="Required value from filter")
+    matched: bool = Field(..., description="Whether the filter was matched")
+    score: float = Field(..., ge=0.0, le=1.0, description="Score for this specific filter")
+    explanation: str = Field(..., description="Text explanation of the match/mismatch")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in the explanation")
+
+
+class FilterExplanationResponse(BaseModel):
+    """Response containing explanations for filter results."""
+    
+    crop_id: UUID = Field(..., description="ID of the crop being explained")
+    crop_name: str = Field(..., description="Name of the crop")
+    overall_compatibility_score: float = Field(..., ge=0.0, le=1.0, description="Overall compatibility score")
+    filter_explanations: List[FilterExplanation] = Field(default_factory=list, description="Detailed explanations for each filter")
+    recommendation: str = Field(..., description="Overall recommendation based on filter results")
+    alternative_suggestions: List[str] = Field(default_factory=list, description="Alternative suggestions if crop was filtered out")
+    improvement_suggestions: List[str] = Field(default_factory=list, description="Suggestions for improving compatibility")
+
+
+class FilterImpactAnalysis(BaseModel):
+    """Analysis of how filters impact overall crop recommendations."""
+    
+    filter_name: str = Field(..., description="Name of the filter")
+    total_crops_affected: int = Field(..., description="Number of crops affected by this filter")
+    average_impact_score: float = Field(..., ge=0.0, le=1.0, description="Average impact on compatibility scores")
+    exclusion_rate: float = Field(..., ge=0.0, le=1.0, description="Percentage of crops excluded by this filter")
+    sensitivity_analysis: Dict[str, float] = Field(default_factory=dict, description="Sensitivity to filter parameter changes")
+    recommendation: str = Field(..., description="Recommendation for adjusting this filter")
+
+
+class FilterConflictExplanation(BaseModel):
+    """Explanation for conflicts between filters."""
+    
+    conflicting_filters: List[str] = Field(..., description="List of conflicting filter names")
+    conflict_type: str = Field(..., description="Type of conflict (e.g., climate-soil, market-season)")
+    explanation: str = Field(..., description="Explanation of why the filters conflict")
+    severity: str = Field(..., description="Severity level (low, medium, high)")
+    resolution_suggestions: List[str] = Field(default_factory=list, description="Suggestions to resolve the conflict")
+
+
+class FilterTuningSuggestion(BaseModel):
+    """Suggestion for tuning filter parameters."""
+    
+    filter_name: str = Field(..., description="Name of the filter")
+    current_value: Any = Field(..., description="Current filter value")
+    suggested_value: Any = Field(..., description="Suggested filter value")
+    expected_impact: str = Field(..., description="Expected impact of the change")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence in the suggestion")
+    reasoning: str = Field(..., description="Reasoning behind the suggestion")
+
+
+# Ranking Models (for use in search result breakdown)
+class FilterScoreBreakdown(BaseModel):
+    """Breakdown of a single filter's contribution to overall score."""
+    
+    name: str = Field(..., description="Name of the filter")
+    weight: float = Field(..., ge=0.0, le=1.0, description="Weight of this filter in overall scoring")
+    score: float = Field(..., ge=0.0, le=1.0, description="Score achieved for this filter")
+    matched: bool = Field(..., description="Whether the filter criteria were matched")
+    partial: bool = Field(..., description="Whether there was a partial match")
+    notes: List[str] = Field(default_factory=list, description="Additional notes about the scoring")
+
+
+class ResultRankingDetails(BaseModel):
+    """Details about how a result was ranked based on filter matches."""
+    
+    active_filters: int = Field(..., description="Number of filters that were active")
+    matched_filters: int = Field(..., description="Number of filters that matched")
+    partial_filters: int = Field(..., description="Number of filters with partial matches")
+    missing_filters: int = Field(..., description="Number of filters that didn't match")
+    coverage: float = Field(..., ge=0.0, le=1.0, description="Coverage ratio of matched filters")
+    filter_scores: List[FilterScoreBreakdown] = Field(default_factory=list, description="Scores for individual filters")
+
+
+class SearchVisualizationSummary(BaseModel):
+    """Summary of search results for visualization purposes."""
+    
+    score_distribution: List['ScoreBucket'] = Field(default_factory=list, description="Distribution of scores across ranges")
+    filter_contributions: List['FilterContributionAggregate'] = Field(default_factory=list, description="Aggregate contribution of each filter")
+    match_summary: Dict[str, int] = Field(default_factory=dict, description="Summary of match types")
+    highlights: List[str] = Field(default_factory=list, description="Key highlights about the search results")
+
+
+class ScoreBucket(BaseModel):
+    """A bucket of results within a score range."""
+    
+    label: str = Field(..., description="Label for the score range")
+    count: int = Field(..., description="Number of results in this range")
+    minimum: float = Field(..., description="Minimum score in the range")
+    maximum: float = Field(..., description="Maximum score in the range")
+
+
+class FilterContributionAggregate(BaseModel):
+    """Aggregate analysis of a filter's contribution across results."""
+    
+    name: str = Field(..., description="Name of the filter")
+    average_score: float = Field(..., ge=0.0, le=1.0, description="Average score for this filter across results")
+    matched_results: int = Field(..., description="Number of results that matched this filter")
+    partial_results: int = Field(..., description="Number of results with partial matches for this filter")
+    weight: float = Field(..., ge=0.0, le=1.0, description="Weight of this filter in scoring")
+
+
+class SearchRankingOverview(BaseModel):
+    """Overview of ranking statistics for search results."""
+    
+    best_score: float = Field(..., ge=0.0, le=1.0, description="Best score among all results")
+    worst_score: float = Field(..., ge=0.0, le=1.0, description="Worst score among all results")
+    median_score: float = Field(..., ge=0.0, le=1.0, description="Median score across all results")
+    average_coverage: float = Field(..., ge=0.0, le=1.0, description="Average filter coverage across results")
+
+
+# Comprehensive Trait Profile Model (Referenced in crop_taxonomy_models.py)
+class ComprehensiveTraitProfile(BaseModel):
+    """Comprehensive trait profile for detailed crop characterization."""
+    
+    # Morphological traits
+    plant_height_cm: Optional[int] = Field(None, description="Average mature plant height in cm")
+    plant_spread_cm: Optional[int] = Field(None, description="Average mature plant spread in cm")
+    leaf_characteristics: Optional[Dict[str, Any]] = Field(None, description="Leaf shape, size, color characteristics")
+    flower_characteristics: Optional[Dict[str, Any]] = Field(None, description="Flower characteristics")
+    fruit_seed_characteristics: Optional[Dict[str, Any]] = Field(None, description="Fruit and seed characteristics")
+    
+    # Growth characteristics  
+    growth_rate: Optional[str] = Field(None, description="Growth rate classification (slow, moderate, fast)")
+    vigor: Optional[str] = Field(None, description="Plant vigor rating")
+    branching_pattern: Optional[str] = Field(None, description="Branching pattern")
+    maturity_characteristics: Optional[Dict[str, Any]] = Field(None, description="Maturity-related characteristics")
+    
+    # Physiological traits
+    photosynthetic_pathway: Optional[str] = Field(None, description="Photosynthetic pathway (C3, C4, CAM)")
+    photoperiod_sensitivity: Optional[str] = Field(None, description="Photoperiod sensitivity")
+    temperature_response: Optional[Dict[str, Any]] = Field(None, description="Response to temperature ranges")
+    water_use_efficiency: Optional[str] = Field(None, description="Water use efficiency rating")
+    
+    # Stress tolerance traits
+    drought_tolerance_detailed: Optional[Dict[str, Any]] = Field(None, description="Detailed drought tolerance characteristics")
+    heat_tolerance_detailed: Optional[Dict[str, Any]] = Field(None, description="Detailed heat tolerance characteristics")
+    cold_tolerance_detailed: Optional[Dict[str, Any]] = Field(None, description="Detailed cold tolerance characteristics")
+    salt_tolerance_detailed: Optional[Dict[str, Any]] = Field(None, description="Detailed salt tolerance characteristics")
+    disease_resistance_profile: Optional[Dict[str, str]] = Field(None, description="Disease resistance profile")
+    pest_resistance_profile: Optional[Dict[str, str]] = Field(None, description="Pest resistance profile")
+    
+    # Quality and composition traits
+    nutritional_composition: Optional[Dict[str, float]] = Field(None, description="Detailed nutritional composition")
+    industrial_compounds: Optional[Dict[str, float]] = Field(None, description="Industrial compounds profile")
+    secondary_metabolites: Optional[Dict[str, float]] = Field(None, description="Secondary metabolites profile")
+    
+    # Reproductive traits
+    reproductive_method: Optional[str] = Field(None, description="Reproductive method (sexual, asexual, etc.)")
+    pollination_requirements: Optional[List[str]] = Field(default_factory=list, description="Pollination requirements")
+    seed_production_characteristics: Optional[Dict[str, Any]] = Field(None, description="Seed production details")
+    breeding_system: Optional[str] = Field(None, description="Breeding system")
+    
+    # Agricultural performance
+    yield_potential: Optional[Dict[str, float]] = Field(None, description="Yield potential by type")
+    quality_metrics: Optional[Dict[str, float]] = Field(None, description="Quality metrics")
+    harvest_index: Optional[float] = Field(None, description="Harvest index")
+    stability_metrics: Optional[Dict[str, float]] = Field(None, description="Stability metrics across environments")
+
+
 # Resolve forward references now that dependent models are loaded
 try:  # pragma: no cover - defensive guard during import cycles
     ComprehensiveCropData.model_rebuild(
-        _types_namespace={'CropFilteringAttributes': CropFilteringAttributes}
+        _types_namespace={'CropFilteringAttributes': CropFilteringAttributes, 'ComprehensiveTraitProfile': ComprehensiveTraitProfile}
     )
 except AttributeError:
-    ComprehensiveCropData.update_forward_refs(CropFilteringAttributes=CropFilteringAttributes)
+    ComprehensiveCropData.update_forward_refs(CropFilteringAttributes=CropFilteringAttributes, ComprehensiveTraitProfile=ComprehensiveTraitProfile)
 except Exception:
     pass
