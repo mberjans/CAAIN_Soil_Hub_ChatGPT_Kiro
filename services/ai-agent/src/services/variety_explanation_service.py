@@ -7,7 +7,10 @@ recommendations with multilingual and audience-specific support.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
+
+from .evidence_management_service import EvidenceManagementService
 
 
 class VarietyExplanationService:
@@ -47,6 +50,7 @@ class VarietyExplanationService:
             }
         }
         self.default_language = "en"
+        self.evidence_service = EvidenceManagementService()
 
     def is_variety_recommendation(self, recommendation: Dict[str, Any]) -> bool:
         """Determine if the payload represents a variety recommendation."""
@@ -124,7 +128,138 @@ class VarietyExplanationService:
         )
         payload["quality_metrics"] = quality_metrics
 
+        evidence_package = self.evidence_service.build_evidence_package(
+            recommendation,
+            context
+        )
+        payload["supporting_evidence"] = self._serialize_evidence_records(
+            evidence_package.records
+        )
+        payload["evidence_summary"] = self._serialize_evidence_summary(
+            evidence_package.summary
+        )
+        payload["evidence_notes"] = self._serialize_evidence_notes(
+            evidence_package.coverage_notes
+        )
+
         return payload
+
+    def _serialize_evidence_records(self, records: Any) -> List[Dict[str, Any]]:
+        serialized: List[Dict[str, Any]] = []
+        if not isinstance(records, list):
+            return serialized
+
+        index = 0
+        while index < len(records):
+            record = records[index]
+            if record is None:
+                index += 1
+                continue
+
+            entry: Dict[str, Any] = {}
+            entry["id"] = getattr(record, "id", None)
+            entry["variety_name"] = getattr(record, "variety_name", None)
+            entry["category"] = getattr(record, "category", None)
+            entry["summary"] = getattr(record, "summary", None)
+            entry["source_name"] = getattr(record, "source_name", None)
+
+            source_type = getattr(record, "source_type", None)
+            if source_type is not None:
+                if hasattr(source_type, "value"):
+                    entry["source_type"] = source_type.value
+                else:
+                    entry["source_type"] = str(source_type)
+            else:
+                entry["source_type"] = None
+
+            entry["source_link"] = getattr(record, "source_link", None)
+
+            published_at = getattr(record, "published_at", None)
+            if isinstance(published_at, datetime):
+                entry["published_at"] = published_at.isoformat()
+            else:
+                entry["published_at"] = None
+
+            entry["credibility_score"] = getattr(record, "credibility_score", 0.0)
+            entry["strength_score"] = getattr(record, "strength_score", 0.0)
+
+            strength_level = getattr(record, "strength_level", None)
+            if strength_level is not None and hasattr(strength_level, "value"):
+                entry["strength_level"] = strength_level.value
+            else:
+                entry["strength_level"] = str(strength_level) if strength_level is not None else None
+
+            entry["reliability_notes"] = getattr(record, "reliability_notes", None)
+
+            verified_at = getattr(record, "last_verified", None)
+            if isinstance(verified_at, datetime):
+                entry["last_verified"] = verified_at.isoformat()
+            else:
+                entry["last_verified"] = None
+
+            serialized.append(entry)
+            index += 1
+
+        return serialized
+
+    def _serialize_evidence_summary(self, summary: Any) -> Dict[str, Any]:
+        if summary is None:
+            return {
+                "total_records": 0,
+                "average_credibility": 0.0,
+                "average_strength": 0.0,
+                "source_distribution": {},
+                "strength_distribution": {},
+                "latest_publication": None
+            }
+
+        summary_dict: Dict[str, Any] = {}
+        summary_dict["total_records"] = getattr(summary, "total_records", 0)
+        summary_dict["average_credibility"] = getattr(summary, "average_credibility", 0.0)
+        summary_dict["average_strength"] = getattr(summary, "average_strength", 0.0)
+
+        source_distribution: Dict[str, int] = {}
+        raw_sources = getattr(summary, "source_distribution", {})
+        if isinstance(raw_sources, dict):
+            for key, value in raw_sources.items():
+                if hasattr(key, "value"):
+                    source_key = key.value
+                else:
+                    source_key = str(key)
+                source_distribution[source_key] = value
+        summary_dict["source_distribution"] = source_distribution
+
+        strength_distribution: Dict[str, int] = {}
+        raw_strength = getattr(summary, "strength_distribution", {})
+        if isinstance(raw_strength, dict):
+            for key, value in raw_strength.items():
+                if hasattr(key, "value"):
+                    strength_key = key.value
+                else:
+                    strength_key = str(key)
+                strength_distribution[strength_key] = value
+        summary_dict["strength_distribution"] = strength_distribution
+
+        latest_publication = getattr(summary, "latest_publication", None)
+        if isinstance(latest_publication, datetime):
+            summary_dict["latest_publication"] = latest_publication.isoformat()
+        else:
+            summary_dict["latest_publication"] = None
+
+        return summary_dict
+
+    def _serialize_evidence_notes(self, notes: Any) -> List[str]:
+        serialized: List[str] = []
+        if isinstance(notes, list):
+            index = 0
+            while index < len(notes):
+                note = notes[index]
+                if isinstance(note, str) and len(note.strip()) > 0:
+                    serialized.append(note.strip())
+                index += 1
+        elif isinstance(notes, str) and len(notes.strip()) > 0:
+            serialized.append(notes.strip())
+        return serialized
 
     def build_fallback_text(self, payload: Dict[str, Any]) -> str:
         """Create deterministic explanation text when LLM is unavailable."""
@@ -197,6 +332,33 @@ class VarietyExplanationService:
         if isinstance(key_points, list):
             for point in key_points:
                 lines.append(f"- {point}")
+
+        evidence_entries = payload.get("supporting_evidence")
+        if isinstance(evidence_entries, list) and len(evidence_entries) > 0:
+            lines.append("Supporting evidence")
+            index = 0
+            while index < len(evidence_entries):
+                entry = evidence_entries[index]
+                if isinstance(entry, dict):
+                    source_name = entry.get("source_name")
+                    summary_text = entry.get("summary")
+                    credibility_score = entry.get("credibility_score")
+
+                    evidence_line = None
+                    if isinstance(source_name, str) and isinstance(summary_text, str):
+                        if isinstance(credibility_score, (int, float)):
+                            percent_value = round(float(credibility_score) * 100)
+                            evidence_line = f"- {source_name}: {summary_text} ({percent_value}% credibility)"
+                        else:
+                            evidence_line = f"- {source_name}: {summary_text}"
+                    elif isinstance(summary_text, str):
+                        evidence_line = f"- {summary_text}"
+                    elif isinstance(source_name, str):
+                        evidence_line = f"- {source_name}"
+
+                    if evidence_line:
+                        lines.append(evidence_line)
+                index += 1
 
         metrics = payload.get("quality_metrics")
         if isinstance(metrics, dict):
