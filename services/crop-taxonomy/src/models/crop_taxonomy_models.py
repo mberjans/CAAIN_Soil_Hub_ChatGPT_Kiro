@@ -13,7 +13,7 @@ from uuid import UUID
 
 
 if TYPE_CHECKING:  # pragma: no cover - type checking helper
-    from .crop_filtering_models import CropFilteringAttributes
+    from .crop_filtering_models import CropFilteringAttributes, ComprehensiveTraitProfile
 
 
 def _ensure_forward_ref_compatibility():
@@ -523,6 +523,8 @@ class CropNutritionalProfile(BaseModel):
         return v
 
 
+from typing import Union
+
 # ============================================================================
 # COMPREHENSIVE CROP DATA MODEL
 # ============================================================================
@@ -548,6 +550,10 @@ class ComprehensiveCropData(BaseModel):
     filtering_attributes: Optional['CropFilteringAttributes'] = Field(
         None,
         description="Advanced filtering attributes associated with the crop"
+    )
+    trait_profile: Optional['ComprehensiveTraitProfile'] = Field(
+        None,
+        description="Comprehensive trait profile for detailed crop characterization"
     )
     
     # Search and categorization
@@ -698,3 +704,10 @@ class BulkCropImportResponse(BaseModel):
     # Processing metadata
     processing_time_seconds: float = Field(..., description="Total processing time")
     generated_at: datetime = Field(default_factory=datetime.utcnow, description="Response generation time")
+
+
+# Resolve forward references now that dependent models are loaded
+try:  # pragma: no cover - defensive guard during import cycles
+    ComprehensiveCropData.update_forward_refs(ComprehensiveTraitProfile='ComprehensiveTraitProfile')
+except Exception:
+    pass  # Fallback if forward reference resolution fails

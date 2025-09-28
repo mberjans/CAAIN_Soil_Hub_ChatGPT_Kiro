@@ -17,8 +17,14 @@ import PyPDF2
 from ..services.ingestion_service import get_ingestion_service, DataIngestionService
 from ..services.data_ingestion_framework import IngestionResult
 
+# Import climate weather routes
+from .climate_weather_routes import router as climate_weather_router
+
 logger = structlog.get_logger(__name__)
 router = APIRouter(prefix="/api/v1", tags=["data-integration"])
+
+# Include climate weather routes
+router.include_router(climate_weather_router)
 
 
 class LocationRequest(BaseModel):

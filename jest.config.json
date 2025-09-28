@@ -1,0 +1,26 @@
+{
+  "testEnvironment": "jsdom",
+  "modulePaths": [
+    "<rootDir>/services/frontend/src/static/js"
+  ],
+  "testMatch": [
+    "**/__tests__/**/*.(test|spec).(js|jsx|ts|tsx)",
+    "**/?(*.)+(spec|test).(js|jsx|ts|tsx)"
+  ],
+  "setupFilesAfterEnv": [
+    "<rootDir>/services/frontend/src/static/js/__tests__/setup.js"
+  ],
+  "collectCoverageFrom": [
+    "services/frontend/src/static/js/**/*.js",
+    "!services/frontend/src/static/js/__tests__/**",
+    "!services/frontend/src/static/js/**/node_modules/**"
+  ],
+  "coverageThreshold": {
+    "global": {
+      "branches": 80,
+      "functions": 80,
+      "lines": 80,
+      "statements": 80
+    }
+  }
+}

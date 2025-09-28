@@ -48,6 +48,16 @@ except ImportError:
         logger.warning("Market price routes not available")
         market_price_router = None
 
+# Import filtering routes
+try:
+    from .recommendation_filtering_routes import router as filtering_router
+except ImportError:
+    try:
+        from recommendation_filtering_routes import router as filtering_router
+    except ImportError:
+        logger.warning("Recommendation filtering routes not available")
+        filtering_router = None
+
 router = APIRouter(prefix="/api/v1", tags=["recommendation-engine"])
 
 # Central recommendation engine

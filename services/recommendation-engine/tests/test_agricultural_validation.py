@@ -13,11 +13,11 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from models.rotation_models import (
+from src.models.rotation_models import (
     FieldProfile, RotationGoal, RotationConstraint,
     CropRotationPlan, RotationGoalType, ConstraintType
 )
-from services.rotation_optimization_engine import RotationOptimizationEngine
+from src.services.rotation_optimization_engine import RotationOptimizationEngine
 
 
 class TestCropCompatibilityValidation:

@@ -11,6 +11,7 @@ from .variety_routes import router as variety_router
 from .regional_routes import router as regional_router
 from .preference_routes import router as preference_router
 from .learning_routes import router as learning_router
+from .smart_filter_routes import router as smart_filter_router
 
 __all__ = [
     "taxonomy_router",
@@ -18,5 +19,6 @@ __all__ = [
     "variety_router",
     "regional_router",
     "preference_router",
-    "learning_router"
+    "learning_router",
+    "smart_filter_router"
 ]

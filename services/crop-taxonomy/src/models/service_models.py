@@ -643,3 +643,59 @@ class TagManagementResponse(BaseModel):
     validation_updates: Dict[str, TagValidationStatus] = Field(default_factory=dict, description="Validation updates keyed by tag ID")
     warnings: List[str] = Field(default_factory=list, description="Warnings encountered while processing instructions")
     processed_instruction_count: int = Field(default=0, ge=0, description="Number of instructions processed")
+
+
+class TaxonomicClassificationRequest(CropTaxonomyRequest):
+    """Request for detailed taxonomic classification."""
+    crop_identifier: str = Field(..., description="Crop name or identifier to classify")
+    classification_type: str = Field("full", description="Type of classification (full, basic, scientific)")
+    include_hierarchy: bool = Field(True, description="Include full taxonomic hierarchy")
+    include_agricultural_classification: bool = Field(True, description="Include agricultural categories")
+    region_context: Optional[str] = Field(None, description="Regional context for classification")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "crop_identifier": "Triticum aestivum",
+                "classification_type": "full",
+                "include_hierarchy": True,
+                "include_agricultural_classification": True,
+                "region_context": "North America"
+            }
+        }
+
+
+class TaxonomicClassificationResponse(BaseModel):
+    """Response for taxonomic classification."""
+    classification: Dict[str, Any] = Field(..., description="Taxonomic classification data")
+    hierarchy: Optional[Dict[str, str]] = Field(None, description="Taxonomic hierarchy")
+    agricultural_classification: Optional[Dict[str, Any]] = Field(None, description="Agricultural categories")
+    confidence_score: float = Field(..., description="Classification confidence")
+    sources: List[str] = Field(default_factory=list, description="Data sources used")
+    
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "classification": {
+                    "kingdom": "Plantae",
+                    "family": "Poaceae", 
+                    "genus": "Triticum",
+                    "species": "aestivum"
+                },
+                "hierarchy": {
+                    "kingdom": "Plantae",
+                    "phylum": "Tracheophyta",
+                    "class": "Liliopsida",
+                    "order": "Poales",
+                    "family": "Poaceae",
+                    "genus": "Triticum",
+                    "species": "aestivum"
+                },
+                "agricultural_classification": {
+                    "crop_type": "cereal grain",
+                    "use_category": "food crop"
+                },
+                "confidence_score": 0.95,
+                "sources": ["botanical_database", "agricultural_extension"]
+            }
+        }

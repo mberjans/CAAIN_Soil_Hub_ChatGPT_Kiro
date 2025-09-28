@@ -1,0 +1,90 @@
+{
+  "test_results": {
+    "database_schema": {
+      "status": "partial",
+      "existing_tables": [
+        "crop_taxonomic_hierarchy",
+        "crop_agricultural_classification",
+        "crop_climate_adaptations",
+        "crop_soil_requirements"
+      ],
+      "missing_tables": [
+        "crop_nutritional_profiles",
+        "enhanced_crop_varieties",
+        "crop_regional_adaptations",
+        "crop_filtering_attributes"
+      ],
+      "enhanced_columns_present": [
+        "taxonomy_id",
+        "agricultural_classification_id",
+        "climate_adaptation_id",
+        "soil_requirements_id",
+        "crop_code",
+        "search_keywords",
+        "tags",
+        "is_cover_crop"
+      ],
+      "enhanced_columns_missing": [
+        "nutritional_profile_id",
+        "filtering_attributes_id"
+      ],
+      "migration_status": "incomplete"
+    },
+    "service_imports": {
+      "status": "error",
+      "error": "cannot import name 'BulkCropDataRequest' from 'models.crop_taxonomy_models' (/Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro/services/crop-taxonomy/src/models/crop_taxonomy_models.py)"
+    },
+    "database_operations": {
+      "status": "success",
+      "query_results": {
+        "taxonomic_hierarchy_count": 0,
+        "agricultural_classification_count": 0,
+        "climate_adaptations_count": 0,
+        "crops_count": 0
+      }
+    },
+    "data_population": {
+      "status": "ready",
+      "sample_script_available": true,
+      "existing_sample_crops": 0,
+      "message": "Sample data script ready. 0 sample crops already in database."
+    },
+    "filtering_functionality": {
+      "status": "success",
+      "filter_tests": {
+        "Filter by crop category": {
+          "status": "success",
+          "result_count": 0,
+          "results": []
+        },
+        "Filter by hardiness zones": {
+          "status": "success",
+          "result_count": 0,
+          "results": []
+        },
+        "Filter by pH range": {
+          "status": "success",
+          "result_count": 0,
+          "results": []
+        },
+        "Complex multi-table filtering": {
+          "status": "success",
+          "result_count": 0,
+          "results": []
+        }
+      }
+    },
+    "api_endpoints": {
+      "status": "service_error",
+      "service_available": true,
+      "status_code": 404
+    }
+  },
+  "timestamp": "2025-09-27T07:44:18.816452",
+  "summary": {
+    "total_tests": 6,
+    "successful_tests": 2,
+    "success_rate": 0.3333333333333333,
+    "overall_status": "needs_work"
+  }
+}

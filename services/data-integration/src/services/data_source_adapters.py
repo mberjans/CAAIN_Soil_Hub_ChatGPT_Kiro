@@ -9,7 +9,7 @@ from typing import Dict, Any, Optional
 import structlog
 from datetime import datetime
 
-from .weather_service import WeatherService, WeatherData, ForecastDay, AgriculturalWeatherMetrics
+from .weather_service import WeatherService, WeatherData, ForecastDay, AgriculturalWeatherMetrics, ClimateZoneData
 from .soil_service import SoilService, SoilCharacteristics, SoilNutrientRanges, SoilSuitability
 
 logger = structlog.get_logger(__name__)
@@ -49,6 +49,12 @@ class WeatherServiceAdapter:
                     latitude, longitude, base_temp_f
                 )
                 return self._agricultural_metrics_to_dict(metrics)
+            
+            elif operation == "climate_zone_data":
+                climate_data = await self.weather_service.get_climate_zone_data(
+                    latitude, longitude
+                )
+                return self._climate_zone_data_to_dict(climate_data)
             
             else:
                 raise ValueError(f"Unknown weather operation: {operation}")
@@ -96,6 +102,23 @@ class WeatherServiceAdapter:
             "soil_temperature_f": metrics.soil_temperature_f,
             "evapotranspiration_inches": metrics.evapotranspiration_inches,
             "data_source": "weather_service"
+        }
+    
+    def _climate_zone_data_to_dict(self, climate_data) -> Dict[str, Any]:
+        """Convert ClimateZoneData to dictionary."""
+        if not climate_data:
+            return {}
+        
+        return {
+            "usda_zone": climate_data.usda_zone,
+            "koppen_classification": climate_data.koppen_classification,
+            "average_min_temp_f": climate_data.average_min_temp_f,
+            "average_max_temp_f": climate_data.average_max_temp_f,
+            "annual_precipitation_inches": climate_data.annual_precipitation_inches,
+            "growing_season_length": climate_data.growing_season_length,
+            "last_frost_date": climate_data.last_frost_date,
+            "first_frost_date": climate_data.first_frost_date,
+            "data_source": "weather_service_climate_analysis"
         }
     
     async def close(self):

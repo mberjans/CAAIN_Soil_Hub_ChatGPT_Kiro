@@ -26,6 +26,8 @@ try:
     from api.learning_routes import router as learning_router
     from api.preference_recommendation_routes import router as preference_recommendation_router
     from api.filtering_routes import router as filtering_router
+    from api.smart_filter_routes import router as smart_filter_router
+    from api.filter_analytics_routes import router as analytics_router
 except ImportError as e:
     logging.error(f"Import error: {e}")
     # Create placeholder routers if imports fail
@@ -39,6 +41,8 @@ except ImportError as e:
     learning_router = APIRouter()
     preference_recommendation_router = APIRouter()
     filtering_router = APIRouter()
+    smart_filter_router = APIRouter()
+    analytics_router = APIRouter()
 
 # Configure logging
 logging.basicConfig(
@@ -144,6 +148,8 @@ app.include_router(filter_router, prefix="/api/v1")
 app.include_router(learning_router, prefix="/api/v1")
 app.include_router(preference_recommendation_router)
 app.include_router(filtering_router)  # Include the new filtering routes with no prefix (handles full paths)
+app.include_router(smart_filter_router, prefix="/api/v1/crop-taxonomy")  # Include smart filter routes
+app.include_router(analytics_router, prefix="/api/v1/crop-taxonomy")  # Include analytics routes
 
 @app.get("/", response_class=HTMLResponse)
 async def root():

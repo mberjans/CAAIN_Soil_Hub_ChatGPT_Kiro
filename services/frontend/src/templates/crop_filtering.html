@@ -455,6 +455,46 @@
                     <div class="tab-pane fade" id="visualization-panel">
                         <h3><i class="fas fa-chart-bar"></i> Filter Results Visualization</h3>
                         
+                        <!-- Result Summary Cards -->
+                        <div class="row mb-4">
+                            <div class="col-md-3">
+                                <div class="card text-center bg-primary text-white">
+                                    <div class="card-body">
+                                        <i class="fas fa-seedling fa-2x mb-2"></i>
+                                        <h5 id="total-results-count">0</h5>
+                                        <p class="card-text">Total Matching Crops</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-success text-white">
+                                    <div class="card-body">
+                                        <i class="fas fa-filter fa-2x mb-2"></i>
+                                        <h5 id="active-filters-count">0</h5>
+                                        <p class="card-text">Active Filters</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-info text-white">
+                                    <div class="card-body">
+                                        <i class="fas fa-percentage fa-2x mb-2"></i>
+                                        <h5 id="reduction-percentage">0%</h5>
+                                        <p class="card-text">Dataset Reduction</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center bg-warning text-dark">
+                                    <div class="card-body">
+                                        <i class="fas fa-star fa-2x mb-2"></i>
+                                        <h5 id="avg-suitability-score">0.00</h5>
+                                        <p class="card-text">Avg Suitability Score</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Filter Impact Visualization -->
                         <div class="card mb-4">
                             <div class="card-header d-flex justify-content-between align-items-center">
@@ -568,6 +608,36 @@
                             </div>
                         </div>
                         
+                        <!-- Advanced Visualization Charts -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5><i class="fas fa-balance-scale"></i> Suitability Score Distribution</h5>
+                                        <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="suitability-distribution-chart">
+                                            <i class="fas fa-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="suitability-distribution-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5><i class="fas fa-leaf"></i> Management Complexity</h5>
+                                        <button class="btn btn-sm btn-outline-secondary export-chart-btn" data-chart="management-complexity-chart">
+                                            <i class="fas fa-download"></i> Export
+                                        </button>
+                                    </div>
+                                    <div class="card-body">
+                                        <canvas id="management-complexity-chart" width="400" height="200"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <!-- Data Export Options -->
                         <div class="card mb-4">
                             <div class="card-header">
@@ -575,20 +645,112 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <button class="btn btn-outline-primary w-100 download-data-btn" data-type="results">
                                             <i class="fas fa-table"></i> Results CSV
                                         </button>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <button class="btn btn-outline-success w-100 download-data-btn" data-type="summary">
                                             <i class="fas fa-chart-bar"></i> Summary CSV
                                         </button>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-3">
                                         <button class="btn btn-outline-info w-100 download-data-btn" data-type="detailed">
                                             <i class="fas fa-file-alt"></i> Detailed CSV
                                         </button>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <button class="btn btn-outline-danger w-100 download-data-btn" data-type="pdf">
+                                            <i class="fas fa-file-pdf"></i> Report PDF
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Save & Share Section -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-share-alt"></i> Save & Share Filter Configuration</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Save Current Filter Configuration</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="filter-config-name" placeholder="Enter configuration name">
+                                                <button class="btn btn-outline-primary" type="button" id="save-filter-config">
+                                                    <i class="fas fa-save"></i> Save
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Load Saved Configuration</label>
+                                            <div class="input-group">
+                                                <select class="form-select" id="saved-filter-configs-list">
+                                                    <option value="">Select a saved configuration</option>
+                                                </select>
+                                                <button class="btn btn-outline-info" type="button" id="load-filter-config">
+                                                    <i class="fas fa-folder-open"></i> Load
+                                                </button>
+                                                <button class="btn btn-outline-danger" type="button" id="delete-filter-config">
+                                                    <i class="fas fa-trash"></i> Delete
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <div class="mb-3">
+                                            <label class="form-label">Share Filter Link</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="filter-share-link" readonly>
+                                                <button class="btn btn-outline-secondary" type="button" id="copy-filter-link">
+                                                    <i class="fas fa-copy"></i> Copy Link
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Performance Features -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-tachometer-alt"></i> Performance Features</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="enable-virtual-scrolling" checked>
+                                            <label class="form-check-label" for="enable-virtual-scrolling">
+                                                Enable Virtual Scrolling (For Large Result Sets)
+                                            </label>
+                                        </div>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" id="enable-result-caching" checked>
+                                            <label class="form-check-label" for="enable-result-caching">
+                                                Enable Result Caching
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">Results Per Page</label>
+                                            <select class="form-select" id="results-per-page">
+                                                <option value="10" selected>10 per page</option>
+                                                <option value="25">25 per page</option>
+                                                <option value="50">50 per page</option>
+                                                <option value="100">100 per page</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </div>

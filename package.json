@@ -1,0 +1,30 @@
+{
+  "name": "caain_soil_hub_chatgpt_kiro",
+  "version": "1.0.0",
+  "description": "An intelligent agricultural decision support platform designed to answer 20 key farmer questions through a combination of data integration, machine learning algorithms, and expert agricultural knowledge.",
+  "main": "eslint.config.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mberjans/autonomous-farm-advisory-system.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/mberjans/autonomous-farm-advisory-system/issues"
+  },
+  "homepage": "https://github.com/mberjans/autonomous-farm-advisory-system#readme",
+  "devDependencies": {
+    "jest": "^30.1.3",
+    "jest-environment-jsdom": "^30.1.2",
+    "jsdom": "^27.0.0"
+  }
+}

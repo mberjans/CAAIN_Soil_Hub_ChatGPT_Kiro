@@ -18,6 +18,7 @@ from ..services.field_history_service import field_history_service
 from ..services.rotation_optimization_engine import RotationOptimizationEngine
 from ..services.rotation_storage_service import rotation_storage_service
 from ..services.rotation_goal_service import RotationGoalService
+from ..services.rotation_analysis_service import RotationAnalysisService
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ fields_router = APIRouter(prefix="/fields", tags=["fields"])
 # Initialize services
 goal_service = RotationGoalService()
 rotation_optimization_engine = RotationOptimizationEngine()
+rotation_analysis_service = RotationAnalysisService()
 
 
 # Additional request/response models
@@ -614,6 +616,192 @@ async def get_economic_analysis(
         raise HTTPException(status_code=500, detail=f"Economic analysis failed: {str(e)}")
 
 
+@router.post("/sustainability-score")
+async def calculate_sustainability_score(
+    field_id: str = Query(..., description="Field ID"),
+    rotation_sequence: List[str] = Query(..., description="Crop rotation sequence")
+):
+    """Calculate comprehensive sustainability metrics for a rotation sequence."""
+    try:
+        logger.info(f"Calculating sustainability score for field {field_id} with sequence: {rotation_sequence}")
+        
+        # Get field profile
+        field_profile = field_history_service.field_profiles.get(field_id)
+        if not field_profile:
+            raise HTTPException(status_code=404, detail=f"Field {field_id} not found")
+        
+        # Validate rotation sequence
+        if not rotation_sequence or len(rotation_sequence) == 0:
+            raise HTTPException(status_code=400, detail="Rotation sequence cannot be empty")
+        
+        # Create a temporary rotation plan for analysis
+        from ..models.rotation_models import CropRotationPlan
+        from datetime import datetime
+        
+        # Create rotation years dictionary from sequence
+        base_year = datetime.now().year
+        rotation_years_dict = {}
+        rotation_details_dict = {}
+        
+        for i, crop in enumerate(rotation_sequence):
+            year = base_year + i
+            rotation_years_dict[year] = crop
+            
+            # Estimate yield using optimization engine (with error handling)
+            try:
+                estimated_yield = await rotation_optimization_engine._estimate_crop_yield(
+                    crop, field_profile, i, rotation_sequence
+                )
+            except:
+                # Fallback yield estimates if optimization engine method fails
+                default_yields = {
+                    'corn': 180.0,     # bushels/acre
+                    'soybean': 50.0,   # bushels/acre
+                    'wheat': 60.0,     # bushels/acre
+                    'oats': 80.0,      # bushels/acre
+                    'alfalfa': 4.0,    # tons/acre
+                    'barley': 70.0     # bushels/acre
+                }
+                estimated_yield = default_yields.get(crop.lower(), 50.0)
+            
+            rotation_details_dict[year] = {
+                'crop_name': crop,
+                'estimated_yield': estimated_yield,
+                'yield_units': 'bushels' if crop.lower() != 'alfalfa' else 'tons'
+            }
+        
+        # Create temporary rotation plan
+        temp_plan = CropRotationPlan(
+            plan_id=f"temp_sustainability_{field_id}_{int(datetime.now().timestamp())}",
+            field_id=field_id,
+            farm_id=getattr(field_profile, 'farm_id', 'unknown'),
+            plan_name="Sustainability Analysis",
+            created_date=datetime.now(),
+            rotation_years=rotation_years_dict,
+            rotation_details=rotation_details_dict,
+            planning_horizon=len(rotation_sequence),
+            start_year=base_year,
+            overall_score=0.0,
+            benefit_scores={},
+            economic_projections={}
+        )
+        
+        # Calculate comprehensive sustainability metrics
+        sustainability_metrics = await rotation_analysis_service.calculate_sustainability_metrics(
+            rotation_plan=temp_plan,
+            field_profile=field_profile
+        )
+        
+        # Calculate rotation benefits for additional sustainability insights
+        benefit_analysis = await rotation_analysis_service.analyze_rotation_benefits(
+            rotation_plan=temp_plan,
+            field_profile=field_profile
+        )
+        
+        # Calculate detailed sustainability scores (0-100 scale)
+        sustainability_scores = {
+            "environmental_impact": sustainability_metrics.environmental_impact_score,
+            "soil_health": min(100, benefit_analysis.soil_organic_matter_improvement * 2),  # Scale to 0-100
+            "carbon_sequestration": min(100, benefit_analysis.carbon_sequestration_tons * 20),  # Scale to 0-100
+            "water_efficiency": sustainability_metrics.water_conservation_score,
+            "biodiversity": min(100, benefit_analysis.biodiversity_index),
+            "long_term_viability": sustainability_metrics.long_term_viability_score
+        }
+        
+        # Calculate overall sustainability score
+        overall_score = sum(sustainability_scores.values()) / len(sustainability_scores)
+        
+        # Determine sustainability grade
+        def get_sustainability_grade(score: float) -> str:
+            if score >= 90:
+                return "A"
+            elif score >= 80:
+                return "B"
+            elif score >= 70:
+                return "C"
+            elif score >= 60:
+                return "D"
+            else:
+                return "F"
+        
+        sustainability_grade = get_sustainability_grade(overall_score)
+        
+        # Generate improvement recommendations
+        recommendations = []
+        
+        if sustainability_scores["environmental_impact"] < 70:
+            recommendations.append("Consider adding more legumes to reduce nitrogen fertilizer needs")
+            
+        if sustainability_scores["soil_health"] < 70:
+            recommendations.append("Include cover crops or perennial forages to improve soil organic matter")
+            
+        if sustainability_scores["carbon_sequestration"] < 60:
+            recommendations.append("Add deep-rooted crops like alfalfa to increase carbon sequestration")
+            
+        if sustainability_scores["water_efficiency"] < 70:
+            recommendations.append("Consider drought-tolerant crops or improve water management practices")
+            
+        if sustainability_scores["biodiversity"] < 70:
+            recommendations.append("Increase crop diversity by adding different plant families to the rotation")
+            
+        if sustainability_scores["long_term_viability"] < 75:
+            recommendations.append("Balance economic returns with environmental benefits for long-term sustainability")
+        
+        # Add diversity-specific recommendations
+        unique_crops = len(set(rotation_sequence))
+        if unique_crops < 3:
+            recommendations.append("Add more crop diversity to improve pest management and soil health")
+        
+        # Check for nitrogen-fixing crops
+        nitrogen_fixers = ['soybean', 'alfalfa', 'clover', 'peas', 'beans']
+        has_nitrogen_fixer = any(crop.lower() in nitrogen_fixers for crop in rotation_sequence)
+        if not has_nitrogen_fixer:
+            recommendations.append("Include nitrogen-fixing legumes to reduce fertilizer requirements")
+        
+        # Add general sustainability recommendations if score is good
+        if overall_score >= 80 and not recommendations:
+            recommendations.extend([
+                "Excellent sustainability profile - maintain current rotation practices",
+                "Monitor soil health indicators annually to track improvements",
+                "Consider precision agriculture technologies to optimize resource use"
+            ])
+        elif overall_score >= 70 and len(recommendations) < 2:
+            recommendations.append("Good sustainability foundation - minor improvements can enhance performance")
+        
+        return {
+            "field_id": field_id,
+            "rotation_sequence": rotation_sequence,
+            "sustainability_scores": sustainability_scores,
+            "overall_sustainability_score": round(overall_score, 2),
+            "sustainability_grade": sustainability_grade,
+            "recommendations": recommendations,
+            "analysis_details": {
+                "crop_diversity_index": benefit_analysis.biodiversity_index,
+                "nitrogen_fixation_lbs_per_acre": benefit_analysis.nitrogen_fixation_annual_avg,
+                "carbon_sequestration_tons": benefit_analysis.carbon_sequestration_tons,
+                "erosion_reduction_percent": benefit_analysis.erosion_reduction_percent,
+                "water_use_efficiency_score": benefit_analysis.water_use_efficiency,
+                "soil_health_trajectory": sustainability_metrics.soil_health_trajectory,
+                "unique_crops_count": unique_crops,
+                "rotation_length_years": len(rotation_sequence),
+                "has_nitrogen_fixing_crops": has_nitrogen_fixer
+            },
+            "sustainability_insights": [
+                f"Rotation includes {unique_crops} different crop types",
+                f"Average annual nitrogen fixation: {benefit_analysis.nitrogen_fixation_annual_avg:.1f} lbs/acre",
+                f"Carbon sequestration potential: {benefit_analysis.carbon_sequestration_tons:.2f} tons",
+                f"Biodiversity index: {benefit_analysis.biodiversity_index:.1f}/100",
+                f"Soil erosion reduction: {benefit_analysis.erosion_reduction_percent:.1f}%"
+            ]
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error calculating sustainability score: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Sustainability analysis failed: {str(e)}")
+
+
 @fields_router.get("/{field_id}/data-quality")
 async def assess_field_data_quality(field_id: str):
     """Assess quality of field history data."""
@@ -826,6 +1014,295 @@ async def validate_constraints(field_id: str, constraints: List[Dict[str, Any]])
     except Exception as e:
         logger.error(f"Error validating constraints: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to validate constraints: {str(e)}")
+
+
+@router.post("/risk-assessment")
+async def assess_rotation_risks(
+    field_id: str = Query(..., description="Field ID"),
+    rotation_sequence: List[str] = Query(..., description="Crop rotation sequence")
+):
+    """Assess comprehensive risks for a specific rotation sequence."""
+    try:
+        logger.info(f"Assessing rotation risks for field {field_id} with sequence: {rotation_sequence}")
+        
+        # Validate input parameters
+        if not rotation_sequence or len(rotation_sequence) == 0:
+            raise HTTPException(status_code=400, detail="Rotation sequence cannot be empty")
+        
+        if len(rotation_sequence) > 20:
+            raise HTTPException(status_code=400, detail="Rotation sequence too long (maximum 20 years)")
+        
+        # Get field profile
+        field_profile = field_history_service.field_profiles.get(field_id)
+        if not field_profile:
+            raise HTTPException(status_code=404, detail=f"Field {field_id} not found")
+        
+        # Create a temporary rotation plan for risk assessment
+        from ..models.rotation_models import CropRotationPlan, RotationYear
+        
+        base_year = datetime.now().year
+        rotation_years_list = []
+        rotation_years_dict = {}
+        rotation_details_dict = {}
+        
+        for i, crop in enumerate(rotation_sequence):
+            year = base_year + i
+            
+            # Estimate yield using optimization engine (with fallback)
+            try:
+                estimated_yield = await rotation_optimization_engine._estimate_crop_yield(
+                    crop, field_profile, i, rotation_sequence
+                )
+            except:
+                # Fallback yield estimates
+                default_yields = {
+                    'corn': 180.0,     # bushels/acre
+                    'soybean': 50.0,   # bushels/acre
+                    'wheat': 60.0,     # bushels/acre
+                    'oats': 80.0,      # bushels/acre
+                    'alfalfa': 4.0,    # tons/acre
+                    'barley': 70.0,    # bushels/acre
+                    'canola': 40.0,    # bushels/acre
+                    'sunflower': 2500.0 # lbs/acre
+                }
+                estimated_yield = default_yields.get(crop.lower(), 50.0)
+            
+            rotation_year = RotationYear(
+                year=year,
+                crop_name=crop,
+                estimated_yield=estimated_yield,
+                confidence_score=0.8
+            )
+            
+            rotation_years_list.append(rotation_year)
+            rotation_years_dict[year] = crop
+            rotation_details_dict[year] = {
+                'crop_name': crop,
+                'estimated_yield': estimated_yield,
+                'yield_units': 'bushels' if crop.lower() != 'alfalfa' else 'tons'
+            }
+        
+        # Create temporary rotation plan for analysis
+        temp_plan = CropRotationPlan(
+            plan_id=f"temp_risk_assessment_{field_id}_{int(datetime.now().timestamp())}",
+            field_id=field_id,
+            farm_id=getattr(field_profile, 'farm_id', 'unknown'),
+            plan_name="Risk Assessment Analysis",
+            created_date=datetime.now(),
+            rotation_years=rotation_years_dict,
+            rotation_details=rotation_details_dict,
+            planning_horizon=len(rotation_sequence),
+            start_year=base_year,
+            overall_score=0.0,
+            benefit_scores={},
+            economic_projections={}
+        )
+        
+        # Perform comprehensive risk assessment using rotation analysis service
+        risk_assessment = await rotation_analysis_service.assess_rotation_risks(
+            rotation_plan=temp_plan,
+            field_profile=field_profile
+        )
+        
+        # Calculate individual risk scores (0-100 scale, higher = more risk)
+        risk_scores = {
+            "weather_climate": round(risk_assessment.weather_risk_score, 2),
+            "market_volatility": round(risk_assessment.market_risk_score, 2),
+            "pest_disease": round(risk_assessment.pest_disease_risk_score, 2),
+            "soil_health": _calculate_soil_health_risk(rotation_sequence, field_profile),
+            "yield_variability": round(risk_assessment.yield_variability_risk, 2),
+            "economic": round(risk_assessment.input_cost_risk, 2)
+        }
+        
+        # Calculate overall risk score
+        overall_risk_score = round(risk_assessment.overall_risk_score, 2)
+        
+        # Determine risk level
+        def get_risk_level(score: float) -> str:
+            if score >= 80:
+                return "CRITICAL"
+            elif score >= 60:
+                return "HIGH"
+            elif score >= 35:
+                return "MEDIUM" 
+            else:
+                return "LOW"
+        
+        risk_level = get_risk_level(overall_risk_score)
+        
+        # Identify specific risk factors
+        risk_factors = []
+        
+        if risk_scores["weather_climate"] > 60:
+            risk_factors.append("High weather/climate sensitivity")
+        if risk_scores["market_volatility"] > 50:
+            risk_factors.append("Significant market price volatility")
+        if risk_scores["pest_disease"] > 40:
+            risk_factors.append("Pest and disease pressure concerns")
+        if risk_scores["soil_health"] > 50:
+            risk_factors.append("Soil health degradation risk")
+        if risk_scores["yield_variability"] > 45:
+            risk_factors.append("High yield variability")
+        if risk_scores["economic"] > 55:
+            risk_factors.append("Input cost volatility risk")
+        
+        # Check for monoculture or low diversity risks
+        unique_crops = len(set(rotation_sequence))
+        if unique_crops == 1:
+            risk_factors.append("Monoculture system - high risk")
+        elif unique_crops < 3:
+            risk_factors.append("Limited crop diversity")
+        
+        # Check for continuous cropping
+        for i in range(1, len(rotation_sequence)):
+            if rotation_sequence[i] == rotation_sequence[i-1]:
+                risk_factors.append("Continuous cropping detected")
+                break
+        
+        # Generate mitigation strategies
+        mitigation_strategies = list(risk_assessment.risk_mitigation_strategies)
+        
+        # Add specific strategies based on risk analysis
+        if risk_scores["weather_climate"] > 60:
+            mitigation_strategies.extend([
+                "Implement precision irrigation systems",
+                "Plant climate-adapted crop varieties",
+                "Consider adjusting planting dates for climate resilience"
+            ])
+        
+        if risk_scores["market_volatility"] > 50:
+            mitigation_strategies.extend([
+                "Diversify marketing channels and timing",
+                "Consider commodity price hedging strategies",
+                "Explore value-added processing opportunities"
+            ])
+        
+        if unique_crops < 3:
+            mitigation_strategies.append("Increase crop diversity in rotation to reduce risks")
+        
+        if "nitrogen-fixing" not in [crop.lower() for crop in rotation_sequence if crop.lower() in ['soybean', 'alfalfa', 'clover', 'peas']]:
+            mitigation_strategies.append("Add nitrogen-fixing legumes to reduce fertilizer costs and risks")
+        
+        # Remove duplicates from mitigation strategies
+        mitigation_strategies = list(dict.fromkeys(mitigation_strategies))
+        
+        # Calculate risk timeline (year-by-year risk evolution)
+        risk_timeline = {}
+        base_risk = overall_risk_score
+        
+        for i, crop in enumerate(rotation_sequence):
+            year = base_year + i
+            
+            # Adjust risk based on position in rotation
+            position_adjustment = 0
+            
+            # First year establishment risk
+            if i == 0:
+                position_adjustment += 5
+            
+            # Continuous cropping penalty
+            if i > 0 and rotation_sequence[i] == rotation_sequence[i-1]:
+                position_adjustment += 15
+            
+            # Diversity benefit (cumulative)
+            crops_so_far = len(set(rotation_sequence[:i+1]))
+            diversity_benefit = min(10, (crops_so_far - 1) * 3)
+            
+            year_risk = max(0, min(100, base_risk + position_adjustment - diversity_benefit))
+            risk_timeline[str(year)] = round(year_risk, 2)
+        
+        return {
+            "field_id": field_id,
+            "rotation_sequence": rotation_sequence,
+            "risk_scores": risk_scores,
+            "overall_risk_score": overall_risk_score,
+            "risk_level": risk_level,
+            "risk_factors": risk_factors,
+            "mitigation_strategies": mitigation_strategies,
+            "risk_timeline": risk_timeline,
+            "assessment_details": {
+                "crops_analyzed": len(rotation_sequence),
+                "unique_crops": unique_crops,
+                "rotation_length_years": len(rotation_sequence),
+                "assessment_date": datetime.now().isoformat(),
+                "confidence_level": "high" if len(rotation_sequence) >= 3 else "medium",
+                "field_size_acres": getattr(field_profile, 'size_acres', 'unknown'),
+                "climate_zone": getattr(field_profile, 'climate_zone', 'unknown')
+            },
+            "recommendations_summary": {
+                "primary_concern": _get_primary_risk_concern(risk_scores),
+                "top_mitigation": mitigation_strategies[0] if mitigation_strategies else "Increase crop diversity",
+                "risk_trend": "improving" if overall_risk_score < 50 else "concerning" if overall_risk_score > 70 else "moderate"
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error assessing rotation risks: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Risk assessment failed: {str(e)}")
+
+
+def _calculate_soil_health_risk(rotation_sequence: List[str], field_profile) -> float:
+    """Calculate soil health risk based on rotation sequence."""
+    
+    # Soil health risk factors
+    soil_building_crops = {'alfalfa': -15, 'clover': -10, 'soybean': -5, 'oats': -3}
+    soil_depleting_crops = {'corn': 8, 'wheat': 3, 'barley': 2}
+    
+    risk_score = 50.0  # Baseline risk
+    
+    for crop in rotation_sequence:
+        crop_lower = crop.lower()
+        if crop_lower in soil_building_crops:
+            risk_score += soil_building_crops[crop_lower]
+        elif crop_lower in soil_depleting_crops:
+            risk_score += soil_depleting_crops[crop_lower]
+    
+    # Check for continuous row crops (higher erosion risk)
+    row_crops = ['corn', 'soybean']
+    continuous_row_crop_years = 0
+    for i in range(len(rotation_sequence)):
+        if rotation_sequence[i].lower() in row_crops:
+            continuous_row_crop_years += 1
+        else:
+            continuous_row_crop_years = 0
+        
+        if continuous_row_crop_years >= 3:
+            risk_score += 20  # Significant soil health risk
+            break
+    
+    # Adjust for field characteristics
+    if hasattr(field_profile, 'slope_percent') and field_profile.slope_percent:
+        if field_profile.slope_percent > 8:
+            risk_score += 15  # Higher erosion risk on steep slopes
+        elif field_profile.slope_percent > 4:
+            risk_score += 8
+    
+    # Drainage impact
+    if hasattr(field_profile, 'drainage_class') and field_profile.drainage_class:
+        if field_profile.drainage_class.lower() in ['poorly drained', 'very poorly drained']:
+            risk_score += 10  # Compaction and waterlogging risks
+    
+    return max(0, min(100, risk_score))
+
+
+def _get_primary_risk_concern(risk_scores: Dict[str, float]) -> str:
+    """Identify the primary risk concern."""
+    max_risk = max(risk_scores.values())
+    for risk_type, score in risk_scores.items():
+        if score == max_risk:
+            risk_descriptions = {
+                "weather_climate": "Weather and climate variability",
+                "market_volatility": "Market price volatility",
+                "pest_disease": "Pest and disease pressure",
+                "soil_health": "Soil health degradation",
+                "yield_variability": "Yield inconsistency",
+                "economic": "Input cost volatility"
+            }
+            return risk_descriptions.get(risk_type, "Multiple risk factors")
+    
+    return "Balanced risk profile"
 
 
 # Health check endpoint

@@ -52,6 +52,7 @@ RECOMMENDATION_ENGINE_URL = os.getenv("RECOMMENDATION_ENGINE_URL", "http://local
 COVER_CROP_SERVICE_URL = os.getenv("COVER_CROP_SERVICE_URL", "http://localhost:8001")
 USER_MANAGEMENT_URL = os.getenv("USER_MANAGEMENT_URL", "http://localhost:8005")
 DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003")
+CROP_TAXONOMY_URL = os.getenv("CROP_TAXONOMY_URL", "http://localhost:8003")  # This should point to the crop-taxonomy service
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
@@ -130,6 +131,17 @@ async def crop_rotation_goals_page(request: Request):
     else:
         return HTMLResponse("<h1>Crop Rotation Goals - Coming Soon</h1>")
 
+@app.get("/filter-analytics", response_class=HTMLResponse)
+async def filter_analytics_page(request: Request):
+    """Filter analytics dashboard page"""
+    if templates:
+        return templates.TemplateResponse("filter_analytics.html", {
+            "request": request,
+            "title": "Filter Analytics Dashboard"
+        })
+    else:
+        return HTMLResponse("<h1>Filter Analytics - Coming Soon</h1>")
+
 @app.get("/climate-zone-selection", response_class=HTMLResponse)
 async def climate_zone_selection_page(request: Request):
     """Climate zone selection page"""
@@ -140,17 +152,6 @@ async def climate_zone_selection_page(request: Request):
         })
     else:
         return HTMLResponse("<h1>Climate Zone Selection - Coming Soon</h1>")
-
-@app.get("/cover-crop-selection", response_class=HTMLResponse)
-async def cover_crop_selection_page(request: Request):
-    """Cover crop selection and recommendation page"""
-    if templates:
-        return templates.TemplateResponse("cover_crop_selection.html", {
-            "request": request,
-            "title": "Cover Crop Selection"
-        })
-    else:
-        return HTMLResponse("<h1>Cover Crop Selection - Coming Soon</h1>")
 
 @app.get("/ph-management", response_class=HTMLResponse)
 async def ph_management_page(request: Request):
@@ -1307,6 +1308,59 @@ async def proxy_benefit_analytics(
         logger.error(f"Request error: {e}")
         raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
 
+
+# Filter Analytics API Proxy Routes
+
+@app.api_route("/api/v1/crop-taxonomy/analytics/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_filter_analytics_api(path: str, request: Request):
+    """Proxy requests to the crop taxonomy filter analytics API"""
+    try:
+        # Get the request method and prepare the data
+        method = request.method
+        
+        # Prepare headers
+        headers = {
+            "content-type": request.headers.get("content-type", "application/json")
+        }
+        
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+        
+        # Forward the request to the crop taxonomy service
+        async with httpx.AsyncClient() as client:
+            url = f"{CROP_TAXONOMY_URL}/api/v1/crop-taxonomy/analytics/{path}"
+            
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+            
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+                
+    except httpx.RequestError as e:
+        logger.error(f"Filter analytics API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Filter analytics service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Filter analytics API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 @app.get("/health")
 async def health_check():
     """Health check endpoint"""
@@ -1345,6 +1399,20 @@ async def health_check():
                 "/api/ph/monitor",
                 "/api/ph/dashboard",
                 "/api/ph/trends"
+            ]
+        },
+        "filter_analytics": {
+            "status": "integrated",
+            "endpoints": [
+                "/api/v1/crop-taxonomy/analytics/filter-usage",
+                "/api/v1/crop-taxonomy/analytics/filter-insights",
+                "/api/v1/crop-taxonomy/analytics/popular-filters",
+                "/api/v1/crop-taxonomy/analytics/filter-trends",
+                "/api/v1/crop-taxonomy/analytics/user-behavior",
+                "/api/v1/crop-taxonomy/analytics/effectiveness",
+                "/api/v1/crop-taxonomy/analytics/a-b-test",
+                "/api/v1/crop-taxonomy/analytics/dashboard-summary",
+                "/api/v1/crop-taxonomy/analytics/record-usage"
             ]
         }
     }

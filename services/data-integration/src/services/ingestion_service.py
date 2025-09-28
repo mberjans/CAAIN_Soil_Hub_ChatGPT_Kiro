@@ -200,6 +200,12 @@ class DataIngestionService:
         params = {"latitude": latitude, "longitude": longitude, **kwargs}
         return await self.pipeline.ingest_data("weather_service", operation, **params)
     
+    async def get_climate_zone_data(self, latitude: float, longitude: float, 
+                                   **kwargs) -> IngestionResult:
+        """Get climate zone data through the ingestion pipeline."""
+        params = {"latitude": latitude, "longitude": longitude, **kwargs}
+        return await self.pipeline.ingest_data("weather_service", "climate_zone_data", **params)
+    
     async def get_soil_data(self, latitude: float, longitude: float, 
                            operation: str = "soil_characteristics", **kwargs) -> IngestionResult:
         """Get soil data through the ingestion pipeline."""
