@@ -451,7 +451,30 @@ class CropTaxonomyDatabase:
         except Exception as e:
             logger.error(f"Error searching varieties: {e}")
             raise
-    
+
+    def get_varieties_by_ids(self, variety_ids: List[UUID]) -> Dict[str, Dict[str, Any]]:
+        """Retrieve varieties keyed by identifier."""
+        results: Dict[str, Dict[str, Any]] = {}
+        if not variety_ids:
+            return results
+
+        try:
+            with self.get_session() as session:
+                query = session.query(EnhancedCropVarieties).filter(
+                    EnhancedCropVarieties.variety_id.in_(variety_ids)
+                )
+                records = query.all()
+
+                for record in records:
+                    key = str(record.variety_id)
+                    results[key] = self._variety_to_dict(record)
+
+                return results
+
+        except Exception as exc:
+            logger.error("Error retrieving varieties by IDs: %s", exc)
+            raise
+
     # ============================================================================
     # REGIONAL ADAPTATION OPERATIONS
     # ============================================================================
