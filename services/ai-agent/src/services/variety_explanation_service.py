@@ -916,7 +916,7 @@ class VarietyExplanationService:
         if isinstance(location_data, dict):
             state = location_data.get("state")
             if isinstance(state, str) and len(state) > 0:
-                return f"Recommendations tuned for {state}" 
+                return f"Recommendations tuned for {state}"
 
         return None
 
