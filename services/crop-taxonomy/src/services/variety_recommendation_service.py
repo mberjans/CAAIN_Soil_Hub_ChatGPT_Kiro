@@ -101,6 +101,15 @@ class VarietyRecommendationService:
             logger.warning("Database integration not available for variety service")
             self.db = None
             self.database_available = False
+        
+        # Initialize seed company integration
+        try:
+            from .seed_company_service import SeedCompanyIntegrationService
+            self.seed_company_service = SeedCompanyIntegrationService(database_url)
+            logger.info("Seed company integration service initialized")
+        except ImportError:
+            logger.warning("Seed company integration not available")
+            self.seed_company_service = None
             
         self.regional_data = {}
         self.performance_models = {}
@@ -177,6 +186,131 @@ class VarietyRecommendationService:
         except Exception as e:
             logger.error(f"Error in variety recommendations: {str(e)}")
             return []
+
+    async def get_variety_availability_info(self, variety_name: str) -> Dict[str, Any]:
+        """
+        Get comprehensive availability information for a variety from seed companies.
+        
+        Args:
+            variety_name: Name of the variety
+            
+        Returns:
+            Dictionary with availability information from all seed companies
+        """
+        if not self.seed_company_service:
+            logger.warning("Seed company service not available")
+            return {"error": "Seed company integration not available"}
+        
+        try:
+            availability = await self.seed_company_service.get_variety_availability(variety_name)
+            
+            # Process availability data for recommendation context
+            availability_info = {
+                "variety_name": variety_name,
+                "total_companies": len(availability),
+                "companies": [],
+                "availability_summary": {
+                    "in_stock": 0,
+                    "limited": 0,
+                    "preorder": 0,
+                    "discontinued": 0
+                },
+                "price_range": {
+                    "min": None,
+                    "max": None,
+                    "average": None
+                },
+                "regional_coverage": set(),
+                "last_updated": None
+            }
+            
+            prices = []
+            for offering in availability:
+                company_info = {
+                    "company_name": offering.company_name,
+                    "product_code": offering.product_code,
+                    "availability_status": offering.availability_status.value,
+                    "price_per_unit": offering.price_per_unit,
+                    "price_unit": offering.price_unit,
+                    "distribution_regions": offering.distribution_regions,
+                    "last_updated": offering.last_updated.isoformat() if offering.last_updated else None,
+                    "notes": offering.notes
+                }
+                availability_info["companies"].append(company_info)
+                
+                # Update summary statistics
+                status = offering.availability_status.value
+                if status in availability_info["availability_summary"]:
+                    availability_info["availability_summary"][status] += 1
+                
+                # Collect pricing information
+                if offering.price_per_unit:
+                    prices.append(offering.price_per_unit)
+                
+                # Collect regional coverage
+                availability_info["regional_coverage"].update(offering.distribution_regions)
+                
+                # Track most recent update
+                if offering.last_updated:
+                    if not availability_info["last_updated"] or offering.last_updated > datetime.fromisoformat(availability_info["last_updated"]):
+                        availability_info["last_updated"] = offering.last_updated.isoformat()
+            
+            # Calculate price statistics
+            if prices:
+                availability_info["price_range"]["min"] = min(prices)
+                availability_info["price_range"]["max"] = max(prices)
+                availability_info["price_range"]["average"] = sum(prices) / len(prices)
+            
+            # Convert set to list for JSON serialization
+            availability_info["regional_coverage"] = list(availability_info["regional_coverage"])
+            
+            return availability_info
+            
+        except Exception as e:
+            logger.error(f"Error getting variety availability: {e}")
+            return {"error": f"Failed to get availability information: {str(e)}"}
+    
+    async def sync_seed_company_data(self) -> Dict[str, Any]:
+        """
+        Synchronize data from seed companies to ensure up-to-date variety information.
+        
+        Returns:
+            Dictionary with sync results and status
+        """
+        if not self.seed_company_service:
+            return {"error": "Seed company integration not available"}
+        
+        try:
+            sync_results = await self.seed_company_service.sync_all_companies()
+            
+            return {
+                "sync_completed": True,
+                "results": sync_results,
+                "timestamp": datetime.now().isoformat(),
+                "message": "Seed company data synchronization completed"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error syncing seed company data: {e}")
+            return {"error": f"Sync failed: {str(e)}"}
+    
+    async def get_seed_company_sync_status(self) -> Dict[str, Any]:
+        """
+        Get synchronization status for all seed companies.
+        
+        Returns:
+            Dictionary with sync status information
+        """
+        if not self.seed_company_service:
+            return {"error": "Seed company integration not available"}
+        
+        try:
+            status_info = await self.seed_company_service.get_company_sync_status()
+            return status_info
+            
+        except Exception as e:
+            logger.error(f"Error getting seed company sync status: {e}")
+            return {"error": f"Status retrieval failed: {str(e)}"}
 
     async def _get_available_varieties(self, crop_data: ComprehensiveCropData) -> List[EnhancedCropVariety]:
         """Get available varieties for the specified crop."""

@@ -4,9 +4,10 @@ Variety API Routes
 FastAPI routes for crop variety recommendations, comparisons, and selection.
 """
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, BackgroundTasks
 from typing import List, Optional, Dict, Any
 from uuid import UUID
+from datetime import datetime
 
 try:
     from ..services.variety_recommendation_service import variety_recommendation_service
@@ -83,6 +84,119 @@ async def recommend_varieties(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Recommendation error: {str(e)}")
+
+
+@router.get("/{variety_name}/availability", response_model=Dict[str, Any])
+async def get_variety_availability(
+    variety_name: str,
+    service: VarietyRecommendationService = Depends(get_variety_service)
+):
+    """
+    Get comprehensive availability information for a specific variety from seed companies.
+    
+    **Information Provided:**
+    - Company-specific availability status
+    - Pricing information across companies
+    - Regional distribution coverage
+    - Product codes and identifiers
+    - Last update timestamps
+    
+    **Use Cases:**
+    - Check seed availability before planting season
+    - Compare pricing across seed companies
+    - Verify regional distribution for specific varieties
+    - Track availability changes over time
+    
+    Args:
+        variety_name: Name of the variety to check
+        
+    Returns:
+        Comprehensive availability information from all seed companies
+    """
+    try:
+        availability_info = await service.get_variety_availability_info(variety_name)
+        return availability_info
+        
+    except Exception as e:
+        logger.error(f"Error getting variety availability: {e}")
+        raise HTTPException(status_code=500, detail=f"Availability check failed: {str(e)}")
+
+
+@router.post("/sync-seed-companies", response_model=Dict[str, Any])
+async def sync_seed_company_data(
+    background_tasks: BackgroundTasks,
+    service: VarietyRecommendationService = Depends(get_variety_service)
+):
+    """
+    Synchronize data from seed companies to ensure up-to-date variety information.
+    
+    **Companies Synchronized:**
+    - Pioneer/Corteva
+    - Bayer/Dekalb
+    - Syngenta
+    - Additional regional companies
+    
+    **Data Updated:**
+    - Variety characteristics and traits
+    - Seed availability and pricing
+    - Regional distribution information
+    - Technology packages and herbicide tolerances
+    
+    **Benefits:**
+    - Ensures recommendations are based on current seed availability
+    - Provides accurate pricing information for cost analysis
+    - Updates variety characteristics with latest data
+    - Maintains data provenance and quality tracking
+    
+    Returns:
+        Synchronization results and status information
+    """
+    try:
+        # Run sync in background to avoid timeout
+        background_tasks.add_task(service.sync_seed_company_data)
+        
+        return {
+            "message": "Seed company data synchronization initiated",
+            "status": "initiated",
+            "timestamp": datetime.now().isoformat(),
+            "note": "Synchronization is running in the background. Check sync status endpoint for progress."
+        }
+        
+    except Exception as e:
+        logger.error(f"Error initiating seed company sync: {e}")
+        raise HTTPException(status_code=500, detail=f"Sync initiation failed: {str(e)}")
+
+
+@router.get("/seed-companies/sync-status", response_model=Dict[str, Any])
+async def get_seed_company_sync_status(
+    service: VarietyRecommendationService = Depends(get_variety_service)
+):
+    """
+    Get synchronization status for all seed companies.
+    
+    **Status Information:**
+    - Last sync timestamp for each company
+    - Current sync status (success, partial, failed, pending)
+    - Error counts and retry information
+    - Next scheduled sync time
+    - Data quality metrics
+    
+    **Use Cases:**
+    - Monitor data freshness and quality
+    - Troubleshoot synchronization issues
+    - Plan data update schedules
+    - Verify integration health
+    
+    Returns:
+        Detailed sync status for all configured seed companies
+    """
+    try:
+        status_info = await service.get_seed_company_sync_status()
+        return status_info
+        
+    except Exception as e:
+        logger.error(f"Error getting seed company sync status: {e}")
+        raise HTTPException(status_code=500, detail=f"Status retrieval failed: {str(e)}")
 
 
 @router.post("/compare", response_model=VarietyComparisonResponse)
