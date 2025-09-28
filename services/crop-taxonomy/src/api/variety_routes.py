@@ -11,6 +11,7 @@ from datetime import datetime
 
 try:
     from ..services.variety_recommendation_service import variety_recommendation_service
+    from ..services.variety_comparison_service import variety_comparison_service
     from ..models.crop_variety_models import (
         VarietyRecommendation,
         VarietyComparisonRequest,
@@ -20,6 +21,7 @@ try:
     from ..models.crop_taxonomy_models import ComprehensiveCropData
 except ImportError:
     from services.variety_recommendation_service import variety_recommendation_service
+    from services.variety_comparison_service import variety_comparison_service
     from models.crop_variety_models import (
         VarietyRecommendation,
         VarietyComparisonRequest,
@@ -230,7 +232,7 @@ async def compare_varieties(
     Returns comprehensive comparison with recommendations for each variety's best use case.
     """
     try:
-        result = await variety_recommendation_service.compare_varieties(request)
+        result = await variety_comparison_service.compare_varieties(request)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Comparison error: {str(e)}")

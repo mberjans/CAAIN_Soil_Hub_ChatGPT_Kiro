@@ -21,6 +21,12 @@ except ImportError:  # pragma: no cover
     VarietyRecommendationService = None
 
 try:
+    from .variety_comparison_service import VarietyComparisonService, variety_comparison_service
+except ImportError:  # pragma: no cover
+    VarietyComparisonService = None
+    variety_comparison_service = None
+
+try:
     from .suitability_service import CropSuitabilityMatrixService
 except ImportError:  # pragma: no cover
     CropSuitabilityMatrixService = None
@@ -69,6 +75,7 @@ for _name in [
     "CropTaxonomyService",
     "CropSearchService",
     "VarietyRecommendationService",
+    "VarietyComparisonService",
     "CropSuitabilityMatrixService",
     "RegionalAdaptationService",
     "CropAttributeTaggingService",
@@ -87,3 +94,5 @@ if filter_combination_engine is not None:
     __all__.append('filter_combination_engine')
 if smart_filter_suggestion_service is not None:
     __all__.append('smart_filter_suggestion_service')
+if variety_comparison_service is not None:
+    __all__.append('variety_comparison_service')

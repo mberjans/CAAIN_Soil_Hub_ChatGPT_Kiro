@@ -119,6 +119,7 @@ class VarietyRecommendationService:
         self.ranking_engine = AdvancedVarietyRanking(self.scoring_weights)
         self.confidence_service = ConfidenceCalculationService()
         self.yield_calculator = YieldPotentialCalculator()
+        self._variety_comparison_service = None
 
     def _initialize_recommendation_algorithms(self):
         """Initialize variety recommendation algorithms and scoring systems."""
@@ -1143,6 +1144,18 @@ class VarietyRecommendationService:
         Returns:
             Detailed comparison with strengths, weaknesses, and recommendations
         """
+        if not hasattr(self, "_variety_comparison_service"):
+            try:
+                from .variety_comparison_service import VarietyComparisonService
+                self._variety_comparison_service = VarietyComparisonService()
+            except Exception as exc:  # pragma: no cover - initialization safeguard
+                logger.error("Failed to initialize VarietyComparisonService: %s", exc)
+                self._variety_comparison_service = None
+
+        comparison_service = getattr(self, "_variety_comparison_service", None)
+        if comparison_service is not None:
+            return await comparison_service.compare_varieties(request)
+
         try:
             # Get variety data for comparison
             varieties_data = []
