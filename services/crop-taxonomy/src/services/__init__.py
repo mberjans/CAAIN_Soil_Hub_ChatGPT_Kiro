@@ -66,6 +66,12 @@ except ImportError:  # pragma: no cover
     YieldPotentialCalculator = None
 
 try:
+    from .variety_growing_season_service import VarietyGrowingSeasonService, variety_growing_season_service
+except ImportError:  # pragma: no cover
+    VarietyGrowingSeasonService = None
+    variety_growing_season_service = None
+
+try:
     from .result_processor import FilterResultProcessor
 except ImportError: # pragma: no cover
     FilterResultProcessor = None

@@ -15,6 +15,7 @@ from .crop_variety_models import *
 from .service_models import *
 from .preference_models import *
 from .recommendation_management_models import *
+from .growing_season_models import *
 
 __all__ = [
     # Core taxonomy models
@@ -91,6 +92,28 @@ __all__ = [
     'SeedCompanyOffering',
     'TraitStackEntry',
     'RegionalPerformanceEntry',
+
+    # Growing season models
+    'GrowthStage',
+    'TemperatureSensitivity',
+    'PhotoperiodResponse',
+    'SeasonRiskLevel',
+    'PhenologyModelType',
+    'GrowingDegreeDayParameters',
+    'PhenologyStage',
+    'VarietyPhenologyProfile',
+    'SeasonLengthAnalysis',
+    'TemperatureSensitivityAnalysis',
+    'PhotoperiodAnalysis',
+    'CriticalDatePrediction',
+    'GrowingSeasonCalendar',
+    'SeasonRiskAssessment',
+    'GrowingSeasonAnalysis',
+    'GrowingSeasonAnalysisRequest',
+    'GrowingSeasonAnalysisResponse',
+    'PhenologyPredictionRequest',
+    'PhenologyPredictionResponse',
+    'GrowingSeasonModelsValidator',
 
     # Preference models
     'PreferenceType',

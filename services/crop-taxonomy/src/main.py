@@ -25,7 +25,8 @@ from .api import (
     filter_analytics_routes,
     explanation_routes,
     result_processor_routes,
-    export_routes
+    export_routes,
+    growing_season_routes
 )
 
 # Add services to Python path for imports
@@ -188,6 +189,7 @@ app.include_router(filter_analytics_routes.router)
 app.include_router(explanation_routes.router)
 app.include_router(result_processor_routes.router)
 app.include_router(export_routes.router)
+app.include_router(growing_season_routes.router)
 app.include_router(personalization_router)
 app.include_router(recommendation_management_router)
 app.include_router(comprehensive_explanation_router)
