@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mobile Variety Selection - CAAIN Soil Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/mobile-variety-selection.css" rel="stylesheet">
+    <meta name="theme-color" content="#28a745">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Variety Selection">
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+<body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="header-content">
+            <button class="btn btn-link text-white" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="header-title">Variety Selection</h1>
+            <button class="btn btn-link text-white" onclick="showMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div class="progress-container">
+            <div class="progress" style="height: 4px;">
+                <div class="progress-bar bg-success" id="progressBar" style="width: 25%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="mobile-container">
+        <!-- Step 1: Farm Information -->
+        <div class="wizard-step active" id="step1">
+            <div class="step-header">
+                <h2><i class="fas fa-tractor"></i> Farm Information</h2>
+                <p class="step-description">Tell us about your farm to get personalized recommendations</p>
+            </div>
+
+            <div class="form-section">
+                <div class="input-group-mobile">
+                    <label for="farmLocation">
+                        <i class="fas fa-map-marker-alt"></i> Farm Location
+                    </label>
+                    <div class="location-input-group">
+                        <input type="text" class="form-control" id="farmLocation" 
+                               placeholder="Enter farm address or coordinates" 
+                               autocomplete="off">
+                        <button class="btn btn-outline-success" onclick="getCurrentLocation()">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                    </div>
+                    <div class="location-suggestions" id="locationSuggestions"></div>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="farmSize">
+                        <i class="fas fa-expand-arrows-alt"></i> Farm Size (acres)
+                    </label>
+                    <input type="number" class="form-control" id="farmSize" 
+                           placeholder="Enter farm size" min="1" max="10000">
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="soilType">
+                        <i class="fas fa-seedling"></i> Soil Type
+                    </label>
+                    <select class="form-select" id="soilType">
+                        <option value="">Select soil type</option>
+                        <option value="clay">Clay</option>
+                        <option value="clay_loam">Clay Loam</option>
+                        <option value="loam">Loam</option>
+                        <option value="sandy_loam">Sandy Loam</option>
+                        <option value="sandy">Sandy</option>
+                        <option value="silt_loam">Silt Loam</option>
+                    </select>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="irrigation">
+                        <i class="fas fa-tint"></i> Irrigation Available
+                    </label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn" data-value="false" onclick="toggleIrrigation(this)">
+                            <i class="fas fa-times"></i> No
+                        </button>
+                        <button class="toggle-btn active" data-value="true" onclick="toggleIrrigation(this)">
+                            <i class="fas fa-check"></i> Yes
+                        </button>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg w-100" onclick="nextStep(2)">
+                        Continue <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Crop Selection -->
+        <div class="wizard-step" id="step2">
+            <div class="step-header">
+                <h2><i class="fas fa-seedling"></i> Crop Selection</h2>
+                <p class="step-description">Choose the crop you want to grow</p>
+            </div>
+
+            <div class="search-section">
+                <div class="search-box">
+                    <input type="text" class="form-control" id="cropSearch" 
+                           placeholder="Search crops or speak..." autocomplete="off">
+                    <button class="btn btn-outline-success" onclick="startVoiceSearch()">
+                        <i class="fas fa-microphone"></i>
+                    </button>
+                </div>
+                <div class="search-suggestions" id="cropSuggestions"></div>
+            </div>
+
+            <div class="crop-categories">
+                <h3>Popular Crops</h3>
+                <div class="crop-grid" id="cropGrid">
+                    <!-- Crop cards will be populated here -->
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="prevStep(1)">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-primary" onclick="nextStep(3)" id="step2Next" disabled>
+                    Continue <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Preferences -->
+        <div class="wizard-step" id="step3">
+            <div class="step-header">
+                <h2><i class="fas fa-sliders-h"></i> Preferences</h2>
+                <p class="step-description">Set your farming priorities</p>
+            </div>
+
+            <div class="preferences-section">
+                <div class="preference-card">
+                    <h4><i class="fas fa-chart-line"></i> Yield Priority</h4>
+                    <div class="slider-container">
+                        <input type="range" class="form-range" id="yieldPriority" 
+                               min="0" max="100" value="80">
+                        <div class="slider-labels">
+                            <span>Low</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preference-card">
+                    <h4><i class="fas fa-leaf"></i> Sustainability Priority</h4>
+                    <div class="slider-container">
+                        <input type="range" class="form-range" id="sustainabilityPriority" 
+                               min="0" max="100" value="60">
+                        <div class="slider-labels">
+                            <span>Low</span>
+                            <span>High</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="preference-card">
+                    <h4><i class="fas fa-shield-alt"></i> Risk Tolerance</h4>
+                    <div class="risk-options">
+                        <button class="risk-btn" data-value="low" onclick="selectRisk(this)">
+                            <i class="fas fa-shield-alt"></i> Low Risk
+                        </button>
+                        <button class="risk-btn active" data-value="moderate" onclick="selectRisk(this)">
+                            <i class="fas fa-balance-scale"></i> Moderate
+                        </button>
+                        <button class="risk-btn" data-value="high" onclick="selectRisk(this)">
+                            <i class="fas fa-rocket"></i> High Risk
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="prevStep(2)">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-primary" onclick="getRecommendations()">
+                    Get Recommendations <i class="fas fa-magic"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Variety Recommendations -->
+        <div class="wizard-step" id="step4">
+            <div class="step-header">
+                <h2><i class="fas fa-star"></i> Recommended Varieties</h2>
+                <p class="step-description">Top varieties for your farm</p>
+            </div>
+
+            <div class="recommendations-container" id="recommendationsContainer">
+                <!-- Recommendations will be populated here -->
+            </div>
+
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="prevStep(3)">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-success" onclick="saveRecommendations()">
+                    Save Recommendations <i class="fas fa-save"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="showStep(1)">
+            <i class="fas fa-tractor"></i>
+            <span>Farm</span>
+        </button>
+        <button class="nav-item" onclick="showStep(2)">
+            <i class="fas fa-seedling"></i>
+            <span>Crop</span>
+        </button>
+        <button class="nav-item" onclick="showStep(3)">
+            <i class="fas fa-sliders-h"></i>
+            <span>Preferences</span>
+        </button>
+        <button class="nav-item" onclick="showStep(4)">
+            <i class="fas fa-star"></i>
+            <span>Results</span>
+        </button>
+    </nav>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="loading-text">Getting recommendations...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="fas fa-info-circle text-primary me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                <!-- Toast message will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/mobile-variety-selection.js"></script>
+</body>
+</html>
