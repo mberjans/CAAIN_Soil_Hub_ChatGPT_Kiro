@@ -38,7 +38,8 @@ from .api import (
     integration_routes,
     monitoring_analytics_routes,
     reporting_routes,
-    monitoring_integration_routes
+    monitoring_integration_routes,
+    drought_resilient_routes
 )
 
 # Add services to Python path for imports
@@ -224,6 +225,7 @@ app.include_router(integration_routes.router)
 app.include_router(monitoring_analytics_routes.router)
 app.include_router(reporting_routes.router)
 app.include_router(monitoring_integration_routes.router)
+app.include_router(drought_resilient_routes.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
