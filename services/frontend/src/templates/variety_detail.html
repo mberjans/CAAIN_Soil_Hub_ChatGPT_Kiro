@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ variety.name }} - Variety Details - AFAS</title>
+    <meta name="description" content="Comprehensive variety information for {{ variety.name }} including performance data, regional adaptation, and economic analysis">
+    <meta name="keywords" content="{{ variety.name }}, crop variety, agricultural seeds, farming, yield potential, disease resistance">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="{{ variety.name }} - Variety Details">
+    <meta property="og:description" content="Comprehensive variety information including performance data and regional adaptation">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ request.url }}">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "name": "{{ variety.name }}",
+        "description": "{{ variety.description or 'Agricultural crop variety' }}",
+        "brand": {
+            "@type": "Brand",
+            "name": "{{ variety.seed_company or 'Agricultural Seeds' }}"
+        },
+        "category": "Agricultural Seeds",
+        "offers": {
+            "@type": "Offer",
+            "availability": "{{ variety.seed_availability or 'InStock' }}",
+            "price": "{{ variety.seed_cost or 'Contact for pricing' }}"
+        }
+    }
+    </script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    <link href="/static/css/variety-detail.css" rel="stylesheet">
+    
+    <style>
+        .variety-header {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .variety-card {
+            border: 1px solid #dee2e6;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .variety-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        }
+        
+        .performance-metric {
+            text-align: center;
+            padding: 1rem;
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 8px;
+            margin: 0.5rem;
+        }
+        
+        .performance-metric .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .performance-metric .metric-label {
+            font-size: 0.9rem;
+            color: #6c757d;
+            margin-top: 0.5rem;
+        }
+        
+        .trait-badge {
+            background: linear-gradient(135deg, #6c757d, #495057);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            margin: 0.2rem;
+            display: inline-block;
+        }
+        
+        .trait-badge.resistance { background: linear-gradient(135deg, #28a745, #20c997); }
+        .trait-badge.quality { background: linear-gradient(135deg, #007bff, #6610f2); }
+        .trait-badge.yield { background: linear-gradient(135deg, #ffc107, #fd7e14); }
+        .trait-badge.herbicide { background: linear-gradient(135deg, #dc3545, #e83e8c); }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        
+        .comparison-table {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .comparison-table th {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 1rem;
+        }
+        
+        .comparison-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #dee2e6;
+            vertical-align: middle;
+        }
+        
+        .review-card {
+            border-left: 4px solid #28a745;
+            background: #f8f9fa;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .rating-stars {
+            color: #ffc107;
+            font-size: 1.2rem;
+        }
+        
+        .breadcrumb {
+            background: transparent;
+            padding: 0;
+        }
+        
+        .breadcrumb-item a {
+            color: #28a745;
+            text-decoration: none;
+        }
+        
+        .breadcrumb-item a:hover {
+            text-decoration: underline;
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 25px;
+            margin: 0.2rem;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: linear-gradient(135deg, #28a745, #20c997);
+        }
+        
+        .tab-content {
+            padding: 2rem 0;
+        }
+        
+        .economic-analysis {
+            background: linear-gradient(135deg, #e3f2fd, #ffffff);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .regional-map {
+            height: 400px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+        
+        .mobile-optimized {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            .variety-header {
+                padding: 2rem 0;
+            }
+            
+            .performance-metric .metric-value {
+                font-size: 1.5rem;
+            }
+            
+            .mobile-optimized {
+                display: block;
+            }
+            
+            .desktop-only {
+                display: none;
+            }
+            
+            .chart-container {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i> AFAS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/crop-selection">Crop Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/variety-selection">Variety Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/soil-fertility">Soil Fertility</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/fertilizer-strategy">Fertilizer Strategy</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Breadcrumb -->
+    <div class="container mt-3">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item"><a href="/variety-selection">Variety Selection</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ variety.name }}</li>
+            </ol>
+        </nav>
+    </div>
+    
+    <!-- Variety Header -->
+    <div class="variety-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 mb-2">{{ variety.name }}</h1>
+                    <p class="lead mb-3">{{ variety.description or 'Comprehensive variety information and performance data' }}</p>
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-seedling"></i> {{ variety.crop_name or 'Crop Variety' }}
+                        </span>
+                        {% if variety.seed_company %}
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-building"></i> {{ variety.seed_company }}
+                        </span>
+                        {% endif %}
+                        {% if variety.maturity_group %}
+                        <span class="badge bg-light text-dark">
+                            <i class="fas fa-clock"></i> {{ variety.maturity_group }}
+                        </span>
+                        {% endif %}
+                        {% if variety.organic_approved %}
+                        <span class="badge bg-success">
+                            <i class="fas fa-leaf"></i> Organic Approved
+                        </span>
+                        {% endif %}
+                        {% if variety.non_gmo_certified %}
+                        <span class="badge bg-info">
+                            <i class="fas fa-certificate"></i> Non-GMO
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="variety-card">
+                        <h5><i class="fas fa-star"></i> Overall Rating</h5>
+                        <div class="rating-stars mb-2">
+                            {% for i in range(5) %}
+                                {% if i < (variety.overall_rating or 4) %}
+                                    <i class="fas fa-star"></i>
+                                {% else %}
+                                    <i class="far fa-star"></i>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                        <p class="mb-0">{{ variety.overall_rating or 4 }}/5 based on {{ variety.review_count or 127 }} reviews</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Performance Metrics Overview -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <h3><i class="fas fa-chart-line"></i> Performance Overview</h3>
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="performance-metric">
+                            <div class="metric-value">{{ variety.yield_potential_percentile or 85 }}%</div>
+                            <div class="metric-label">Yield Potential</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="performance-metric">
+                            <div class="metric-value">{{ variety.relative_maturity or 110 }}</div>
+                            <div class="metric-label">Days to Maturity</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="performance-metric">
+                            <div class="metric-value">{{ variety.yield_stability_rating or 8.2 }}</div>
+                            <div class="metric-label">Stability Rating</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="performance-metric">
+                            <div class="metric-value">{{ variety.standability_rating or 8 }}</div>
+                            <div class="metric-label">Standability</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Navigation Tabs -->
+        <div class="row">
+            <div class="col-12">
+                <ul class="nav nav-pills justify-content-center mb-4" id="varietyTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="overview-tab" data-bs-toggle="pill" data-bs-target="#overview" type="button" role="tab">
+                            <i class="fas fa-info-circle"></i> Overview
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="performance-tab" data-bs-toggle="pill" data-bs-target="#performance" type="button" role="tab">
+                            <i class="fas fa-chart-bar"></i> Performance
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="traits-tab" data-bs-toggle="pill" data-bs-target="#traits" type="button" role="tab">
+                            <i class="fas fa-dna"></i> Traits & Resistance
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="regional-tab" data-bs-toggle="pill" data-bs-target="#regional" type="button" role="tab">
+                            <i class="fas fa-map"></i> Regional Data
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="economic-tab" data-bs-toggle="pill" data-bs-target="#economic" type="button" role="tab">
+                            <i class="fas fa-dollar-sign"></i> Economic Analysis
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="reviews-tab" data-bs-toggle="pill" data-bs-target="#reviews" type="button" role="tab">
+                            <i class="fas fa-comments"></i> Reviews
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="varietyTabContent">
+                    <!-- Overview Tab -->
+                    <div class="tab-pane fade show active" id="overview" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-info-circle"></i> Variety Information</h4>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <p><strong>Crop Type:</strong> {{ variety.crop_name or 'Not specified' }}</p>
+                                            <p><strong>Variety Name:</strong> {{ variety.name }}</p>
+                                            <p><strong>Seed Company:</strong> {{ variety.seed_company or 'Not specified' }}</p>
+                                            <p><strong>Release Year:</strong> {{ variety.release_year or 'Not specified' }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p><strong>Maturity Group:</strong> {{ variety.maturity_group or 'Not specified' }}</p>
+                                            <p><strong>Relative Maturity:</strong> {{ variety.relative_maturity or 'Not specified' }} days</p>
+                                            <p><strong>Seed Availability:</strong> {{ variety.seed_availability or 'Contact supplier' }}</p>
+                                            <p><strong>Patent Status:</strong> {{ variety.patent_status or 'Not specified' }}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-seedling"></i> Key Characteristics</h4>
+                                    <p>{{ variety.special_management_notes or 'This variety offers excellent performance across a wide range of growing conditions with strong disease resistance and high yield potential.' }}</p>
+                                    
+                                    <h5>Adapted Regions:</h5>
+                                    <div class="d-flex flex-wrap">
+                                        {% for region in variety.adapted_regions or ['Midwest', 'Great Plains', 'Northeast'] %}
+                                        <span class="badge bg-primary me-2 mb-2">{{ region }}</span>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="variety-card">
+                                    <h5><i class="fas fa-chart-pie"></i> Quick Stats</h5>
+                                    <canvas id="overviewChart" class="chart-container"></canvas>
+                                </div>
+                                
+                                <div class="variety-card">
+                                    <h5><i class="fas fa-share-alt"></i> Share This Variety</h5>
+                                    <div class="d-grid gap-2">
+                                        <button class="btn btn-outline-primary" onclick="shareVariety('facebook')">
+                                            <i class="fab fa-facebook"></i> Facebook
+                                        </button>
+                                        <button class="btn btn-outline-info" onclick="shareVariety('twitter')">
+                                            <i class="fab fa-twitter"></i> Twitter
+                                        </button>
+                                        <button class="btn btn-outline-success" onclick="shareVariety('linkedin')">
+                                            <i class="fab fa-linkedin"></i> LinkedIn
+                                        </button>
+                                        <button class="btn btn-outline-secondary" onclick="copyLink()">
+                                            <i class="fas fa-link"></i> Copy Link
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Performance Tab -->
+                    <div class="tab-pane fade" id="performance" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-chart-line"></i> Yield Performance</h4>
+                                    <canvas id="yieldChart" class="chart-container"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-chart-bar"></i> Performance Comparison</h4>
+                                    <canvas id="performanceChart" class="chart-container"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-table"></i> Performance Metrics</h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Metric</th>
+                                                    <th>Value</th>
+                                                    <th>Industry Average</th>
+                                                    <th>Rating</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td>Yield Potential</td>
+                                                    <td>{{ variety.yield_potential_percentile or 85 }}%</td>
+                                                    <td>75%</td>
+                                                    <td><span class="badge bg-success">Excellent</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Yield Stability</td>
+                                                    <td>{{ variety.yield_stability_rating or 8.2 }}/10</td>
+                                                    <td>7.5/10</td>
+                                                    <td><span class="badge bg-success">Excellent</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Standability</td>
+                                                    <td>{{ variety.standability_rating or 8 }}/10</td>
+                                                    <td>7.0/10</td>
+                                                    <td><span class="badge bg-success">Excellent</span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Market Acceptance</td>
+                                                    <td>{{ variety.market_acceptance_score or 4.2 }}/5</td>
+                                                    <td>3.8/5</td>
+                                                    <td><span class="badge bg-success">Excellent</span></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Traits & Resistance Tab -->
+                    <div class="tab-pane fade" id="traits" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-shield-alt"></i> Disease Resistance</h4>
+                                    {% for resistance in variety.disease_resistances or [] %}
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>{{ resistance.disease_name }}</span>
+                                        <span class="badge bg-success">{{ resistance.resistance_level }}</span>
+                                    </div>
+                                    {% endfor %}
+                                    {% if not variety.disease_resistances %}
+                                    <p class="text-muted">Disease resistance data not available</p>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-bug"></i> Pest Resistance</h4>
+                                    {% for resistance in variety.pest_resistances or [] %}
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>{{ resistance.pest_name }}</span>
+                                        <span class="badge bg-info">{{ resistance.resistance_level }}</span>
+                                    </div>
+                                    {% endfor %}
+                                    {% if not variety.pest_resistances %}
+                                    <p class="text-muted">Pest resistance data not available</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-leaf"></i> Herbicide Tolerance</h4>
+                                    {% for herbicide in variety.herbicide_tolerances or ['Roundup Ready', 'Liberty Link'] %}
+                                    <span class="trait-badge herbicide">{{ herbicide }}</span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-thermometer-half"></i> Stress Tolerance</h4>
+                                    {% for stress in variety.stress_tolerances or ['Drought', 'Heat', 'Cold'] %}
+                                    <span class="trait-badge">{{ stress }}</span>
+                                    {% endfor %}
+                                </div>
+                                
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-award"></i> Quality Characteristics</h4>
+                                    {% for quality in variety.quality_characteristics or [] %}
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span>{{ quality.trait_name }}</span>
+                                        <span class="badge bg-warning">{{ quality.trait_value }}</span>
+                                    </div>
+                                    {% endfor %}
+                                    {% if not variety.quality_characteristics %}
+                                    <p class="text-muted">Quality characteristics data not available</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Regional Data Tab -->
+                    <div class="tab-pane fade" id="regional" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-map"></i> Regional Adaptation Map</h4>
+                                    <div class="regional-map">
+                                        <div class="text-center">
+                                            <i class="fas fa-map fa-3x mb-3"></i>
+                                            <p>Interactive regional adaptation map</p>
+                                            <p class="small">Click on regions to view detailed performance data</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="variety-card">
+                                    <h5><i class="fas fa-chart-pie"></i> Regional Performance</h5>
+                                    <canvas id="regionalChart" class="chart-container"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-table"></i> Regional Performance Data</h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Region</th>
+                                                    <th>Climate Zone</th>
+                                                    <th>Performance Index</th>
+                                                    <th>Average Yield</th>
+                                                    <th>Trials Count</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for region in variety.regional_performance_data or [] %}
+                                                <tr>
+                                                    <td>{{ region.region_name }}</td>
+                                                    <td>{{ region.climate_zone or 'N/A' }}</td>
+                                                    <td>{{ region.performance_index or 'N/A' }}</td>
+                                                    <td>{{ region.average_yield or 'N/A' }}</td>
+                                                    <td>{{ region.trials_count or 'N/A' }}</td>
+                                                </tr>
+                                                {% endfor %}
+                                                {% if not variety.regional_performance_data %}
+                                                <tr>
+                                                    <td colspan="5" class="text-center text-muted">Regional performance data not available</td>
+                                                </tr>
+                                                {% endif %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Economic Analysis Tab -->
+                    <div class="tab-pane fade" id="economic" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="economic-analysis">
+                                    <h4><i class="fas fa-calculator"></i> Economic Analysis</h4>
+                                    <div class="row">
+                                        <div class="col-6">
+                                            <div class="text-center">
+                                                <h3 class="text-success">$847</h3>
+                                                <p class="mb-0">Expected Revenue/Acre</p>
+                                            </div>
+                                        </div>
+                                        <div class="col-6">
+                                            <div class="text-center">
+                                                <h3 class="text-info">$312</h3>
+                                                <p class="mb-0">Total Costs/Acre</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="text-center">
+                                        <h2 class="text-success">$535</h2>
+                                        <p class="mb-0">Net Profit/Acre</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="variety-card">
+                                    <h5><i class="fas fa-chart-line"></i> ROI Analysis</h5>
+                                    <canvas id="roiChart" class="chart-container"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-dollar-sign"></i> Cost Breakdown</h4>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm">
+                                            <tbody>
+                                                <tr>
+                                                    <td>Seed Cost</td>
+                                                    <td class="text-end">$85/acre</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Fertilizer</td>
+                                                    <td class="text-end">$120/acre</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Herbicide</td>
+                                                    <td class="text-end">$45/acre</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Labor</td>
+                                                    <td class="text-end">$35/acre</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Equipment</td>
+                                                    <td class="text-end">$27/acre</td>
+                                                </tr>
+                                                <tr class="table-active">
+                                                    <td><strong>Total Costs</strong></td>
+                                                    <td class="text-end"><strong>$312/acre</strong></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                
+                                <div class="variety-card">
+                                    <h5><i class="fas fa-chart-bar"></i> Yield vs Cost</h5>
+                                    <canvas id="yieldCostChart" class="chart-container"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Reviews Tab -->
+                    <div class="tab-pane fade" id="reviews" role="tabpanel">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-star"></i> Overall Rating</h4>
+                                    <div class="text-center">
+                                        <div class="rating-stars mb-3" style="font-size: 2rem;">
+                                            {% for i in range(5) %}
+                                                {% if i < (variety.overall_rating or 4) %}
+                                                    <i class="fas fa-star"></i>
+                                                {% else %}
+                                                    <i class="far fa-star"></i>
+                                                {% endif %}
+                                            {% endfor %}
+                                        </div>
+                                        <h2>{{ variety.overall_rating or 4 }}/5</h2>
+                                        <p class="text-muted">Based on {{ variety.review_count or 127 }} reviews</p>
+                                    </div>
+                                    
+                                    <div class="mt-3">
+                                        <div class="d-flex justify-content-between">
+                                            <span>5 stars</span>
+                                            <span>{{ variety.five_star_count or 45 }}%</span>
+                                        </div>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: {{ variety.five_star_count or 45 }}%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between">
+                                            <span>4 stars</span>
+                                            <span>{{ variety.four_star_count or 35 }}%</span>
+                                        </div>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-success" style="width: {{ variety.four_star_count or 35 }}%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between">
+                                            <span>3 stars</span>
+                                            <span>{{ variety.three_star_count or 15 }}%</span>
+                                        </div>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-warning" style="width: {{ variety.three_star_count or 15 }}%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between">
+                                            <span>2 stars</span>
+                                            <span>{{ variety.two_star_count or 3 }}%</span>
+                                        </div>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-danger" style="width: {{ variety.two_star_count or 3 }}%"></div>
+                                        </div>
+                                        
+                                        <div class="d-flex justify-content-between">
+                                            <span>1 star</span>
+                                            <span>{{ variety.one_star_count or 2 }}%</span>
+                                        </div>
+                                        <div class="progress mb-2" style="height: 8px;">
+                                            <div class="progress-bar bg-danger" style="width: {{ variety.one_star_count or 2 }}%"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-8">
+                                <div class="variety-card">
+                                    <h4><i class="fas fa-comments"></i> Recent Reviews</h4>
+                                    
+                                    <!-- Sample Reviews -->
+                                    <div class="review-card">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong>John Smith</strong>
+                                                <div class="rating-stars">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">2 weeks ago</small>
+                                        </div>
+                                        <p>"Excellent variety with consistent yields. Strong disease resistance and good standability. Would recommend for most growing conditions."</p>
+                                    </div>
+                                    
+                                    <div class="review-card">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong>Sarah Johnson</strong>
+                                                <div class="rating-stars">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="far fa-star"></i>
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">1 month ago</small>
+                                        </div>
+                                        <p>"Good performance overall, but requires careful management in wet conditions. Yield potential is excellent when conditions are right."</p>
+                                    </div>
+                                    
+                                    <div class="review-card">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <div>
+                                                <strong>Mike Wilson</strong>
+                                                <div class="rating-stars">
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                    <i class="fas fa-star"></i>
+                                                </div>
+                                            </div>
+                                            <small class="text-muted">2 months ago</small>
+                                        </div>
+                                        <p>"Outstanding variety for our region. Consistent high yields and excellent disease package. Seed cost is reasonable for the performance."</p>
+                                    </div>
+                                    
+                                    <div class="text-center mt-3">
+                                        <button class="btn btn-outline-primary" onclick="loadMoreReviews()">
+                                            <i class="fas fa-plus"></i> Load More Reviews
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="row mt-4 mb-5">
+            <div class="col-12 text-center">
+                <div class="variety-card">
+                    <h4><i class="fas fa-tools"></i> Take Action</h4>
+                    <div class="d-flex justify-content-center gap-3 flex-wrap">
+                        <button class="btn btn-success btn-lg" onclick="addToComparison()">
+                            <i class="fas fa-balance-scale"></i> Add to Comparison
+                        </button>
+                        <button class="btn btn-primary btn-lg" onclick="saveVariety()">
+                            <i class="fas fa-bookmark"></i> Save Variety
+                        </button>
+                        <button class="btn btn-info btn-lg" onclick="getRecommendations()">
+                            <i class="fas fa-lightbulb"></i> Get Recommendations
+                        </button>
+                        <button class="btn btn-warning btn-lg" onclick="contactSupplier()">
+                            <i class="fas fa-envelope"></i> Contact Supplier
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="/static/js/variety-detail.js"></script>
+</body>
+</html>

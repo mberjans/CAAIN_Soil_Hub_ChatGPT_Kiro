@@ -91,6 +91,15 @@ class VarietyRecommendationService:
         except ImportError:
             logger.warning("Economic analysis service not available")
             self.economic_analysis_service = None
+        
+        # Initialize market intelligence service
+        try:
+            from .market_intelligence_service import MarketIntelligenceService
+            self.market_intelligence_service = MarketIntelligenceService()
+            logger.info("Market intelligence service initialized")
+        except ImportError:
+            logger.warning("Market intelligence service not available")
+            self.market_intelligence_service = None
             
         self.regional_data = {}
         self.performance_models = {}
@@ -656,22 +665,86 @@ class VarietyRecommendationService:
         return total_score / factor_count if factor_count > 0 else 0.5
 
     async def _score_market_desirability(self, variety: EnhancedCropVariety, context: Dict[str, Any]) -> float:
-        """Score market desirability and economic potential."""
-        if not variety.market_attributes:
-            return 0.5
-            
+        """Score market desirability and economic potential using market intelligence."""
         base_score = 0.6
         
-        # Adjust based on premium potential
-        if variety.market_attributes.premium_potential:
-            premium_score = variety.market_attributes.premium_potential / 5.0
-            base_score += premium_score * 0.3
-            
-        # Adjust based on regional market preferences
-        if "market_preferences" in context:
-            market_prefs = context["market_preferences"]
-            if variety.market_attributes.market_class in market_prefs:
-                base_score += 0.2
+        # Use market intelligence service if available
+        if self.market_intelligence_service:
+            try:
+                from ..models.market_intelligence_models import MarketIntelligenceRequest
+                
+                # Create market intelligence request
+                request = MarketIntelligenceRequest(
+                    variety_names=[variety.variety_name],
+                    regions=context.get('regions', ['US']),
+                    include_trends=True,
+                    include_premium_discount=True,
+                    include_recommendations=False,
+                    detail_level="basic"
+                )
+                
+                # Get market intelligence
+                market_intelligence = await self.market_intelligence_service.get_market_intelligence(request)
+                
+                if market_intelligence.reports:
+                    report = market_intelligence.reports[0]
+                    
+                    # Adjust score based on market trends
+                    if report.market_trends:
+                        if report.market_trends.trend_direction == 'up':
+                            if report.market_trends.trend_strength == 'strong':
+                                base_score += 0.3
+                            elif report.market_trends.trend_strength == 'moderate':
+                                base_score += 0.2
+                            else:
+                                base_score += 0.1
+                        elif report.market_trends.trend_direction == 'down':
+                            if report.market_trends.trend_strength == 'strong':
+                                base_score -= 0.3
+                            elif report.market_trends.trend_strength == 'moderate':
+                                base_score -= 0.2
+                            else:
+                                base_score -= 0.1
+                    
+                    # Adjust score based on premium/discount analysis
+                    if report.premium_discount_analysis:
+                        if report.premium_discount_analysis.current_premium_discount > 0:
+                            premium_factor = min(float(report.premium_discount_analysis.current_premium_discount) / 1.0, 0.3)
+                            base_score += premium_factor
+                        elif report.premium_discount_analysis.current_premium_discount < 0:
+                            discount_factor = min(abs(float(report.premium_discount_analysis.current_premium_discount)) / 1.0, 0.2)
+                            base_score -= discount_factor
+                    
+                    # Adjust score based on market opportunities
+                    if report.market_opportunities:
+                        opportunity_bonus = min(len(report.market_opportunities) * 0.05, 0.2)
+                        base_score += opportunity_bonus
+                    
+                    # Adjust score based on risk factors
+                    if report.risk_factors:
+                        risk_penalty = min(len(report.risk_factors) * 0.03, 0.15)
+                        base_score -= risk_penalty
+                    
+                    # Apply confidence weighting
+                    confidence_factor = report.confidence
+                    base_score = base_score * confidence_factor + 0.5 * (1 - confidence_factor)
+                
+            except Exception as e:
+                logger.warning(f"Market intelligence analysis failed for {variety.variety_name}: {e}")
+                # Fall back to basic market desirability scoring
+        
+        # Fallback to basic market attributes if market intelligence not available
+        if variety.market_attributes:
+            # Adjust based on premium potential
+            if variety.market_attributes.premium_potential:
+                premium_score = variety.market_attributes.premium_potential / 5.0
+                base_score += premium_score * 0.3
+                
+            # Adjust based on regional market preferences
+            if "market_preferences" in context:
+                market_prefs = context["market_preferences"]
+                if variety.market_attributes.market_class in market_prefs:
+                    base_score += 0.2
                 
         return max(0.0, min(1.0, base_score))
 
@@ -1026,13 +1099,14 @@ class VarietyRecommendationService:
         variety: EnhancedCropVariety, 
         context: Dict[str, Any]
     ) -> Dict[str, Any]:
-        """Generate economic analysis for the variety."""
+        """Generate economic analysis for the variety with market intelligence integration."""
 
         analysis = {
             "seed_cost_premium": 0.0,
             "expected_revenue": 0.0,
             "input_cost_adjustments": {},
-            "roi_factors": []
+            "roi_factors": [],
+            "market_intelligence": {}
         }
 
         # Calculate seed cost premium
@@ -1045,6 +1119,78 @@ class VarietyRecommendationService:
             "Improved disease resistance reduces fungicide costs", 
             "Market class commands premium prices"
         ]
+
+        # Integrate market intelligence if available
+        if self.market_intelligence_service:
+            try:
+                from ..models.market_intelligence_models import MarketIntelligenceRequest
+                
+                # Create market intelligence request
+                market_request = MarketIntelligenceRequest(
+                    variety_names=[variety.variety_name],
+                    regions=context.get("regions", ["US"]),
+                    include_trends=True,
+                    include_basis=True,
+                    include_demand_forecast=True,
+                    include_premium_discount=True,
+                    include_recommendations=True,
+                    include_executive_summary=True,
+                    detail_level="standard"
+                )
+                
+                # Get market intelligence
+                market_intelligence = await self.market_intelligence_service.get_market_intelligence(market_request)
+                
+                if market_intelligence.reports:
+                    market_report = market_intelligence.reports[0]
+                    
+                    # Extract key market intelligence data
+                    analysis["market_intelligence"] = {
+                        "current_prices": [
+                            {
+                                "price_per_unit": float(price.price_per_unit),
+                                "unit": price.unit,
+                                "market_type": price.market_type.value,
+                                "region": price.region,
+                                "confidence": price.confidence
+                            }
+                            for price in market_report.current_prices
+                        ],
+                        "market_trends": {
+                            "trend_direction": market_report.market_trends.trend_direction if market_report.market_trends else "unknown",
+                            "trend_strength": market_report.market_trends.trend_strength if market_report.market_trends else "unknown",
+                            "confidence": market_report.market_trends.confidence if market_report.market_trends else 0.0
+                        } if market_report.market_trends else None,
+                        "market_opportunities": market_report.market_opportunities,
+                        "risk_factors": market_report.risk_factors,
+                        "competitive_advantages": market_report.competitive_advantages,
+                        "pricing_recommendations": market_report.pricing_recommendations,
+                        "market_timing_recommendations": market_report.market_timing_recommendations,
+                        "contract_recommendations": market_report.contract_recommendations,
+                        "executive_summary": market_report.executive_summary,
+                        "key_insights": market_report.key_insights,
+                        "confidence": market_report.confidence,
+                        "data_quality_score": market_report.data_quality_score
+                    }
+                    
+                    # Update ROI factors with market intelligence
+                    if market_report.market_opportunities:
+                        analysis["roi_factors"].extend([
+                            f"Market opportunity: {opportunity}" 
+                            for opportunity in market_report.market_opportunities[:2]  # Limit to top 2
+                        ])
+                    
+                    # Add market-based revenue estimates
+                    if market_report.current_prices:
+                        avg_price = sum(float(price.price_per_unit) for price in market_report.current_prices) / len(market_report.current_prices)
+                        analysis["expected_revenue"] = avg_price * 150  # Assume 150 bushels per acre
+                        
+            except Exception as e:
+                logger.warning(f"Market intelligence integration failed for variety {variety.variety_name}: {e}")
+                analysis["market_intelligence"] = {
+                    "error": "Market intelligence data unavailable",
+                    "confidence": 0.0
+                }
 
         return analysis
 

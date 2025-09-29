@@ -81,6 +81,11 @@ try:
 except ImportError: # pragma: no cover
     FilterResultProcessor = None
 
+try:
+    from .trial_data_service import UniversityTrialDataService
+except ImportError:  # pragma: no cover
+    UniversityTrialDataService = None
+
 __all__ = []
 for _name in [
     "CropTaxonomyService",
@@ -94,7 +99,8 @@ for _name in [
     "FilterCombinationEngine",
     "SmartFilterSuggestionService",
     "FilterResultProcessor",
-    "YieldPotentialCalculator"
+    "YieldPotentialCalculator",
+    "UniversityTrialDataService"
 ]:
     if globals().get(_name) is not None:
         __all__.append(_name)

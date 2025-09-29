@@ -16,6 +16,9 @@ from .service_models import *
 from .preference_models import *
 from .recommendation_management_models import *
 from .growing_season_models import *
+from .pest_resistance_models import *
+from .resistance_explanation_models import *
+from .trial_data_models import *
 
 __all__ = [
     # Core taxonomy models
@@ -146,7 +149,97 @@ __all__ = [
     'PreferenceLearningRequest',
     'PreferenceProfile',
     'PreferenceProfileResponse',
-    'PreferenceUpdateRequest'
+    'PreferenceUpdateRequest',
+
+    # Pest resistance models
+    'PestType',
+    'PestSeverity',
+    'PestRiskLevel',
+    'ResistanceMechanism',
+    'ResistanceDurability',
+    'IPMStrategy',
+    'PestData',
+    'RegionalPestPressure',
+    'PestPressureEntry',
+    'VarietyPestResistance',
+    'PestResistanceEntry',
+    'PestResistanceRequest',
+    'PestResistanceResponse',
+    'VarietyPestAnalysis',
+    'VarietyRecommendation',
+    'PestManagementRecommendations',
+    'ChemicalControlRecommendation',
+    'PestTimingGuidance',
+    'CriticalTimingPeriod',
+    'MonitoringPeriod',
+    'ActionThreshold',
+    'SeasonalActivity',
+    'ResistanceAnalysis',
+    'ResistanceStack',
+    'RefugeRequirements',
+    'PestForecast',
+    'PestForecastEntry',
+    'PestTrends',
+    'PestTrendEntry',
+
+    # Resistance explanation models
+    'ResistanceType',
+    'ResistanceMechanism',
+    'StewardshipLevel',
+    'EducationLevel',
+    'ComplianceLevel',
+    'ResistanceTrait',
+    'MechanismExplanation',
+    'PestPressureAnalysis',
+    'ResistanceEffectiveness',
+    'RiskAssessment',
+    'EducationalContent',
+    'TraitSpecificEducation',
+    'RefugeRequirements',
+    'StewardshipGuidelines',
+    'ManagementRecommendations',
+    'DurabilityAssessment',
+    'ComplianceRequirements',
+    'ExplanationSections',
+    'ResistanceExplanationRequest',
+    'ResistanceExplanationResponse',
+    'EducationalContentRequest',
+    'EducationalContentResponse',
+    'StewardshipGuidelinesRequest',
+    'StewardshipGuidelinesResponse',
+    'MechanismExplanationRequest',
+    'MechanismExplanationResponse',
+    'ComplianceRequirementsRequest',
+    'ComplianceRequirementsResponse',
+    'DurabilityAssessmentRequest',
+    'DurabilityAssessmentResponse',
+    'ResistanceExplanationValidator',
+
+    # Trial data models
+    'TrialDataQuality',
+    'StatisticalSignificance',
+    'TrialDataRequest',
+    'VarietyPerformanceRequest',
+    'RegionalTrialRequest',
+    'TrialIngestionRequest',
+    'TrialLocationInfo',
+    'TrialDesignInfo',
+    'TrialStatistics',
+    'TrialQualityInfo',
+    'TrialMetadata',
+    'TrialSummaryInfo',
+    'TrialDataResponse',
+    'VarietyPerformanceMetrics',
+    'VarietyPerformanceResponse',
+    'RegionalTrialInfo',
+    'RegionalTrialResponse',
+    'TrialIngestionResult',
+    'TrialIngestionResponse',
+    'TrialDataValidation',
+    'TrialDataValidationResult',
+    'TrialDataFilter',
+    'TrialDataSort',
+    'TrialDataAggregation'
 ]
 
 

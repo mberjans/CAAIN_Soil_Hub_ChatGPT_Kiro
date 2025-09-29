@@ -26,7 +26,8 @@ class VarietyExplanationService:
                 "management_heading": "Management guidance",
                 "risk_heading": "Risks to monitor",
                 "economics_heading": "Economics",
-                "actions_heading": "Next actions"
+                "actions_heading": "Next actions",
+                "resistance_heading": "Resistance Management"
             },
             "es": {
                 "identifier": "es",
@@ -36,7 +37,8 @@ class VarietyExplanationService:
                 "management_heading": "Guía de manejo",
                 "risk_heading": "Riesgos a vigilar",
                 "economics_heading": "Economía",
-                "actions_heading": "Próximos pasos"
+                "actions_heading": "Próximos pasos",
+                "resistance_heading": "Manejo de Resistencia"
             },
             "fr": {
                 "identifier": "fr",
@@ -46,11 +48,25 @@ class VarietyExplanationService:
                 "management_heading": "Conseils de gestion",
                 "risk_heading": "Risques à surveiller",
                 "economics_heading": "Économie",
-                "actions_heading": "Actions suivantes"
+                "actions_heading": "Actions suivantes",
+                "resistance_heading": "Gestion de la Résistance"
             }
         }
         self.default_language = "en"
         self.evidence_service = EvidenceManagementService()
+        
+        # Initialize resistance explanation service integration
+        self.resistance_explanation_service = None
+        try:
+            # Import resistance explanation service
+            import sys
+            import os
+            sys.path.append(os.path.join(os.path.dirname(__file__), '../../crop-taxonomy/src'))
+            from services.resistance_explanation_service import ResistanceExplanationService
+            self.resistance_explanation_service = ResistanceExplanationService()
+        except ImportError as e:
+            # Service not available, will handle gracefully
+            pass
 
     def is_variety_recommendation(self, recommendation: Dict[str, Any]) -> bool:
         """Determine if the payload represents a variety recommendation."""
@@ -99,6 +115,7 @@ class VarietyExplanationService:
         yield_insights = self._build_yield_insights(varieties, context)
         disease_highlights = self._build_disease_highlights(varieties)
         climate_adaptation = self._build_climate_adaptation_notes(varieties, context)
+        resistance_explanations = self._build_resistance_explanations(varieties, context)
 
         payload: Dict[str, Any] = {}
         payload["language"] = language
@@ -115,6 +132,7 @@ class VarietyExplanationService:
         payload["yield_insights"] = yield_insights
         payload["disease_highlights"] = disease_highlights
         payload["climate_adaptation"] = climate_adaptation
+        payload["resistance_explanations"] = resistance_explanations
         payload["raw_recommendation"] = recommendation
 
         structured_key_points: List[str] = []
@@ -1176,3 +1194,137 @@ class VarietyExplanationService:
                     index += 1
 
         return messages
+
+    def _build_resistance_explanations(
+        self,
+        varieties: List[Dict[str, Any]],
+        context: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Build resistance explanations for varieties with resistance traits."""
+        resistance_explanations = {
+            "has_resistance_traits": False,
+            "resistance_summary": [],
+            "educational_content": {},
+            "stewardship_guidelines": {},
+            "management_recommendations": {}
+        }
+        
+        # Check if resistance explanation service is available
+        if not self.resistance_explanation_service:
+            resistance_explanations["resistance_summary"].append(
+                "Resistance explanation service not available"
+            )
+            return resistance_explanations
+        
+        # Collect resistance traits from varieties
+        resistance_traits = []
+        for variety in varieties:
+            variety_data = variety.get("raw", {})
+            variety_id = variety_data.get("variety_id")
+            variety_name = variety_data.get("variety_name", "Unknown")
+            
+            # Extract resistance traits
+            bt_traits = variety_data.get("bt_traits", [])
+            herbicide_traits = variety_data.get("herbicide_tolerance", [])
+            disease_traits = variety_data.get("disease_resistance", [])
+            
+            if bt_traits or herbicide_traits or disease_traits:
+                resistance_explanations["has_resistance_traits"] = True
+                
+                # Add resistance traits to collection
+                for trait in bt_traits:
+                    resistance_traits.append({
+                        "type": "bt_toxin",
+                        "trait_name": trait.get("name", "Unknown Bt Trait"),
+                        "variety_id": variety_id,
+                        "variety_name": variety_name,
+                        "target_pests": trait.get("target_pests", []),
+                        "mechanism": trait.get("mechanism", "Protein inhibition")
+                    })
+                
+                for trait in herbicide_traits:
+                    resistance_traits.append({
+                        "type": "herbicide_tolerance",
+                        "trait_name": trait.get("name", "Unknown Herbicide Tolerance"),
+                        "variety_id": variety_id,
+                        "variety_name": variety_name,
+                        "target_herbicides": trait.get("target_herbicides", []),
+                        "mechanism": trait.get("mechanism", "Metabolic detoxification")
+                    })
+                
+                for trait in disease_traits:
+                    resistance_traits.append({
+                        "type": "disease_resistance",
+                        "trait_name": trait.get("name", "Unknown Disease Resistance"),
+                        "variety_id": variety_id,
+                        "variety_name": variety_name,
+                        "target_diseases": trait.get("target_diseases", []),
+                        "mechanism": trait.get("mechanism", "Structural modification")
+                    })
+        
+        # Generate resistance explanations if traits are found
+        if resistance_traits:
+            try:
+                # Create mock pest resistance data for explanation generation
+                pest_resistance_data = {
+                    "regional_pressure": {
+                        "current_pressure": "Medium",
+                        "historical_trends": ["Stable", "Increasing"],
+                        "resistance_development": "Not detected"
+                    },
+                    "data_quality_score": 0.8
+                }
+                
+                # Generate educational content
+                educational_content = self.resistance_explanation_service._generate_educational_content(
+                    resistance_traits=resistance_traits,
+                    context=context
+                )
+                
+                # Generate stewardship guidelines
+                stewardship_guidelines = self.resistance_explanation_service._generate_stewardship_guidelines(
+                    resistance_traits=resistance_traits,
+                    context=context
+                )
+                
+                # Generate management recommendations
+                management_recommendations = self.resistance_explanation_service._generate_management_recommendations(
+                    resistance_traits=resistance_traits,
+                    pest_resistance_data=pest_resistance_data,
+                    context=context
+                )
+                
+                # Build resistance summary
+                resistance_summary = []
+                for trait in resistance_traits:
+                    trait_type = trait["type"]
+                    trait_name = trait["trait_name"]
+                    variety_name = trait["variety_name"]
+                    
+                    if trait_type == "bt_toxin":
+                        resistance_summary.append(
+                            f"{variety_name} includes {trait_name} for insect control"
+                        )
+                    elif trait_type == "herbicide_tolerance":
+                        resistance_summary.append(
+                            f"{variety_name} includes {trait_name} for herbicide tolerance"
+                        )
+                    elif trait_type == "disease_resistance":
+                        resistance_summary.append(
+                            f"{variety_name} includes {trait_name} for disease resistance"
+                        )
+                
+                resistance_explanations.update({
+                    "resistance_summary": resistance_summary,
+                    "educational_content": educational_content,
+                    "stewardship_guidelines": stewardship_guidelines,
+                    "management_recommendations": management_recommendations,
+                    "resistance_traits": resistance_traits
+                })
+                
+            except Exception as e:
+                resistance_explanations["resistance_summary"].append(
+                    f"Error generating resistance explanations: {str(e)}"
+                )
+        
+        return resistance_explanations
