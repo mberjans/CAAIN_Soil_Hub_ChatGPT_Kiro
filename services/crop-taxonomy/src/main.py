@@ -26,7 +26,10 @@ from .api import (
     explanation_routes,
     result_processor_routes,
     export_routes,
-    growing_season_routes
+    growing_season_routes,
+    economic_analysis_routes,
+    market_intelligence_endpoints,
+    disease_routes
 )
 
 # Add services to Python path for imports
@@ -63,6 +66,8 @@ try:
     from api.recommendation_management_routes import router as recommendation_management_router
     from api.comprehensive_explanation_routes import router as comprehensive_explanation_router
     from api.timing_filter_routes import router as timing_filter_router
+    from api.market_intelligence_endpoints import router as market_intelligence_router
+    from api.disease_routes import router as disease_router
 except ImportError as e:
     logging.error(f"Import error: {e}")
     # Create placeholder routers if imports fail
@@ -82,6 +87,8 @@ except ImportError as e:
     recommendation_management_router = APIRouter()
     comprehensive_explanation_router = APIRouter()
     timing_filter_router = APIRouter()
+    market_intelligence_router = APIRouter()
+    disease_router = APIRouter()
 
 # Configure logging
 logging.basicConfig(
@@ -196,6 +203,9 @@ app.include_router(personalization_router)
 app.include_router(recommendation_management_router)
 app.include_router(comprehensive_explanation_router)
 app.include_router(timing_filter_router)
+app.include_router(economic_analysis_routes.router)
+app.include_router(market_intelligence_router)
+app.include_router(disease_router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -452,6 +462,8 @@ async def health_check():
             "variety_recommendations": "operational",
             "regional_adaptation": "operational",
             "timing_based_filtering": "operational",
+            "market_intelligence": "operational",
+            "disease_pressure_analysis": "operational",
             "database": "not_connected",  # Would be actual database status
             "ml_services": "limited"      # ML features partially implemented
         },
@@ -460,7 +472,9 @@ async def health_check():
             "search": "/api/v1/search/*",
             "varieties": "/api/v1/varieties/*", 
             "regional": "/api/v1/regional/*",
-            "timing_filter": "/api/v1/timing-filter/*"
+            "timing_filter": "/api/v1/timing-filter/*",
+            "market_intelligence": "/api/v1/market-intelligence/*",
+            "disease_pressure": "/api/v1/disease-pressure/*"
         },
         "documentation": {
             "swagger_ui": "/docs",
@@ -502,7 +516,9 @@ async def service_info():
                 "variety_comparison": True,
                 "trait_based_search": True,
                 "regional_adaptation": True,
-                "timing_based_filtering": True
+                "timing_based_filtering": True,
+                "market_intelligence": True,
+                "disease_resistance_analysis": True
             },
             "regional_adaptation": {
                 "climate_matching": True,
@@ -511,6 +527,16 @@ async def service_info():
                 "risk_analysis": True,
                 "adaptation_strategies": True,
                 "geospatial_analysis": "limited"
+            },
+            "disease_pressure_analysis": {
+                "regional_disease_mapping": True,
+                "disease_severity_assessment": True,
+                "variety_resistance_analysis": True,
+                "management_recommendations": True,
+                "timing_guidance": True,
+                "disease_forecasting": True,
+                "historical_trend_analysis": True,
+                "risk_assessment": True
             }
         },
         "data_sources": {
