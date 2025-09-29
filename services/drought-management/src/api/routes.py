@@ -3329,3 +3329,7 @@ router.include_router(water_usage_router)
 # Include farm infrastructure assessment routes
 from .infrastructure_routes import router as infrastructure_router
 router.include_router(infrastructure_router)
+
+# Include equipment optimization routes
+from .equipment_optimization_routes import router as equipment_optimization_router
+router.include_router(equipment_optimization_router)

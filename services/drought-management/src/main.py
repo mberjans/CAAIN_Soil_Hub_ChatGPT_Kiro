@@ -52,11 +52,12 @@ cover_crop_mulch_optimization_service = None
 water_usage_monitoring_service = None
 water_usage_reporting_service = None
 farm_infrastructure_service = None
+equipment_optimization_service = None
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service, farm_infrastructure_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service, farm_infrastructure_service, equipment_optimization_service
     try:
         logger.info("Initializing Drought Management Service...")
         
@@ -106,6 +107,11 @@ async def startup_event():
         farm_infrastructure_service = FarmInfrastructureAssessmentService()
         await farm_infrastructure_service.initialize()
         
+        # Initialize equipment optimization service
+        from .services.equipment_optimization_service import EquipmentOptimizationService
+        equipment_optimization_service = EquipmentOptimizationService()
+        await equipment_optimization_service.initialize()
+        
         logger.info("Drought Management Service initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize Drought Management Service: {str(e)}")
@@ -115,7 +121,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service, farm_infrastructure_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service, farm_infrastructure_service, equipment_optimization_service
     try:
         if drought_assessment_service:
             await drought_assessment_service.cleanup()
@@ -137,6 +143,8 @@ async def shutdown_event():
             await water_usage_reporting_service.cleanup()
         if farm_infrastructure_service:
             await farm_infrastructure_service.cleanup()
+        if equipment_optimization_service:
+            await equipment_optimization_service.cleanup()
         logger.info("Drought Management Service shutdown completed")
     except Exception as e:
         logger.error(f"Error during shutdown: {str(e)}")
@@ -156,7 +164,7 @@ app.include_router(router)
 @app.get("/health")
 async def health_check():
     """Health check endpoint for service monitoring."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, farm_infrastructure_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, farm_infrastructure_service, equipment_optimization_service
     
     service_healthy = True
     service_status = "healthy"
@@ -252,6 +260,17 @@ async def health_check():
         components["farm_infrastructure"] = "not_initialized"
         service_healthy = False
     
+    if equipment_optimization_service:
+        try:
+            components["equipment_optimization"] = "healthy"
+        except Exception as e:
+            logger.error(f"Equipment optimization service health check failed: {str(e)}")
+            components["equipment_optimization"] = "unhealthy"
+            service_healthy = False
+    else:
+        components["equipment_optimization"] = "not_initialized"
+        service_healthy = False
+    
     if not service_healthy:
         service_status = "unhealthy"
     
@@ -287,6 +306,7 @@ async def root():
             "practice_effectiveness": "/api/v1/drought/practice-effectiveness",
             "cover_crop_mulch_optimization": "/api/v1/optimization",
             "farm_infrastructure": "/api/v1/infrastructure",
+            "equipment_optimization": "/api/v1/equipment-optimization",
             "health": "/health",
             "docs": "/docs"
         },
@@ -311,7 +331,12 @@ async def root():
             "farm_infrastructure_assessment",
             "equipment_inventory_management",
             "capacity_assessment",
-            "upgrade_recommendations"
+            "upgrade_recommendations",
+            "equipment_optimization",
+            "investment_planning",
+            "cost_benefit_analysis",
+            "financing_options",
+            "risk_assessment"
         ],
         "integration": {
             "weather_services": "NOAA, OpenWeatherMap integration",
