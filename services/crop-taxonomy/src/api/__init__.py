@@ -17,6 +17,7 @@ from .comprehensive_explanation_routes import router as comprehensive_explanatio
 from .timing_filter_routes import router as timing_filter_router
 from .economic_analysis_routes import router as economic_analysis_router
 from .pest_resistance_routes import router as pest_resistance_router
+from .resistance_explanation_routes import router as resistance_explanation_router
 
 __all__ = [
     "taxonomy_router",
@@ -30,5 +31,6 @@ __all__ = [
     "comprehensive_explanation_router",
     "timing_filter_router",
     "economic_analysis_router",
-    "pest_resistance_router"
+    "pest_resistance_router",
+    "resistance_explanation_router"
 ]
