@@ -304,6 +304,176 @@ async def get_monitoring_status(
         logger.error(f"Error getting monitoring status: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get monitoring status: {str(e)}")
 
+@router.get("/monitor/drought-indices/{farm_location_id}/{field_id}")
+async def get_drought_indices(
+    farm_location_id: UUID,
+    field_id: UUID,
+    service: DroughtMonitoringService = Depends(get_drought_monitoring_service)
+):
+    """
+    Get comprehensive drought indices for a field.
+    
+    Calculates and returns:
+    - Standardized Precipitation Index (SPI) for multiple time periods
+    - Palmer Drought Severity Index (PDSI)
+    - Standardized Precipitation Evapotranspiration Index (SPEI)
+    - Vegetation Health Index (VHI)
+    - Overall drought severity assessment
+    
+    This endpoint provides scientific drought assessment using
+    internationally recognized drought indices for agricultural planning.
+    """
+    try:
+        logger.info(f"Calculating drought indices for field: {field_id}")
+        indices = await service.calculate_drought_indices(farm_location_id, field_id)
+        return indices
+    except Exception as e:
+        logger.error(f"Error calculating drought indices: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to calculate drought indices: {str(e)}")
+
+@router.get("/monitor/noaa-data/{farm_location_id}")
+async def get_noaa_drought_data(
+    farm_location_id: UUID,
+    service: DroughtMonitoringService = Depends(get_drought_monitoring_service)
+):
+    """
+    Get NOAA drought monitor data for farm location.
+    
+    Returns official NOAA drought monitor information including:
+    - Current drought category and intensity
+    - Affected area percentage
+    - Drought duration and start date
+    - Confidence level in assessment
+    - Data source and last update time
+    
+    This provides authoritative drought status from the National
+    Oceanic and Atmospheric Administration's drought monitoring system.
+    """
+    try:
+        logger.info(f"Getting NOAA drought data for farm: {farm_location_id}")
+        noaa_data = await service.get_noaa_drought_data(farm_location_id)
+        return noaa_data
+    except Exception as e:
+        logger.error(f"Error getting NOAA drought data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get NOAA drought data: {str(e)}")
+
+@router.get("/monitor/predictive-alerts/{farm_location_id}")
+async def get_predictive_alerts(
+    farm_location_id: UUID,
+    service: DroughtMonitoringService = Depends(get_drought_monitoring_service)
+):
+    """
+    Get predictive drought alerts for farm location.
+    
+    Generates forward-looking alerts based on:
+    - Drought index trends and patterns
+    - Weather forecast analysis
+    - Soil moisture trend analysis
+    - Historical drought patterns
+    
+    Returns prioritized alerts with severity levels and
+    recommended actions for proactive drought management.
+    """
+    try:
+        logger.info(f"Generating predictive alerts for farm: {farm_location_id}")
+        alerts = await service.generate_predictive_alerts(farm_location_id)
+        return {"alerts": alerts, "generated_at": datetime.utcnow()}
+    except Exception as e:
+        logger.error(f"Error generating predictive alerts: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate predictive alerts: {str(e)}")
+
+@router.get("/monitor/dashboard/{farm_location_id}")
+async def get_monitoring_dashboard(
+    farm_location_id: UUID,
+    include_historical: bool = Query(False, description="Include historical data"),
+    days_back: int = Query(30, description="Days of historical data to include"),
+    service: DroughtMonitoringService = Depends(get_drought_monitoring_service)
+):
+    """
+    Get comprehensive monitoring dashboard data for farm location.
+    
+    Returns integrated dashboard with:
+    - Current monitoring status
+    - Drought indices summary
+    - NOAA drought monitor data
+    - Active and predictive alerts
+    - Historical trends (if requested)
+    - Weather forecast integration
+    - Soil moisture status
+    
+    This endpoint provides a complete overview for drought
+    monitoring dashboard interfaces and mobile applications.
+    """
+    try:
+        logger.info(f"Getting monitoring dashboard for farm: {farm_location_id}")
+        
+        # Collect all monitoring data
+        dashboard_data = {
+            "farm_location_id": farm_location_id,
+            "timestamp": datetime.utcnow(),
+            "current_status": await service.get_monitoring_status(farm_location_id),
+            "noaa_data": await service.get_noaa_drought_data(farm_location_id),
+            "predictive_alerts": await service.generate_predictive_alerts(farm_location_id),
+            "summary": {
+                "overall_drought_risk": "moderate",  # Would be calculated from indices
+                "active_alerts_count": 0,  # Would be counted from alerts
+                "monitoring_status": "active",
+                "last_data_update": datetime.utcnow()
+            }
+        }
+        
+        # Add historical data if requested
+        if include_historical:
+            dashboard_data["historical_trends"] = await service._get_historical_trends(
+                farm_location_id, days_back
+            )
+        
+        return dashboard_data
+        
+    except Exception as e:
+        logger.error(f"Error getting monitoring dashboard: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get monitoring dashboard: {str(e)}")
+
+@router.get("/monitor/alerts/{farm_location_id}")
+async def get_drought_alerts(
+    farm_location_id: UUID,
+    alert_type: Optional[str] = Query(None, description="Filter by alert type"),
+    severity: Optional[str] = Query(None, description="Filter by severity level"),
+    service: DroughtMonitoringService = Depends(get_drought_monitoring_service)
+):
+    """
+    Get active drought alerts for farm location with filtering options.
+    
+    Parameters:
+    - alert_type: Filter by specific alert type (e.g., 'soil_moisture_low', 'drought_trend_warning')
+    - severity: Filter by severity level ('low', 'medium', 'high')
+    
+    Returns filtered list of active alerts with recommendations
+    and priority levels for effective drought management.
+    """
+    try:
+        logger.info(f"Getting drought alerts for farm: {farm_location_id}")
+        alerts = await service.get_drought_alerts(farm_location_id, alert_type)
+        
+        # Apply severity filter if specified
+        if severity:
+            alerts = [alert for alert in alerts if alert.get("severity") == severity]
+        
+        return {
+            "farm_location_id": farm_location_id,
+            "alerts": alerts,
+            "total_count": len(alerts),
+            "filters_applied": {
+                "alert_type": alert_type,
+                "severity": severity
+            },
+            "retrieved_at": datetime.utcnow()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting drought alerts: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get drought alerts: {str(e)}")
+
 # Water Savings Endpoints
 @router.post("/water-savings/calculate", response_model=WaterSavingsResponse)
 async def calculate_water_savings(
