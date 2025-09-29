@@ -636,14 +636,13 @@ class MoistureConservationService:
             # Create a conservation practice request
             request = ConservationPracticeRequest(
                 field_id=field_id,
-                crop_type=crop_type,
                 soil_type=soil_type,
-                field_size_acres=field_size_acres,
-                drought_risk_level=drought_risk_level,
-                goals=["water_conservation", "soil_health"],
-                budget_constraints=None,
-                equipment_available=None,
-                timeline_months=12
+                slope_percent=kwargs.get('slope_percent', 5.0),  # Default moderate slope
+                drainage_class=kwargs.get('drainage_class', 'moderate'),  # Default moderate drainage
+                current_practices=kwargs.get('current_practices', []),
+                available_equipment=kwargs.get('available_equipment', []),
+                budget_constraint=kwargs.get('budget_constraint'),
+                implementation_timeline=kwargs.get('implementation_timeline', 'immediate')
             )
             
             # Get recommendations using existing method
