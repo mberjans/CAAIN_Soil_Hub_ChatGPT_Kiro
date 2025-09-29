@@ -230,3 +230,137 @@ class WaterSavingsResponse(BaseModel):
     cost_benefit_analysis: Dict[str, Any] = Field(..., description="Cost-benefit analysis")
     implementation_timeline: Dict[str, Any] = Field(..., description="Implementation timeline")
     monitoring_recommendations: List[str] = Field(..., description="Monitoring recommendations")
+
+# Irrigation Management Models
+class IrrigationSystemType(str, Enum):
+    """Types of irrigation systems."""
+    SPRINKLER = "sprinkler"
+    DRIP = "drip"
+    FLOOD = "flood"
+    CENTER_PIVOT = "center_pivot"
+    LINEAR_MOVE = "linear_move"
+    HAND_MOVE = "hand_move"
+    MICRO_SPRAY = "micro_spray"
+    SUB_SURFACE = "sub_surface"
+
+class WaterSourceType(str, Enum):
+    """Types of water sources."""
+    WELL = "well"
+    SURFACE_WATER = "surface_water"
+    MUNICIPAL = "municipal"
+    RECYCLED = "recycled"
+    RAINWATER = "rainwater"
+    SPRING = "spring"
+
+class IrrigationEfficiencyLevel(str, Enum):
+    """Irrigation efficiency levels."""
+    LOW = "low"  # < 60%
+    MODERATE = "moderate"  # 60-80%
+    HIGH = "high"  # 80-90%
+    EXCELLENT = "excellent"  # > 90%
+
+class IrrigationSystemAssessment(BaseModel):
+    """Assessment of irrigation system performance."""
+    system_type: IrrigationSystemType = Field(..., description="Type of irrigation system")
+    current_efficiency: float = Field(..., ge=0, le=1, description="Current system efficiency")
+    efficiency_level: IrrigationEfficiencyLevel = Field(..., description="Efficiency level classification")
+    water_distribution_uniformity: float = Field(..., ge=0, le=1, description="Water distribution uniformity")
+    pressure_consistency: float = Field(..., ge=0, le=1, description="Pressure consistency across field")
+    coverage_area_percent: float = Field(..., ge=0, le=100, description="Coverage area percentage")
+    maintenance_status: str = Field(..., description="Current maintenance status")
+    age_years: int = Field(..., ge=0, description="Age of irrigation system in years")
+    estimated_water_loss_percent: float = Field(..., ge=0, le=100, description="Estimated water loss percentage")
+    energy_efficiency_score: float = Field(..., ge=0, le=1, description="Energy efficiency score")
+    overall_score: float = Field(..., ge=0, le=100, description="Overall system score")
+
+class WaterSourceAssessment(BaseModel):
+    """Assessment of water source capacity and quality."""
+    source_type: WaterSourceType = Field(..., description="Type of water source")
+    available_capacity_gpm: float = Field(..., ge=0, description="Available capacity in gallons per minute")
+    water_quality_score: float = Field(..., ge=0, le=1, description="Water quality score")
+    reliability_score: float = Field(..., ge=0, le=1, description="Reliability score")
+    cost_per_gallon: Decimal = Field(..., description="Cost per gallon of water")
+    seasonal_variation_percent: float = Field(..., ge=0, le=100, description="Seasonal variation percentage")
+    sustainability_score: float = Field(..., ge=0, le=1, description="Sustainability score")
+    regulatory_compliance: bool = Field(..., description="Regulatory compliance status")
+    pumping_capacity_gpm: float = Field(..., ge=0, description="Effective pumping capacity")
+    storage_capacity_gallons: float = Field(..., ge=0, description="Storage capacity in gallons")
+
+class IrrigationConstraint(BaseModel):
+    """Constraint affecting irrigation operations."""
+    constraint_type: str = Field(..., description="Type of constraint")
+    description: str = Field(..., description="Constraint description")
+    impact_level: str = Field(..., description="Impact level (low, medium, high, critical)")
+    mitigation_options: List[str] = Field(..., description="Available mitigation options")
+    cost_impact: Decimal = Field(..., description="Cost impact of constraint")
+    timeline_impact_days: int = Field(..., ge=0, description="Timeline impact in days")
+
+class IrrigationOptimization(BaseModel):
+    """Irrigation optimization recommendations."""
+    optimization_type: str = Field(..., description="Type of optimization")
+    description: str = Field(..., description="Optimization description")
+    potential_water_savings_percent: float = Field(..., ge=0, le=100, description="Potential water savings percentage")
+    potential_cost_savings_per_year: Decimal = Field(..., description="Potential annual cost savings")
+    implementation_cost: Decimal = Field(..., description="Implementation cost")
+    payback_period_years: float = Field(..., ge=0, description="Payback period in years")
+    implementation_timeline_days: int = Field(..., ge=0, description="Implementation timeline in days")
+    priority_level: str = Field(..., description="Priority level (high, medium, low)")
+    equipment_requirements: List[EquipmentRequirement] = Field(default_factory=list, description="Required equipment")
+
+# Irrigation Management Request Models
+class IrrigationAssessmentRequest(BaseModel):
+    """Request model for irrigation system assessment."""
+    field_id: UUID = Field(..., description="Field identifier")
+    system_type: IrrigationSystemType = Field(..., description="Type of irrigation system")
+    system_age_years: int = Field(..., ge=0, description="Age of irrigation system")
+    maintenance_history: Dict[str, Any] = Field(default_factory=dict, description="Maintenance history data")
+    field_characteristics: Dict[str, Any] = Field(..., description="Field characteristics")
+    water_source_data: Dict[str, Any] = Field(..., description="Water source information")
+    operational_constraints: Dict[str, Any] = Field(default_factory=dict, description="Operational constraints")
+
+class IrrigationScheduleRequest(BaseModel):
+    """Request model for irrigation schedule generation."""
+    field_id: UUID = Field(..., description="Field identifier")
+    crop_type: str = Field(..., description="Type of crop")
+    growth_stage: str = Field(..., description="Current growth stage")
+    soil_moisture_data: Dict[str, Any] = Field(..., description="Current soil moisture data")
+    weather_forecast: List[Dict[str, Any]] = Field(..., description="Weather forecast data")
+    irrigation_system: IrrigationSystemAssessment = Field(..., description="Irrigation system assessment")
+    water_source: WaterSourceAssessment = Field(..., description="Water source assessment")
+
+class IrrigationOptimizationRequest(BaseModel):
+    """Request model for irrigation optimization."""
+    field_id: UUID = Field(..., description="Field identifier")
+    current_assessment: IrrigationSystemAssessment = Field(..., description="Current irrigation assessment")
+    water_source_assessment: WaterSourceAssessment = Field(..., description="Water source assessment")
+    field_characteristics: Dict[str, Any] = Field(..., description="Field characteristics")
+    budget_constraints: Optional[Decimal] = Field(None, description="Budget constraints")
+    optimization_goals: List[str] = Field(default_factory=list, description="Optimization goals")
+
+# Irrigation Management Response Models
+class IrrigationAssessmentResponse(BaseModel):
+    """Response model for irrigation system assessment."""
+    field_id: UUID = Field(..., description="Field identifier")
+    system_assessment: IrrigationSystemAssessment = Field(..., description="System assessment results")
+    water_source_assessment: WaterSourceAssessment = Field(..., description="Water source assessment results")
+    constraints: List[IrrigationConstraint] = Field(..., description="Identified constraints")
+    recommendations: List[str] = Field(..., description="General recommendations")
+    assessment_timestamp: datetime = Field(default_factory=datetime.utcnow, description="Assessment timestamp")
+
+class IrrigationOptimizationResponse(BaseModel):
+    """Response model for irrigation optimization."""
+    field_id: UUID = Field(..., description="Field identifier")
+    optimizations: List[IrrigationOptimization] = Field(..., description="Optimization recommendations")
+    total_potential_savings: Dict[str, Any] = Field(..., description="Total potential savings")
+    implementation_priority: List[str] = Field(..., description="Implementation priority order")
+    cost_benefit_summary: Dict[str, Any] = Field(..., description="Cost-benefit summary")
+    optimization_timestamp: datetime = Field(default_factory=datetime.utcnow, description="Optimization timestamp")
+
+class IrrigationScheduleResponse(BaseModel):
+    """Response model for irrigation schedule."""
+    field_id: UUID = Field(..., description="Field identifier")
+    schedule: Dict[str, Any] = Field(..., description="Irrigation schedule")
+    water_requirements: Dict[str, Any] = Field(..., description="Water requirements")
+    efficiency_factors: Dict[str, Any] = Field(..., description="Efficiency factors")
+    recommendations: List[str] = Field(..., description="Schedule recommendations")
+    schedule_timestamp: datetime = Field(default_factory=datetime.utcnow, description="Schedule timestamp")
