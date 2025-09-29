@@ -8,6 +8,7 @@ and monitoring endpoints.
 from fastapi import APIRouter, HTTPException, Depends, Query, Body
 from typing import List, Optional, Dict, Any
 import logging
+import uuid
 from datetime import datetime, date
 from uuid import UUID
 
@@ -29,6 +30,7 @@ from ..models.drought_models import (
     IrrigationOptimizationRequest,
     IrrigationOptimizationResponse
 )
+from ..models.water_source_models import WaterSourceAnalysisRequest
 from ..models.soil_assessment_models import (
     SoilAssessmentRequest,
     SoilAssessmentResponse,
@@ -49,6 +51,18 @@ from ..models.regional_drought_models import (
     DroughtPatternMapResponse,
     DroughtAlertResponse
 )
+from ..models.practice_effectiveness_models import (
+    PracticeEffectivenessRequest,
+    PracticeEffectivenessResponse,
+    PracticeImplementation,
+    PerformanceMeasurement,
+    EffectivenessValidation,
+    PracticeEffectivenessReport,
+    AdaptiveRecommendation,
+    RegionalEffectivenessAnalysis,
+    PerformanceMetric,
+    ValidationStatus
+)
 from ..services.drought_assessment_service import DroughtAssessmentService
 from ..services.moisture_conservation_service import MoistureConservationService
 from ..services.drought_monitoring_service import DroughtMonitoringService
@@ -58,6 +72,7 @@ from ..services.soil_weather_service import SoilWeatherIntegrationService
 from ..services.soil_moisture_monitoring_service import SoilMoistureMonitoringService
 from ..services.regional_drought_analysis_service import RegionalDroughtAnalysisService
 from ..services.irrigation_service import IrrigationManagementService
+from ..services.practice_effectiveness_service import PracticeEffectivenessService
 
 logger = logging.getLogger(__name__)
 
@@ -113,6 +128,13 @@ async def get_irrigation_management_service():
     """Get irrigation management service instance."""
     from ..services.irrigation_service import IrrigationManagementService
     return IrrigationManagementService()
+
+async def get_practice_effectiveness_service():
+    """Get practice effectiveness service instance."""
+    from ..services.practice_effectiveness_service import PracticeEffectivenessService
+    service = PracticeEffectivenessService()
+    await service.initialize()
+    return service
 
 # Drought Assessment Endpoints
 @router.post("/assess", response_model=DroughtAssessmentResponse)
@@ -1646,3 +1668,483 @@ async def get_water_source_types():
     except Exception as e:
         logger.error(f"Error getting water source types: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get water source types: {str(e)}")
+
+# Practice Effectiveness Tracking Endpoints
+
+@router.post("/practice-effectiveness/track-implementation", response_model=PracticeImplementation)
+async def track_practice_implementation(
+    practice_id: UUID = Body(..., description="ID of the conservation practice"),
+    field_id: UUID = Body(..., description="Field where practice is implemented"),
+    farmer_id: UUID = Body(..., description="Farmer implementing the practice"),
+    start_date: date = Body(..., description="Implementation start date"),
+    implementation_notes: Optional[str] = Body(None, description="Implementation notes"),
+    service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service)
+):
+    """
+    Start tracking a new conservation practice implementation.
+    
+    This endpoint initiates tracking for conservation practice effectiveness including:
+    - Practice implementation monitoring
+    - Performance measurement collection
+    - Effectiveness validation
+    - Adaptive recommendations
+    
+    Returns practice implementation tracking object with unique ID.
+    """
+    try:
+        logger.info(f"Starting practice implementation tracking: {practice_id}")
+        implementation = await service.track_practice_implementation(
+            practice_id=practice_id,
+            field_id=field_id,
+            farmer_id=farmer_id,
+            start_date=start_date,
+            implementation_notes=implementation_notes
+        )
+        return implementation
+    except Exception as e:
+        logger.error(f"Error tracking practice implementation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to track practice implementation: {str(e)}")
+
+@router.post("/practice-effectiveness/record-measurement", response_model=PerformanceMeasurement)
+async def record_performance_measurement(
+    implementation_id: UUID = Body(..., description="ID of the practice implementation"),
+    metric_type: PerformanceMetric = Body(..., description="Type of metric being measured"),
+    metric_value: float = Body(..., description="Measured value"),
+    metric_unit: str = Body(..., description="Unit of measurement"),
+    measurement_method: str = Body(..., description="Method used for measurement"),
+    measurement_source: str = Body(..., description="Source of measurement"),
+    confidence_level: float = Body(0.8, ge=0, le=1, description="Confidence in measurement accuracy"),
+    notes: Optional[str] = Body(None, description="Additional notes about the measurement"),
+    service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service)
+):
+    """
+    Record a performance measurement for a practice implementation.
+    
+    This endpoint records performance measurements including:
+    - Water savings achieved
+    - Soil health improvements
+    - Cost effectiveness metrics
+    - Yield impact measurements
+    - Environmental benefits
+    - Farmer satisfaction scores
+    
+    Returns performance measurement object with calculated improvements.
+    """
+    try:
+        logger.info(f"Recording performance measurement for implementation: {implementation_id}")
+        from decimal import Decimal
+        
+        measurement = await service.record_performance_measurement(
+            implementation_id=implementation_id,
+            metric_type=metric_type,
+            metric_value=Decimal(str(metric_value)),
+            metric_unit=metric_unit,
+            measurement_method=measurement_method,
+            measurement_source=measurement_source,
+            confidence_level=confidence_level,
+            notes=notes
+        )
+        return measurement
+    except Exception as e:
+        logger.error(f"Error recording performance measurement: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to record performance measurement: {str(e)}")
+
+@router.post("/practice-effectiveness/validate", response_model=EffectivenessValidation)
+async def validate_practice_effectiveness(
+    implementation_id: UUID = Body(..., description="ID of the practice implementation"),
+    validator_type: str = Body(..., description="Type of validator (expert, algorithm, farmer)"),
+    validator_id: Optional[UUID] = Body(None, description="ID of the validator"),
+    validation_notes: Optional[str] = Body(None, description="Validation notes"),
+    service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service)
+):
+    """
+    Validate the effectiveness of a practice implementation.
+    
+    This endpoint validates practice effectiveness including:
+    - Overall effectiveness scoring (0-10 scale)
+    - Water savings validation
+    - Soil health improvement assessment
+    - Cost effectiveness rating
+    - Farmer satisfaction evaluation
+    - Improvement recommendations
+    
+    Returns comprehensive validation results with recommendations.
+    """
+    try:
+        logger.info(f"Validating practice effectiveness for implementation: {implementation_id}")
+        validation = await service.validate_practice_effectiveness(
+            implementation_id=implementation_id,
+            validator_type=validator_type,
+            validator_id=validator_id,
+            validation_notes=validation_notes
+        )
+        return validation
+    except Exception as e:
+        logger.error(f"Error validating practice effectiveness: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to validate practice effectiveness: {str(e)}")
+
+@router.post("/practice-effectiveness/generate-report", response_model=PracticeEffectivenessReport)
+async def generate_effectiveness_report(
+    implementation_id: UUID = Body(..., description="ID of the practice implementation"),
+    report_period_start: date = Body(..., description="Report period start date"),
+    report_period_end: date = Body(..., description="Report period end date"),
+    service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service)
+):
+    """
+    Generate a comprehensive effectiveness report for a practice implementation.
+    
+    This endpoint generates detailed effectiveness reports including:
+    - Overall effectiveness score and trends
+    - Water savings summary and analysis
+    - Soil health impact assessment
+    - Cost-benefit analysis
+    - Challenge identification and success factors
+    - Improvement recommendations and next steps
+    
+    Returns comprehensive effectiveness report with actionable insights.
+    """
+    try:
+        logger.info(f"Generating effectiveness report for implementation: {implementation_id}")
+        report = await service.generate_effectiveness_report(
+            implementation_id=implementation_id,
+            report_period_start=report_period_start,
+            report_period_end=report_period_end
+        )
+        return report
+    except Exception as e:
+        logger.error(f"Error generating effectiveness report: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate effectiveness report: {str(e)}")
+
+@router.post("/practice-effectiveness/adaptive-recommendations", response_model=List[AdaptiveRecommendation])
+async def generate_adaptive_recommendations(
+    implementation_id: UUID = Body(..., description="ID of the practice implementation"),
+    service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service)
+):
+    """
+    Generate adaptive recommendations based on effectiveness data.
+    
+    This endpoint provides adaptive recommendations including:
+    - Performance pattern analysis
+    - Machine learning-based optimization insights
+    - Implementation adjustments
+    - Resource optimization recommendations
+    - Timeline and priority guidance
+    
+    Returns prioritized adaptive recommendations with confidence scores.
+    """
+    try:
+        logger.info(f"Generating adaptive recommendations for implementation: {implementation_id}")
+        recommendations = await service.generate_adaptive_recommendations(implementation_id)
+        return recommendations
+    except Exception as e:
+        logger.error(f"Error generating adaptive recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate adaptive recommendations: {str(e)}")
+
+@router.post("/practice-effectiveness/get-data", response_model=PracticeEffectivenessResponse)
+async def get_practice_effectiveness_data(
+    request: PracticeEffectivenessRequest,
+    service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service)
+):
+    """
+    Get comprehensive practice effectiveness data for a field.
+    
+    This endpoint retrieves comprehensive effectiveness data including:
+    - All practice implementations for the field
+    - Performance measurements and trends
+    - Effectiveness validations and scores
+    - Generated reports and insights
+    - Adaptive recommendations
+    - Overall effectiveness summary
+    
+    Returns complete effectiveness tracking data with analysis.
+    """
+    try:
+        logger.info(f"Getting practice effectiveness data for field: {request.field_id}")
+        response = await service.get_practice_effectiveness_data(request)
+        return response
+    except Exception as e:
+        logger.error(f"Error getting practice effectiveness data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get practice effectiveness data: {str(e)}")
+
+@router.post("/practice-effectiveness/regional-analysis", response_model=RegionalEffectivenessAnalysis)
+async def generate_regional_effectiveness_analysis(
+    region: str = Body(..., description="Geographic region for analysis"),
+    analysis_period_start: date = Body(..., description="Analysis period start date"),
+    analysis_period_end: date = Body(..., description="Analysis period end date"),
+    service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service)
+):
+    """
+    Generate regional effectiveness analysis for conservation practices.
+    
+    This endpoint provides regional effectiveness analysis including:
+    - Practice types analyzed in the region
+    - Average effectiveness scores
+    - Most effective practices identification
+    - Regional challenges and success factors
+    - Optimization opportunities
+    - Cross-farm learning insights
+    
+    Returns comprehensive regional effectiveness analysis with recommendations.
+    """
+    try:
+        logger.info(f"Generating regional effectiveness analysis for region: {region}")
+        analysis = await service.generate_regional_effectiveness_analysis(
+            region=region,
+            analysis_period_start=analysis_period_start,
+            analysis_period_end=analysis_period_end
+        )
+        return analysis
+    except Exception as e:
+        logger.error(f"Error generating regional effectiveness analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate regional effectiveness analysis: {str(e)}")
+
+@router.get("/practice-effectiveness/metrics")
+async def get_available_performance_metrics():
+    """
+    Get available performance metrics for practice effectiveness tracking.
+    
+    Returns comprehensive list of performance metrics including:
+    - Water savings measurements
+    - Soil health indicators
+    - Cost effectiveness metrics
+    - Yield impact measurements
+    - Environmental benefits
+    - Farmer satisfaction indicators
+    
+    Useful for understanding what metrics can be tracked and measured.
+    """
+    try:
+        metrics = [
+            {
+                "metric_type": PerformanceMetric.WATER_SAVINGS.value,
+                "description": "Water savings achieved through conservation practices",
+                "unit_examples": ["gallons", "acre-inches", "percent"],
+                "measurement_methods": ["irrigation records", "soil moisture sensors", "water meters"]
+            },
+            {
+                "metric_type": PerformanceMetric.SOIL_HEALTH.value,
+                "description": "Soil health improvements from conservation practices",
+                "unit_examples": ["organic matter percent", "soil structure score", "infiltration rate"],
+                "measurement_methods": ["soil tests", "visual assessment", "penetration tests"]
+            },
+            {
+                "metric_type": PerformanceMetric.COST_EFFECTIVENESS.value,
+                "description": "Cost effectiveness of conservation practice implementation",
+                "unit_examples": ["dollars per acre", "cost per unit saved", "ROI percent"],
+                "measurement_methods": ["financial records", "cost tracking", "benefit analysis"]
+            },
+            {
+                "metric_type": PerformanceMetric.YIELD_IMPACT.value,
+                "description": "Crop yield impact from conservation practices",
+                "unit_examples": ["bushels per acre", "tons per acre", "yield percent change"],
+                "measurement_methods": ["harvest records", "yield monitors", "field measurements"]
+            },
+            {
+                "metric_type": PerformanceMetric.ENVIRONMENTAL_BENEFIT.value,
+                "description": "Environmental benefits from conservation practices",
+                "unit_examples": ["carbon sequestered", "erosion reduced", "biodiversity score"],
+                "measurement_methods": ["environmental monitoring", "soil sampling", "wildlife surveys"]
+            },
+            {
+                "metric_type": PerformanceMetric.FARMER_SATISFACTION.value,
+                "description": "Farmer satisfaction with conservation practice implementation",
+                "unit_examples": ["satisfaction score", "recommendation rating", "adoption likelihood"],
+                "measurement_methods": ["surveys", "interviews", "feedback forms"]
+            }
+        ]
+        
+        return {
+            "available_metrics": metrics,
+            "total_metrics": len(metrics),
+            "description": "Comprehensive list of performance metrics for conservation practice effectiveness tracking"
+        }
+    except Exception as e:
+        logger.error(f"Error getting available performance metrics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get available performance metrics: {str(e)}")
+
+@router.get("/practice-effectiveness/health")
+async def practice_effectiveness_health():
+    """Health check endpoint for practice effectiveness tracking service."""
+    return {
+        "status": "healthy",
+        "service": "practice-effectiveness-tracking",
+        "timestamp": datetime.utcnow().isoformat(),
+        "features": [
+            "practice_implementation_tracking",
+            "performance_measurement_collection",
+            "effectiveness_validation",
+            "adaptive_recommendations",
+            "regional_effectiveness_analysis",
+            "comprehensive_reporting"
+        ]
+    }
+
+# Water Source Analysis Endpoints
+
+@router.post("/water-source-analysis")
+async def analyze_water_sources(request: WaterSourceAnalysisRequest):
+    """
+    Perform comprehensive water source and availability analysis.
+    
+    This endpoint provides detailed analysis of water sources including:
+    - Water source evaluation and assessment
+    - Availability forecasting
+    - Water budget planning
+    - Drought contingency planning
+    - Alternative source identification
+    - Usage optimization recommendations
+    
+    Agricultural Use Cases:
+    - Farm water resource planning and management
+    - Drought preparedness and contingency planning
+    - Water source diversification strategies
+    - Cost optimization for water usage
+    - Sustainability assessment of water sources
+    """
+    try:
+        from ..services.water_source_analysis_service import WaterSourceAnalysisService
+        
+        service = WaterSourceAnalysisService()
+        await service.initialize()
+        
+        try:
+            analysis_response = await service.analyze_water_sources(request)
+            
+            logger.info(f"Water source analysis completed for farm: {request.farm_location_id}")
+            
+            return {
+                "success": True,
+                "analysis_id": str(uuid.uuid4()),
+                "farm_location_id": str(request.farm_location_id),
+                "field_id": str(request.field_id),
+                "analysis_date": analysis_response.analysis_date.isoformat(),
+                "overall_reliability_score": analysis_response.overall_reliability_score,
+                "source_count": len(analysis_response.source_assessments),
+                "recommendations_count": len(analysis_response.recommendations),
+                "analysis_summary": {
+                    "total_available_capacity_gpm": analysis_response.water_budget_plan.total_available_capacity_gpm,
+                    "daily_requirement_gallons": analysis_response.water_budget_plan.daily_requirement_gallons,
+                    "capacity_utilization_percent": analysis_response.water_budget_plan.capacity_utilization_percent,
+                    "annual_cost_estimate": float(analysis_response.water_budget_plan.annual_cost_estimate),
+                    "potential_savings_percent": analysis_response.usage_optimization.savings_percent
+                },
+                "source_assessments": [
+                    {
+                        "source_type": assessment.source_type.value,
+                        "available_capacity_gpm": assessment.available_capacity_gpm,
+                        "water_quality_score": assessment.water_quality_score,
+                        "reliability_score": assessment.reliability_score,
+                        "cost_per_gallon": float(assessment.cost_per_gallon),
+                        "seasonal_variation_percent": assessment.seasonal_variation_percent,
+                        "sustainability_score": assessment.sustainability_score,
+                        "regulatory_compliance": assessment.regulatory_compliance
+                    }
+                    for assessment in analysis_response.source_assessments
+                ],
+                "availability_forecast": {
+                    "forecast_period_days": analysis_response.availability_forecast.forecast_period_days,
+                    "confidence_score": analysis_response.availability_forecast.confidence_score,
+                    "last_updated": analysis_response.availability_forecast.last_updated.isoformat(),
+                    "forecast_summary": {
+                        "avg_daily_capacity_gpm": sum(
+                            day["total_available_capacity_gpm"] 
+                            for day in analysis_response.availability_forecast.forecast_data
+                        ) / len(analysis_response.availability_forecast.forecast_data)
+                    }
+                },
+                "water_budget_plan": {
+                    "total_available_capacity_gpm": analysis_response.water_budget_plan.total_available_capacity_gpm,
+                    "daily_requirement_gallons": analysis_response.water_budget_plan.daily_requirement_gallons,
+                    "capacity_utilization_percent": analysis_response.water_budget_plan.capacity_utilization_percent,
+                    "annual_cost_estimate": float(analysis_response.water_budget_plan.annual_cost_estimate),
+                    "seasonal_budget": analysis_response.water_budget_plan.seasonal_budget
+                },
+                "drought_contingency_plan": {
+                    "reliable_sources": [source.value for source in analysis_response.drought_contingency_plan.reliable_sources],
+                    "alternative_sources": [source.value for source in analysis_response.drought_contingency_plan.alternative_sources],
+                    "contingency_scenarios": analysis_response.drought_contingency_plan.contingency_scenarios,
+                    "emergency_contacts": analysis_response.drought_contingency_plan.emergency_contacts
+                },
+                "alternative_sources": [
+                    {
+                        "source_type": alt.source_type.value,
+                        "description": alt.description,
+                        "feasibility_score": alt.feasibility_score,
+                        "estimated_cost_per_gallon": float(alt.estimated_cost_per_gallon),
+                        "implementation_timeline_days": alt.implementation_timeline_days,
+                        "required_infrastructure": alt.required_infrastructure,
+                        "sustainability_score": alt.sustainability_score
+                    }
+                    for alt in analysis_response.alternative_sources
+                ],
+                "usage_optimization": {
+                    "optimization_plan": analysis_response.usage_optimization.optimization_plan,
+                    "total_daily_cost": analysis_response.usage_optimization.total_daily_cost,
+                    "potential_savings_per_day": analysis_response.usage_optimization.potential_savings_per_day,
+                    "savings_percent": analysis_response.usage_optimization.savings_percent,
+                    "optimization_factors": analysis_response.usage_optimization.optimization_factors
+                },
+                "recommendations": analysis_response.recommendations
+            }
+            
+        finally:
+            await service.cleanup()
+            
+    except Exception as e:
+        logger.error(f"Error analyzing water sources: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze water sources: {str(e)}")
+
+@router.get("/water-source-analysis/source-types")
+async def get_water_source_analysis_types():
+    """
+    Get comprehensive water source types and their characteristics for analysis.
+    
+    Returns detailed information about different water source types including
+    reliability factors, quality concerns, cost factors, and sustainability scores.
+    """
+    try:
+        from ..services.water_source_analysis_service import WaterSourceAnalysisService
+        
+        service = WaterSourceAnalysisService()
+        
+        source_types = []
+        for source_type, characteristics in service.water_source_database.items():
+            source_types.append({
+                "source_type": source_type,
+                "description": characteristics.get("description", ""),
+                "typical_depth_range": characteristics.get("typical_depth_range", (0, 0)),
+                "reliability_factors": characteristics.get("reliability_factors", []),
+                "quality_concerns": characteristics.get("quality_concerns", []),
+                "seasonal_variation": characteristics.get("seasonal_variation", 0.2),
+                "cost_factors": characteristics.get("cost_factors", []),
+                "sustainability_score": characteristics.get("sustainability_score", 0.5),
+                "regulatory_requirements": characteristics.get("regulatory_requirements", []),
+                "drought_resilience": characteristics.get("drought_resilience", 0.5)
+            })
+        
+        return {
+            "water_source_types": source_types,
+            "total_sources": len(source_types),
+            "description": "Comprehensive water source types with analysis characteristics"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting water source analysis types: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get water source analysis types: {str(e)}")
+
+@router.get("/water-source-analysis/health")
+async def water_source_analysis_health():
+    """Health check endpoint for water source analysis service."""
+    return {
+        "status": "healthy",
+        "service": "water-source-analysis",
+        "timestamp": datetime.utcnow().isoformat(),
+        "features": [
+            "water_source_evaluation",
+            "availability_forecasting", 
+            "water_budget_planning",
+            "drought_contingency_planning",
+            "alternative_source_identification",
+            "usage_optimization"
+        ]
+    }

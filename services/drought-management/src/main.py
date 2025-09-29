@@ -46,11 +46,13 @@ drought_assessment_service = None
 moisture_conservation_service = None
 drought_monitoring_service = None
 soil_assessment_service = None
+soil_weather_integration_service = None
+practice_effectiveness_service = None
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service
     try:
         logger.info("Initializing Drought Management Service...")
         
@@ -62,6 +64,8 @@ async def startup_event():
         from .services.moisture_conservation_service import MoistureConservationService
         from .services.drought_monitoring_service import DroughtMonitoringService
         from .services.soil_assessment_service import SoilManagementAssessmentService
+        from .services.soil_weather_service import SoilWeatherIntegrationService
+        from .services.practice_effectiveness_service import PracticeEffectivenessService
         
         moisture_conservation_service = MoistureConservationService()
         await moisture_conservation_service.initialize()
@@ -72,6 +76,12 @@ async def startup_event():
         soil_assessment_service = SoilManagementAssessmentService()
         await soil_assessment_service.initialize()
         
+        soil_weather_integration_service = SoilWeatherIntegrationService()
+        await soil_weather_integration_service.initialize()
+        
+        practice_effectiveness_service = PracticeEffectivenessService()
+        await practice_effectiveness_service.initialize()
+        
         logger.info("Drought Management Service initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize Drought Management Service: {str(e)}")
@@ -81,7 +91,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service
     try:
         if drought_assessment_service:
             await drought_assessment_service.cleanup()
@@ -91,6 +101,10 @@ async def shutdown_event():
             await drought_monitoring_service.cleanup()
         if soil_assessment_service:
             await soil_assessment_service.cleanup()
+        if soil_weather_integration_service:
+            await soil_weather_integration_service.cleanup()
+        if practice_effectiveness_service:
+            await practice_effectiveness_service.cleanup()
         logger.info("Drought Management Service shutdown completed")
     except Exception as e:
         logger.error(f"Error during shutdown: {str(e)}")
@@ -110,7 +124,7 @@ app.include_router(router)
 @app.get("/health")
 async def health_check():
     """Health check endpoint for service monitoring."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, practice_effectiveness_service
     
     service_healthy = True
     service_status = "healthy"
@@ -162,6 +176,28 @@ async def health_check():
         components["soil_assessment"] = "not_initialized"
         service_healthy = False
     
+    if soil_weather_integration_service:
+        try:
+            components["soil_weather_integration"] = "healthy"
+        except Exception as e:
+            logger.error(f"Soil-weather integration service health check failed: {str(e)}")
+            components["soil_weather_integration"] = "unhealthy"
+            service_healthy = False
+    else:
+        components["soil_weather_integration"] = "not_initialized"
+        service_healthy = False
+    
+    if practice_effectiveness_service:
+        try:
+            components["practice_effectiveness"] = "healthy"
+        except Exception as e:
+            logger.error(f"Practice effectiveness service health check failed: {str(e)}")
+            components["practice_effectiveness"] = "unhealthy"
+            service_healthy = False
+    else:
+        components["practice_effectiveness"] = "not_initialized"
+        service_healthy = False
+    
     if not service_healthy:
         service_status = "unhealthy"
     
@@ -194,6 +230,7 @@ async def root():
             "water_savings": "/api/v1/drought/water-savings",
             "drought_risk": "/api/v1/drought/risk-assessment",
             "soil_assessment": "/api/v1/drought/soil-assessment",
+            "practice_effectiveness": "/api/v1/drought/practice-effectiveness",
             "health": "/health",
             "docs": "/docs"
         },
@@ -205,7 +242,11 @@ async def root():
             "soil_management_assessment",
             "weather_integration",
             "soil_moisture_modeling",
-            "crop_water_requirements"
+            "crop_water_requirements",
+            "practice_effectiveness_tracking",
+            "performance_measurement_collection",
+            "effectiveness_validation",
+            "adaptive_recommendations"
         ],
         "integration": {
             "weather_services": "NOAA, OpenWeatherMap integration",
