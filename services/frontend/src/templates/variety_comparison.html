@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Variety Comparison - AFAS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    <link href="/static/css/variety-comparison.css" rel="stylesheet">
+    <style>
+        .comparison-container {
+            background: linear-gradient(135deg, #f8f9fa, #ffffff);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .variety-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .variety-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            border-color: #28a745;
+        }
+        
+        .variety-card.selected {
+            border-color: #28a745;
+            background: linear-gradient(135deg, #d4edda, #ffffff);
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+        }
+        
+        .comparison-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .comparison-table th {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            font-weight: 600;
+            text-align: center;
+            padding: 1rem;
+        }
+        
+        .comparison-table td {
+            padding: 1rem;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        .score-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .score-excellent { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .score-good { background: linear-gradient(135deg, #17a2b8, #138496); color: white; }
+        .score-average { background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529; }
+        .score-poor { background: linear-gradient(135deg, #dc3545, #c82333); color: white; }
+        
+        .radar-chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1rem 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .trade-off-analysis {
+            background: linear-gradient(135deg, #fff3cd, #ffffff);
+            border: 1px solid #ffeaa7;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .decision-matrix {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .export-buttons {
+            position: sticky;
+            top: 20px;
+            z-index: 1000;
+        }
+        
+        .comparison-summary {
+            background: linear-gradient(135deg, #e3f2fd, #ffffff);
+            border: 1px solid #90caf9;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i> AFAS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/crop-selection">Crop Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/variety-selection">Variety Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/variety-comparison">Variety Comparison</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/soil-fertility">Soil Fertility</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/fertilizer-strategy">Fertilizer Strategy</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Header -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1><i class="fas fa-balance-scale"></i> Advanced Variety Comparison</h1>
+                        <p class="lead">Compare multiple crop varieties with comprehensive analysis and decision support</p>
+                    </div>
+                    <div class="export-buttons">
+                        <button class="btn btn-outline-primary me-2" onclick="exportComparison('pdf')" disabled id="exportPdfBtn">
+                            <i class="fas fa-file-pdf"></i> Export PDF
+                        </button>
+                        <button class="btn btn-outline-success me-2" onclick="exportComparison('excel')" disabled id="exportExcelBtn">
+                            <i class="fas fa-file-excel"></i> Export Excel
+                        </button>
+                        <button class="btn btn-outline-info" onclick="shareComparison()" disabled id="shareBtn">
+                            <i class="fas fa-share"></i> Share
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Variety Selection Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="comparison-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4><i class="fas fa-seedling"></i> Select Varieties to Compare</h4>
+                        <div>
+                            <span class="badge bg-primary" id="selectedCount">0 varieties selected</span>
+                            <button class="btn btn-outline-secondary ms-2" onclick="clearSelection()">
+                                <i class="fas fa-times"></i> Clear All
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Variety Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-search"></i></span>
+                                <input type="text" class="form-control" id="varietySearch" placeholder="Search varieties by name, traits, or characteristics...">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="cropFilter">
+                                <option value="">All Crops</option>
+                                <option value="corn">Corn</option>
+                                <option value="soybean">Soybean</option>
+                                <option value="wheat">Wheat</option>
+                                <option value="cotton">Cotton</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="sortBy">
+                                <option value="name">Sort by Name</option>
+                                <option value="yield">Sort by Yield Potential</option>
+                                <option value="maturity">Sort by Maturity</option>
+                                <option value="disease">Sort by Disease Resistance</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Variety Grid -->
+                    <div class="row" id="varietyGrid">
+                        <!-- Variety cards will be populated here -->
+                    </div>
+                    
+                    <!-- Load More Button -->
+                    <div class="text-center mt-3" id="loadMoreContainer" style="display: none;">
+                        <button class="btn btn-outline-primary" onclick="loadMoreVarieties()">
+                            <i class="fas fa-plus"></i> Load More Varieties
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Results Section -->
+        <div class="row" id="comparisonResults" style="display: none;">
+            <!-- Comparison Summary -->
+            <div class="col-12 mb-4">
+                <div class="comparison-summary">
+                    <h5><i class="fas fa-chart-bar"></i> Comparison Summary</h5>
+                    <div id="comparisonSummaryContent">
+                        <!-- Summary content will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Comparison Table -->
+            <div class="col-12 mb-4">
+                <div class="comparison-table">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Variety</th>
+                                <th>Overall Score</th>
+                                <th>Yield Potential</th>
+                                <th>Disease Resistance</th>
+                                <th>Maturity</th>
+                                <th>Management</th>
+                                <th>Economic Outlook</th>
+                                <th>Risk Rating</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="comparisonTableBody">
+                            <!-- Comparison rows will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Radar Chart -->
+            <div class="col-md-6 mb-4">
+                <div class="radar-chart-container">
+                    <h5><i class="fas fa-chart-radar"></i> Performance Radar Chart</h5>
+                    <canvas id="radarChart" width="400" height="400"></canvas>
+                </div>
+            </div>
+            
+            <!-- Trade-off Analysis -->
+            <div class="col-md-6 mb-4">
+                <div class="trade-off-analysis">
+                    <h5><i class="fas fa-balance-scale"></i> Trade-off Analysis</h5>
+                    <div id="tradeOffContent">
+                        <!-- Trade-off analysis will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Decision Matrix -->
+            <div class="col-12 mb-4">
+                <div class="decision-matrix">
+                    <h5><i class="fas fa-th"></i> Decision Matrix</h5>
+                    <div id="decisionMatrixContent">
+                        <!-- Decision matrix will be populated here -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Comparison -->
+            <div class="col-12 mb-4">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-microscope"></i> Detailed Comparison Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="detailedComparisonContent">
+                            <!-- Detailed comparison will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="row" id="emptyState">
+            <div class="col-12">
+                <div class="empty-state">
+                    <i class="fas fa-balance-scale"></i>
+                    <h4>No Varieties Selected</h4>
+                    <p>Select at least 2 varieties from the list above to start comparing</p>
+                    <button class="btn btn-primary" onclick="scrollToVarietySelection()">
+                        <i class="fas fa-arrow-up"></i> Select Varieties
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="row" id="loadingState" style="display: none;">
+            <div class="col-12">
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-2">Analyzing varieties and generating comparison...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Comparison History Modal -->
+    <div class="modal fade" id="comparisonHistoryModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-history"></i> Comparison History</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="comparisonHistoryContent">
+                        <!-- History content will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Comparison Modal -->
+    <div class="modal fade" id="shareModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-share"></i> Share Comparison</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="shareUrl" class="form-label">Shareable Link:</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="shareUrl" readonly>
+                            <button class="btn btn-outline-secondary" onclick="copyShareUrl()">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="shareMessage" class="form-label">Message (optional):</label>
+                        <textarea class="form-control" id="shareMessage" rows="3" placeholder="Add a message to accompany your comparison..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" onclick="sendShareMessage()">
+                        <i class="fas fa-paper-plane"></i> Send
+                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="/static/js/variety-comparison.js"></script>
+</body>
+</html>

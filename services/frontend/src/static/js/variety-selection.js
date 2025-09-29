@@ -903,12 +903,17 @@ function removeFromComparison(varietyId) {
 }
 
 function viewVarietyDetails(varietyId) {
-    // Implement variety details modal or page
-    console.log('View details for variety:', varietyId);
+    // Navigate to variety detail page
+    window.location.href = `/variety-detail/${varietyId}`;
 }
 
 function exportRecommendations() {
     varietyManager.exportRecommendations();
+}
+
+function goToComparison() {
+    // Navigate to variety comparison page
+    window.location.href = '/variety-comparison';
 }
 
 // Initialize the variety selection manager when the page loads

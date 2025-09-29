@@ -1,0 +1,549 @@
+/* Variety Comparison CSS Styles */
+
+/* Base Styles */
+.comparison-container {
+    background: linear-gradient(135deg, #f8f9fa, #ffffff);
+    border-radius: 15px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.comparison-container:hover {
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+}
+
+/* Variety Cards */
+.variety-card {
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    background: white;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.variety-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    transition: left 0.5s;
+}
+
+.variety-card:hover::before {
+    left: 100%;
+}
+
+.variety-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    border-color: #28a745;
+}
+
+.variety-card.selected {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #d4edda, #ffffff);
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.2);
+}
+
+.variety-card.selected::after {
+    content: '✓';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #28a745;
+    color: white;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Comparison Table */
+.comparison-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: 1rem 0;
+}
+
+.comparison-table th {
+    background: linear-gradient(135deg, #007bff, #0056b3);
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    padding: 1rem;
+    border: none;
+    position: relative;
+}
+
+.comparison-table th::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #28a745, #20c997, #17a2b8);
+}
+
+.comparison-table td {
+    padding: 1rem;
+    text-align: center;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.3s ease;
+}
+
+.comparison-table tbody tr:hover td {
+    background-color: #f8f9fa;
+}
+
+/* Score Badges */
+.score-badge {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.score-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.score-badge:hover::before {
+    left: 100%;
+}
+
+.score-excellent { 
+    background: linear-gradient(135deg, #28a745, #20c997); 
+    color: white; 
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.score-good { 
+    background: linear-gradient(135deg, #17a2b8, #138496); 
+    color: white; 
+    box-shadow: 0 2px 8px rgba(23, 162, 184, 0.3);
+}
+
+.score-average { 
+    background: linear-gradient(135deg, #ffc107, #e0a800); 
+    color: #212529; 
+    box-shadow: 0 2px 8px rgba(255, 193, 7, 0.3);
+}
+
+.score-poor { 
+    background: linear-gradient(135deg, #dc3545, #c82333); 
+    color: white; 
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
+}
+
+/* Chart Containers */
+.radar-chart-container {
+    background: white;
+    border-radius: 12px;
+    padding: 2rem;
+    margin: 1rem 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.radar-chart-container:hover {
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transform: translateY(-2px);
+}
+
+/* Trade-off Analysis */
+.trade-off-analysis {
+    background: linear-gradient(135deg, #fff3cd, #ffffff);
+    border: 1px solid #ffeaa7;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.trade-off-analysis::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ffc107, #fd7e14, #dc3545);
+}
+
+.trade-off-item {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem 0;
+    border-left: 4px solid #ffc107;
+    transition: all 0.3s ease;
+}
+
+.trade-off-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Decision Matrix */
+.decision-matrix {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.matrix-cell {
+    padding: 1rem;
+    text-align: center;
+    border: 1px solid #e9ecef;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.matrix-cell:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.05);
+}
+
+.matrix-header {
+    background: linear-gradient(135deg, #6c757d, #495057);
+    color: white;
+    font-weight: 600;
+}
+
+.matrix-best {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border-color: #28a745;
+}
+
+.matrix-good {
+    background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+    border-color: #17a2b8;
+}
+
+.matrix-average {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    border-color: #ffc107;
+}
+
+.matrix-poor {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    border-color: #dc3545;
+}
+
+/* Export Buttons */
+.export-buttons {
+    position: sticky;
+    top: 20px;
+    z-index: 1000;
+}
+
+.export-buttons .btn {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.export-buttons .btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    transition: left 0.5s;
+}
+
+.export-buttons .btn:hover::before {
+    left: 100%;
+}
+
+/* Comparison Summary */
+.comparison-summary {
+    background: linear-gradient(135deg, #e3f2fd, #ffffff);
+    border: 1px solid #90caf9;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    position: relative;
+}
+
+.comparison-summary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #007bff, #17a2b8, #28a745);
+}
+
+.summary-stat {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    margin: 0.5rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+.summary-stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+.summary-stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #007bff;
+}
+
+.summary-stat-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Loading States */
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+}
+
+.loading-spinner .spinner-border {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.5; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.5; }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .comparison-container {
+        padding: 1rem;
+    }
+    
+    .variety-card {
+        padding: 1rem;
+    }
+    
+    .comparison-table {
+        font-size: 0.9rem;
+    }
+    
+    .comparison-table th,
+    .comparison-table td {
+        padding: 0.5rem;
+    }
+    
+    .radar-chart-container {
+        padding: 1rem;
+    }
+    
+    .export-buttons {
+        position: static;
+        margin-bottom: 1rem;
+    }
+    
+    .export-buttons .btn {
+        margin-bottom: 0.5rem;
+        width: 100%;
+    }
+}
+
+@media (max-width: 576px) {
+    .comparison-table {
+        font-size: 0.8rem;
+    }
+    
+    .score-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.8rem;
+    }
+    
+    .summary-stat-value {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animation Classes */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+.slide-up {
+    animation: slideUp 0.5s ease-out;
+}
+
+.scale-in {
+    animation: scaleIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to { 
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes scaleIn {
+    from { 
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to { 
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Print Styles */
+@media print {
+    .export-buttons,
+    .btn,
+    .modal {
+        display: none !important;
+    }
+    
+    .comparison-container {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .variety-card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+    
+    .comparison-table {
+        box-shadow: none;
+        border: 1px solid #ccc;
+    }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .comparison-container {
+        background: linear-gradient(135deg, #2d3748, #1a202c);
+        color: #e2e8f0;
+    }
+    
+    .variety-card {
+        background: #2d3748;
+        border-color: #4a5568;
+        color: #e2e8f0;
+    }
+    
+    .variety-card:hover {
+        border-color: #48bb78;
+    }
+    
+    .variety-card.selected {
+        background: linear-gradient(135deg, #2f855a, #2d3748);
+        border-color: #48bb78;
+    }
+    
+    .comparison-table {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .comparison-table th {
+        background: linear-gradient(135deg, #2b6cb0, #2c5282);
+    }
+    
+    .comparison-table td {
+        border-bottom-color: #4a5568;
+    }
+    
+    .comparison-table tbody tr:hover td {
+        background-color: #4a5568;
+    }
+    
+    .radar-chart-container,
+    .decision-matrix {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .trade-off-analysis {
+        background: linear-gradient(135deg, #744210, #2d3748);
+        border-color: #d69e2e;
+    }
+    
+    .trade-off-item {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .comparison-summary {
+        background: linear-gradient(135deg, #2c5282, #2d3748);
+        border-color: #4299e1;
+    }
+    
+    .summary-stat {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+}

@@ -44,6 +44,15 @@ async def variety_selection(request: Request):
     })
 
 
+@router.get("/variety-comparison", response_class=HTMLResponse)
+async def variety_comparison(request: Request):
+    """Serve the variety comparison page."""
+    return templates.TemplateResponse("variety_comparison.html", {
+        "request": request,
+        "title": "Variety Comparison"
+    })
+
+
 @router.get("/crop-filtering", response_class=HTMLResponse)
 async def crop_filtering(request: Request):
     """Serve the crop filtering page."""
@@ -158,6 +167,64 @@ async def mobile_rotation_planning(request: Request):
     return templates.TemplateResponse("mobile_rotation_planning.html", {
         "request": request,
         "title": "Rotation Planning"
+    })
+
+
+@router.get("/variety-detail/{variety_id}", response_class=HTMLResponse)
+async def variety_detail(request: Request, variety_id: str):
+    """Serve the variety detail page."""
+    # Mock variety data for demonstration
+    variety_data = {
+        "id": variety_id,
+        "name": f"Variety {variety_id}",
+        "description": "High-yielding variety with excellent disease resistance and standability",
+        "crop_name": "Corn",
+        "seed_company": "Pioneer",
+        "release_year": 2020,
+        "maturity_group": "110",
+        "relative_maturity": 110,
+        "yield_potential_percentile": 85,
+        "yield_stability_rating": 8.2,
+        "standability_rating": 8,
+        "market_acceptance_score": 4.2,
+        "overall_rating": 4.2,
+        "review_count": 127,
+        "five_star_count": 45,
+        "four_star_count": 35,
+        "three_star_count": 15,
+        "two_star_count": 3,
+        "one_star_count": 2,
+        "organic_approved": True,
+        "non_gmo_certified": False,
+        "seed_availability": "widely_available",
+        "patent_status": "active",
+        "adapted_regions": ["Midwest", "Great Plains", "Northeast"],
+        "disease_resistances": [
+            {"disease_name": "Northern Corn Leaf Blight", "resistance_level": "High"},
+            {"disease_name": "Gray Leaf Spot", "resistance_level": "High"},
+            {"disease_name": "Rust", "resistance_level": "Medium"}
+        ],
+        "pest_resistances": [
+            {"pest_name": "Corn Rootworm", "resistance_level": "High"},
+            {"pest_name": "European Corn Borer", "resistance_level": "High"}
+        ],
+        "herbicide_tolerances": ["Roundup Ready", "Liberty Link"],
+        "stress_tolerances": ["Drought", "Heat", "Cold"],
+        "quality_characteristics": [
+            {"trait_name": "Protein Content", "trait_value": "High"},
+            {"trait_name": "Oil Content", "trait_value": "Medium"}
+        ],
+        "regional_performance_data": [
+            {"region_name": "Iowa", "climate_zone": "5a", "performance_index": 0.92, "average_yield": 195, "trials_count": 45},
+            {"region_name": "Illinois", "climate_zone": "5b", "performance_index": 0.88, "average_yield": 192, "trials_count": 38},
+            {"region_name": "Nebraska", "climate_zone": "5a", "performance_index": 0.85, "average_yield": 188, "trials_count": 32}
+        ]
+    }
+    
+    return templates.TemplateResponse("variety_detail.html", {
+        "request": request,
+        "title": f"Variety Details - {variety_data['name']}",
+        "variety": variety_data
     })
 
 
