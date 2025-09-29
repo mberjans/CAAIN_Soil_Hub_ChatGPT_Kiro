@@ -32,6 +32,49 @@ The Drought Management Service is part of the Autonomous Farm Advisory System (A
 - **Data Collection**: Automated data collection from sensors and weather stations
 - **Trend Analysis**: Identifies patterns and trends in drought conditions
 
+### 🚨 Personalized Alert and Response System
+- **Farm-Specific Thresholds**: Customizable alert thresholds based on farm characteristics
+- **Automated Response Recommendations**: AI-powered response recommendations based on alert context
+- **Emergency Protocol Management**: Step-by-step emergency response procedures
+- **Resource Mobilization**: Automated resource coordination and delivery
+- **Response Tracking**: Monitor response action implementation and effectiveness
+- **Multi-Channel Notifications**: Email, SMS, push notifications, and dashboard alerts
+
+## Personalized Alert System Details
+
+The Personalized Alert and Response System provides comprehensive drought management capabilities:
+
+### Alert Configuration
+- **Farm-Specific Setup**: Configure alerts based on farm characteristics, crop types, and practices
+- **Automatic Threshold Generation**: System generates appropriate thresholds based on farm data
+- **Custom Thresholds**: Override default thresholds with custom values
+- **Crop-Specific Alerts**: Different thresholds for different crops and growth stages
+
+### Alert Types
+- **Drought Onset**: Early warning when drought conditions begin
+- **Soil Moisture Critical**: Alerts when soil moisture drops below critical levels
+- **Crop Stress**: Notifications when crops show stress indicators
+- **Water Shortage**: Alerts when water availability is limited
+- **Irrigation Efficiency**: Notifications when irrigation efficiency drops
+
+### Automated Responses
+- **Intelligent Recommendations**: AI-powered response recommendations based on alert context
+- **Priority-Based Actions**: Actions prioritized by urgency and effectiveness
+- **Cost-Benefit Analysis**: Economic analysis of recommended actions
+- **Resource Requirements**: Detailed equipment and resource requirements
+
+### Emergency Protocols
+- **Water Restriction**: Protocols for implementing water use restrictions
+- **Emergency Irrigation**: Procedures for emergency irrigation activation
+- **Crop Abandonment**: Guidelines for crop abandonment decisions
+- **Disaster Assistance**: Coordination with government assistance programs
+
+### Response Tracking
+- **Implementation Monitoring**: Track response action implementation
+- **Effectiveness Analysis**: Measure and analyze response effectiveness
+- **Cost Tracking**: Monitor costs and savings from response actions
+- **Performance Reporting**: Generate comprehensive effectiveness reports
+
 ## Architecture
 
 ### Service Structure
@@ -44,14 +87,19 @@ services/drought-management/
 │   │   ├── drought_assessment_service.py      # Core drought assessment logic
 │   │   ├── moisture_conservation_service.py   # Conservation practice management
 │   │   ├── drought_monitoring_service.py      # Monitoring and alerting
-│   │   └── water_savings_calculator.py        # Water savings calculations
+│   │   ├── water_savings_calculator.py        # Water savings calculations
+│   │   └── personalized_alert_service.py      # Personalized alert and response system
 │   ├── models/
-│   │   └── drought_models.py      # Pydantic data models
+│   │   ├── drought_models.py      # Pydantic data models
+│   │   └── personalized_alert_models.py  # Personalized alert data models
 │   ├── database/
 │   │   └── drought_db.py          # SQLAlchemy models and database operations
 │   └── main.py                    # FastAPI application entry point
 ├── tests/
-│   └── test_drought_assessment_service.py  # Comprehensive test suite
+│   ├── test_drought_assessment_service.py  # Comprehensive test suite
+│   └── test_personalized_alert_service.py  # Personalized alert system tests
+├── docs/
+│   └── personalized_alert_system.md        # Detailed documentation
 ├── requirements.txt               # Python dependencies
 ├── start_service.py              # Service startup script
 └── README.md                     # This documentation

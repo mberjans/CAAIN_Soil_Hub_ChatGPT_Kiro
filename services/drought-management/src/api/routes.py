@@ -70,6 +70,7 @@ from ..models.tillage_models import (
     EquipmentRecommendation,
     TransitionPlan
 )
+from .personalized_alert_routes import router as personalized_alert_router
 from ..services.drought_assessment_service import DroughtAssessmentService
 from ..services.moisture_conservation_service import MoistureConservationService
 from ..services.drought_monitoring_service import DroughtMonitoringService
@@ -3503,3 +3504,6 @@ router.include_router(infrastructure_router)
 # Include equipment optimization routes
 from .equipment_optimization_routes import router as equipment_optimization_router
 router.include_router(equipment_optimization_router)
+
+# Include personalized alert routes
+router.include_router(personalized_alert_router)
