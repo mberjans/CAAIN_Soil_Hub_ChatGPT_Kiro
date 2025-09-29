@@ -18,7 +18,13 @@ try:
         VarietyEconomicAnalysisService,
         EconomicAnalysisResult,
         CostFactors,
-        RevenueFactors
+        RevenueFactors,
+        SophisticatedROIAnalysis,
+        ScenarioAnalysis,
+        MonteCarloResult,
+        InvestmentRecommendation,
+        ScenarioType,
+        RiskLevel
     )
     from ..models.crop_variety_models import EnhancedCropVariety
     from ..models.service_models import ConfidenceLevel
@@ -27,7 +33,13 @@ except ImportError:
         VarietyEconomicAnalysisService,
         EconomicAnalysisResult,
         CostFactors,
-        RevenueFactors
+        RevenueFactors,
+        SophisticatedROIAnalysis,
+        ScenarioAnalysis,
+        MonteCarloResult,
+        InvestmentRecommendation,
+        ScenarioType,
+        RiskLevel
     )
     from models.crop_variety_models import EnhancedCropVariety
     from models.service_models import ConfidenceLevel
@@ -133,6 +145,95 @@ class EconomicScoringResponse(BaseModel):
     confidence_level: str
     scoring_factors: Dict[str, float]
     analysis_date: datetime
+
+
+class SophisticatedROIAnalysisRequest(BaseModel):
+    """Request model for sophisticated ROI analysis."""
+    
+    variety_id: str = Field(..., description="ID of the variety to analyze")
+    regional_context: Dict[str, Any] = Field(..., description="Regional growing conditions and market data")
+    farmer_preferences: Optional[Dict[str, Any]] = Field(None, description="Optional farmer-specific preferences")
+    analysis_horizon_years: int = Field(5, ge=1, le=10, description="Number of years for analysis (1-10)")
+    monte_carlo_iterations: int = Field(10000, ge=1000, le=50000, description="Number of Monte Carlo iterations")
+
+
+class ScenarioAnalysisResponse(BaseModel):
+    """Response model for scenario analysis."""
+    
+    scenario_type: str
+    net_present_value: float
+    internal_rate_of_return: float
+    payback_period_years: float
+    expected_profit_per_acre: float
+    probability_of_profit: float
+    confidence_interval_95: List[float]
+
+
+class MonteCarloAnalysisResponse(BaseModel):
+    """Response model for Monte Carlo analysis."""
+    
+    mean_npv: float
+    median_npv: float
+    std_deviation_npv: float
+    probability_of_positive_npv: float
+    value_at_risk_95: float
+    expected_shortfall: float
+    simulation_iterations: int
+    confidence_intervals: Dict[str, List[float]]
+
+
+class InvestmentRecommendationResponse(BaseModel):
+    """Response model for investment recommendation."""
+    
+    recommendation_type: str
+    confidence_score: float
+    risk_level: str
+    expected_return_percent: float
+    payback_period_years: float
+    key_factors: List[str]
+    risk_factors: List[str]
+    mitigation_strategies: List[str]
+
+
+class SophisticatedROIAnalysisResponse(BaseModel):
+    """Response model for sophisticated ROI analysis."""
+    
+    variety_id: str
+    variety_name: str
+    
+    # Multi-year analysis
+    analysis_horizon_years: int
+    annual_cash_flows: List[float]
+    cumulative_cash_flows: List[float]
+    
+    # Scenario analysis
+    base_case: ScenarioAnalysisResponse
+    optimistic: ScenarioAnalysisResponse
+    pessimistic: ScenarioAnalysisResponse
+    
+    # Monte Carlo simulation
+    monte_carlo_results: MonteCarloAnalysisResponse
+    
+    # Risk assessment
+    weather_risk_score: float
+    market_volatility_risk: float
+    yield_volatility_risk: float
+    overall_risk_score: float
+    
+    # Investment recommendation
+    investment_recommendation: InvestmentRecommendationResponse
+    
+    # Financial metrics
+    net_present_value: float
+    internal_rate_of_return: float
+    modified_internal_rate_of_return: float
+    profitability_index: float
+    discounted_payback_period: float
+    
+    # Analysis metadata
+    analysis_date: datetime
+    assumptions_used: Dict[str, Any]
+    data_sources: List[str]
 
 
 # Dependency injection
@@ -405,7 +506,13 @@ async def health_check():
             "Payback period",
             "Break-even analysis",
             "Risk assessment",
-            "Government program integration"
+            "Government program integration",
+            "Sophisticated ROI analysis",
+            "Multi-year analysis",
+            "Scenario modeling",
+            "Monte Carlo simulation",
+            "Investment recommendations",
+            "Advanced financial metrics"
         ]
     }
 
@@ -492,3 +599,261 @@ async def get_government_programs(
     except Exception as e:
         logger.error(f"Error getting government programs: {e}")
         raise HTTPException(status_code=500, detail=f"Failed to get government programs: {str(e)}")
+
+
+@router.post("/sophisticated-roi", response_model=SophisticatedROIAnalysisResponse)
+async def perform_sophisticated_roi_analysis(
+    request: SophisticatedROIAnalysisRequest,
+    service: VarietyEconomicAnalysisService = Depends(get_economic_analysis_service)
+):
+    """
+    Perform sophisticated ROI and profitability analysis with advanced financial modeling.
+    
+    This endpoint provides comprehensive ROI analysis including:
+    - Multi-year ROI analysis with annual cash flows
+    - Scenario modeling (base case, optimistic, pessimistic)
+    - Monte Carlo simulation for uncertainty quantification
+    - Risk assessment with weather and market volatility
+    - Investment recommendations with mitigation strategies
+    - Advanced financial metrics (MIRR, PI, discounted payback)
+    
+    Agricultural Use Cases:
+    - Investment decision support for variety selection
+    - Risk assessment and portfolio optimization
+    - Scenario planning for different market conditions
+    - Uncertainty quantification for financial planning
+    - Investment recommendation with risk mitigation
+    """
+    try:
+        logger.info(f"Starting sophisticated ROI analysis for variety {request.variety_id}")
+        
+        # Create mock variety for analysis (in production, would fetch from database)
+        variety = EnhancedCropVariety(
+            id=request.variety_id,
+            variety_name=f"Variety {request.variety_id}",
+            crop_name=request.regional_context.get('crop_name', 'corn'),
+            yield_potential=None,
+            market_attributes=None,
+            disease_resistance_profile=None,
+            risk_level=None
+        )
+        
+        # Perform sophisticated ROI analysis
+        result = await service.perform_sophisticated_roi_analysis(
+            variety,
+            request.regional_context,
+            request.farmer_preferences,
+            request.analysis_horizon_years
+        )
+        
+        # Convert scenario analyses to response models
+        def convert_scenario_analysis(scenario: ScenarioAnalysis) -> ScenarioAnalysisResponse:
+            return ScenarioAnalysisResponse(
+                scenario_type=scenario.scenario_type.value,
+                net_present_value=scenario.net_present_value,
+                internal_rate_of_return=scenario.internal_rate_of_return,
+                payback_period_years=scenario.payback_period_years,
+                expected_profit_per_acre=scenario.expected_profit_per_acre,
+                probability_of_profit=scenario.probability_of_profit,
+                confidence_interval_95=list(scenario.confidence_interval_95)
+            )
+        
+        # Convert Monte Carlo results to response model
+        monte_carlo_response = MonteCarloAnalysisResponse(
+            mean_npv=result.monte_carlo_results.mean_npv,
+            median_npv=result.monte_carlo_results.median_npv,
+            std_deviation_npv=result.monte_carlo_results.std_deviation_npv,
+            probability_of_positive_npv=result.monte_carlo_results.probability_of_positive_npv,
+            value_at_risk_95=result.monte_carlo_results.value_at_risk_95,
+            expected_shortfall=result.monte_carlo_results.expected_shortfall,
+            simulation_iterations=result.monte_carlo_results.simulation_iterations,
+            confidence_intervals={
+                k: list(v) for k, v in result.monte_carlo_results.confidence_intervals.items()
+            }
+        )
+        
+        # Convert investment recommendation to response model
+        investment_response = InvestmentRecommendationResponse(
+            recommendation_type=result.investment_recommendation.recommendation_type,
+            confidence_score=result.investment_recommendation.confidence_score,
+            risk_level=result.investment_recommendation.risk_level.value,
+            expected_return_percent=result.investment_recommendation.expected_return_percent,
+            payback_period_years=result.investment_recommendation.payback_period_years,
+            key_factors=result.investment_recommendation.key_factors,
+            risk_factors=result.investment_recommendation.risk_factors,
+            mitigation_strategies=result.investment_recommendation.mitigation_strategies
+        )
+        
+        # Create comprehensive response
+        response = SophisticatedROIAnalysisResponse(
+            variety_id=result.variety_id,
+            variety_name=result.variety_name,
+            analysis_horizon_years=result.analysis_horizon_years,
+            annual_cash_flows=result.annual_cash_flows,
+            cumulative_cash_flows=result.cumulative_cash_flows,
+            base_case=convert_scenario_analysis(result.base_case),
+            optimistic=convert_scenario_analysis(result.optimistic),
+            pessimistic=convert_scenario_analysis(result.pessimistic),
+            monte_carlo_results=monte_carlo_response,
+            weather_risk_score=result.weather_risk_score,
+            market_volatility_risk=result.market_volatility_risk,
+            yield_volatility_risk=result.yield_volatility_risk,
+            overall_risk_score=result.overall_risk_score,
+            investment_recommendation=investment_response,
+            net_present_value=result.net_present_value,
+            internal_rate_of_return=result.internal_rate_of_return,
+            modified_internal_rate_of_return=result.modified_internal_rate_of_return,
+            profitability_index=result.profitability_index,
+            discounted_payback_period=result.discounted_payback_period,
+            analysis_date=result.analysis_date,
+            assumptions_used=result.assumptions_used,
+            data_sources=result.data_sources
+        )
+        
+        logger.info(f"Completed sophisticated ROI analysis for variety {request.variety_id}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error in sophisticated ROI analysis: {e}")
+        raise HTTPException(status_code=500, detail=f"Sophisticated ROI analysis failed: {str(e)}")
+
+
+@router.get("/roi-scenarios/{variety_id}")
+async def get_roi_scenarios(
+    variety_id: str,
+    analysis_horizon_years: int = Query(5, ge=1, le=10, description="Analysis horizon in years"),
+    service: VarietyEconomicAnalysisService = Depends(get_economic_analysis_service)
+):
+    """
+    Get ROI scenario analysis for a variety.
+    
+    This endpoint provides scenario analysis (base case, optimistic, pessimistic)
+    for a specific variety without the full sophisticated analysis.
+    
+    Agricultural Use Cases:
+    - Quick scenario comparison
+    - Risk assessment overview
+    - Investment decision support
+    """
+    try:
+        # Create mock variety for analysis (in production, would fetch from database)
+        variety = EnhancedCropVariety(
+            id=variety_id,
+            variety_name=f"Variety {variety_id}",
+            crop_name="corn",  # Default crop
+            yield_potential=None,
+            market_attributes=None,
+            disease_resistance_profile=None,
+            risk_level=None
+        )
+        
+        # Default regional context
+        regional_context = {
+            "crop_name": "corn",
+            "region": "US",
+            "yield_multiplier": 1.0,
+            "price_multiplier": 1.0,
+            "cost_multiplier": 1.0
+        }
+        
+        # Perform scenario analysis only
+        scenario_results = await service._perform_scenario_analysis(
+            variety, regional_context, None, analysis_horizon_years
+        )
+        
+        # Convert to response format
+        scenarios = {}
+        for scenario_name, scenario in scenario_results.items():
+            scenarios[scenario_name] = {
+                "scenario_type": scenario.scenario_type.value,
+                "net_present_value": scenario.net_present_value,
+                "internal_rate_of_return": scenario.internal_rate_of_return,
+                "payback_period_years": scenario.payback_period_years,
+                "expected_profit_per_acre": scenario.expected_profit_per_acre,
+                "probability_of_profit": scenario.probability_of_profit,
+                "confidence_interval_95": list(scenario.confidence_interval_95)
+            }
+        
+        return {
+            "variety_id": variety_id,
+            "analysis_horizon_years": analysis_horizon_years,
+            "scenarios": scenarios,
+            "analysis_date": datetime.utcnow().isoformat(),
+            "summary": {
+                "best_scenario": max(scenarios.keys(), key=lambda k: scenarios[k]["net_present_value"]),
+                "worst_scenario": min(scenarios.keys(), key=lambda k: scenarios[k]["net_present_value"]),
+                "scenario_range": {
+                    "min_npv": min(s["net_present_value"] for s in scenarios.values()),
+                    "max_npv": max(s["net_present_value"] for s in scenarios.values())
+                }
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in ROI scenarios analysis: {e}")
+        raise HTTPException(status_code=500, detail=f"ROI scenarios analysis failed: {str(e)}")
+
+
+@router.get("/risk-assessment/{variety_id}")
+async def get_risk_assessment(
+    variety_id: str,
+    service: VarietyEconomicAnalysisService = Depends(get_economic_analysis_service)
+):
+    """
+    Get comprehensive risk assessment for a variety.
+    
+    This endpoint provides detailed risk assessment including weather,
+    market volatility, and yield volatility risks.
+    
+    Agricultural Use Cases:
+    - Risk evaluation for variety selection
+    - Portfolio risk management
+    - Insurance and hedging decisions
+    """
+    try:
+        # Create mock variety for analysis (in production, would fetch from database)
+        variety = EnhancedCropVariety(
+            id=variety_id,
+            variety_name=f"Variety {variety_id}",
+            crop_name="corn",  # Default crop
+            yield_potential=None,
+            market_attributes=None,
+            disease_resistance_profile=None,
+            risk_level=None
+        )
+        
+        # Default regional context
+        regional_context = {
+            "crop_name": "corn",
+            "region": "US",
+            "weather_risk_score": 0.5,
+            "price_volatility": 0.15,
+            "yield_volatility_adjustment": 0.0
+        }
+        
+        # Perform risk assessment
+        risk_assessments = await service._calculate_comprehensive_risk_assessment(
+            variety, regional_context, None
+        )
+        
+        return {
+            "variety_id": variety_id,
+            "risk_assessment": {
+                "weather_risk_score": risk_assessments["weather_risk"],
+                "market_volatility_risk": risk_assessments["market_volatility"],
+                "yield_volatility_risk": risk_assessments["yield_volatility"],
+                "overall_risk_score": risk_assessments["overall_risk"]
+            },
+            "risk_level": "high" if risk_assessments["overall_risk"] > 0.7 else 
+                         "medium" if risk_assessments["overall_risk"] > 0.4 else "low",
+            "analysis_date": datetime.utcnow().isoformat(),
+            "risk_factors": await service._generate_risk_factors(risk_assessments, {}),
+            "mitigation_strategies": await service._generate_mitigation_strategies(
+                [], 
+                RiskLevel.HIGH if risk_assessments["overall_risk"] > 0.7 else RiskLevel.MEDIUM
+            )
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in risk assessment: {e}")
+        raise HTTPException(status_code=500, detail=f"Risk assessment failed: {str(e)}")

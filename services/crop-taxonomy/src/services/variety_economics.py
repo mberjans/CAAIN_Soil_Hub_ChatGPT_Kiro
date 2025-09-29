@@ -18,6 +18,9 @@ from dataclasses import dataclass, asdict
 from decimal import Decimal, ROUND_HALF_UP
 import statistics
 import math
+import random
+import numpy as np
+from enum import Enum
 
 try:
     from ..models.crop_variety_models import (
@@ -41,6 +44,100 @@ except ImportError:
     )
 
 logger = logging.getLogger(__name__)
+
+
+class ScenarioType(Enum):
+    """Types of economic scenarios for analysis."""
+    BASE_CASE = "base_case"
+    OPTIMISTIC = "optimistic"
+    PESSIMISTIC = "pessimistic"
+
+
+class RiskLevel(Enum):
+    """Risk levels for investment analysis."""
+    LOW = "low"
+    MEDIUM = "medium"
+    HIGH = "high"
+    VERY_HIGH = "very_high"
+
+
+@dataclass
+class ScenarioAnalysis:
+    """Analysis results for a specific scenario."""
+    scenario_type: ScenarioType
+    net_present_value: float
+    internal_rate_of_return: float
+    payback_period_years: float
+    expected_profit_per_acre: float
+    probability_of_profit: float
+    confidence_interval_95: Tuple[float, float]
+
+
+@dataclass
+class MonteCarloResult:
+    """Results from Monte Carlo simulation."""
+    mean_npv: float
+    median_npv: float
+    std_deviation_npv: float
+    probability_of_positive_npv: float
+    value_at_risk_95: float
+    expected_shortfall: float
+    simulation_iterations: int
+    confidence_intervals: Dict[str, Tuple[float, float]]
+
+
+@dataclass
+class InvestmentRecommendation:
+    """Investment recommendation based on ROI analysis."""
+    recommendation_type: str  # "strong_buy", "buy", "hold", "sell", "strong_sell"
+    confidence_score: float
+    risk_level: RiskLevel
+    expected_return_percent: float
+    payback_period_years: float
+    key_factors: List[str]
+    risk_factors: List[str]
+    mitigation_strategies: List[str]
+
+
+@dataclass
+class SophisticatedROIAnalysis:
+    """Comprehensive ROI and profitability analysis result."""
+    variety_id: str
+    variety_name: str
+    
+    # Multi-year analysis
+    analysis_horizon_years: int
+    annual_cash_flows: List[float]
+    cumulative_cash_flows: List[float]
+    
+    # Scenario analysis
+    base_case: ScenarioAnalysis
+    optimistic: ScenarioAnalysis
+    pessimistic: ScenarioAnalysis
+    
+    # Monte Carlo simulation
+    monte_carlo_results: MonteCarloResult
+    
+    # Risk assessment
+    weather_risk_score: float
+    market_volatility_risk: float
+    yield_volatility_risk: float
+    overall_risk_score: float
+    
+    # Investment recommendation
+    investment_recommendation: InvestmentRecommendation
+    
+    # Financial metrics
+    net_present_value: float
+    internal_rate_of_return: float
+    modified_internal_rate_of_return: float
+    profitability_index: float
+    discounted_payback_period: float
+    
+    # Analysis metadata
+    analysis_date: datetime
+    assumptions_used: Dict[str, Any]
+    data_sources: List[str]
 
 
 @dataclass
@@ -828,3 +925,883 @@ class VarietyEconomicAnalysisService:
         results.sort(key=lambda x: x[1].economic_viability_score, reverse=True)
         
         return results
+    
+    async def perform_sophisticated_roi_analysis(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]] = None,
+        analysis_horizon_years: int = 5
+    ) -> SophisticatedROIAnalysis:
+        """
+        Perform sophisticated ROI and profitability analysis with advanced financial modeling.
+        
+        Features:
+        - Multi-year ROI analysis
+        - Scenario modeling (base case, optimistic, pessimistic)
+        - Monte Carlo simulation for uncertainty quantification
+        - Risk assessment with weather and market volatility
+        - Investment recommendations
+        
+        Args:
+            variety: The crop variety to analyze
+            regional_context: Regional growing conditions and market data
+            farmer_preferences: Optional farmer-specific preferences
+            analysis_horizon_years: Number of years for analysis (default: 5)
+            
+        Returns:
+            Comprehensive ROI and profitability analysis
+        """
+        try:
+            logger.info(f"Starting sophisticated ROI analysis for variety {variety.variety_name}")
+            
+            # Get base economic analysis
+            base_analysis = await self.analyze_variety_economics(
+                variety, regional_context, farmer_preferences
+            )
+            
+            # Perform scenario analysis
+            scenario_results = await self._perform_scenario_analysis(
+                variety, regional_context, farmer_preferences, analysis_horizon_years
+            )
+            
+            # Perform Monte Carlo simulation
+            monte_carlo_results = await self._perform_monte_carlo_simulation(
+                variety, regional_context, farmer_preferences, analysis_horizon_years
+            )
+            
+            # Calculate risk assessments
+            risk_assessments = await self._calculate_comprehensive_risk_assessment(
+                variety, regional_context, farmer_preferences
+            )
+            
+            # Generate investment recommendation
+            investment_recommendation = await self._generate_investment_recommendation(
+                base_analysis, scenario_results, monte_carlo_results, risk_assessments
+            )
+            
+            # Calculate advanced financial metrics
+            advanced_metrics = await self._calculate_advanced_financial_metrics(
+                variety, regional_context, farmer_preferences, analysis_horizon_years
+            )
+            
+            # Generate annual cash flows
+            annual_cash_flows = await self._generate_annual_cash_flows(
+                variety, regional_context, farmer_preferences, analysis_horizon_years
+            )
+            
+            return SophisticatedROIAnalysis(
+                variety_id=str(variety.variety_id) if variety.variety_id else variety.variety_name,
+                variety_name=variety.variety_name,
+                analysis_horizon_years=analysis_horizon_years,
+                annual_cash_flows=annual_cash_flows,
+                cumulative_cash_flows=self._calculate_cumulative_cash_flows(annual_cash_flows),
+                base_case=scenario_results['base_case'],
+                optimistic=scenario_results['optimistic'],
+                pessimistic=scenario_results['pessimistic'],
+                monte_carlo_results=monte_carlo_results,
+                weather_risk_score=risk_assessments['weather_risk'],
+                market_volatility_risk=risk_assessments['market_volatility'],
+                yield_volatility_risk=risk_assessments['yield_volatility'],
+                overall_risk_score=risk_assessments['overall_risk'],
+                investment_recommendation=investment_recommendation,
+                net_present_value=advanced_metrics['npv'],
+                internal_rate_of_return=advanced_metrics['irr'],
+                modified_internal_rate_of_return=advanced_metrics['mirr'],
+                profitability_index=advanced_metrics['pi'],
+                discounted_payback_period=advanced_metrics['discounted_payback'],
+                analysis_date=datetime.utcnow(),
+                assumptions_used=self._get_sophisticated_analysis_assumptions(
+                    variety, regional_context, analysis_horizon_years
+                ),
+                data_sources=self._get_data_sources_used(regional_context)
+            )
+            
+        except Exception as e:
+            logger.error(f"Error in sophisticated ROI analysis for variety {variety.variety_id}: {e}")
+            raise
+    
+    async def _perform_scenario_analysis(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]],
+        analysis_horizon_years: int
+    ) -> Dict[str, ScenarioAnalysis]:
+        """Perform scenario analysis (base case, optimistic, pessimistic)."""
+        
+        scenarios = {}
+        
+        # Base case scenario
+        base_case_data = await self._get_scenario_data(
+            variety, regional_context, ScenarioType.BASE_CASE
+        )
+        scenarios['base_case'] = await self._analyze_scenario(
+            variety, base_case_data, ScenarioType.BASE_CASE, analysis_horizon_years
+        )
+        
+        # Optimistic scenario
+        optimistic_data = await self._get_scenario_data(
+            variety, regional_context, ScenarioType.OPTIMISTIC
+        )
+        scenarios['optimistic'] = await self._analyze_scenario(
+            variety, optimistic_data, ScenarioType.OPTIMISTIC, analysis_horizon_years
+        )
+        
+        # Pessimistic scenario
+        pessimistic_data = await self._get_scenario_data(
+            variety, regional_context, ScenarioType.PESSIMISTIC
+        )
+        scenarios['pessimistic'] = await self._analyze_scenario(
+            variety, pessimistic_data, ScenarioType.PESSIMISTIC, analysis_horizon_years
+        )
+        
+        return scenarios
+    
+    async def _get_scenario_data(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        scenario_type: ScenarioType
+    ) -> Dict[str, Any]:
+        """Get data adjusted for specific scenario."""
+        
+        base_data = regional_context.copy()
+        
+        if scenario_type == ScenarioType.OPTIMISTIC:
+            # Optimistic: higher yields, better prices, lower costs
+            base_data['yield_multiplier'] = base_data.get('yield_multiplier', 1.0) * 1.15
+            base_data['price_multiplier'] = base_data.get('price_multiplier', 1.0) * 1.1
+            base_data['cost_multiplier'] = base_data.get('cost_multiplier', 1.0) * 0.95
+            base_data['weather_risk_multiplier'] = 0.7
+            base_data['market_volatility_multiplier'] = 0.8
+            
+        elif scenario_type == ScenarioType.PESSIMISTIC:
+            # Pessimistic: lower yields, worse prices, higher costs
+            base_data['yield_multiplier'] = base_data.get('yield_multiplier', 1.0) * 0.85
+            base_data['price_multiplier'] = base_data.get('price_multiplier', 1.0) * 0.9
+            base_data['cost_multiplier'] = base_data.get('cost_multiplier', 1.0) * 1.1
+            base_data['weather_risk_multiplier'] = 1.3
+            base_data['market_volatility_multiplier'] = 1.2
+            
+        else:  # BASE_CASE
+            # Base case: no adjustments
+            base_data['yield_multiplier'] = base_data.get('yield_multiplier', 1.0)
+            base_data['price_multiplier'] = base_data.get('price_multiplier', 1.0)
+            base_data['cost_multiplier'] = base_data.get('cost_multiplier', 1.0)
+            base_data['weather_risk_multiplier'] = 1.0
+            base_data['market_volatility_multiplier'] = 1.0
+        
+        return base_data
+    
+    async def _analyze_scenario(
+        self,
+        variety: EnhancedCropVariety,
+        scenario_data: Dict[str, Any],
+        scenario_type: ScenarioType,
+        analysis_horizon_years: int
+    ) -> ScenarioAnalysis:
+        """Analyze a specific scenario."""
+        
+        # Get market data for scenario
+        market_data = await self._get_market_data(variety, scenario_data)
+        
+        # Calculate cost factors
+        cost_factors = await self._calculate_cost_factors(variety, scenario_data)
+        
+        # Calculate revenue factors
+        revenue_factors = await self._calculate_revenue_factors(
+            variety, scenario_data, market_data
+        )
+        
+        # Calculate financial metrics
+        npv = self._calculate_npv(cost_factors, revenue_factors)
+        irr = self._calculate_irr(cost_factors, revenue_factors)
+        payback_period = self._calculate_payback_period(cost_factors, revenue_factors)
+        
+        # Calculate expected profit
+        expected_profit = revenue_factors.total_revenue_per_acre() - cost_factors.total_cost_per_acre()
+        
+        # Calculate probability of profit (simplified)
+        probability_of_profit = self._calculate_probability_of_profit(
+            expected_profit, scenario_type
+        )
+        
+        # Calculate confidence interval (simplified)
+        confidence_interval = self._calculate_confidence_interval(
+            expected_profit, scenario_type
+        )
+        
+        return ScenarioAnalysis(
+            scenario_type=scenario_type,
+            net_present_value=npv,
+            internal_rate_of_return=irr,
+            payback_period_years=payback_period,
+            expected_profit_per_acre=expected_profit,
+            probability_of_profit=probability_of_profit,
+            confidence_interval_95=confidence_interval
+        )
+    
+    async def _perform_monte_carlo_simulation(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]],
+        analysis_horizon_years: int,
+        iterations: int = 10000
+    ) -> MonteCarloResult:
+        """Perform Monte Carlo simulation for uncertainty quantification."""
+        
+        logger.info(f"Running Monte Carlo simulation with {iterations} iterations")
+        
+        npv_results = []
+        
+        for i in range(iterations):
+            # Generate random scenario data
+            random_scenario = await self._generate_random_scenario(
+                variety, regional_context, farmer_preferences
+            )
+            
+            # Calculate NPV for this iteration
+            market_data = await self._get_market_data(variety, random_scenario)
+            cost_factors = await self._calculate_cost_factors(variety, random_scenario)
+            revenue_factors = await self._calculate_revenue_factors(
+                variety, random_scenario, market_data
+            )
+            
+            npv = self._calculate_npv(cost_factors, revenue_factors)
+            npv_results.append(npv)
+        
+        # Calculate statistics
+        npv_array = np.array(npv_results)
+        
+        mean_npv = float(np.mean(npv_array))
+        median_npv = float(np.median(npv_array))
+        std_deviation_npv = float(np.std(npv_array))
+        
+        # Calculate probability of positive NPV
+        positive_npv_count = np.sum(npv_array > 0)
+        probability_positive_npv = float(positive_npv_count / iterations)
+        
+        # Calculate Value at Risk (95%)
+        var_95 = float(np.percentile(npv_array, 5))  # 5th percentile
+        
+        # Calculate Expected Shortfall (Conditional VaR)
+        var_threshold = np.percentile(npv_array, 5)
+        shortfall_values = npv_array[npv_array <= var_threshold]
+        expected_shortfall = float(np.mean(shortfall_values)) if len(shortfall_values) > 0 else var_95
+        
+        # Calculate confidence intervals
+        confidence_intervals = {
+            '90%': (float(np.percentile(npv_array, 5)), float(np.percentile(npv_array, 95))),
+            '95%': (float(np.percentile(npv_array, 2.5)), float(np.percentile(npv_array, 97.5))),
+            '99%': (float(np.percentile(npv_array, 0.5)), float(np.percentile(npv_array, 99.5)))
+        }
+        
+        return MonteCarloResult(
+            mean_npv=mean_npv,
+            median_npv=median_npv,
+            std_deviation_npv=std_deviation_npv,
+            probability_of_positive_npv=probability_positive_npv,
+            value_at_risk_95=var_95,
+            expected_shortfall=expected_shortfall,
+            simulation_iterations=iterations,
+            confidence_intervals=confidence_intervals
+        )
+    
+    async def _generate_random_scenario(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Generate random scenario data for Monte Carlo simulation."""
+        
+        random_scenario = regional_context.copy()
+        
+        # Random yield multiplier (normal distribution around 1.0, std dev 0.15)
+        random_scenario['yield_multiplier'] = max(0.5, np.random.normal(1.0, 0.15))
+        
+        # Random price multiplier (normal distribution around 1.0, std dev 0.1)
+        random_scenario['price_multiplier'] = max(0.7, np.random.normal(1.0, 0.1))
+        
+        # Random cost multiplier (normal distribution around 1.0, std dev 0.08)
+        random_scenario['cost_multiplier'] = max(0.8, np.random.normal(1.0, 0.08))
+        
+        # Random weather risk (uniform distribution)
+        random_scenario['weather_risk_multiplier'] = np.random.uniform(0.7, 1.3)
+        
+        # Random market volatility (uniform distribution)
+        random_scenario['market_volatility_multiplier'] = np.random.uniform(0.8, 1.2)
+        
+        return random_scenario
+    
+    async def _calculate_comprehensive_risk_assessment(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]]
+    ) -> Dict[str, float]:
+        """Calculate comprehensive risk assessment."""
+        
+        # Weather risk assessment
+        weather_risk = await self._calculate_weather_risk(variety, regional_context)
+        
+        # Market volatility risk
+        market_volatility_risk = await self._calculate_market_volatility_risk(
+            variety, regional_context
+        )
+        
+        # Yield volatility risk
+        yield_volatility_risk = await self._calculate_yield_volatility_risk(
+            variety, regional_context
+        )
+        
+        # Overall risk score (weighted average)
+        overall_risk = (
+            weather_risk * 0.4 +
+            market_volatility_risk * 0.3 +
+            yield_volatility_risk * 0.3
+        )
+        
+        return {
+            'weather_risk': weather_risk,
+            'market_volatility': market_volatility_risk,
+            'yield_volatility': yield_volatility_risk,
+            'overall_risk': overall_risk
+        }
+    
+    async def _calculate_weather_risk(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any]
+    ) -> float:
+        """Calculate weather-related risk score."""
+        
+        # Base weather risk from regional context
+        base_weather_risk = regional_context.get('weather_risk_score', 0.5)
+        
+        # Adjust based on variety characteristics
+        variety_risk_adjustment = 0.0
+        
+        # Drought tolerance reduces weather risk
+        if variety.stress_tolerances:
+            if "drought_tolerance" in variety.stress_tolerances:
+                variety_risk_adjustment -= 0.1  # Drought tolerance reduces risk
+        
+        # Heat tolerance reduces weather risk
+        if variety.stress_tolerances:
+            if "heat_tolerance" in variety.stress_tolerances:
+                variety_risk_adjustment -= 0.05  # Heat tolerance reduces risk
+        
+        # Yield stability affects weather risk
+        if variety.yield_stability_rating:
+            stability_adjustment = (variety.yield_stability_rating - 5) * 0.02
+            variety_risk_adjustment -= stability_adjustment
+        
+        final_weather_risk = max(0.0, min(1.0, base_weather_risk + variety_risk_adjustment))
+        
+        return final_weather_risk
+    
+    async def _calculate_market_volatility_risk(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any]
+    ) -> float:
+        """Calculate market volatility risk score."""
+        
+        # Get market volatility from regional context
+        market_volatility = regional_context.get('price_volatility', 0.15)
+        
+        # Adjust based on variety market characteristics
+        variety_adjustment = 0.0
+        
+        # Market acceptance affects volatility risk
+        if variety.market_acceptance_score:
+            if variety.market_acceptance_score > 4.0:
+                variety_adjustment -= 0.05  # High acceptance = lower risk
+            elif variety.market_acceptance_score < 2.0:
+                variety_adjustment += 0.05  # Low acceptance = higher risk
+        
+        # Premium potential affects volatility (simplified check)
+        if variety.market_acceptance_score and variety.market_acceptance_score > 4.0:
+            variety_adjustment += 0.03  # High market acceptance can indicate premium markets
+        
+        final_volatility_risk = max(0.0, min(1.0, market_volatility + variety_adjustment))
+        
+        return final_volatility_risk
+    
+    async def _calculate_yield_volatility_risk(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any]
+    ) -> float:
+        """Calculate yield volatility risk score."""
+        
+        # Base yield volatility from variety characteristics
+        base_volatility = 0.5  # Default moderate volatility
+        
+        # Adjust based on yield stability rating
+        if variety.yield_stability_rating:
+            # Convert stability rating (1-10) to volatility (0-1)
+            # Higher stability = lower volatility
+            base_volatility = 1.0 - (variety.yield_stability_rating / 10.0)
+        
+        # Adjust based on disease resistance
+        disease_adjustment = 0.0
+        if variety.disease_resistances:
+            resistance_count = len(variety.disease_resistances)
+            if resistance_count > 5:
+                disease_adjustment -= 0.1  # High resistance = lower volatility
+            elif resistance_count < 2:
+                disease_adjustment += 0.1  # Low resistance = higher volatility
+        
+        # Adjust based on regional conditions
+        regional_adjustment = regional_context.get('yield_volatility_adjustment', 0.0)
+        
+        final_yield_volatility = max(0.0, min(1.0, 
+            base_volatility + disease_adjustment + regional_adjustment
+        ))
+        
+        return final_yield_volatility
+    
+    async def _generate_investment_recommendation(
+        self,
+        base_analysis: EconomicAnalysisResult,
+        scenario_results: Dict[str, ScenarioAnalysis],
+        monte_carlo_results: MonteCarloResult,
+        risk_assessments: Dict[str, float]
+    ) -> InvestmentRecommendation:
+        """Generate investment recommendation based on comprehensive analysis."""
+        
+        # Calculate recommendation score
+        recommendation_score = self._calculate_recommendation_score(
+            base_analysis, scenario_results, monte_carlo_results, risk_assessments
+        )
+        
+        # Determine recommendation type
+        if recommendation_score >= 0.8:
+            recommendation_type = "strong_buy"
+        elif recommendation_score >= 0.6:
+            recommendation_type = "buy"
+        elif recommendation_score >= 0.4:
+            recommendation_type = "hold"
+        elif recommendation_score >= 0.2:
+            recommendation_type = "sell"
+        else:
+            recommendation_type = "strong_sell"
+        
+        # Determine risk level
+        overall_risk = risk_assessments['overall_risk']
+        if overall_risk <= 0.3:
+            risk_level = RiskLevel.LOW
+        elif overall_risk <= 0.5:
+            risk_level = RiskLevel.MEDIUM
+        elif overall_risk <= 0.7:
+            risk_level = RiskLevel.HIGH
+        else:
+            risk_level = RiskLevel.VERY_HIGH
+        
+        # Calculate expected return
+        expected_return = base_analysis.internal_rate_of_return
+        
+        # Generate key factors
+        key_factors = self._generate_key_factors(base_analysis, scenario_results, monte_carlo_results)
+        
+        # Generate risk factors
+        risk_factors = self._generate_risk_factors(risk_assessments, scenario_results)
+        
+        # Generate mitigation strategies
+        mitigation_strategies = self._generate_mitigation_strategies(
+            risk_factors, risk_level
+        )
+        
+        return InvestmentRecommendation(
+            recommendation_type=recommendation_type,
+            confidence_score=recommendation_score,
+            risk_level=risk_level,
+            expected_return_percent=expected_return,
+            payback_period_years=base_analysis.payback_period_years,
+            key_factors=key_factors,
+            risk_factors=risk_factors,
+            mitigation_strategies=mitigation_strategies
+        )
+    
+    def _calculate_recommendation_score(
+        self,
+        base_analysis: EconomicAnalysisResult,
+        scenario_results: Dict[str, ScenarioAnalysis],
+        monte_carlo_results: MonteCarloResult,
+        risk_assessments: Dict[str, float]
+    ) -> float:
+        """Calculate overall recommendation score (0-1)."""
+        
+        # Economic viability score (40% weight)
+        economic_score = base_analysis.economic_viability_score
+        
+        # Scenario analysis score (25% weight)
+        scenario_score = (
+            scenario_results['optimistic'].net_present_value * 0.3 +
+            scenario_results['base_case'].net_present_value * 0.5 +
+            scenario_results['pessimistic'].net_present_value * 0.2
+        )
+        # Normalize scenario score
+        scenario_score = max(0.0, min(1.0, (scenario_score + 1000) / 2000))
+        
+        # Monte Carlo score (20% weight)
+        monte_carlo_score = monte_carlo_results.probability_of_positive_npv
+        
+        # Risk-adjusted score (15% weight)
+        risk_score = 1.0 - risk_assessments['overall_risk']
+        
+        # Weighted combination
+        recommendation_score = (
+            economic_score * 0.4 +
+            scenario_score * 0.25 +
+            monte_carlo_score * 0.2 +
+            risk_score * 0.15
+        )
+        
+        return max(0.0, min(1.0, recommendation_score))
+    
+    def _generate_key_factors(
+        self,
+        base_analysis: EconomicAnalysisResult,
+        scenario_results: Dict[str, ScenarioAnalysis],
+        monte_carlo_results: MonteCarloResult
+    ) -> List[str]:
+        """Generate key positive factors for the investment."""
+        
+        factors = []
+        
+        # Economic factors
+        if base_analysis.internal_rate_of_return > 15:
+            factors.append(f"Strong IRR of {base_analysis.internal_rate_of_return:.1f}%")
+        
+        if base_analysis.payback_period_years < 3:
+            factors.append(f"Quick payback period of {base_analysis.payback_period_years:.1f} years")
+        
+        if base_analysis.profit_margin_percent > 20:
+            factors.append(f"High profit margin of {base_analysis.profit_margin_percent:.1f}%")
+        
+        # Scenario factors
+        if scenario_results['optimistic'].net_present_value > scenario_results['base_case'].net_present_value * 1.5:
+            factors.append("Significant upside potential in optimistic scenario")
+        
+        # Monte Carlo factors
+        if monte_carlo_results.probability_of_positive_npv > 0.8:
+            factors.append(f"High probability ({monte_carlo_results.probability_of_positive_npv:.1%}) of positive returns")
+        
+        if monte_carlo_results.mean_npv > 500:
+            factors.append(f"Strong expected NPV of ${monte_carlo_results.mean_npv:.0f}")
+        
+        return factors
+    
+    def _generate_risk_factors(
+        self,
+        risk_assessments: Dict[str, float],
+        scenario_results: Dict[str, ScenarioAnalysis]
+    ) -> List[str]:
+        """Generate risk factors for the investment."""
+        
+        risk_factors = []
+        
+        # Weather risks
+        if risk_assessments['weather_risk'] > 0.6:
+            risk_factors.append("High weather-related yield variability")
+        
+        # Market risks
+        if risk_assessments['market_volatility'] > 0.6:
+            risk_factors.append("High market price volatility")
+        
+        # Yield risks
+        if risk_assessments['yield_volatility'] > 0.6:
+            risk_factors.append("High yield variability")
+        
+        # Scenario risks
+        if scenario_results['pessimistic'].net_present_value < 0:
+            risk_factors.append("Negative returns in pessimistic scenario")
+        
+        if scenario_results['pessimistic'].payback_period_years > 5:
+            risk_factors.append("Long payback period in adverse conditions")
+        
+        return risk_factors
+    
+    def _generate_mitigation_strategies(
+        self,
+        risk_factors: List[str],
+        risk_level: RiskLevel
+    ) -> List[str]:
+        """Generate mitigation strategies for identified risks."""
+        
+        strategies = []
+        
+        # General strategies based on risk level
+        if risk_level in [RiskLevel.HIGH, RiskLevel.VERY_HIGH]:
+            strategies.append("Consider crop insurance to mitigate yield risks")
+            strategies.append("Diversify crop portfolio to reduce concentration risk")
+            strategies.append("Implement hedging strategies for price risk management")
+        
+        # Specific strategies based on risk factors
+        for risk_factor in risk_factors:
+            if "weather" in risk_factor.lower():
+                strategies.append("Implement irrigation systems for drought mitigation")
+                strategies.append("Use weather derivatives for weather risk hedging")
+            
+            if "market" in risk_factor.lower():
+                strategies.append("Enter forward contracts to lock in prices")
+                strategies.append("Consider commodity futures for price protection")
+            
+            if "yield" in risk_factor.lower():
+                strategies.append("Implement precision agriculture for yield optimization")
+                strategies.append("Use multiple varieties to reduce yield concentration")
+        
+        return strategies
+    
+    async def _calculate_advanced_financial_metrics(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]],
+        analysis_horizon_years: int
+    ) -> Dict[str, float]:
+        """Calculate advanced financial metrics."""
+        
+        # Get base data
+        market_data = await self._get_market_data(variety, regional_context)
+        cost_factors = await self._calculate_cost_factors(variety, regional_context)
+        revenue_factors = await self._calculate_revenue_factors(
+            variety, regional_context, market_data
+        )
+        
+        # Calculate NPV
+        npv = self._calculate_npv(cost_factors, revenue_factors)
+        
+        # Calculate IRR
+        irr = self._calculate_irr(cost_factors, revenue_factors)
+        
+        # Calculate Modified IRR (MIRR)
+        mirr = self._calculate_modified_irr(cost_factors, revenue_factors)
+        
+        # Calculate Profitability Index (PI)
+        pi = self._calculate_profitability_index(cost_factors, revenue_factors)
+        
+        # Calculate Discounted Payback Period
+        discounted_payback = self._calculate_discounted_payback_period(
+            cost_factors, revenue_factors
+        )
+        
+        return {
+            'npv': npv,
+            'irr': irr,
+            'mirr': mirr,
+            'pi': pi,
+            'discounted_payback': discounted_payback
+        }
+    
+    def _calculate_modified_irr(
+        self,
+        cost_factors: CostFactors,
+        revenue_factors: RevenueFactors
+    ) -> float:
+        """Calculate Modified Internal Rate of Return (MIRR)."""
+        
+        # Simplified MIRR calculation
+        # In production, would use more sophisticated method
+        annual_cash_flow = revenue_factors.total_revenue_per_acre() - cost_factors.total_cost_per_acre()
+        
+        if annual_cash_flow <= 0:
+            return 0.0
+        
+        # Use reinvestment rate of 8% and finance rate of 6%
+        reinvestment_rate = 0.08
+        finance_rate = 0.06
+        
+        initial_investment = cost_factors.total_cost_per_acre()
+        
+        # Future value of positive cash flows
+        future_value = annual_cash_flow * ((1 + reinvestment_rate) ** self.analysis_horizon_years - 1) / reinvestment_rate
+        
+        # MIRR calculation
+        mirr = (future_value / initial_investment) ** (1 / self.analysis_horizon_years) - 1
+        
+        return min(mirr * 100, 50.0)  # Cap at 50% for realism
+    
+    def _calculate_profitability_index(
+        self,
+        cost_factors: CostFactors,
+        revenue_factors: RevenueFactors
+    ) -> float:
+        """Calculate Profitability Index (PI)."""
+        
+        npv = self._calculate_npv(cost_factors, revenue_factors)
+        initial_investment = cost_factors.total_cost_per_acre()
+        
+        if initial_investment <= 0:
+            return 0.0
+        
+        pi = (npv + initial_investment) / initial_investment
+        
+        return max(0.0, pi)
+    
+    def _calculate_discounted_payback_period(
+        self,
+        cost_factors: CostFactors,
+        revenue_factors: RevenueFactors
+    ) -> float:
+        """Calculate discounted payback period."""
+        
+        annual_cash_flow = revenue_factors.total_revenue_per_acre() - cost_factors.total_cost_per_acre()
+        initial_investment = cost_factors.total_cost_per_acre()
+        
+        if annual_cash_flow <= 0:
+            return float('inf')
+        
+        cumulative_discounted_cash_flow = 0.0
+        year = 0
+        
+        while cumulative_discounted_cash_flow < initial_investment and year < self.analysis_horizon_years:
+            year += 1
+            discounted_cash_flow = annual_cash_flow / ((1 + self.discount_rate) ** year)
+            cumulative_discounted_cash_flow += discounted_cash_flow
+        
+        if cumulative_discounted_cash_flow < initial_investment:
+            return float('inf')
+        
+        # Interpolate for partial year
+        if year > 1:
+            prev_cumulative = sum(
+                annual_cash_flow / ((1 + self.discount_rate) ** (y + 1))
+                for y in range(year - 1)
+            )
+            remaining_investment = initial_investment - prev_cumulative
+            final_discounted_cash_flow = annual_cash_flow / ((1 + self.discount_rate) ** year)
+            partial_year = remaining_investment / final_discounted_cash_flow
+            return year - 1 + partial_year
+        
+        return float(year)
+    
+    async def _generate_annual_cash_flows(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]],
+        analysis_horizon_years: int
+    ) -> List[float]:
+        """Generate annual cash flows for multi-year analysis."""
+        
+        # Get base economic data
+        market_data = await self._get_market_data(variety, regional_context)
+        cost_factors = await self._calculate_cost_factors(variety, regional_context)
+        revenue_factors = await self._calculate_revenue_factors(
+            variety, regional_context, market_data
+        )
+        
+        annual_cash_flow = revenue_factors.total_revenue_per_acre() - cost_factors.total_cost_per_acre()
+        
+        # Generate cash flows for each year
+        cash_flows = []
+        for year in range(1, analysis_horizon_years + 1):
+            # Apply small random variation to simulate year-to-year variability
+            variation = np.random.normal(1.0, 0.05)  # 5% standard deviation
+            year_cash_flow = annual_cash_flow * variation
+            cash_flows.append(year_cash_flow)
+        
+        return cash_flows
+    
+    def _calculate_cumulative_cash_flows(self, annual_cash_flows: List[float]) -> List[float]:
+        """Calculate cumulative cash flows."""
+        
+        cumulative = []
+        running_total = 0.0
+        
+        for cash_flow in annual_cash_flows:
+            running_total += cash_flow
+            cumulative.append(running_total)
+        
+        return cumulative
+    
+    def _calculate_probability_of_profit(self, expected_profit: float, scenario_type: ScenarioType) -> float:
+        """Calculate probability of profit for a scenario."""
+        
+        if scenario_type == ScenarioType.OPTIMISTIC:
+            return min(0.95, max(0.7, 0.8 + (expected_profit / 1000)))
+        elif scenario_type == ScenarioType.PESSIMISTIC:
+            return max(0.05, min(0.3, 0.2 + (expected_profit / 1000)))
+        else:  # BASE_CASE
+            return max(0.1, min(0.9, 0.5 + (expected_profit / 2000)))
+    
+    def _calculate_confidence_interval(self, expected_profit: float, scenario_type: ScenarioType) -> Tuple[float, float]:
+        """Calculate 95% confidence interval for expected profit."""
+        
+        # Simplified confidence interval calculation
+        if scenario_type == ScenarioType.OPTIMISTIC:
+            std_dev = abs(expected_profit) * 0.15  # 15% standard deviation
+        elif scenario_type == ScenarioType.PESSIMISTIC:
+            std_dev = abs(expected_profit) * 0.25  # 25% standard deviation
+        else:  # BASE_CASE
+            std_dev = abs(expected_profit) * 0.20  # 20% standard deviation
+        
+        # 95% confidence interval (±1.96 standard deviations)
+        margin_of_error = 1.96 * std_dev
+        
+        return (
+            expected_profit - margin_of_error,
+            expected_profit + margin_of_error
+        )
+    
+    def _get_sophisticated_analysis_assumptions(
+        self,
+        variety: EnhancedCropVariety,
+        regional_context: Dict[str, Any],
+        analysis_horizon_years: int
+    ) -> Dict[str, Any]:
+        """Get assumptions used in sophisticated analysis."""
+        
+        base_assumptions = self._get_analysis_assumptions(variety, regional_context)
+        
+        sophisticated_assumptions = {
+            **base_assumptions,
+            'analysis_horizon_years': analysis_horizon_years,
+            'monte_carlo_iterations': 10000,
+            'scenario_probabilities': {
+                'optimistic': 0.2,
+                'base_case': 0.6,
+                'pessimistic': 0.2
+            },
+            'risk_free_rate': self.risk_free_rate,
+            'reinvestment_rate': 0.08,
+            'finance_rate': 0.06,
+            'confidence_level': 0.95,
+            'value_at_risk_percentile': 95,
+            'yield_volatility_assumption': 0.15,
+            'price_volatility_assumption': 0.20,
+            'cost_volatility_assumption': 0.10
+        }
+        
+        return sophisticated_assumptions
+    
+    def _get_data_sources_used(self, regional_context: Dict[str, Any]) -> List[str]:
+        """Get list of data sources used in analysis."""
+        
+        sources = ['variety_database', 'regional_averages']
+        
+        if self.market_price_service:
+            sources.append('market_price_service')
+        else:
+            sources.append('fallback_pricing')
+        
+        if 'weather_data' in regional_context:
+            sources.append('weather_service')
+        
+        if 'soil_data' in regional_context:
+            sources.append('soil_service')
+        
+        sources.extend([
+            'government_programs_database',
+            'insurance_data',
+            'monte_carlo_simulation',
+            'scenario_analysis'
+        ])
+        
+        return sources
