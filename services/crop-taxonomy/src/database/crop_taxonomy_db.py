@@ -26,29 +26,26 @@ logger = logging.getLogger(__name__)
 # Add the databases directory to the Python path for imports
 sys.path.append('/Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro/databases/python')
 
-try:
-    from models import (
-        Base, Crop, CropTaxonomicHierarchy, CropAgriculturalClassification,
-        CropClimateAdaptations, CropSoilRequirements, CropNutritionalProfiles,
-        CropFilteringAttributes, CropAttributeTag, FarmerCropPreference,
-        EnhancedCropVarieties, CropRegionalAdaptations
-    )
-except ImportError as e:
-    logger.warning(f"Could not import database models: {e}")
-    # Create a minimal Base for testing
-    from sqlalchemy.ext.declarative import declarative_base
-    Base = declarative_base()
-
 # Import Pydantic models from our service
-from ..models.crop_taxonomy_models import (
-    CropTaxonomyResponse, CropSearchFilters, CropCompatibilityFilters
+from models.crop_taxonomy_models import (
+    ComprehensiveCropData, CropTaxonomyValidationResult,
+    CropTaxonomicHierarchy, CropAgriculturalClassification,
+    CropClimateAdaptations, CropSoilRequirements, CropNutritionalProfile
 )
-from ..models.crop_variety_models import (
-    VarietyRecommendationResponse, VarietyComparisonResponse
+from models.crop_variety_models import (
+    VarietyRecommendationResponse, VarietyComparisonResponse,
+    EnhancedCropVariety, CropRegionalAdaptation
 )
-from ..models.service_models import (
-    CropSearchResponse, RegionalAdaptationResponse
+from models.crop_filtering_models import (
+    CropFilteringAttributes, CropSearchRequest, CropSearchResult
 )
+from models.service_models import (
+    CropTaxonomyRequest, CropTaxonomyResponse, CropAttributeTagPayload
+)
+
+# Create a minimal Base for SQLAlchemy operations
+from sqlalchemy.ext.declarative import declarative_base
+Base = declarative_base()
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +101,7 @@ class CropTaxonomyDatabase:
     def search_crops(
         self,
         search_text: Optional[str] = None,
-        filters: Optional[CropSearchFilters] = None,
+        filters: Optional[CropSearchRequest] = None,
         limit: int = 50,
         offset: int = 0
     ) -> List[Dict[str, Any]]:
@@ -113,7 +110,7 @@ class CropTaxonomyDatabase:
         
         Args:
             search_text: Text to search in crop names, scientific names, keywords
-            filters: CropSearchFilters object with filtering criteria
+            filters: CropSearchRequest object with filtering criteria
             limit: Maximum number of results to return
             offset: Number of results to skip (for pagination)
             
@@ -162,7 +159,7 @@ class CropTaxonomyDatabase:
             logger.error(f"Error searching crops: {e}")
             raise
     
-    def _apply_crop_filters(self, query, filters: CropSearchFilters):
+    def _apply_crop_filters(self, query, filters: CropSearchRequest):
         """Apply filtering criteria to crop query."""
 
         # Geographic filters
@@ -592,200 +589,54 @@ class CropTaxonomyDatabase:
     # DATA CONVERSION HELPER METHODS
     # ============================================================================
     
-    def _crop_to_dict(self, crop: Crop) -> Dict[str, Any]:
-        """Convert SQLAlchemy Crop model to dictionary."""
+    def _crop_to_dict(self, crop: ComprehensiveCropData) -> Dict[str, Any]:
+        """Convert ComprehensiveCropData model to dictionary."""
         crop_dict = {
-            'crop_id': str(crop.crop_id),
+            'crop_id': str(crop.crop_id) if crop.crop_id else None,
             'crop_name': crop.crop_name,
-            'scientific_name': crop.scientific_name,
-            'crop_category': crop.crop_category,
-            'crop_family': crop.crop_family,
             'crop_code': crop.crop_code,
             'crop_status': crop.crop_status,
             'is_cover_crop': crop.is_cover_crop,
             'is_companion_crop': crop.is_companion_crop,
             'search_keywords': crop.search_keywords or [],
             'tags': crop.tags or [],
+            'data_source': crop.data_source,
+            'confidence_score': crop.confidence_score,
+            'created_at': crop.created_at,
+            'updated_at': crop.updated_at,
         }
 
-        attribute_tags_data = []
-        if crop.attribute_tags:
-            for tag in crop.attribute_tags:
-                attribute_tags_data.append(self._tag_to_dict(tag))
-
-        crop_dict['attribute_tags'] = attribute_tags_data
-
-        crop_dict['nitrogen_fixing'] = crop.nitrogen_fixing
-        if crop.typical_yield_range_min:
-            crop_dict['typical_yield_range'] = {
-                'min': crop.typical_yield_range_min,
-                'max': crop.typical_yield_range_max,
-                'units': crop.yield_units
-            }
-        else:
-            crop_dict['typical_yield_range'] = None
-
-        if crop.maturity_days_min:
-            crop_dict['maturity_days_range'] = {
-                'min': crop.maturity_days_min,
-                'max': crop.maturity_days_max
-            }
-        else:
-            crop_dict['maturity_days_range'] = None
-
-        crop_dict['growing_degree_days'] = crop.growing_degree_days
-
-        # Add taxonomic hierarchy if available
+        # Add taxonomic hierarchy data if available
         if crop.taxonomic_hierarchy:
-            th = crop.taxonomic_hierarchy
-            crop_dict['taxonomic_hierarchy'] = {
-                'kingdom': th.kingdom,
-                'phylum': th.phylum,
-                'class': th.class_,
-                'order': th.order_name,
-                'family': th.family,
-                'genus': th.genus,
-                'species': th.species,
-                'subspecies': th.subspecies,
-                'variety': th.variety,
-                'cultivar': th.cultivar,
-                'common_synonyms': th.common_synonyms or []
-            }
-
-        # Add agricultural classification if available
+            crop_dict['taxonomic_hierarchy'] = crop.taxonomic_hierarchy.dict()
+        
+        # Add agricultural classification data if available
         if crop.agricultural_classification:
-            ac = crop.agricultural_classification
-            crop_dict['agricultural_classification'] = {
-                'crop_category': ac.crop_category,
-                'crop_subcategory': ac.crop_subcategory,
-                'primary_use': ac.primary_use,
-                'secondary_uses': ac.secondary_uses or [],
-                'growth_habit': ac.growth_habit,
-                'plant_type': ac.plant_type,
-                'growth_form': ac.growth_form,
-                'photosynthesis_type': ac.photosynthesis_type,
-                'nitrogen_fixing': ac.nitrogen_fixing,
-                'mature_size': {
-                    'height_inches': {
-                        'min': ac.mature_height_min_inches,
-                        'max': ac.mature_height_max_inches
-                    } if ac.mature_height_min_inches else None,
-                    'width_inches': {
-                        'min': ac.mature_width_min_inches,
-                        'max': ac.mature_width_max_inches
-                    } if ac.mature_width_min_inches else None
-                },
-                'root_system_type': ac.root_system_type
-            }
-
-        # Add climate adaptations if available
+            crop_dict['agricultural_classification'] = crop.agricultural_classification.dict()
+        
+        # Add climate adaptations data if available
         if crop.climate_adaptations:
-            ca = crop.climate_adaptations
-            crop_dict['climate_adaptations'] = {
-                'temperature_range_f': {
-                    'optimal_min': ca.optimal_temp_min_f,
-                    'optimal_max': ca.optimal_temp_max_f,
-                    'absolute_min': ca.absolute_temp_min_f,
-                    'absolute_max': ca.absolute_temp_max_f
-                },
-                'hardiness_zones': ca.hardiness_zones or [],
-                'precipitation_requirements': {
-                    'annual_min_inches': ca.annual_precipitation_min_inches,
-                    'annual_max_inches': ca.annual_precipitation_max_inches,
-                    'water_requirement': ca.water_requirement
-                },
-                'tolerance': {
-                    'drought': ca.drought_tolerance,
-                    'heat': ca.heat_tolerance,
-                    'frost': ca.frost_tolerance,
-                    'flooding': ca.flooding_tolerance
-                },
-                'photoperiod_sensitivity': ca.photoperiod_sensitivity,
-                'vernalization_requirement': ca.vernalization_requirement,
-                'elevation_range_feet': {
-                    'min': ca.elevation_min_feet,
-                    'max': ca.elevation_max_feet
-                } if ca.elevation_min_feet else None
-            }
+            crop_dict['climate_adaptations'] = crop.climate_adaptations.dict()
         
-        # Add soil requirements if available
+        # Add soil requirements data if available
         if crop.soil_requirements:
-            sr = crop.soil_requirements
-            crop_dict['soil_requirements'] = {
-                'ph_range': {
-                    'optimal_min': sr.optimal_ph_min,
-                    'optimal_max': sr.optimal_ph_max,
-                    'tolerable_min': sr.tolerable_ph_min,
-                    'tolerable_max': sr.tolerable_ph_max
-                },
-                'texture_preferences': {
-                    'preferred': sr.preferred_textures or [],
-                    'tolerable': sr.tolerable_textures or []
-                },
-                'drainage_requirement': sr.drainage_requirement,
-                'tolerance': {
-                    'salinity': sr.salinity_tolerance,
-                    'alkalinity': sr.alkalinity_tolerance,
-                    'acidity': sr.acidity_tolerance,
-                    'compaction': sr.compaction_tolerance
-                },
-                'nutrient_requirements': {
-                    'nitrogen': sr.nitrogen_requirement,
-                    'phosphorus': sr.phosphorus_requirement,
-                    'potassium': sr.potassium_requirement
-                },
-                'organic_matter_preference': sr.organic_matter_preference
-            }
+            crop_dict['soil_requirements'] = crop.soil_requirements.dict()
         
-        # Add filtering attributes if available
+        # Add nutritional profile data if available
+        if crop.nutritional_profile:
+            crop_dict['nutritional_profile'] = crop.nutritional_profile.dict()
+        
+        # Add filtering attributes data if available
         if crop.filtering_attributes:
-            fa = crop.filtering_attributes
-            crop_dict['filtering_attributes'] = {
-                'filter_id': str(fa.filter_id) if fa.filter_id else None,
-                'crop_id': str(fa.crop_id) if fa.crop_id else None,
-                'seasonality': {
-                    'planting_season': fa.planting_season or [],
-                    'growing_season': fa.growing_season or [],
-                    'harvest_season': fa.harvest_season or []
-                },
-                'agricultural_systems': {
-                    'farming_systems': fa.farming_systems or [],
-                    'rotation_compatibility': fa.rotation_compatibility or [],
-                    'intercropping_compatible': fa.intercropping_compatible,
-                    'cover_crop_compatible': fa.cover_crop_compatible
-                },
-                'management': {
-                    'complexity': fa.management_complexity,
-                    'input_requirements': fa.input_requirements,
-                    'labor_requirements': fa.labor_requirements
-                },
-                'technology': {
-                    'precision_ag_compatible': fa.precision_ag_compatible,
-                    'gps_guidance_recommended': fa.gps_guidance_recommended,
-                    'sensor_monitoring_beneficial': fa.sensor_monitoring_beneficial
-                },
-                'sustainability': {
-                    'carbon_sequestration_potential': fa.carbon_sequestration_potential,
-                    'biodiversity_support': fa.biodiversity_support,
-                    'pollinator_value': fa.pollinator_value,
-                    'water_use_efficiency': fa.water_use_efficiency
-                },
-                'market': {
-                    'market_stability': fa.market_stability,
-                    'price_premium_potential': fa.price_premium_potential,
-                    'value_added_opportunities': fa.value_added_opportunities or []
-                },
-                'advanced_filters': {
-                    'pest_resistance_traits': fa.pest_resistance_traits or {},
-                    'market_class_filters': fa.market_class_filters or {},
-                    'certification_filters': fa.certification_filters or {},
-                    'seed_availability_filters': fa.seed_availability_filters or {}
-                }
-            }
+            crop_dict['filtering_attributes'] = crop.filtering_attributes.dict()
+
+        # Add trait profile data if available
+        if crop.trait_profile:
+            crop_dict['trait_profile'] = crop.trait_profile.dict()
 
         return crop_dict
 
-    def _tag_to_dict(self, tag: CropAttributeTag) -> Dict[str, Any]:
+    def _tag_to_dict(self, tag: CropAttributeTagPayload) -> Dict[str, Any]:
         """Convert a CropAttributeTag model to dictionary."""
         tag_dict = {
             'tag_id': str(tag.tag_id),
@@ -1013,7 +864,7 @@ class CropTaxonomyDatabase:
             logger.error("Error incrementing tag usage: %s", exc)
             raise
     
-    def _variety_to_dict(self, variety: EnhancedCropVarieties) -> Dict[str, Any]:
+    def _variety_to_dict(self, variety: EnhancedCropVariety) -> Dict[str, Any]:
         """Convert SQLAlchemy EnhancedCropVarieties model to dictionary."""
         yield_stability_value = None
         if variety.yield_stability_rating is not None:
@@ -1089,7 +940,7 @@ class CropTaxonomyDatabase:
             },
             'is_active': variety.is_active
         }
-    def _adaptation_to_dict(self, adaptation: CropRegionalAdaptations) -> Dict[str, Any]:
+    def _adaptation_to_dict(self, adaptation: CropRegionalAdaptation) -> Dict[str, Any]:
         """Convert SQLAlchemy CropRegionalAdaptations model to dictionary."""
         return {
             'adaptation_id': str(adaptation.adaptation_id),
@@ -1237,7 +1088,7 @@ class CropTaxonomyDatabase:
             logger.error("Error upserting preference profile: %s", exc)
             raise
 
-    def _preference_to_dict(self, record: FarmerCropPreference) -> Dict[str, Any]:
+    def _preference_to_dict(self, record: Any) -> Dict[str, Any]:
         """Convert preference record to dictionary representation."""
         result: Dict[str, Any] = {
             'preference_id': str(record.preference_id),
