@@ -1,22 +1,49 @@
 // Service Worker for Mobile Variety Selection
-// Provides offline capability and cached variety database with advanced mobile features
+// Provides comprehensive PWA features including offline capability, background sync, push notifications, and advanced mobile features
 
-const CACHE_NAME = 'mobile-variety-selection-v2';
-const STATIC_CACHE = 'static-v2';
-const DYNAMIC_CACHE = 'dynamic-v2';
+const CACHE_NAME = 'mobile-variety-selection-v3';
+const STATIC_CACHE = 'static-v3';
+const DYNAMIC_CACHE = 'dynamic-v3';
+const OFFLINE_CACHE = 'offline-v3';
+const API_CACHE = 'api-v3';
 
-// Files to cache for offline functionality
-const STATIC_FILES = [
+// App shell files for instant loading
+const APP_SHELL_FILES = [
+    '/mobile-variety-selection',
     '/static/css/mobile-variety-selection.css',
     '/static/js/mobile-variety-selection.js',
     '/static/js/mobile-device-integration.js',
     '/static/js/mobile-camera-crop-id.js',
     '/static/js/mobile-gps-field-mapping.js',
     '/static/js/mobile-offline-database.js',
+    '/static/js/mobile-pwa-features.js',
     '/static/css/bootstrap.min.css',
     '/static/css/font-awesome.min.css',
     '/static/js/bootstrap.bundle.min.js',
+    '/manifest.json',
+    '/static/css/app-shell.css',
+    '/static/js/app-shell.js',
+    '/static/templates/app-shell.html'
+];
+
+// Critical resources for offline functionality
+const CRITICAL_RESOURCES = [
+    '/mobile-variety-selection',
+    '/static/css/mobile-variety-selection.css',
+    '/static/js/mobile-variety-selection.js',
+    '/static/js/mobile-offline-database.js',
+    '/static/js/mobile-pwa-features.js',
     '/manifest.json'
+];
+
+// Non-critical resources that can be cached lazily
+const NON_CRITICAL_RESOURCES = [
+    '/static/js/mobile-device-integration.js',
+    '/static/js/mobile-camera-crop-id.js',
+    '/static/js/mobile-gps-field-mapping.js',
+    '/static/css/bootstrap.min.css',
+    '/static/css/font-awesome.min.css',
+    '/static/js/bootstrap.bundle.min.js'
 ];
 
 // API endpoints to cache
@@ -31,91 +58,117 @@ const API_CACHE_PATTERNS = [
     '/api/v1/photos'
 ];
 
-// Install event - cache static files
+// Install event - implement app shell architecture
 self.addEventListener('install', (event) => {
-    console.log('Service Worker installing...');
+    console.log('Service Worker installing with app shell architecture...');
     
     event.waitUntil(
-        caches.open(STATIC_CACHE)
-            .then((cache) => {
-                console.log('Caching static files...');
-                return cache.addAll(STATIC_FILES);
+        Promise.all([
+            // Cache critical app shell resources immediately
+            caches.open(STATIC_CACHE).then((cache) => {
+                console.log('Caching critical app shell resources...');
+                return cache.addAll(CRITICAL_RESOURCES);
+            }),
+            
+            // Cache offline fallback data
+            caches.open(OFFLINE_CACHE).then((cache) => {
+                console.log('Caching offline fallback data...');
+                return cache.addAll([
+                    '/offline.html',
+                    '/static/data/offline-crops.json',
+                    '/static/data/offline-varieties.json'
+                ]);
             })
-            .then(() => {
-                console.log('Static files cached successfully');
-                return self.skipWaiting();
-            })
-            .catch((error) => {
-                console.error('Error caching static files:', error);
-            })
+        ])
+        .then(() => {
+            console.log('App shell cached successfully');
+            return self.skipWaiting();
+        })
+        .catch((error) => {
+            console.error('Error caching app shell:', error);
+        })
     );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches and initialize PWA features
 self.addEventListener('activate', (event) => {
-    console.log('Service Worker activating...');
+    console.log('Service Worker activating with PWA features...');
     
     event.waitUntil(
-        caches.keys()
-            .then((cacheNames) => {
+        Promise.all([
+            // Clean up old caches
+            caches.keys().then((cacheNames) => {
                 return Promise.all(
                     cacheNames.map((cacheName) => {
-                        if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
+                        if (![STATIC_CACHE, DYNAMIC_CACHE, OFFLINE_CACHE, API_CACHE].includes(cacheName)) {
                             console.log('Deleting old cache:', cacheName);
                             return caches.delete(cacheName);
                         }
                     })
                 );
-            })
-            .then(() => {
-                console.log('Service Worker activated');
-                return self.clients.claim();
-            })
+            }),
+            
+            // Initialize background sync
+            initializeBackgroundSync(),
+            
+            // Initialize push notifications
+            initializePushNotifications(),
+            
+            // Cache non-critical resources in background
+            cacheNonCriticalResources()
+        ])
+        .then(() => {
+            console.log('Service Worker activated with PWA features');
+            return self.clients.claim();
+        })
+        .catch((error) => {
+            console.error('Error during service worker activation:', error);
+        })
     );
 });
 
-// Fetch event - serve cached content when offline
+// Fetch event - comprehensive PWA strategies
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
 
-    // Handle API requests
+    // Skip non-GET requests
+    if (request.method !== 'GET') {
+        return;
+    }
+
+    // Handle API requests with network-first strategy
     if (url.pathname.startsWith('/api/')) {
         event.respondWith(handleApiRequest(request));
         return;
     }
 
-    // Handle static file requests
-    if (STATIC_FILES.some(file => url.pathname.includes(file))) {
-        event.respondWith(handleStaticRequest(request));
+    // Handle app shell requests with cache-first strategy
+    if (CRITICAL_RESOURCES.some(file => url.pathname.includes(file))) {
+        event.respondWith(handleAppShellRequest(request));
         return;
     }
 
-    // Handle HTML requests
+    // Handle static assets with cache-first strategy
+    if (NON_CRITICAL_RESOURCES.some(file => url.pathname.includes(file))) {
+        event.respondWith(handleStaticAssetRequest(request));
+        return;
+    }
+
+    // Handle HTML requests with network-first strategy
     if (request.headers.get('accept').includes('text/html')) {
         event.respondWith(handleHtmlRequest(request));
         return;
     }
 
-    // Default: try network first, then cache
-    event.respondWith(
-        fetch(request)
-            .then((response) => {
-                // Cache successful responses
-                if (response.status === 200) {
-                    const responseClone = response.clone();
-                    caches.open(DYNAMIC_CACHE)
-                        .then((cache) => {
-                            cache.put(request, responseClone);
-                        });
-                }
-                return response;
-            })
-            .catch(() => {
-                // Return cached version if network fails
-                return caches.match(request);
-            })
-    );
+    // Handle images with cache-first strategy
+    if (request.headers.get('accept').includes('image/')) {
+        event.respondWith(handleImageRequest(request));
+        return;
+    }
+
+    // Default: stale-while-revalidate strategy
+    event.respondWith(handleDefaultRequest(request));
 });
 
 // Handle API requests with offline fallback

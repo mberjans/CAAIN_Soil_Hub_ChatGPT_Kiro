@@ -1,7 +1,7 @@
 {
   "name": "CAAIN Soil Hub - Mobile Variety Selection",
   "short_name": "Variety Selection",
-  "description": "Mobile-optimized crop variety selection and recommendation tool for farmers",
+  "description": "Mobile-optimized crop variety selection and recommendation tool for farmers with comprehensive PWA features",
   "start_url": "/mobile-variety-selection",
   "display": "standalone",
   "background_color": "#ffffff",
@@ -10,7 +10,7 @@
   "scope": "/",
   "lang": "en-US",
   "dir": "ltr",
-  "categories": ["agriculture", "productivity", "utilities"],
+  "categories": ["agriculture", "productivity", "utilities", "business", "education"],
   "icons": [
     {
       "src": "/static/icons/icon-72x72.png",
@@ -64,66 +64,99 @@
   "screenshots": [
     {
       "src": "/static/screenshots/mobile-home.png",
-      "sizes": "390x844",
+      "sizes": "1280x720",
       "type": "image/png",
-      "form_factor": "narrow",
+      "form_factor": "wide",
       "label": "Mobile variety selection home screen"
     },
     {
-      "src": "/static/screenshots/mobile-recommendations.png",
-      "sizes": "390x844",
+      "src": "/static/screenshots/mobile-variety-list.png",
+      "sizes": "750x1334",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Variety recommendations screen"
+      "label": "Mobile variety list view"
+    },
+    {
+      "src": "/static/screenshots/mobile-field-management.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile field management interface"
+    },
+    {
+      "src": "/static/screenshots/mobile-camera-analysis.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Mobile camera crop analysis"
     }
   ],
   "shortcuts": [
     {
-      "name": "Quick Crop Selection",
-      "short_name": "Crop Selection",
-      "description": "Quickly select crops for variety recommendations",
-      "url": "/mobile-variety-selection?step=2",
+      "name": "Variety Selection",
+      "short_name": "Varieties",
+      "description": "Quick access to crop variety selection",
+      "url": "/mobile-variety-selection",
       "icons": [
         {
-          "src": "/static/icons/shortcut-crop.png",
-          "sizes": "96x96"
+          "src": "/static/icons/shortcut-variety-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
         }
       ]
     },
     {
-      "name": "Saved Recommendations",
-      "short_name": "Saved",
-      "description": "View your saved variety recommendations",
-      "url": "/mobile-variety-selection?step=4&saved=true",
+      "name": "Field Management",
+      "short_name": "Fields",
+      "description": "Manage farm fields and locations",
+      "url": "/mobile-variety-selection?tab=fields",
       "icons": [
         {
-          "src": "/static/icons/shortcut-saved.png",
-          "sizes": "96x96"
+          "src": "/static/icons/shortcut-field-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Recommendations",
+      "short_name": "Recs",
+      "description": "View variety recommendations",
+      "url": "/mobile-variety-selection?tab=recommendations",
+      "icons": [
+        {
+          "src": "/static/icons/shortcut-recommendations-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Camera Analysis",
+      "short_name": "Camera",
+      "description": "Analyze crop photos",
+      "url": "/mobile-variety-selection?tab=camera",
+      "icons": [
+        {
+          "src": "/static/icons/shortcut-camera-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
         }
       ]
     }
   ],
-  "related_applications": [
-    {
-      "platform": "webapp",
-      "url": "https://caain-soil-hub.com/manifest.json"
-    }
-  ],
-  "prefer_related_applications": false,
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
-  "handle_links": "preferred",
-  "capture_links": "new-client",
   "file_handlers": [
     {
       "action": "/mobile-variety-selection",
       "accept": {
         "application/json": [".json"],
-        "text/csv": [".csv"]
+        "text/csv": [".csv"],
+        "text/plain": [".txt"],
+        "image/jpeg": [".jpg", ".jpeg"],
+        "image/png": [".png"],
+        "image/webp": [".webp"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"]
       }
     }
   ],
@@ -131,6 +164,18 @@
     {
       "protocol": "web+variety",
       "url": "/mobile-variety-selection?crop=%s"
+    },
+    {
+      "protocol": "web+field",
+      "url": "/mobile-variety-selection?field=%s"
+    },
+    {
+      "protocol": "web+recommendation",
+      "url": "/mobile-variety-selection?recommendation=%s"
+    },
+    {
+      "protocol": "web+caain",
+      "url": "/mobile-variety-selection?action=%s"
     }
   ],
   "share_target": {
@@ -143,22 +188,136 @@
       "url": "url",
       "files": [
         {
-          "name": "variety_data",
-          "accept": ["application/json", "text/csv"]
+          "name": "files",
+          "accept": ["image/*", ".json", ".csv", ".txt", ".xls", ".xlsx"]
         }
       ]
     }
   },
+  "background_sync": [
+    "save-recommendations",
+    "sync-varieties",
+    "sync-field-data",
+    "sync-photos",
+    "sync-user-preferences",
+    "sync-offline-data"
+  ],
+  "periodic_background_sync": {
+    "min_interval": 86400
+  },
+  "content_handlers": [
+    {
+      "url": "/mobile-variety-selection",
+      "action": "open"
+    }
+  ],
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "web_share_target": {
+    "action": "/mobile-variety-selection/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "scope_extensions": [
+    {
+      "origin": "https://caain-soil-hub.com"
+    }
+  ],
+  "isolation": "none",
+  "user_preferences": {
+    "color_scheme": "auto",
+    "reduced_motion": "auto"
+  },
+  "side_panel": {
+    "preferred_width": 400
+  },
+  "tab_strip": {
+    "home_tab": {
+      "icons": [
+        {
+          "src": "/static/icons/tab-home-24x24.png",
+          "sizes": "24x24",
+          "type": "image/png"
+        }
+      ]
+    },
+    "new_tab_button": {
+      "icons": [
+        {
+          "src": "/static/icons/tab-new-24x24.png",
+          "sizes": "24x24",
+          "type": "image/png"
+        }
+      ]
+    }
+  },
+  "widgets": [
+    {
+      "name": "Variety Recommendations",
+      "short_name": "Varieties",
+      "description": "Quick access to crop variety recommendations",
+      "tag": "variety-widget",
+      "template": "grid",
+      "data": {
+        "src": "/mobile-variety-selection/widget-data"
+      },
+      "screenshots": [
+        {
+          "src": "/static/screenshots/widget-variety.png",
+          "sizes": "400x300",
+          "type": "image/png",
+          "label": "Variety recommendations widget"
+        }
+      ],
+      "icons": [
+        {
+          "src": "/static/icons/widget-variety-64x64.png",
+          "sizes": "64x64",
+          "type": "image/png"
+        }
+      ],
+      "auth": false,
+      "update": 86400
+    }
+  ],
+  "note_taking": {
+    "new_note_url": "/mobile-variety-selection/new-note"
+  },
+  "run_on_os_login": "allowed",
+  "handle_share": true,
+  "handle_urls": true,
+  "lock_screen": {
+    "start_url": "/mobile-variety-selection/lock-screen",
+    "edge_side_panel": {
+      "preferred_width": 300
+    }
+  },
+  "file_system_access": true,
+  "web_identity": {
+    "providers": [
+      {
+        "protocol": "openid_connect",
+        "url": "https://caain-soil-hub.com/auth"
+      }
+    ]
+  },
   "permissions": [
-    "geolocation",
     "camera",
     "microphone",
-    "notifications"
+    "geolocation",
+    "notifications",
+    "background-sync",
+    "persistent-storage"
   ],
-  "features": [
-    "Cross Platform",
-    "fast",
-    "simple"
+  "related_applications": [
+    {
+      "platform": "webapp",
+      "url": "https://caain-soil-hub.com/manifest.json"
+    }
   ],
-  "iarc_rating_id": "e84b072d-71b3-4d3e-86ae-31a8ce4e53b7"
+  "prefer_related_applications": false
 }

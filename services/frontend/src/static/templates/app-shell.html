@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#28a745">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Variety Selection">
+    <meta name="msapplication-TileColor" content="#28a745">
+    <meta name="msapplication-TileImage" content="/static/icons/icon-144x144.png">
+    
+    <title>CAAIN Soil Hub - Mobile Variety Selection</title>
+    
+    <!-- Critical CSS -->
+    <link rel="stylesheet" href="/static/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/static/css/mobile-variety-selection.css">
+    <link rel="stylesheet" href="/static/css/app-shell.css">
+    
+    <!-- App Shell Meta Tags -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Variety Selection">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- App Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/icons/icon-16x16.png">
+    <link rel="apple-touch-icon" href="/static/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/icons/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/static/icons/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/static/icons/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/static/icons/icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/static/icons/icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/static/icons/icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/static/icons/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/static/icons/icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="/static/icons/icon-57x57.png">
+    
+    <!-- Preload Critical Resources -->
+    <link rel="preload" href="/static/js/mobile-variety-selection.js" as="script">
+    <link rel="preload" href="/static/js/mobile-pwa-features.js" as="script">
+    <link rel="preload" href="/static/js/app-shell.js" as="script">
+    <link rel="preload" href="/static/icons/icon-192x192.png" as="image">
+    <link rel="preload" href="/static/icons/icon-512x512.png" as="image">
+    
+    <!-- DNS Prefetch -->
+    <link rel="dns-prefetch" href="//fonts.googleapis.com">
+    <link rel="dns-prefetch" href="//cdnjs.cloudflare.com">
+    
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://caain-soil-hub.com" crossorigin>
+    
+    <!-- Prefetch Likely Next Pages -->
+    <link rel="prefetch" href="/mobile-variety-selection?tab=fields">
+    <link rel="prefetch" href="/mobile-variety-selection?tab=recommendations">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "CAAIN Soil Hub - Mobile Variety Selection",
+        "description": "Mobile-optimized crop variety selection and recommendation tool for farmers",
+        "url": "https://caain-soil-hub.com/mobile-variety-selection",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Organization",
+            "name": "CAAIN Soil Hub"
+        }
+    }
+    </script>
+</head>
+<body>
+    <!-- App Shell Container -->
+    <div id="app-shell" class="app-shell-container">
+        
+        <!-- Connection Status Indicator -->
+        <div id="connection-status" class="connection-status"></div>
+        
+        <!-- Offline Banner -->
+        <div id="offline-banner" class="offline-banner">
+            <span>📱</span> You're currently offline. Some features may be limited.
+        </div>
+        
+        <!-- App Installation Prompt -->
+        <div id="install-app-button" class="install-prompt" style="display: none;">
+            <div class="install-prompt-header">
+                <div class="install-prompt-icon">🌱</div>
+                <h3 class="install-prompt-title">Install CAAIN Soil Hub</h3>
+            </div>
+            <p class="install-prompt-description">
+                Get quick access to crop variety selection and recommendations right from your home screen.
+            </p>
+            <div class="install-prompt-actions">
+                <button class="install-btn">Install App</button>
+                <button class="dismiss-btn">Not Now</button>
+            </div>
+        </div>
+        
+        <!-- Main App Content -->
+        <main id="main-content" class="main-content">
+            <!-- Content will be loaded here -->
+        </main>
+        
+        <!-- Navigation -->
+        <nav id="app-navigation" class="app-navigation" style="display: none;">
+            <a href="/mobile-variety-selection" class="nav-item active">
+                <span class="nav-icon">🌱</span>
+                <span class="nav-label">Varieties</span>
+            </a>
+            <a href="/mobile-variety-selection?tab=fields" class="nav-item">
+                <span class="nav-icon">📍</span>
+                <span class="nav-label">Fields</span>
+            </a>
+            <a href="/mobile-variety-selection?tab=recommendations" class="nav-item">
+                <span class="nav-icon">💡</span>
+                <span class="nav-label">Recs</span>
+            </a>
+            <a href="/mobile-variety-selection?tab=camera" class="nav-item">
+                <span class="nav-icon">📷</span>
+                <span class="nav-label">Camera</span>
+            </a>
+        </nav>
+        
+        <!-- Footer -->
+        <footer id="app-footer" class="app-footer" style="display: none;">
+            <div class="footer-content">
+                <p>&copy; 2024 CAAIN Soil Hub. All rights reserved.</p>
+                <div class="footer-links">
+                    <a href="/privacy">Privacy</a>
+                    <a href="/terms">Terms</a>
+                    <a href="/support">Support</a>
+                </div>
+            </div>
+        </footer>
+        
+    </div>
+    
+    <!-- Critical JavaScript -->
+    <script src="/static/js/app-shell.js"></script>
+    <script src="/static/js/mobile-pwa-features.js"></script>
+    <script src="/static/js/mobile-variety-selection.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/static/sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered:', registration);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+    
+    <!-- App Shell Initialization -->
+    <script>
+        // Initialize app shell when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            // Show navigation and footer after app shell is ready
+            document.addEventListener('appShellReady', () => {
+                const navigation = document.getElementById('app-navigation');
+                const footer = document.getElementById('app-footer');
+                
+                if (navigation) navigation.style.display = 'flex';
+                if (footer) footer.style.display = 'block';
+            });
+        });
+    </script>
+    
+</body>
+</html>
