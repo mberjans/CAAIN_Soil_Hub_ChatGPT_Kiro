@@ -1,14 +1,18 @@
 // Service Worker for Mobile Variety Selection
-// Provides offline capability and cached variety database
+// Provides offline capability and cached variety database with advanced mobile features
 
-const CACHE_NAME = 'mobile-variety-selection-v1';
-const STATIC_CACHE = 'static-v1';
-const DYNAMIC_CACHE = 'dynamic-v1';
+const CACHE_NAME = 'mobile-variety-selection-v2';
+const STATIC_CACHE = 'static-v2';
+const DYNAMIC_CACHE = 'dynamic-v2';
 
 // Files to cache for offline functionality
 const STATIC_FILES = [
     '/static/css/mobile-variety-selection.css',
     '/static/js/mobile-variety-selection.js',
+    '/static/js/mobile-device-integration.js',
+    '/static/js/mobile-camera-crop-id.js',
+    '/static/js/mobile-gps-field-mapping.js',
+    '/static/js/mobile-offline-database.js',
     '/static/css/bootstrap.min.css',
     '/static/css/font-awesome.min.css',
     '/static/js/bootstrap.bundle.min.js',
@@ -19,7 +23,12 @@ const STATIC_FILES = [
 const API_CACHE_PATTERNS = [
     '/api/v1/crop-taxonomy/crops',
     '/api/v1/crop-taxonomy/crops/search',
-    '/api/v1/locations/search'
+    '/api/v1/locations/search',
+    '/api/v1/crop-analysis/identify',
+    '/api/v1/varieties',
+    '/api/v1/recommendations',
+    '/api/v1/fields',
+    '/api/v1/photos'
 ];
 
 // Install event - cache static files
@@ -256,8 +265,22 @@ function getOfflineFallback(pathname) {
 self.addEventListener('sync', (event) => {
     console.log('Background sync triggered:', event.tag);
     
-    if (event.tag === 'save-recommendations') {
-        event.waitUntil(syncSavedRecommendations());
+    switch (event.tag) {
+        case 'save-recommendations':
+            event.waitUntil(syncSavedRecommendations());
+            break;
+        case 'sync-varieties':
+            event.waitUntil(syncVarieties());
+            break;
+        case 'sync-field-data':
+            event.waitUntil(syncFieldData());
+            break;
+        case 'sync-photos':
+            event.waitUntil(syncPhotos());
+            break;
+        case 'sync-all':
+            event.waitUntil(syncAllData());
+            break;
     }
 });
 
@@ -406,4 +429,146 @@ async function cacheVarietyData(varietyData) {
     } catch (error) {
         console.error('Failed to cache variety data:', error);
     }
+}
+
+// Sync varieties from offline storage
+async function syncVarieties() {
+    try {
+        const pendingVarieties = await getPendingData('varieties');
+        
+        for (const variety of pendingVarieties) {
+            try {
+                const response = await fetch('/api/v1/varieties', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(variety)
+                });
+                
+                if (response.ok) {
+                    await removePendingData('varieties', variety.id);
+                    console.log('Synced variety:', variety.id);
+                }
+            } catch (error) {
+                console.error('Failed to sync variety:', error);
+            }
+        }
+    } catch (error) {
+        console.error('Variety sync failed:', error);
+    }
+}
+
+// Sync field data from offline storage
+async function syncFieldData() {
+    try {
+        const pendingFieldData = await getPendingData('fieldData');
+        
+        for (const fieldData of pendingFieldData) {
+            try {
+                const response = await fetch('/api/v1/fields', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(fieldData)
+                });
+                
+                if (response.ok) {
+                    await removePendingData('fieldData', fieldData.id);
+                    console.log('Synced field data:', fieldData.id);
+                }
+            } catch (error) {
+                console.error('Failed to sync field data:', error);
+            }
+        }
+    } catch (error) {
+        console.error('Field data sync failed:', error);
+    }
+}
+
+// Sync photos from offline storage
+async function syncPhotos() {
+    try {
+        const pendingPhotos = await getPendingData('photos');
+        
+        for (const photo of pendingPhotos) {
+            try {
+                const formData = new FormData();
+                formData.append('photo', photo.blob);
+                formData.append('metadata', JSON.stringify(photo.metadata));
+
+                const response = await fetch('/api/v1/photos', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    await removePendingData('photos', photo.id);
+                    console.log('Synced photo:', photo.id);
+                }
+            } catch (error) {
+                console.error('Failed to sync photo:', error);
+            }
+        }
+    } catch (error) {
+        console.error('Photo sync failed:', error);
+    }
+}
+
+// Sync all pending data
+async function syncAllData() {
+    await Promise.all([
+        syncSavedRecommendations(),
+        syncVarieties(),
+        syncFieldData(),
+        syncPhotos()
+    ]);
+    
+    // Notify main thread that sync is complete
+    const clients = await self.clients.matchAll();
+    clients.forEach(client => {
+        client.postMessage({
+            type: 'SYNC_COMPLETE',
+            data: { timestamp: Date.now() }
+        });
+    });
+}
+
+// Generic function to get pending data from IndexedDB
+async function getPendingData(storeName) {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('AFASOfflineDB', 1);
+        
+        request.onerror = () => reject(request.error);
+        
+        request.onsuccess = () => {
+            const db = request.result;
+            const transaction = db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            const getAllRequest = store.getAll();
+            
+            getAllRequest.onsuccess = () => resolve(getAllRequest.result);
+            getAllRequest.onerror = () => reject(getAllRequest.error);
+        };
+    });
+}
+
+// Generic function to remove pending data from IndexedDB
+async function removePendingData(storeName, id) {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open('AFASOfflineDB', 1);
+        
+        request.onerror = () => reject(request.error);
+        
+        request.onsuccess = () => {
+            const db = request.result;
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const deleteRequest = store.delete(id);
+            
+            deleteRequest.onsuccess = () => resolve();
+            deleteRequest.onerror = () => reject(deleteRequest.error);
+        };
+    });
 }
