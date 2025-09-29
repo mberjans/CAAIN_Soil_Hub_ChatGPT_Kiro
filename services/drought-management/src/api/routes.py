@@ -80,6 +80,13 @@ from ..services.soil_moisture_monitoring_service import SoilMoistureMonitoringSe
 from ..services.regional_drought_analysis_service import RegionalDroughtAnalysisService
 from ..services.irrigation_service import IrrigationManagementService
 from ..services.practice_effectiveness_service import PracticeEffectivenessService
+from ..services.cover_management_service import (
+    CoverManagementService,
+    CoverManagementRequest,
+    CoverManagementResponse,
+    CoverCropSpecies,
+    MulchMaterial
+)
 
 logger = logging.getLogger(__name__)
 
@@ -140,6 +147,13 @@ async def get_practice_effectiveness_service():
     """Get practice effectiveness service instance."""
     from ..services.practice_effectiveness_service import PracticeEffectivenessService
     service = PracticeEffectivenessService()
+    await service.initialize()
+    return service
+
+async def get_cover_management_service():
+    """Get cover management service instance."""
+    from ..services.cover_management_service import CoverManagementService
+    service = CoverManagementService()
     await service.initialize()
     return service
 
@@ -3035,6 +3049,257 @@ async def tillage_transition_planning_health():
                 "educational_resources",
                 "support_network",
                 "monitoring_framework"
+            ],
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        logger.error(f"Health check error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Service health check failed")
+
+
+# Cover Management Endpoints
+@router.post("/cover-management/recommendations", response_model=CoverManagementResponse)
+async def get_cover_management_recommendations(
+    request: CoverManagementRequest,
+    service: CoverManagementService = Depends(get_cover_management_service)
+):
+    """
+    Get comprehensive cover management recommendations for a field.
+    
+    This endpoint provides cover crop and mulching recommendations based on:
+    - Field characteristics and soil type
+    - Climate zone and weather patterns
+    - Management goals and budget constraints
+    - Available equipment and resources
+    
+    Agricultural Benefits:
+    - Improved soil health and organic matter
+    - Enhanced moisture conservation and drought resilience
+    - Weed suppression and pest management
+    - Erosion control and nutrient cycling
+    """
+    try:
+        logger.info(f"Getting cover management recommendations for field: {request.field_id}")
+        
+        response = await service.get_cover_management_recommendations(request)
+        
+        logger.info(f"Generated cover management recommendations for field: {request.field_id}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error getting cover management recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Cover management recommendations failed: {str(e)}")
+
+
+@router.post("/cover-management/biomass-calculation")
+async def calculate_biomass_production(
+    field_id: UUID = Body(..., description="Field identifier"),
+    cover_crop_species: str = Body(..., description="Cover crop species name"),
+    field_conditions: Dict[str, Any] = Body(..., description="Field conditions and characteristics"),
+    service: CoverManagementService = Depends(get_cover_management_service)
+):
+    """
+    Calculate expected biomass production for cover crop species.
+    
+    This endpoint calculates biomass production based on:
+    - Cover crop species characteristics
+    - Field soil quality and conditions
+    - Moisture availability and temperature suitability
+    - Expected nitrogen contribution and organic matter addition
+    """
+    try:
+        logger.info(f"Calculating biomass production for {cover_crop_species} in field: {field_id}")
+        
+        # Find the cover crop species
+        cover_crop = None
+        for species in service.cover_crop_database:
+            if species.common_name.lower() == cover_crop_species.lower():
+                cover_crop = species
+                break
+        
+        if not cover_crop:
+            raise HTTPException(status_code=404, detail=f"Cover crop species '{cover_crop_species}' not found")
+        
+        biomass_analysis = await service.calculate_biomass_production(cover_crop, field_conditions)
+        
+        logger.info(f"Biomass calculation completed for {cover_crop_species}")
+        return biomass_analysis
+        
+    except Exception as e:
+        logger.error(f"Error calculating biomass production: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Biomass calculation failed: {str(e)}")
+
+
+@router.post("/cover-management/moisture-conservation-assessment")
+async def assess_moisture_conservation(
+    mulch_materials: List[str] = Body(..., description="List of mulch material names"),
+    field_conditions: Dict[str, Any] = Body(..., description="Field conditions and characteristics"),
+    service: CoverManagementService = Depends(get_cover_management_service)
+):
+    """
+    Assess moisture conservation benefits of mulching strategies.
+    
+    This endpoint evaluates:
+    - Moisture retention capabilities of mulch materials
+    - Weed suppression effectiveness
+    - Cost-benefit analysis and ROI estimates
+    - Water savings potential and irrigation reduction
+    """
+    try:
+        logger.info("Assessing moisture conservation benefits")
+        
+        # Find the mulch materials
+        materials = []
+        for material_name in mulch_materials:
+            material = None
+            for mulch in service.mulch_database:
+                if mulch.material_name.lower() == material_name.lower():
+                    material = mulch
+                    break
+            
+            if not material:
+                raise HTTPException(status_code=404, detail=f"Mulch material '{material_name}' not found")
+            
+            materials.append(material)
+        
+        conservation_analysis = await service.assess_moisture_conservation(materials, field_conditions)
+        
+        logger.info("Moisture conservation assessment completed")
+        return conservation_analysis
+        
+    except Exception as e:
+        logger.error(f"Error assessing moisture conservation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Moisture conservation assessment failed: {str(e)}")
+
+
+@router.get("/cover-management/species")
+async def get_cover_crop_species(
+    crop_type: Optional[str] = Query(None, description="Filter by cover crop type"),
+    nitrogen_fixation: Optional[bool] = Query(None, description="Filter by nitrogen fixation capability"),
+    service: CoverManagementService = Depends(get_cover_management_service)
+):
+    """
+    Get available cover crop species with filtering options.
+    
+    Returns comprehensive information about cover crop species including:
+    - Species characteristics and growth habits
+    - Seeding rates and management requirements
+    - Benefits and suitability for different conditions
+    - Termination methods and timing recommendations
+    """
+    try:
+        logger.info("Getting cover crop species information")
+        
+        species_list = []
+        for species in service.cover_crop_database:
+            # Apply filters
+            if crop_type and species.crop_type.value != crop_type.lower():
+                continue
+            if nitrogen_fixation is not None and species.nitrogen_fixation != nitrogen_fixation:
+                continue
+            
+            species_info = {
+                "species_id": species.species_id,
+                "common_name": species.common_name,
+                "scientific_name": species.scientific_name,
+                "crop_type": species.crop_type.value,
+                "nitrogen_fixation": species.nitrogen_fixation,
+                "biomass_production_lbs_per_acre": species.biomass_production_lbs_per_acre,
+                "root_depth_inches": species.root_depth_inches,
+                "cold_tolerance_f": species.cold_tolerance_f,
+                "drought_tolerance": species.drought_tolerance,
+                "seeding_rate_lbs_per_acre": species.seeding_rate_lbs_per_acre,
+                "termination_methods": species.termination_methods,
+                "benefits": species.benefits
+            }
+            species_list.append(species_info)
+        
+        logger.info(f"Returned {len(species_list)} cover crop species")
+        return {
+            "species": species_list,
+            "total_count": len(species_list),
+            "filters_applied": {
+                "crop_type": crop_type,
+                "nitrogen_fixation": nitrogen_fixation
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting cover crop species: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Cover crop species retrieval failed: {str(e)}")
+
+
+@router.get("/cover-management/mulch-materials")
+async def get_mulch_materials(
+    mulch_type: Optional[str] = Query(None, description="Filter by mulch type"),
+    max_cost_per_cubic_yard: Optional[float] = Query(None, description="Maximum cost filter"),
+    service: CoverManagementService = Depends(get_cover_management_service)
+):
+    """
+    Get available mulch materials with filtering options.
+    
+    Returns comprehensive information about mulch materials including:
+    - Material characteristics and properties
+    - Cost and application requirements
+    - Moisture retention and weed suppression capabilities
+    - Soil health benefits and decomposition rates
+    """
+    try:
+        logger.info("Getting mulch materials information")
+        
+        materials_list = []
+        for material in service.mulch_database:
+            # Apply filters
+            if mulch_type and material.mulch_type.value != mulch_type.lower():
+                continue
+            if max_cost_per_cubic_yard and float(material.cost_per_cubic_yard) > max_cost_per_cubic_yard:
+                continue
+            
+            material_info = {
+                "material_id": material.material_id,
+                "material_name": material.material_name,
+                "mulch_type": material.mulch_type.value,
+                "cost_per_cubic_yard": float(material.cost_per_cubic_yard),
+                "application_rate_inches": material.application_rate_inches,
+                "moisture_retention_percent": material.moisture_retention_percent,
+                "weed_suppression_percent": material.weed_suppression_percent,
+                "decomposition_rate_months": material.decomposition_rate_months,
+                "soil_health_benefits": material.soil_health_benefits
+            }
+            materials_list.append(material_info)
+        
+        logger.info(f"Returned {len(materials_list)} mulch materials")
+        return {
+            "materials": materials_list,
+            "total_count": len(materials_list),
+            "filters_applied": {
+                "mulch_type": mulch_type,
+                "max_cost_per_cubic_yard": max_cost_per_cubic_yard
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting mulch materials: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Mulch materials retrieval failed: {str(e)}")
+
+
+@router.get("/cover-management/health")
+async def cover_management_health():
+    """Health check endpoint for cover management service."""
+    try:
+        return {
+            "status": "healthy",
+            "service": "cover-management",
+            "timestamp": datetime.utcnow(),
+            "features": [
+                "cover_crop_recommendations",
+                "mulching_strategies",
+                "biomass_calculations",
+                "moisture_conservation_assessment",
+                "species_database",
+                "materials_database",
+                "implementation_planning",
+                "cost_analysis"
             ],
             "version": "1.0.0"
         }
