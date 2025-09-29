@@ -62,6 +62,40 @@ class CropTimingProfile:
     winter_hardy: bool = False
 
 
+@dataclass
+class VarietyTimingProfile:
+    """Variety-specific timing and growth characteristics."""
+    
+    variety_id: str
+    variety_name: str
+    crop_name: str
+    relative_maturity: Optional[int] = None  # Relative maturity units (corn) or days
+    maturity_group: Optional[str] = None  # Maturity group classification
+    days_to_emergence: Optional[int] = None
+    days_to_flowering: Optional[int] = None
+    days_to_physiological_maturity: Optional[int] = None
+    heat_unit_requirements: Optional[int] = None  # Growing degree days
+    frost_sensitivity_adjustment: int = 0  # Days to adjust for frost sensitivity
+    market_timing_preference: Optional[str] = None  # "early", "mid", "late" season
+    harvest_window_days: int = 14  # Days harvest can be delayed without quality loss
+    stress_tolerances: List[str] = field(default_factory=list)  # drought, heat, cold
+    special_planting_notes: List[str] = field(default_factory=list)
+
+
+@dataclass
+class VarietyPlantingWindow(PlantingWindow):
+    """Enhanced planting window with variety-specific information."""
+    
+    variety_id: str
+    variety_name: str
+    relative_maturity: Optional[int] = None
+    maturity_group: Optional[str] = None
+    variety_specific_notes: List[str] = field(default_factory=list)
+    market_timing_considerations: List[str] = field(default_factory=list)
+    harvest_timing_flexibility: int = 14  # Days harvest can be delayed
+    variety_performance_factors: Dict[str, Any] = field(default_factory=dict)
+
+
 class PlantingDateCalculatorService:
     """Service for calculating optimal planting dates based on climate and crop requirements."""
     
@@ -102,6 +136,18 @@ class PlantingDateCalculatorService:
             except ImportError:
                 logger.warning("Enhanced weather service not available")
                 self.enhanced_weather_service = None
+        
+        # Import variety data service for variety-specific calculations
+        try:
+            from .knowledge_base import KnowledgeBase
+            self.knowledge_base = KnowledgeBase()
+        except ImportError:
+            try:
+                from ..services.knowledge_base import KnowledgeBase
+                self.knowledge_base = KnowledgeBase()
+            except ImportError:
+                logger.warning("Knowledge base not available for variety data")
+                self.knowledge_base = None
     
     def _build_crop_timing_database(self) -> Dict[str, CropTimingProfile]:
         """Build database of crop timing characteristics."""
@@ -643,6 +689,296 @@ class PlantingDateCalculatorService:
             planting_number += 1
         
         return succession_schedule
+    
+    async def calculate_variety_specific_planting_dates(
+        self,
+        variety_id: str,
+        variety_name: str,
+        crop_name: str,
+        location: LocationData,
+        planting_season: str = "spring"
+    ) -> VarietyPlantingWindow:
+        """
+        Calculate optimal planting dates for a specific variety.
+        
+        Args:
+            variety_id: Unique identifier for the variety
+            variety_name: Name of the variety
+            crop_name: Name of the crop
+            location: Location data with coordinates and climate info
+            planting_season: Target planting season ("spring", "summer", "fall")
+            
+        Returns:
+            VarietyPlantingWindow with variety-specific planting information
+        """
+        logger.info(f"Calculating variety-specific planting dates for {variety_name} ({variety_id}) at {location.latitude}, {location.longitude}")
+        
+        # Get variety timing profile
+        variety_profile = await self._get_variety_timing_profile(variety_id, variety_name, crop_name)
+        
+        # Get base crop timing profile
+        crop_profile = self.crop_timing_database.get(crop_name.lower())
+        if not crop_profile:
+            raise ValueError(f"No timing data available for crop: {crop_name}")
+        
+        # Get frost date information
+        frost_info = await self._get_frost_date_info(location)
+        
+        # Calculate base planting window
+        base_window = await self.calculate_planting_dates(crop_name, location, planting_season)
+        
+        # Apply variety-specific adjustments
+        variety_window = self._apply_variety_adjustments(
+            base_window, variety_profile, frost_info, location
+        )
+        
+        # Convert to VarietyPlantingWindow
+        return VarietyPlantingWindow(
+            variety_id=variety_id,
+            variety_name=variety_name,
+            relative_maturity=variety_profile.relative_maturity,
+            maturity_group=variety_profile.maturity_group,
+            crop_name=variety_window.crop_name,
+            optimal_date=variety_window.optimal_date,
+            earliest_safe_date=variety_window.earliest_safe_date,
+            latest_safe_date=variety_window.latest_safe_date,
+            planting_season=variety_window.planting_season,
+            safety_margin_days=variety_window.safety_margin_days,
+            confidence_score=variety_window.confidence_score,
+            frost_considerations=variety_window.frost_considerations,
+            climate_warnings=variety_window.climate_warnings,
+            growing_degree_days_required=variety_window.growing_degree_days_required,
+            expected_harvest_date=variety_window.expected_harvest_date,
+            variety_specific_notes=variety_profile.special_planting_notes,
+            market_timing_considerations=self._get_market_timing_considerations(variety_profile),
+            harvest_timing_flexibility=variety_profile.harvest_window_days,
+            variety_performance_factors=self._get_variety_performance_factors(variety_profile)
+        )
+    
+    async def _get_variety_timing_profile(
+        self, 
+        variety_id: str, 
+        variety_name: str, 
+        crop_name: str
+    ) -> VarietyTimingProfile:
+        """Get variety-specific timing profile from database or create default."""
+        
+        # Try to get variety data from knowledge base
+        if self.knowledge_base:
+            try:
+                variety_data = self.knowledge_base.get_crop_varieties(crop_name)
+                # Find matching variety
+                for variety in variety_data:
+                    if variety.get('variety_id') == variety_id or variety.get('variety_name') == variety_name:
+                        return VarietyTimingProfile(
+                            variety_id=variety_id,
+                            variety_name=variety_name,
+                            crop_name=crop_name,
+                            relative_maturity=variety.get('relative_maturity'),
+                            maturity_group=variety.get('maturity_group'),
+                            days_to_emergence=variety.get('days_to_emergence'),
+                            days_to_flowering=variety.get('days_to_flowering'),
+                            days_to_physiological_maturity=variety.get('days_to_physiological_maturity'),
+                            heat_unit_requirements=variety.get('heat_unit_requirements'),
+                            frost_sensitivity_adjustment=self._calculate_frost_sensitivity_adjustment(variety),
+                            market_timing_preference=self._determine_market_timing_preference(variety),
+                            harvest_window_days=variety.get('harvest_window_days', 14),
+                            stress_tolerances=variety.get('stress_tolerances', []),
+                            special_planting_notes=self._generate_special_planting_notes(variety)
+                        )
+            except Exception as e:
+                logger.warning(f"Could not retrieve variety data from knowledge base: {e}")
+        
+        # Fallback: Create default variety profile based on crop
+        return self._create_default_variety_profile(variety_id, variety_name, crop_name)
+    
+    def _create_default_variety_profile(
+        self, 
+        variety_id: str, 
+        variety_name: str, 
+        crop_name: str
+    ) -> VarietyTimingProfile:
+        """Create default variety profile when database data is not available."""
+        
+        crop_profile = self.crop_timing_database.get(crop_name.lower())
+        if not crop_profile:
+            raise ValueError(f"No timing data available for crop: {crop_name}")
+        
+        # Create default profile based on crop characteristics
+        return VarietyTimingProfile(
+            variety_id=variety_id,
+            variety_name=variety_name,
+            crop_name=crop_name,
+            relative_maturity=None,
+            maturity_group=None,
+            days_to_emergence=7,  # Default emergence
+            days_to_flowering=crop_profile.days_to_maturity // 2,  # Estimate flowering
+            days_to_physiological_maturity=crop_profile.days_to_maturity,
+            heat_unit_requirements=crop_profile.growing_degree_days,
+            frost_sensitivity_adjustment=self._get_default_frost_adjustment(crop_profile),
+            market_timing_preference="mid",
+            harvest_window_days=14,
+            stress_tolerances=[],
+            special_planting_notes=[f"Default profile for {variety_name}"]
+        )
+    
+    def _apply_variety_adjustments(
+        self,
+        base_window: PlantingWindow,
+        variety_profile: VarietyTimingProfile,
+        frost_info: FrostDateInfo,
+        location: LocationData
+    ) -> PlantingWindow:
+        """Apply variety-specific adjustments to base planting window."""
+        
+        # Start with base window
+        adjusted_window = PlantingWindow(
+            crop_name=base_window.crop_name,
+            optimal_date=base_window.optimal_date,
+            earliest_safe_date=base_window.earliest_safe_date,
+            latest_safe_date=base_window.latest_safe_date,
+            planting_season=base_window.planting_season,
+            safety_margin_days=base_window.safety_margin_days,
+            confidence_score=base_window.confidence_score,
+            frost_considerations=base_window.frost_considerations.copy(),
+            climate_warnings=base_window.climate_warnings.copy(),
+            growing_degree_days_required=base_window.growing_degree_days_required,
+            expected_harvest_date=base_window.expected_harvest_date
+        )
+        
+        # Apply frost sensitivity adjustments
+        if variety_profile.frost_sensitivity_adjustment != 0:
+            adjusted_window.optimal_date += timedelta(days=variety_profile.frost_sensitivity_adjustment)
+            adjusted_window.earliest_safe_date += timedelta(days=variety_profile.frost_sensitivity_adjustment)
+            adjusted_window.latest_safe_date += timedelta(days=variety_profile.frost_sensitivity_adjustment)
+            
+            if variety_profile.frost_sensitivity_adjustment > 0:
+                adjusted_window.frost_considerations.append(
+                    f"Variety-specific delay: {variety_profile.frost_sensitivity_adjustment} days later planting recommended"
+                )
+            else:
+                adjusted_window.frost_considerations.append(
+                    f"Variety-specific early planting: {abs(variety_profile.frost_sensitivity_adjustment)} days earlier possible"
+                )
+        
+        # Apply maturity adjustments
+        if variety_profile.days_to_physiological_maturity:
+            maturity_difference = variety_profile.days_to_physiological_maturity - base_window.growing_degree_days_required
+            if maturity_difference != 0:
+                # Adjust harvest date
+                adjusted_window.expected_harvest_date = adjusted_window.optimal_date + timedelta(
+                    days=variety_profile.days_to_physiological_maturity
+                )
+                
+                # Add maturity-specific notes
+                if maturity_difference > 0:
+                    adjusted_window.frost_considerations.append(
+                        f"Longer maturity variety: {maturity_difference} additional days to harvest"
+                    )
+                else:
+                    adjusted_window.frost_considerations.append(
+                        f"Shorter maturity variety: {abs(maturity_difference)} fewer days to harvest"
+                    )
+        
+        # Apply heat unit adjustments
+        if variety_profile.heat_unit_requirements:
+            adjusted_window.growing_degree_days_required = variety_profile.heat_unit_requirements
+            
+            # Validate against available heat units
+            climate_zone = getattr(location, 'climate_zone', None)
+            if climate_zone:
+                zone_gdd_estimates = {
+                    "3a": 1800, "3b": 2000, "4a": 2200, "4b": 2400,
+                    "5a": 2600, "5b": 2800, "6a": 3000, "6b": 3200,
+                    "7a": 3400, "7b": 3600, "8a": 3800, "8b": 4000
+                }
+                
+                if climate_zone in zone_gdd_estimates:
+                    available_gdd = zone_gdd_estimates[climate_zone]
+                    required_gdd = variety_profile.heat_unit_requirements
+                    
+                    if available_gdd < required_gdd:
+                        adjusted_window.climate_warnings.append(
+                            f"Variety requires {required_gdd} heat units, but only ~{available_gdd} available in this zone"
+                        )
+                        adjusted_window.confidence_score *= 0.8
+        
+        # Apply stress tolerance considerations
+        for tolerance in variety_profile.stress_tolerances:
+            if tolerance == "drought":
+                adjusted_window.climate_warnings.append("Drought-tolerant variety - suitable for dry conditions")
+            elif tolerance == "heat":
+                adjusted_window.climate_warnings.append("Heat-tolerant variety - good for hot climates")
+            elif tolerance == "cold":
+                adjusted_window.frost_considerations.append("Cold-tolerant variety - can handle cooler conditions")
+        
+        return adjusted_window
+    
+    def _calculate_frost_sensitivity_adjustment(self, variety_data: Dict[str, Any]) -> int:
+        """Calculate frost sensitivity adjustment based on variety characteristics."""
+        # This would analyze variety-specific frost tolerance data
+        # For now, return 0 (no adjustment)
+        return 0
+    
+    def _determine_market_timing_preference(self, variety_data: Dict[str, Any]) -> str:
+        """Determine market timing preference based on variety characteristics."""
+        # Analyze variety characteristics to determine market timing
+        maturity_days = variety_data.get('days_to_physiological_maturity', 0)
+        if maturity_days < 100:
+            return "early"
+        elif maturity_days > 130:
+            return "late"
+        else:
+            return "mid"
+    
+    def _generate_special_planting_notes(self, variety_data: Dict[str, Any]) -> List[str]:
+        """Generate special planting notes based on variety characteristics."""
+        notes = []
+        
+        # Add notes based on variety traits
+        if variety_data.get('disease_resistance'):
+            notes.append(f"Disease resistance: {', '.join(variety_data['disease_resistance'])}")
+        
+        if variety_data.get('herbicide_tolerance'):
+            notes.append(f"Herbicide tolerance: {', '.join(variety_data['herbicide_tolerance'])}")
+        
+        if variety_data.get('special_traits'):
+            notes.append(f"Special traits: {', '.join(variety_data['special_traits'])}")
+        
+        return notes
+    
+    def _get_default_frost_adjustment(self, crop_profile: CropTimingProfile) -> int:
+        """Get default frost adjustment based on crop frost tolerance."""
+        adjustments = {
+            "tolerant": -7,      # Can plant 1 week earlier
+            "sensitive": 0,      # No adjustment
+            "very_sensitive": 7  # Plant 1 week later
+        }
+        return adjustments.get(crop_profile.frost_tolerance, 0)
+    
+    def _get_market_timing_considerations(self, variety_profile: VarietyTimingProfile) -> List[str]:
+        """Get market timing considerations for the variety."""
+        considerations = []
+        
+        if variety_profile.market_timing_preference:
+            if variety_profile.market_timing_preference == "early":
+                considerations.append("Early season variety - plant early for early harvest")
+            elif variety_profile.market_timing_preference == "late":
+                considerations.append("Late season variety - plant later for late harvest")
+            else:
+                considerations.append("Mid-season variety - flexible planting timing")
+        
+        return considerations
+    
+    def _get_variety_performance_factors(self, variety_profile: VarietyTimingProfile) -> Dict[str, Any]:
+        """Get variety performance factors for analysis."""
+        return {
+            "relative_maturity": variety_profile.relative_maturity,
+            "maturity_group": variety_profile.maturity_group,
+            "heat_unit_requirements": variety_profile.heat_unit_requirements,
+            "stress_tolerances": variety_profile.stress_tolerances,
+            "harvest_window_days": variety_profile.harvest_window_days
+        }
     
     async def get_multiple_season_plantings(
         self,

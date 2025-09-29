@@ -6,7 +6,7 @@ FastAPI routes for planting date calculations and timing recommendations.
 
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from datetime import date, datetime, timedelta
 import logging
 
@@ -15,14 +15,16 @@ try:
     from ..services.planting_date_service import (
         planting_date_service,
         PlantingWindow,
-        FrostDateInfo
+        FrostDateInfo,
+        VarietyPlantingWindow
     )
 except ImportError:
     from models.agricultural_models import LocationData
     from services.planting_date_service import (
         planting_date_service, 
         PlantingWindow,
-        FrostDateInfo
+        FrostDateInfo,
+        VarietyPlantingWindow
     )
 
 logger = logging.getLogger(__name__)
@@ -33,6 +35,26 @@ class PlantingDateRequest(BaseModel):
     """Request for planting date calculations."""
     
     crop_name: str = Field(..., description="Name of the crop to plant")
+    location: LocationData = Field(..., description="Farm location data")
+    planting_season: str = Field(
+        default="spring", 
+        description="Target planting season"
+    )
+    
+    @validator('planting_season')
+    def validate_season(cls, v):
+        valid_seasons = {"spring", "summer", "fall", "winter"}
+        if v.lower() not in valid_seasons:
+            raise ValueError(f"Invalid season. Must be one of: {', '.join(valid_seasons)}")
+        return v.lower()
+
+
+class VarietyPlantingDateRequest(BaseModel):
+    """Request for variety-specific planting date calculations."""
+    
+    variety_id: str = Field(..., description="Unique identifier for the variety")
+    variety_name: str = Field(..., description="Name of the variety")
+    crop_name: str = Field(..., description="Name of the crop")
     location: LocationData = Field(..., description="Farm location data")
     planting_season: str = Field(
         default="spring", 
@@ -107,6 +129,30 @@ class PlantingWindowResponse(BaseModel):
     expected_harvest_date: Optional[date] = None
 
 
+class VarietyPlantingWindowResponse(BaseModel):
+    """Response containing variety-specific planting window information."""
+    
+    variety_id: str
+    variety_name: str
+    crop_name: str
+    optimal_date: date
+    earliest_safe_date: date
+    latest_safe_date: date
+    planting_season: str
+    safety_margin_days: int
+    confidence_score: float
+    frost_considerations: List[str]
+    climate_warnings: List[str]
+    growing_degree_days_required: Optional[int] = None
+    expected_harvest_date: Optional[date] = None
+    relative_maturity: Optional[int] = None
+    maturity_group: Optional[str] = None
+    variety_specific_notes: List[str] = []
+    market_timing_considerations: List[str] = []
+    harvest_timing_flexibility: int = 14
+    variety_performance_factors: Dict[str, Any] = {}
+
+
 class FrostDateResponse(BaseModel):
     """Response containing frost date information."""
     
@@ -173,6 +219,64 @@ async def calculate_planting_dates(request: PlantingDateRequest):
         raise HTTPException(
             status_code=500,
             detail=f"Error calculating planting dates: {str(e)}"
+        )
+
+
+@router.post("/variety-specific-dates", response_model=VarietyPlantingWindowResponse)
+async def calculate_variety_specific_planting_dates(request: VarietyPlantingDateRequest):
+    """
+    Calculate optimal planting dates for a specific variety.
+    
+    This endpoint provides variety-specific planting recommendations including:
+    - Variety-specific optimal planting dates
+    - Maturity-based timing adjustments
+    - Heat unit requirements validation
+    - Frost sensitivity considerations
+    - Market timing recommendations
+    - Harvest timing flexibility
+    """
+    try:
+        logger.info(f"Calculating variety-specific planting dates for {request.variety_name} ({request.variety_id}) at {request.location.latitude}, {request.location.longitude}")
+        
+        # Calculate variety-specific planting window
+        variety_window = await planting_date_service.calculate_variety_specific_planting_dates(
+            variety_id=request.variety_id,
+            variety_name=request.variety_name,
+            crop_name=request.crop_name,
+            location=request.location,
+            planting_season=request.planting_season
+        )
+        
+        # Convert to response model
+        return VarietyPlantingWindowResponse(
+            variety_id=variety_window.variety_id,
+            variety_name=variety_window.variety_name,
+            crop_name=variety_window.crop_name,
+            optimal_date=variety_window.optimal_date,
+            earliest_safe_date=variety_window.earliest_safe_date,
+            latest_safe_date=variety_window.latest_safe_date,
+            planting_season=variety_window.planting_season,
+            safety_margin_days=variety_window.safety_margin_days,
+            confidence_score=variety_window.confidence_score,
+            frost_considerations=variety_window.frost_considerations,
+            climate_warnings=variety_window.climate_warnings,
+            growing_degree_days_required=variety_window.growing_degree_days_required,
+            expected_harvest_date=variety_window.expected_harvest_date,
+            relative_maturity=variety_window.relative_maturity,
+            maturity_group=variety_window.maturity_group,
+            variety_specific_notes=variety_window.variety_specific_notes,
+            market_timing_considerations=variety_window.market_timing_considerations,
+            harvest_timing_flexibility=variety_window.harvest_timing_flexibility,
+            variety_performance_factors=variety_window.variety_performance_factors
+        )
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error calculating variety-specific planting dates: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error calculating variety-specific planting dates: {str(e)}"
         )
 
 
