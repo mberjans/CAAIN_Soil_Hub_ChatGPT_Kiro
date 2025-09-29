@@ -12,7 +12,7 @@ from datetime import datetime, date, timedelta
 from uuid import UUID, uuid4
 from decimal import Decimal
 
-from ..models.personalized_alert_models import (
+from src.models.personalized_alert_models import (
     PersonalizedAlertConfig,
     PersonalizedAlertThreshold,
     NotificationPreference,

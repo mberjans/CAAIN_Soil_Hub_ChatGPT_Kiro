@@ -17,7 +17,7 @@ from ..models.farm_infrastructure_models import (
     InfrastructureAssessmentResponse, EquipmentInventory, EquipmentCategory,
     EquipmentCondition, EquipmentOwnershipType
 )
-from ..services.infrastructure_service import FarmInfrastructureAssessmentService
+from services.infrastructure_service import FarmInfrastructureAssessmentService
 
 logger = logging.getLogger(__name__)
 

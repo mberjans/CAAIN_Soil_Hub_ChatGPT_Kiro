@@ -9,8 +9,8 @@ import logging
 import asyncio
 import math
 from typing import List, Optional, Dict, Any, Tuple
-from datetime import datetime, timedelta, date
-from uuid import UUID
+from datetime import datetime, timedelta, date, UTC
+from uuid import UUID, uuid4
 from decimal import Decimal
 import numpy as np
 
@@ -108,12 +108,12 @@ class DroughtMonitoringService:
             
             # Create response
             response = DroughtMonitoringResponse(
-                monitoring_id=UUID(),
+                monitoring_id=uuid4(),
                 farm_location_id=request.farm_location_id,
                 status="active",
                 active_alerts=[],
                 monitoring_data=initial_data,
-                next_check_time=datetime.utcnow() + timedelta(hours=1)
+                next_check_time=datetime.now(UTC) + timedelta(hours=1)
             )
             
             logger.info(f"Drought monitoring setup completed for farm: {request.farm_location_id}")
@@ -154,7 +154,7 @@ class DroughtMonitoringService:
             next_check_time = await self._calculate_next_check_time(config)
             
             response = DroughtMonitoringResponse(
-                monitoring_id=UUID(),
+                monitoring_id=uuid4(),
                 farm_location_id=farm_location_id,
                 status=status,
                 active_alerts=active_alerts,
@@ -243,7 +243,7 @@ class DroughtMonitoringService:
             
             # Compile results
             drought_indices = {
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(UTC),
                 "field_id": field_id,
                 "spi": {
                     "1_month": spi_values[0],
@@ -295,7 +295,7 @@ class DroughtMonitoringService:
             
             # Process and enhance NOAA data
             enhanced_data = {
-                "timestamp": datetime.utcnow(),
+                "timestamp": datetime.now(UTC),
                 "farm_location_id": farm_location_id,
                 "noaa_drought_category": noaa_data.get("drought_category"),
                 "drought_intensity": noaa_data.get("drought_intensity"),
@@ -360,8 +360,8 @@ class DroughtMonitoringService:
             "alert_thresholds": request.alert_thresholds,
             "notification_preferences": request.notification_preferences,
             "integration_services": request.integration_services,
-            "created_at": datetime.utcnow(),
-            "last_updated": datetime.utcnow()
+            "created_at": datetime.now(UTC),
+            "last_updated": datetime.now(UTC)
         }
     
     async def _setup_data_collection(self, request: DroughtMonitoringRequest):
@@ -421,7 +421,7 @@ class DroughtMonitoringService:
         logger.info(f"Collecting initial data for farm: {request.farm_location_id}")
         
         initial_data = {
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(UTC),
             "farm_location_id": request.farm_location_id,
             "fields": {}
         }
@@ -440,7 +440,7 @@ class DroughtMonitoringService:
         logger.info(f"Collecting current data for farm: {farm_location_id}")
         
         current_data = {
-            "timestamp": datetime.utcnow(),
+            "timestamp": datetime.now(UTC),
             "farm_location_id": farm_location_id,
             "fields": {}
         }
@@ -525,7 +525,7 @@ class DroughtMonitoringService:
                     "severity": "high",
                     "message": f"Critical soil moisture level: {soil_moisture}%",
                     "recommendation": "Immediate irrigation required",
-                    "timestamp": datetime.utcnow()
+                    "timestamp": datetime.now(UTC)
                 })
             elif soil_moisture < config["alert_thresholds"].get("soil_moisture_low", 30.0):
                 alerts.append({
@@ -534,7 +534,7 @@ class DroughtMonitoringService:
                     "severity": "medium",
                     "message": f"Low soil moisture level: {soil_moisture}%",
                     "recommendation": "Consider irrigation or conservation practices",
-                    "timestamp": datetime.utcnow()
+                    "timestamp": datetime.now(UTC)
                 })
         
         # Check weather alerts
@@ -545,7 +545,7 @@ class DroughtMonitoringService:
                 "severity": "medium",
                 "message": f"High temperature: {farm_weather['temperature_avg']}°C",
                 "recommendation": "Monitor crop stress and consider irrigation",
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.now(UTC)
             })
         
         # Check drought risk alerts
@@ -556,7 +556,7 @@ class DroughtMonitoringService:
                 "severity": "high",
                 "message": f"High drought risk: {drought_risk:.1f}",
                 "recommendation": "Implement drought mitigation measures",
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.now(UTC)
             })
         
         return alerts
@@ -581,13 +581,13 @@ class DroughtMonitoringService:
         frequency = config["monitoring_frequency"]
         
         if frequency == "continuous":
-            return datetime.utcnow() + timedelta(minutes=15)
+            return datetime.now(UTC) + timedelta(minutes=15)
         elif frequency == "hourly":
-            return datetime.utcnow() + timedelta(hours=1)
+            return datetime.now(UTC) + timedelta(hours=1)
         elif frequency == "daily":
-            return datetime.utcnow() + timedelta(days=1)
+            return datetime.now(UTC) + timedelta(days=1)
         else:
-            return datetime.utcnow() + timedelta(hours=6)  # Default
+            return datetime.now(UTC) + timedelta(hours=6)  # Default
     
     async def _get_soil_moisture_sensors(self, field_id: UUID) -> List[Dict[str, Any]]:
         """Get soil moisture sensors for a field."""
@@ -597,13 +597,13 @@ class DroughtMonitoringService:
                 "sensor_id": f"sensor_{field_id}_surface",
                 "depth_cm": 10,
                 "status": "active",
-                "last_reading": datetime.utcnow()
+                "last_reading": datetime.now(UTC)
             },
             {
                 "sensor_id": f"sensor_{field_id}_deep",
                 "depth_cm": 30,
                 "status": "active",
-                "last_reading": datetime.utcnow()
+                "last_reading": datetime.now(UTC)
             }
         ]
     
@@ -613,7 +613,7 @@ class DroughtMonitoringService:
         return {
             "station_id": f"weather_{field_id}",
             "status": "active",
-            "last_reading": datetime.utcnow(),
+            "last_reading": datetime.now(UTC),
             "capabilities": ["temperature", "humidity", "precipitation", "wind"]
         }
     
@@ -623,7 +623,7 @@ class DroughtMonitoringService:
         return {
             "monitoring_type": "satellite_imagery",
             "frequency": "weekly",
-            "last_update": datetime.utcnow(),
+            "last_update": datetime.now(UTC),
             "indicators": ["NDVI", "crop_health", "stress_level"]
         }
     
@@ -709,7 +709,7 @@ class DroughtMonitoringService:
                 "severity": "high",
                 "message": f"3-month SPI indicates severe drought conditions: {spi_3m:.2f}",
                 "recommendation": "Implement immediate drought mitigation measures",
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.now(UTC)
             })
         
         return alerts
@@ -726,7 +726,7 @@ class DroughtMonitoringService:
                 "severity": "medium",
                 "message": f"Low precipitation forecast: {avg_precip:.1f}mm/day average",
                 "recommendation": "Monitor soil moisture closely and prepare irrigation",
-                "timestamp": datetime.utcnow()
+                "timestamp": datetime.now(UTC)
             })
         
         return alerts
@@ -741,7 +741,7 @@ class DroughtMonitoringService:
             "severity": "medium",
             "message": "Soil moisture levels declining over past week",
             "recommendation": "Consider irrigation or conservation practices",
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.now(UTC)
         })
         
         return alerts
@@ -864,7 +864,7 @@ class NOAADroughtProvider:
             "drought_start_date": "2024-01-15",
             "drought_duration_weeks": 8,
             "confidence_level": 0.85,
-            "last_updated": datetime.utcnow()
+            "last_updated": datetime.now(UTC)
         }
 
 
@@ -911,7 +911,7 @@ class ComprehensiveAlertSystem:
         self.alert_configs[str(farm_location_id)] = {
             "thresholds": thresholds,
             "notification_preferences": notification_preferences,
-            "created_at": datetime.utcnow(),
+            "created_at": datetime.now(UTC),
             "alert_history": []
         }
     
@@ -928,6 +928,185 @@ class ComprehensiveAlertSystem:
                 alert,
                 config["notification_preferences"]
             )
+
+
+    async def create_alert_subscription(self, request) -> 'AlertSubscriptionResponse':
+        """
+        Create drought alert subscription for a farm location.
+        
+        This method allows farmers to:
+        - Set up customizable alert thresholds for different conditions
+        - Choose notification channels (email, SMS, push notifications)
+        - Configure escalation rules for critical situations
+        - Set up custom triggers based on specific field conditions
+        - Manage notification frequency preferences
+        """
+        try:
+            from ..models.drought_models import AlertSubscriptionResponse
+            from uuid import uuid4
+            
+            logger.info(f"Creating alert subscription for farm: {request.farm_location_id}")
+            
+            # Generate subscription ID
+            subscription_id = uuid4()
+            
+            # Store subscription configuration
+            subscription_config = {
+                "subscription_id": subscription_id,
+                "farm_location_id": request.farm_location_id,
+                "field_ids": request.field_ids,
+                "alert_types": request.alert_types,
+                "threshold_settings": request.threshold_settings,
+                "notification_channels": request.notification_channels,
+                "notification_frequency": request.notification_frequency,
+                "escalation_rules": request.escalation_rules,
+                "custom_triggers": request.custom_triggers,
+                "created_at": datetime.now(UTC),
+                "status": "active"
+            }
+            
+            # Store in monitoring configs
+            self.monitoring_configs[str(request.farm_location_id)] = subscription_config
+            
+            # Generate active alerts (if any)
+            active_alerts = await self._get_active_alerts(request.farm_location_id)
+            
+            # Generate alert history
+            alert_history = await self._get_alert_history(request.farm_location_id)
+            
+            # Generate notification preferences
+            notification_preferences = {
+                "channels": request.notification_channels,
+                "frequency": request.notification_frequency,
+                "escalation_rules": request.escalation_rules
+            }
+            
+            # Create response
+            response = AlertSubscriptionResponse(
+                subscription_id=subscription_id,
+                farm_location_id=request.farm_location_id,
+                subscription_status="active",
+                field_ids=request.field_ids,
+                alert_types=request.alert_types,
+                threshold_settings=request.threshold_settings,
+                notification_preferences=notification_preferences,
+                active_alerts=active_alerts,
+                alert_history=alert_history,
+                next_check_time=datetime.now(UTC) + timedelta(hours=1),
+                subscription_health="healthy"
+            )
+            
+            logger.info(f"Alert subscription created successfully for farm: {request.farm_location_id}")
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error creating alert subscription: {str(e)}")
+            raise
+
+    async def get_alert_subscription_status(
+        self,
+        farm_location_id: UUID,
+        include_history: bool = True,
+        include_active_alerts: bool = True
+    ) -> 'AlertSubscriptionResponse':
+        """
+        Get current status of drought alert subscription.
+        
+        This method provides:
+        - Current subscription status and health
+        - Active alerts and their severity levels
+        - Recent alert history with timestamps
+        - Notification preferences and settings
+        - Next scheduled check time
+        """
+        try:
+            from ..models.drought_models import AlertSubscriptionResponse
+            
+            logger.info(f"Getting alert subscription status for farm: {farm_location_id}")
+            
+            # Get subscription configuration
+            config = self.monitoring_configs.get(str(farm_location_id))
+            
+            if not config:
+                # Return default inactive subscription
+                return AlertSubscriptionResponse(
+                    subscription_id=uuid4(),
+                    farm_location_id=farm_location_id,
+                    subscription_status="inactive",
+                    field_ids=[],
+                    alert_types=[],
+                    threshold_settings={},
+                    notification_preferences={},
+                    active_alerts=[],
+                    alert_history=[],
+                    next_check_time=datetime.now(UTC),
+                    subscription_health="no_subscription"
+                )
+            
+            # Get active alerts if requested
+            active_alerts = []
+            if include_active_alerts:
+                active_alerts = await self._get_active_alerts(farm_location_id)
+            
+            # Get alert history if requested
+            alert_history = []
+            if include_history:
+                alert_history = await self._get_alert_history(farm_location_id)
+            
+            # Create response
+            response = AlertSubscriptionResponse(
+                subscription_id=config["subscription_id"],
+                farm_location_id=farm_location_id,
+                subscription_status=config["status"],
+                field_ids=config["field_ids"],
+                alert_types=config["alert_types"],
+                threshold_settings=config["threshold_settings"],
+                notification_preferences={
+                    "channels": config["notification_channels"],
+                    "frequency": config["notification_frequency"],
+                    "escalation_rules": config["escalation_rules"]
+                },
+                active_alerts=active_alerts,
+                alert_history=alert_history,
+                next_check_time=datetime.now(UTC) + timedelta(hours=1),
+                subscription_health="healthy"
+            )
+            
+            logger.info(f"Alert subscription status retrieved for farm: {farm_location_id}")
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error getting alert subscription status: {str(e)}")
+            raise
+
+    async def _get_active_alerts(self, farm_location_id: UUID) -> List[Dict[str, Any]]:
+        """Get currently active alerts for the farm location."""
+        # In a real implementation, this would check actual monitoring data
+        return [
+            {
+                "alert_id": str(uuid4()),
+                "alert_type": "drought_warning",
+                "severity": "medium",
+                "message": "Soil moisture levels below threshold",
+                "timestamp": datetime.now(UTC),
+                "field_id": str(uuid4())
+            }
+        ]
+
+    async def _get_alert_history(self, farm_location_id: UUID) -> List[Dict[str, Any]]:
+        """Get recent alert history for the farm location."""
+        # In a real implementation, this would retrieve from database
+        return [
+            {
+                "alert_id": str(uuid4()),
+                "alert_type": "soil_moisture_low",
+                "severity": "low",
+                "message": "Soil moisture approaching threshold",
+                "timestamp": datetime.now(UTC) - timedelta(hours=2),
+                "field_id": str(uuid4()),
+                "resolved": True
+            }
+        ]
 
 
 class NotificationService:
@@ -1035,7 +1214,7 @@ class AlertSystem:
         self.alert_configs[str(farm_location_id)] = {
             "thresholds": thresholds,
             "notification_preferences": notification_preferences,
-            "created_at": datetime.utcnow()
+            "created_at": datetime.now(UTC)
         }
     
     async def send_alert(self, farm_location_id: UUID, alert: Dict[str, Any]):
@@ -1047,4 +1226,4 @@ class AlertSystem:
                 alert,
                 config["notification_preferences"]
             )
-    
+

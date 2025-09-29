@@ -880,6 +880,165 @@ class WaterSourceAnalysisService:
             recommendations.append("Consider more sustainable water sources for long-term viability")
         
         return recommendations
+    
+    async def evaluate_water_source(self, source_type: str, field_id: UUID, 
+                                  farm_location_id: UUID) -> Dict[str, Any]:
+        """
+        Evaluate a specific water source for a field.
+        
+        Args:
+            source_type: Type of water source (well, surface, municipal, etc.)
+            field_id: Unique identifier for the field
+            farm_location_id: Unique identifier for the farm location
+            
+        Returns:
+            Dictionary with water source evaluation results
+        """
+        try:
+            # Create a water source analysis request
+            request = WaterSourceAnalysisRequest(
+                farm_location_id=farm_location_id,
+                field_id=field_id,
+                water_source_types=[source_type],
+                analysis_depth="comprehensive",
+                include_cost_analysis=True,
+                include_sustainability_assessment=True
+            )
+            
+            # Perform analysis using existing method
+            analysis_response = await self.analyze_water_sources(request)
+            
+            # Find the specific source type in the results
+            source_assessment = None
+            for assessment in analysis_response.source_assessments:
+                if assessment.source_type.value == source_type:
+                    source_assessment = assessment
+                    break
+            
+            if not source_assessment:
+                return {
+                    "source_type": source_type,
+                    "evaluation_score": 0.0,
+                    "capacity_adequate": False,
+                    "quality_suitable": False,
+                    "reliability_acceptable": False,
+                    "cost_reasonable": False,
+                    "recommended": False,
+                    "issues": ["Source type not found in analysis"]
+                }
+            
+            # Calculate overall evaluation score
+            evaluation_score = (
+                source_assessment.capacity_score * 0.25 +
+                source_assessment.water_quality_score * 0.25 +
+                source_assessment.reliability_score * 0.25 +
+                (1.0 - min(1.0, float(source_assessment.cost_per_gallon) * 1000)) * 0.25
+            )
+            
+            return {
+                "source_type": source_type,
+                "evaluation_score": evaluation_score,
+                "capacity_adequate": source_assessment.capacity_score > 0.7,
+                "quality_suitable": source_assessment.water_quality_score > 0.7,
+                "reliability_acceptable": source_assessment.reliability_score > 0.7,
+                "cost_reasonable": float(source_assessment.cost_per_gallon) < 0.003,
+                "recommended": evaluation_score > 0.7,
+                "capacity_score": source_assessment.capacity_score,
+                "quality_score": source_assessment.water_quality_score,
+                "reliability_score": source_assessment.reliability_score,
+                "cost_per_gallon": float(source_assessment.cost_per_gallon),
+                "issues": source_assessment.quality_issues,
+                "recommendations": analysis_response.recommendations
+            }
+            
+        except Exception as e:
+            logger.error(f"Error evaluating water source: {str(e)}")
+            return {
+                "source_type": source_type,
+                "evaluation_score": 0.0,
+                "capacity_adequate": False,
+                "quality_suitable": False,
+                "reliability_acceptable": False,
+                "cost_reasonable": False,
+                "recommended": False,
+                "issues": [f"Evaluation error: {str(e)}"]
+            }
+    
+    async def analyze_water_sustainability(self, farm_location_id: UUID, 
+                                         field_id: UUID) -> Dict[str, Any]:
+        """
+        Analyze water sustainability for a farm location and field.
+        
+        Args:
+            farm_location_id: Unique identifier for the farm location
+            field_id: Unique identifier for the field
+            
+        Returns:
+            Dictionary with water sustainability analysis
+        """
+        try:
+            # Create a comprehensive water source analysis request
+            request = WaterSourceAnalysisRequest(
+                farm_location_id=farm_location_id,
+                field_id=field_id,
+                water_source_types=["well", "surface", "municipal", "rainwater"],
+                analysis_depth="comprehensive",
+                include_cost_analysis=True,
+                include_sustainability_assessment=True
+            )
+            
+            # Perform analysis
+            analysis_response = await self.analyze_water_sources(request)
+            
+            # Calculate sustainability metrics
+            total_sources = len(analysis_response.source_assessments)
+            sustainable_sources = sum(1 for a in analysis_response.source_assessments 
+                                   if a.sustainability_score > 0.7)
+            
+            avg_sustainability = sum(a.sustainability_score for a in analysis_response.source_assessments) / total_sources if total_sources > 0 else 0.0
+            
+            # Assess overall sustainability
+            sustainability_level = "high" if avg_sustainability > 0.8 else "medium" if avg_sustainability > 0.6 else "low"
+            
+            return {
+                "farm_location_id": str(farm_location_id),
+                "field_id": str(field_id),
+                "sustainability_level": sustainability_level,
+                "overall_sustainability_score": avg_sustainability,
+                "sustainable_sources_count": sustainable_sources,
+                "total_sources_analyzed": total_sources,
+                "water_budget": {
+                    "total_capacity": float(analysis_response.water_budget.total_capacity_gallons),
+                    "utilization_percent": analysis_response.water_budget.capacity_utilization_percent,
+                    "monthly_requirement": float(analysis_response.water_budget.monthly_requirement_gallons)
+                },
+                "contingency_plan": {
+                    "has_plan": analysis_response.contingency_plan is not None,
+                    "backup_sources": len(analysis_response.contingency_plan.alternative_sources) if analysis_response.contingency_plan else 0,
+                    "emergency_capacity": float(analysis_response.contingency_plan.emergency_capacity_gallons) if analysis_response.contingency_plan else 0.0
+                },
+                "recommendations": analysis_response.recommendations,
+                "sustainability_concerns": [
+                    "Low water source diversity" if total_sources < 2 else None,
+                    "High capacity utilization" if analysis_response.water_budget.capacity_utilization_percent > 90 else None,
+                    "Limited backup sources" if not analysis_response.contingency_plan or len(analysis_response.contingency_plan.alternative_sources) < 2 else None
+                ]
+            }
+            
+        except Exception as e:
+            logger.error(f"Error analyzing water sustainability: {str(e)}")
+            return {
+                "farm_location_id": str(farm_location_id),
+                "field_id": str(field_id),
+                "sustainability_level": "unknown",
+                "overall_sustainability_score": 0.0,
+                "sustainable_sources_count": 0,
+                "total_sources_analyzed": 0,
+                "water_budget": None,
+                "contingency_plan": None,
+                "recommendations": [],
+                "sustainability_concerns": [f"Analysis error: {str(e)}"]
+            }
 
 
 # External service client classes (placeholders)

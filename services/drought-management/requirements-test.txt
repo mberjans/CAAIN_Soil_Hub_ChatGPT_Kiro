@@ -1,0 +1,47 @@
+# Testing Requirements for Drought Management System
+# TICKET-014_drought-management-13.1: Comprehensive testing suite
+
+# Core testing framework
+pytest>=7.0.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.0.0
+pytest-mock>=3.10.0
+pytest-html>=3.1.0
+pytest-xdist>=3.0.0
+
+# Async testing support
+asyncio-mock>=0.1.0
+aioresponses>=0.7.4
+
+# Performance testing
+psutil>=5.9.0
+memory-profiler>=0.60.0
+
+# Data validation and fixtures
+factory-boy>=3.2.0
+faker>=18.0.0
+
+# Mock and testing utilities
+responses>=0.22.0
+freezegun>=1.2.0
+
+# Coverage reporting
+coverage>=7.0.0
+
+# Agricultural data validation
+numpy>=1.24.0
+pandas>=2.0.0
+scipy>=1.10.0
+
+# Date and time utilities
+python-dateutil>=2.8.0
+
+# JSON and data handling
+jsonschema>=4.17.0
+
+# Logging and debugging
+loguru>=0.7.0
+
+# Development and debugging tools
+pdb-attach>=3.2.0
+ipdb>=0.13.0

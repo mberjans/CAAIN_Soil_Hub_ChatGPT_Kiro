@@ -14,7 +14,7 @@ import asyncio
 import statistics
 from enum import Enum
 
-from models.drought_models import (
+from ..models.drought_models import (
     PracticeComparisonRequest,
     PracticeComparisonResponse,
     PracticeComparisonResult,

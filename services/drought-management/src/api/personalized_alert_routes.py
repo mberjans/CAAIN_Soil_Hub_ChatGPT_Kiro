@@ -5,7 +5,7 @@ FastAPI routes for personalized drought alert configuration,
 monitoring, and response management.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, Query, Path, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, Query, Path, BackgroundTasks, Body
 from typing import List, Optional, Dict, Any
 from datetime import datetime, date
 from uuid import UUID
@@ -30,7 +30,7 @@ from ..models.personalized_alert_models import (
     ResponseActionType,
     EmergencyProtocolType
 )
-from ..services.personalized_alert_service import PersonalizedAlertService
+from services.personalized_alert_service import PersonalizedAlertService
 
 logger = logging.getLogger(__name__)
 
@@ -201,7 +201,7 @@ async def generate_automated_responses(
 async def activate_emergency_protocol(
     alert_id: UUID = Query(..., description="Alert identifier"),
     protocol_id: UUID = Query(..., description="Protocol identifier"),
-    authorization_details: Dict[str, Any] = Query(..., description="Authorization information"),
+    authorization_details: Dict[str, Any] = Body(..., description="Authorization information"),
     service: PersonalizedAlertService = Depends(get_personalized_alert_service)
 ):
     """
@@ -285,7 +285,7 @@ async def track_response_action(
 @router.post("/resources/mobilize", response_model=List[ResourceMobilization])
 async def mobilize_resources(
     alert_id: UUID = Query(..., description="Alert identifier"),
-    resource_requirements: List[Dict[str, Any]] = Query(..., description="Resource requirements"),
+    resource_requirements: List[Dict[str, Any]] = Body(..., description="Resource requirements"),
     service: PersonalizedAlertService = Depends(get_personalized_alert_service)
 ):
     """
@@ -440,7 +440,7 @@ async def get_alert_thresholds(
 @router.put("/thresholds/{threshold_id}")
 async def update_alert_threshold(
     threshold_id: UUID = Path(..., description="Threshold identifier"),
-    threshold_data: Dict[str, Any] = Query(..., description="Updated threshold data"),
+    threshold_data: Dict[str, Any] = Body(..., description="Updated threshold data"),
     service: PersonalizedAlertService = Depends(get_personalized_alert_service)
 ):
     """

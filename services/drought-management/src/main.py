@@ -13,16 +13,13 @@ from dotenv import load_dotenv
 import logging
 from datetime import datetime
 
-try:
-    from .api.routes import router
-    from .services.drought_assessment_service import DroughtAssessmentService
-except ImportError:
-    # Fallback for direct execution
-    import sys
-    from pathlib import Path
-    sys.path.append(str(Path(__file__).parent))
-    from api.routes import router
-    from services.drought_assessment_service import DroughtAssessmentService
+# Add src directory to Python path for imports
+import sys
+from pathlib import Path
+sys.path.append(str(Path(__file__).parent))
+
+from api.routes import router
+from services.drought_assessment_service import DroughtAssessmentService
 
 load_dotenv()
 
@@ -298,6 +295,11 @@ async def root():
         "description": "Agricultural drought assessment, moisture conservation, and water management with weather and soil integration",
         "endpoints": {
             "drought_assessment": "/api/v1/drought/assess",
+            "comprehensive_drought_assessment": "/api/v1/drought/assessment",
+            "detailed_recommendations": "/api/v1/drought/recommendations/{assessment_id}",
+            "water_savings_analysis": "/api/v1/drought/water-savings/{assessment_id}",
+            "alert_subscription": "/api/v1/drought/alerts/subscribe",
+            "alert_status": "/api/v1/drought/alerts/status/{farm_location_id}",
             "moisture_conservation": "/api/v1/drought/conservation",
             "drought_monitoring": "/api/v1/drought/monitor",
             "water_savings": "/api/v1/drought/water-savings",

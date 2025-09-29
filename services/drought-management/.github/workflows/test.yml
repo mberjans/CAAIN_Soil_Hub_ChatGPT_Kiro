@@ -1,0 +1,153 @@
+name: Drought Management System Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'services/drought-management/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'services/drought-management/**'
+  schedule:
+    - cron: '0 2 * * *'  # Daily at 2 AM
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: [3.11, 3.12]
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements-test.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        cd services/drought-management
+        python -m pip install --upgrade pip
+        pip install -r requirements-test.txt
+    
+    - name: Lint with flake8
+      run: |
+        cd services/drought-management
+        pip install flake8
+        flake8 src --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    
+    - name: Run unit tests
+      run: |
+        cd services/drought-management
+        python run_tests.py --test-type unit
+    
+    - name: Run integration tests
+      run: |
+        cd services/drought-management
+        python run_tests.py --test-type integration
+    
+    - name: Run agricultural validation tests
+      run: |
+        cd services/drought-management
+        python run_tests.py --test-type agricultural
+    
+    - name: Run performance tests
+      run: |
+        cd services/drought-management
+        python run_tests.py --test-type performance
+    
+    - name: Generate test report
+      run: |
+        cd services/drought-management
+        python run_tests.py --test-type report
+    
+    - name: Upload coverage reports
+      uses: codecov/codecov-action@v3
+      with:
+        file: services/drought-management/coverage.xml
+        flags: drought-management
+        name: drought-management-coverage
+    
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-results-${{ matrix.python-version }}
+        path: |
+          services/drought-management/htmlcov/
+          services/drought-management/test-results.xml
+          services/drought-management/coverage.xml
+
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    
+    - name: Install security scanning tools
+      run: |
+        pip install bandit safety
+    
+    - name: Run security scan with bandit
+      run: |
+        cd services/drought-management
+        bandit -r src -f json -o bandit-report.json || true
+    
+    - name: Run safety check
+      run: |
+        cd services/drought-management
+        safety check --json --output safety-report.json || true
+    
+    - name: Upload security reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-reports
+        path: |
+          services/drought-management/bandit-report.json
+          services/drought-management/safety-report.json
+
+  performance-benchmark:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+    
+    - name: Install dependencies
+      run: |
+        cd services/drought-management
+        python -m pip install --upgrade pip
+        pip install -r requirements-test.txt
+    
+    - name: Run performance benchmarks
+      run: |
+        cd services/drought-management
+        python -m pytest tests/test_performance.py -m performance --benchmark-only
+    
+    - name: Upload performance results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-results
+        path: services/drought-management/.benchmarks/

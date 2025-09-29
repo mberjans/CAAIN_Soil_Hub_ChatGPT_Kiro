@@ -11,7 +11,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Depends, Query, Body
 from pydantic import BaseModel, Field
 
-from ..services.cover_crop_mulch_optimization_service import (
+from services.cover_crop_mulch_optimization_service import (
     CoverCropMulchOptimizationService,
     OptimizationObjective,
     OptimizationAlgorithm,

@@ -11,8 +11,8 @@ from datetime import datetime, timedelta
 from uuid import UUID, uuid4
 from decimal import Decimal
 
-from ..services.water_usage_monitoring_service import WaterUsageMonitoringService
-from ..models.water_usage_models import (
+from src.services.water_usage_monitoring_service import WaterUsageMonitoringService
+from src.models.water_usage_models import (
     WaterUsageRecord,
     WaterUsageSummary,
     WaterUsageAlert,

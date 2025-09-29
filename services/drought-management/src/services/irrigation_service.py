@@ -116,6 +116,17 @@ class IrrigationManagementService:
         self.irrigation_system_database = self._initialize_system_database()
         self.water_source_database = self._initialize_water_source_database()
         self.optimization_algorithms = self._initialize_optimization_algorithms()
+        self.initialized = False
+
+    async def initialize(self):
+        """Initialize the irrigation management service."""
+        try:
+            self.logger.info("Initializing Irrigation Management Service...")
+            self.initialized = True
+            self.logger.info("Irrigation Management Service initialized successfully")
+        except Exception as e:
+            self.logger.error(f"Failed to initialize Irrigation Management Service: {str(e)}")
+            raise
 
     def _initialize_system_database(self) -> Dict[str, Dict[str, Any]]:
         """Initialize irrigation system characteristics database."""

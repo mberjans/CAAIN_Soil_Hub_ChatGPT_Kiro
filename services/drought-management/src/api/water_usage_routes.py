@@ -24,6 +24,8 @@ from ..models.water_usage_models import (
     WaterUsageType,
     MonitoringFrequency
 )
+from services.water_usage_monitoring_service import WaterUsageMonitoringService
+from services.water_usage_reporting_service import WaterUsageReportingService
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +35,12 @@ water_usage_router = APIRouter(prefix="/api/v1/water-usage", tags=["water-usage-
 # Service dependencies for water usage monitoring
 async def get_water_usage_monitoring_service():
     """Get water usage monitoring service instance."""
-    from ..services.water_usage_monitoring_service import WaterUsageMonitoringService
+    from services.water_usage_monitoring_service import WaterUsageMonitoringService
     return WaterUsageMonitoringService()
 
 async def get_water_usage_reporting_service():
     """Get water usage reporting service instance."""
-    from ..services.water_usage_reporting_service import WaterUsageReportingService
+    from services.water_usage_reporting_service import WaterUsageReportingService
     return WaterUsageReportingService()
 
 @water_usage_router.post("/record", response_model=WaterUsageRecord)

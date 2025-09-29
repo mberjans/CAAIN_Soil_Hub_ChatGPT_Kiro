@@ -24,13 +24,7 @@ from ..models.equipment_optimization_models import (
     OptimizationObjective,
     InvestmentType,
     InvestmentPriority,
-    FinancingOption,
-    EquipmentCategory,
-    EquipmentSpecification,
-    PerformanceMetrics,
-    RiskAssessment,
-    InvestmentScenario,
-    EquipmentOptimizationValidator
+    FinancingOption
 )
 
 logger = logging.getLogger(__name__)
@@ -162,7 +156,7 @@ class EquipmentOptimizationService:
     async def _generate_investment_scenarios(
         self,
         request: EquipmentOptimizationRequest
-    ) -> List[InvestmentScenario]:
+    ) -> List[Dict[str, Any]]:
         """Generate investment scenarios based on objectives and constraints."""
         scenarios = []
         
@@ -187,7 +181,7 @@ class EquipmentOptimizationService:
     async def _create_conservative_scenario(
         self,
         request: EquipmentOptimizationRequest
-    ) -> InvestmentScenario:
+    ) -> Dict[str, Any]:
         """Create conservative investment scenario."""
         investments = []
         
@@ -207,20 +201,20 @@ class EquipmentOptimizationService:
                 )
                 investments.append(tillage_option)
         
-        return InvestmentScenario(
-            scenario_id=str(uuid4()),
-            scenario_name="Conservative Investment",
-            description="Low-risk investment focusing on proven equipment with reliable financing",
-            investment_options=investments,
-            total_investment_cost=sum(inv.investment_cost for inv in investments),
-            risk_level="low",
-            expected_return_percent=8.0
-        )
+        return {
+            "scenario_id": str(uuid4()),
+            "scenario_name": "Conservative Investment",
+            "description": "Low-risk investment focusing on proven equipment with reliable financing",
+            "investment_options": investments,
+            "total_investment_cost": sum(inv.investment_cost for inv in investments),
+            "risk_level": "low",
+            "expected_return_percent": 8.0
+        }
     
     async def _create_balanced_scenario(
         self,
         request: EquipmentOptimizationRequest
-    ) -> InvestmentScenario:
+    ) -> Dict[str, Any]:
         """Create balanced investment scenario."""
         investments = []
         
@@ -244,20 +238,20 @@ class EquipmentOptimizationService:
                 )
                 investments.append(capacity_option)
         
-        return InvestmentScenario(
-            scenario_id=str(uuid4()),
-            scenario_name="Balanced Investment",
-            description="Balanced approach mixing proven and innovative equipment",
-            investment_options=investments,
-            total_investment_cost=sum(inv.investment_cost for inv in investments),
-            risk_level="medium",
-            expected_return_percent=12.0
-        )
+        return {
+            "scenario_id": str(uuid4()),
+            "scenario_name": "Balanced Investment",
+            "description": "Balanced approach mixing proven and innovative equipment",
+            "investment_options": investments,
+            "total_investment_cost": sum(inv.investment_cost for inv in investments),
+            "risk_level": "medium",
+            "expected_return_percent": 12.0
+        }
     
     async def _create_aggressive_scenario(
         self,
         request: EquipmentOptimizationRequest
-    ) -> InvestmentScenario:
+    ) -> Dict[str, Any]:
         """Create aggressive investment scenario."""
         investments = []
         
@@ -281,20 +275,20 @@ class EquipmentOptimizationService:
                 )
                 investments.append(capacity_option)
         
-        return InvestmentScenario(
-            scenario_id=str(uuid4()),
-            scenario_name="Aggressive Investment",
-            description="High-return investment focusing on cutting-edge technology",
-            investment_options=investments,
-            total_investment_cost=sum(inv.investment_cost for inv in investments),
-            risk_level="high",
-            expected_return_percent=18.0
-        )
+        return {
+            "scenario_id": str(uuid4()),
+            "scenario_name": "Aggressive Investment",
+            "description": "High-return investment focusing on cutting-edge technology",
+            "investment_options": investments,
+            "total_investment_cost": sum(inv.investment_cost for inv in investments),
+            "risk_level": "high",
+            "expected_return_percent": 18.0
+        }
     
     async def _create_phased_scenario(
         self,
         request: EquipmentOptimizationRequest
-    ) -> InvestmentScenario:
+    ) -> Dict[str, Any]:
         """Create phased investment scenario."""
         investments = []
         
@@ -312,15 +306,15 @@ class EquipmentOptimizationService:
                 )
                 investments.append(tillage_option)
         
-        return InvestmentScenario(
-            scenario_id=str(uuid4()),
-            scenario_name="Phased Investment",
-            description="Multi-year phased approach to spread investment costs",
-            investment_options=investments,
-            total_investment_cost=sum(inv.investment_cost for inv in investments),
-            risk_level="low",
-            expected_return_percent=10.0
-        )
+        return {
+            "scenario_id": str(uuid4()),
+            "scenario_name": "Phased Investment",
+            "description": "Multi-year phased approach to spread investment costs",
+            "investment_options": investments,
+            "total_investment_cost": sum(inv.investment_cost for inv in investments),
+            "risk_level": "low",
+            "expected_return_percent": 10.0
+        }
     
     async def _create_irrigation_investment_option(
         self,
@@ -586,7 +580,7 @@ class EquipmentOptimizationService:
     
     async def _analyze_investment_scenario(
         self,
-        scenario: InvestmentScenario,
+        scenario: Dict[str, Any],
         request: EquipmentOptimizationRequest
     ) -> InvestmentAnalysis:
         """Analyze investment scenario and calculate financial metrics."""
@@ -669,14 +663,14 @@ class EquipmentOptimizationService:
         irr_approx = ((total_cash_flow / initial_investment) ** (1/years)) - 1
         return min(irr_approx * 100, 50.0)  # Cap at 50%
     
-    def _calculate_risk_score(self, scenario: InvestmentScenario) -> float:
+    def _calculate_risk_score(self, scenario: Dict[str, Any]) -> float:
         """Calculate risk score for scenario."""
         base_risk = 0.3  # Base risk
         
         # Adjust based on scenario type
-        if scenario.risk_level == "low":
+        if scenario.get("risk_level") == "low":
             risk_adjustment = -0.1
-        elif scenario.risk_level == "medium":
+        elif scenario.get("risk_level") == "medium":
             risk_adjustment = 0.0
         else:  # high
             risk_adjustment = 0.2
@@ -718,10 +712,10 @@ class EquipmentOptimizationService:
         
         return min(1.0, score)
     
-    def _assess_implementation_complexity(self, scenario: InvestmentScenario) -> str:
+    def _assess_implementation_complexity(self, scenario: Dict[str, Any]) -> str:
         """Assess implementation complexity."""
-        total_cost = scenario.total_investment_cost
-        num_options = len(scenario.investment_options)
+        total_cost = scenario.get("total_investment_cost", 0)
+        num_options = len(scenario.get("investment_options", []))
         
         if total_cost > Decimal("300000") and num_options > 3:
             return "high"
@@ -730,12 +724,12 @@ class EquipmentOptimizationService:
         else:
             return "low"
     
-    def _assess_market_impact(self, scenario: InvestmentScenario) -> str:
+    def _assess_market_impact(self, scenario: Dict[str, Any]) -> str:
         """Assess market conditions impact."""
         # Simple assessment based on investment amount
-        if scenario.total_investment_cost > Decimal("200000"):
+        if scenario.get("total_investment_cost", 0) > Decimal("200000"):
             return "high"
-        elif scenario.total_investment_cost > Decimal("100000"):
+        elif scenario.get("total_investment_cost", 0) > Decimal("100000"):
             return "medium"
         else:
             return "low"
@@ -838,7 +832,7 @@ class EquipmentOptimizationService:
         self,
         scenarios: List[InvestmentAnalysis],
         request: EquipmentOptimizationRequest
-    ) -> RiskAssessment:
+    ) -> Dict[str, Any]:
         """Assess overall investment risks."""
         
         # Calculate risk metrics
@@ -861,17 +855,17 @@ class EquipmentOptimizationService:
         if any(s.payback_period_years > 5 for s in scenarios):
             mitigation_strategies.append("Explore alternative financing options")
         
-        return RiskAssessment(
-            overall_risk_level="high" if max_risk > 0.7 else "medium" if max_risk > 0.4 else "low",
-            risk_score=max_risk,
-            key_risk_factors=risk_factors,
-            mitigation_strategies=mitigation_strategies,
-            risk_monitoring_recommendations=[
+        return {
+            "overall_risk_level": "high" if max_risk > 0.7 else "medium" if max_risk > 0.4 else "low",
+            "risk_score": max_risk,
+            "key_risk_factors": risk_factors,
+            "mitigation_strategies": mitigation_strategies,
+            "risk_monitoring_recommendations": [
                 "Monitor market conditions",
                 "Track equipment performance",
                 "Review financing terms"
             ]
-        )
+        }
     
     def _generate_recommendations(
         self,

@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime, date
 from uuid import UUID
 
-from models.drought_models import (
+from ..models.drought_models import (
     DroughtAssessmentRequest,
     DroughtAssessmentResponse,
     ConservationPracticeRequest,
@@ -44,14 +44,14 @@ from models.drought_models import (
     ScenarioPlanningRequest,
     ScenarioPlanningResponse
 )
-from models.water_source_models import WaterSourceAnalysisRequest
-from models.soil_assessment_models import (
+from ..models.water_source_models import WaterSourceAnalysisRequest
+from ..models.soil_assessment_models import (
     SoilAssessmentRequest,
     SoilAssessmentResponse,
     PracticeRecommendationResponse,
     SoilHealthTrendResponse
 )
-from models.regional_drought_models import (
+from ..models.regional_drought_models import (
     RegionalDroughtAnalysisRequest,
     RegionalDroughtAnalysisResponse,
     DroughtForecastRequest,
@@ -65,7 +65,7 @@ from models.regional_drought_models import (
     DroughtPatternMapResponse,
     DroughtAlertResponse
 )
-from models.practice_effectiveness_models import (
+from ..models.practice_effectiveness_models import (
     PracticeEffectivenessRequest,
     PracticeEffectivenessResponse,
     PracticeImplementation,
@@ -77,7 +77,7 @@ from models.practice_effectiveness_models import (
     PerformanceMetric,
     ValidationStatus
 )
-from models.tillage_models import (
+from ..models.tillage_models import (
     TillageOptimizationRequest,
     TillageOptimizationResponse,
     TillageSystemAssessment,
@@ -2436,7 +2436,7 @@ async def get_tillage_systems():
     equipment requirements, and implementation considerations.
     """
     try:
-        from models.tillage_models import TillageSystem
+        from ..models.tillage_models import TillageSystem
         
         systems = []
         for system in TillageSystem:
@@ -2470,7 +2470,7 @@ async def get_tillage_equipment():
     compatibility with different soil types and field conditions.
     """
     try:
-        from models.tillage_models import TillageEquipment
+        from ..models.tillage_models import TillageEquipment
         
         equipment = []
         for eq_type in TillageEquipment:
@@ -2508,7 +2508,7 @@ async def get_transition_guide(
     cost estimates, and risk mitigation strategies.
     """
     try:
-        from models.tillage_models import TillageSystem, TillageOptimizationValidator
+        from ..models.tillage_models import TillageSystem, TillageOptimizationValidator
         
         # Validate systems
         try:
@@ -2860,7 +2860,7 @@ async def create_comprehensive_transition_plan(
     - Comprehensive support throughout transition process
     """
     try:
-        from models.tillage_models import TillageSystem
+        from ..models.tillage_models import TillageSystem
         from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage systems
@@ -2910,7 +2910,7 @@ async def assess_transition_feasibility(
     - Resource allocation and timeline planning
     """
     try:
-        from models.tillage_models import TillageSystem, TillageOptimizationRequest
+        from ..models.tillage_models import TillageSystem, TillageOptimizationRequest
         from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage systems
@@ -2977,7 +2977,7 @@ async def get_troubleshooting_guide(
     - Expert consultation coordination
     """
     try:
-        from models.tillage_models import TillageSystem
+        from ..models.tillage_models import TillageSystem
         from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage system
@@ -3043,7 +3043,7 @@ async def get_educational_resources(
     - Continuous learning and improvement
     """
     try:
-        from models.tillage_models import TillageSystem
+        from ..models.tillage_models import TillageSystem
         from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage system
@@ -3123,7 +3123,7 @@ async def get_support_network(
     - Coordinating with service providers
     """
     try:
-        from models.tillage_models import TillageSystem
+        from ..models.tillage_models import TillageSystem
         from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage system
@@ -3191,7 +3191,7 @@ async def get_monitoring_framework(
     - Documentation and reporting
     """
     try:
-        from models.tillage_models import TillageSystem
+        from ..models.tillage_models import TillageSystem
         from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage system

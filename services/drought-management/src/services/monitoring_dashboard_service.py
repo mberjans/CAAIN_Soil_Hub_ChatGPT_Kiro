@@ -15,7 +15,7 @@ import statistics
 from enum import Enum
 from pydantic import BaseModel, Field
 
-from models.drought_models import (
+from ..models.drought_models import (
     DashboardDataRequest,
     MonitoringDashboardResponse,
     DashboardFieldData,

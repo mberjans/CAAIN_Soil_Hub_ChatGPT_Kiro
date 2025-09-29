@@ -20,14 +20,9 @@ from ..models.equipment_optimization_models import (
     InvestmentType,
     InvestmentPriority,
     FinancingOption,
-    EquipmentCategory,
-    EquipmentSpecification,
-    PerformanceMetrics,
-    RiskAssessment,
-    InvestmentScenario,
     EquipmentInvestmentOption
 )
-from ..services.equipment_optimization_service import EquipmentOptimizationService
+from services.equipment_optimization_service import EquipmentOptimizationService
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +107,7 @@ async def get_investment_scenarios(
 @router.get("/financing-options", response_model=List[FinancingOption])
 async def get_financing_options(
     investment_type: InvestmentType = Query(..., description="Type of investment"),
-    equipment_category: EquipmentCategory = Query(..., description="Equipment category"),
+    equipment_category: str = Query(..., description="Equipment category"),
     investment_amount: float = Query(..., ge=0, description="Investment amount"),
     service: EquipmentOptimizationService = Depends(get_equipment_optimization_service)
 ):
@@ -194,7 +189,7 @@ async def get_financing_options(
 
 @router.get("/equipment-catalog", response_model=List[Dict[str, Any]])
 async def get_equipment_catalog(
-    category: EquipmentCategory = Query(..., description="Equipment category"),
+    category: str = Query(..., description="Equipment category"),
     budget_range: Optional[str] = Query(None, description="Budget range (low, medium, high)"),
     efficiency_requirement: Optional[float] = Query(None, ge=0, le=1, description="Minimum efficiency requirement"),
     service: EquipmentOptimizationService = Depends(get_equipment_optimization_service)
@@ -217,7 +212,7 @@ async def get_equipment_catalog(
         # Generate equipment catalog based on category
         equipment_catalog = []
         
-        if category == EquipmentCategory.IRRIGATION:
+        if category == "irrigation":
             equipment_catalog.extend([
                 {
                     "equipment_id": "irr_001",
@@ -302,7 +297,7 @@ async def get_equipment_catalog(
                 }
             ])
         
-        elif category == EquipmentCategory.TILLAGE:
+        elif category == "tillage":
             equipment_catalog.extend([
                 {
                     "equipment_id": "till_001",
@@ -387,7 +382,7 @@ async def get_equipment_catalog(
                 }
             ])
         
-        elif category == EquipmentCategory.STORAGE:
+        elif category == "storage":
             equipment_catalog.extend([
                 {
                     "equipment_id": "stor_001",

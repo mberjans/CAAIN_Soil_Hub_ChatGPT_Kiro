@@ -12,8 +12,8 @@ from uuid import uuid4
 from decimal import Decimal
 from datetime import datetime, date
 
-from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
-from ..models.tillage_models import (
+from src.services.tillage_transition_planning_service import TillageTransitionPlanningService
+from src.models.tillage_models import (
     TillageSystem,
     TillageOptimizationRequest,
     SoilType,

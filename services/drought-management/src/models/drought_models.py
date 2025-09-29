@@ -8,7 +8,7 @@ and monitoring data structures.
 from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime, date
-from uuid import UUID
+from uuid import UUID, uuid4
 from decimal import Decimal
 from enum import Enum
 
@@ -368,3 +368,236 @@ class IrrigationScheduleResponse(BaseModel):
     efficiency_factors: Dict[str, Any] = Field(..., description="Efficiency factors")
     recommendations: List[str] = Field(..., description="Schedule recommendations")
     schedule_timestamp: datetime = Field(default_factory=datetime.utcnow, description="Schedule timestamp")
+
+# New models for TICKET-014_drought-management-12.1 endpoints
+
+class AssessmentType(str, Enum):
+    """Types of drought assessment."""
+    COMPREHENSIVE = "comprehensive"
+    QUICK = "quick"
+    EMERGENCY = "emergency"
+
+class AssessmentGoal(str, Enum):
+    """Assessment goals."""
+    WATER_CONSERVATION = "water_conservation"
+    COST_REDUCTION = "cost_reduction"
+    SOIL_HEALTH = "soil_health"
+    YIELD_OPTIMIZATION = "yield_optimization"
+    SUSTAINABILITY = "sustainability"
+
+class ComprehensiveDroughtAssessmentRequest(BaseModel):
+    """Request model for comprehensive drought assessment endpoint."""
+    farm_location_id: UUID = Field(..., description="Farm location identifier")
+    assessment_type: AssessmentType = Field(..., description="Type of assessment to perform")
+    field_ids: Optional[List[UUID]] = Field(None, description="Specific field identifiers (if None, all fields)")
+    crop_types: List[str] = Field(..., description="Types of crops to assess")
+    growth_stages: List[str] = Field(..., description="Current growth stages")
+    soil_types: List[str] = Field(..., description="Soil types in fields")
+    irrigation_available: bool = Field(False, description="Whether irrigation is available")
+    include_weather_forecast: bool = Field(True, description="Include weather forecast analysis")
+    include_soil_analysis: bool = Field(True, description="Include detailed soil analysis")
+    include_economic_analysis: bool = Field(True, description="Include economic impact analysis")
+    assessment_depth_days: int = Field(30, ge=1, le=365, description="Assessment depth in days")
+    assessment_goals: List[AssessmentGoal] = Field(..., description="Primary assessment goals")
+    budget_constraints: Optional[Decimal] = Field(None, description="Budget constraints for recommendations")
+    implementation_timeline: str = Field("immediate", description="Preferred implementation timeline")
+
+class DetailedRecommendation(BaseModel):
+    """Detailed recommendation with implementation guidance."""
+    recommendation_id: UUID = Field(..., description="Unique recommendation identifier")
+    practice_name: str = Field(..., description="Name of the recommended practice")
+    practice_type: ConservationPracticeType = Field(..., description="Type of conservation practice")
+    priority_score: float = Field(..., ge=0, le=10, description="Priority score (0-10)")
+    implementation_timeline: Dict[str, Any] = Field(..., description="Detailed implementation timeline")
+    cost_benefit_analysis: Dict[str, Any] = Field(..., description="Comprehensive cost-benefit analysis")
+    expected_outcomes: Dict[str, Any] = Field(..., description="Expected outcomes and benefits")
+    implementation_guide: Dict[str, Any] = Field(..., description="Step-by-step implementation guide")
+    equipment_requirements: List[EquipmentRequirement] = Field(default_factory=list)
+    resource_requirements: List[str] = Field(default_factory=list, description="Required resources")
+    risk_assessment: Dict[str, Any] = Field(..., description="Risk assessment for implementation")
+    monitoring_requirements: List[str] = Field(default_factory=list, description="Monitoring requirements")
+    success_metrics: List[str] = Field(default_factory=list, description="Success measurement metrics")
+
+class ComprehensiveDroughtAssessmentResponse(BaseModel):
+    """Response model for comprehensive drought assessment."""
+    assessment_id: UUID = Field(..., description="Unique assessment identifier")
+    farm_location_id: UUID = Field(..., description="Farm location identifier")
+    assessment_date: datetime = Field(default_factory=datetime.utcnow)
+    assessment_type: AssessmentType = Field(..., description="Type of assessment performed")
+    overall_drought_risk: DroughtRiskLevel = Field(..., description="Overall drought risk level")
+    field_assessments: List[DroughtAssessment] = Field(..., description="Individual field assessments")
+    comprehensive_recommendations: List[DetailedRecommendation] = Field(..., description="Comprehensive recommendations")
+    water_savings_potential: WaterSavingsPotential = Field(..., description="Overall water savings potential")
+    economic_impact_analysis: Dict[str, Any] = Field(..., description="Economic impact analysis")
+    implementation_roadmap: Dict[str, Any] = Field(..., description="Implementation roadmap")
+    monitoring_strategy: Dict[str, Any] = Field(..., description="Monitoring strategy")
+    next_assessment_date: date = Field(..., description="Recommended next assessment date")
+    confidence_score: float = Field(..., ge=0, le=1, description="Overall assessment confidence")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+
+class DetailedRecommendationsResponse(BaseModel):
+    """Response model for detailed recommendations endpoint."""
+    assessment_id: UUID = Field(..., description="Assessment identifier")
+    recommendations: List[DetailedRecommendation] = Field(..., description="Detailed recommendations")
+    implementation_priority: Dict[str, Any] = Field(..., description="Implementation priority matrix")
+    resource_allocation: Dict[str, Any] = Field(..., description="Resource allocation recommendations")
+    timeline_optimization: Dict[str, Any] = Field(..., description="Timeline optimization suggestions")
+    risk_mitigation_strategies: List[str] = Field(..., description="Risk mitigation strategies")
+    success_tracking_plan: Dict[str, Any] = Field(..., description="Success tracking plan")
+    expert_insights: List[str] = Field(default_factory=list, description="Expert insights and tips")
+
+class WaterSavingsAnalysisResponse(BaseModel):
+    """Response model for water savings analysis endpoint."""
+    assessment_id: UUID = Field(..., description="Assessment identifier")
+    field_savings_analysis: List[Dict[str, Any]] = Field(..., description="Field-specific savings analysis")
+    cumulative_savings: Dict[str, Any] = Field(..., description="Cumulative savings across all fields")
+    practice_contributions: Dict[str, Any] = Field(..., description="Contribution of each practice to savings")
+    uncertainty_analysis: Dict[str, Any] = Field(..., description="Uncertainty ranges and confidence intervals")
+    validation_data: Dict[str, Any] = Field(..., description="Validation data and sources")
+    savings_projections: Dict[str, Any] = Field(..., description="Future savings projections")
+    cost_benefit_summary: Dict[str, Any] = Field(..., description="Cost-benefit summary")
+    implementation_impact: Dict[str, Any] = Field(..., description="Implementation impact on savings")
+
+class AlertSubscriptionRequest(BaseModel):
+    """Request model for drought alert subscription."""
+    farm_location_id: UUID = Field(..., description="Farm location identifier")
+    field_ids: List[UUID] = Field(..., description="Field identifiers to monitor")
+    alert_types: List[str] = Field(..., description="Types of alerts to subscribe to")
+    threshold_settings: Dict[str, float] = Field(..., description="Alert threshold settings")
+    notification_channels: List[str] = Field(..., description="Notification channels (email, sms, push)")
+    notification_frequency: str = Field("immediate", description="Notification frequency preference")
+    escalation_rules: Dict[str, Any] = Field(default_factory=dict, description="Alert escalation rules")
+    custom_triggers: List[Dict[str, Any]] = Field(default_factory=list, description="Custom alert triggers")
+
+class AlertSubscriptionResponse(BaseModel):
+    """Response model for drought alert subscription."""
+    subscription_id: UUID = Field(..., description="Unique subscription identifier")
+    farm_location_id: UUID = Field(..., description="Farm location identifier")
+    subscription_status: str = Field(..., description="Subscription status")
+    active_alerts: List[Dict[str, Any]] = Field(default_factory=list, description="Currently active alerts")
+    alert_history: List[Dict[str, Any]] = Field(default_factory=list, description="Recent alert history")
+    notification_preferences: Dict[str, Any] = Field(..., description="Current notification preferences")
+    next_check_time: datetime = Field(..., description="Next scheduled check time")
+    subscription_health: Dict[str, Any] = Field(..., description="Subscription health status")
+
+# Models for TICKET-014_drought-management-12.2 Advanced API Endpoints
+
+class PracticeComparisonRequest(BaseModel):
+    """Request model for practice comparison."""
+    field_id: UUID = Field(..., description="Field identifier for comparison")
+    practices_to_compare: List[UUID] = Field(..., min_length=2, max_length=5, description="Practice IDs to compare")
+    comparison_criteria: List[str] = Field(default=["water_savings", "cost_effectiveness", "soil_health"], description="Criteria for comparison")
+    time_horizon_years: int = Field(default=3, ge=1, le=10, description="Time horizon for comparison in years")
+    include_risk_assessment: bool = Field(default=True, description="Include risk assessment in comparison")
+
+class PracticeComparisonResult(BaseModel):
+    """Individual practice comparison result."""
+    practice_id: UUID = Field(..., description="Practice identifier")
+    practice_name: str = Field(..., description="Practice name")
+    water_savings_percent: float = Field(..., description="Expected water savings percentage")
+    implementation_cost_per_acre: Decimal = Field(..., description="Implementation cost per acre")
+    annual_maintenance_cost: Decimal = Field(..., description="Annual maintenance cost per acre")
+    soil_health_impact_score: float = Field(..., ge=0, le=10, description="Soil health impact score")
+    effectiveness_rating: float = Field(..., ge=0, le=10, description="Overall effectiveness rating")
+    risk_level: DroughtRiskLevel = Field(..., description="Associated risk level")
+    payback_period_years: Optional[float] = Field(None, description="Payback period in years")
+    total_benefit_score: float = Field(..., ge=0, le=10, description="Total benefit score")
+
+class PracticeComparisonResponse(BaseModel):
+    """Response model for practice comparison."""
+    comparison_id: UUID = Field(default_factory=uuid4, description="Unique comparison identifier")
+    field_id: UUID = Field(..., description="Field identifier")
+    comparison_date: datetime = Field(default_factory=datetime.utcnow, description="Comparison date")
+    practices_compared: List[PracticeComparisonResult] = Field(..., description="Comparison results")
+    recommended_practice: Optional[UUID] = Field(None, description="Recommended practice ID")
+    recommendation_reason: str = Field(..., description="Reason for recommendation")
+    decision_matrix: Dict[str, Dict[str, float]] = Field(..., description="Decision matrix for comparison")
+    trade_off_analysis: Dict[str, Any] = Field(..., description="Trade-off analysis between practices")
+
+class DashboardDataRequest(BaseModel):
+    """Request model for monitoring dashboard data."""
+    farm_location_id: UUID = Field(..., description="Farm location identifier")
+    include_field_details: bool = Field(default=True, description="Include individual field details")
+    time_range_days: int = Field(default=30, ge=1, le=365, description="Time range for data in days")
+    include_forecasts: bool = Field(default=True, description="Include forecast data")
+    include_alerts: bool = Field(default=True, description="Include alert information")
+
+class DashboardFieldData(BaseModel):
+    """Dashboard data for individual field."""
+    field_id: UUID = Field(..., description="Field identifier")
+    field_name: str = Field(..., description="Field name")
+    current_drought_index: float = Field(..., description="Current drought index")
+    soil_moisture_percent: float = Field(..., ge=0, le=100, description="Current soil moisture percentage")
+    moisture_trend: str = Field(..., description="Moisture trend (increasing/decreasing/stable)")
+    irrigation_recommendation: str = Field(..., description="Current irrigation recommendation")
+    days_until_critical: Optional[int] = Field(None, description="Days until critical moisture level")
+    last_irrigation_date: Optional[date] = Field(None, description="Last irrigation date")
+    water_savings_this_month: Decimal = Field(..., description="Water savings this month")
+
+class DashboardAlert(BaseModel):
+    """Dashboard alert information."""
+    alert_id: UUID = Field(..., description="Alert identifier")
+    alert_type: str = Field(..., description="Type of alert")
+    severity: str = Field(..., description="Alert severity")
+    message: str = Field(..., description="Alert message")
+    field_id: Optional[UUID] = Field(None, description="Associated field ID")
+    created_at: datetime = Field(..., description="Alert creation time")
+    acknowledged: bool = Field(default=False, description="Whether alert is acknowledged")
+
+class DashboardTrendData(BaseModel):
+    """Trend data for dashboard."""
+    metric_name: str = Field(..., description="Metric name")
+    current_value: float = Field(..., description="Current value")
+    previous_value: float = Field(..., description="Previous period value")
+    change_percent: float = Field(..., description="Percentage change")
+    trend_direction: str = Field(..., description="Trend direction (up/down/stable)")
+    data_points: List[Dict[str, Any]] = Field(..., description="Historical data points")
+
+class MonitoringDashboardResponse(BaseModel):
+    """Response model for monitoring dashboard data."""
+    dashboard_id: UUID = Field(default_factory=uuid4, description="Unique dashboard identifier")
+    farm_location_id: UUID = Field(..., description="Farm location identifier")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Dashboard generation time")
+    overall_drought_status: DroughtRiskLevel = Field(..., description="Overall farm drought status")
+    fields_data: List[DashboardFieldData] = Field(..., description="Individual field data")
+    alerts: List[DashboardAlert] = Field(default_factory=list, description="Active alerts")
+    trends: List[DashboardTrendData] = Field(..., description="Trend analysis data")
+    forecast_summary: Dict[str, Any] = Field(..., description="Weather forecast summary")
+    recommendations: List[str] = Field(..., description="General recommendations")
+
+class ScenarioPlanningRequest(BaseModel):
+    """Request model for scenario planning."""
+    farm_location_id: UUID = Field(..., description="Farm location identifier")
+    scenario_name: str = Field(..., description="Name of the scenario")
+    scenario_description: str = Field(..., description="Description of the scenario")
+    time_horizon_months: int = Field(default=12, ge=1, le=60, description="Planning horizon in months")
+    practices_to_evaluate: List[UUID] = Field(..., description="Practices to evaluate in scenario")
+    weather_scenarios: List[str] = Field(default=["normal", "drought", "wet"], description="Weather scenarios to evaluate")
+    include_economic_analysis: bool = Field(default=True, description="Include economic analysis")
+    include_risk_assessment: bool = Field(default=True, description="Include risk assessment")
+
+class ScenarioOutcome(BaseModel):
+    """Outcome for a specific scenario."""
+    scenario_name: str = Field(..., description="Scenario name")
+    weather_condition: str = Field(..., description="Weather condition")
+    practice_combination: List[str] = Field(..., description="Practices in this scenario")
+    expected_water_savings: Decimal = Field(..., description="Expected water savings")
+    expected_yield_impact: float = Field(..., description="Expected yield impact percentage")
+    implementation_cost: Decimal = Field(..., description="Total implementation cost")
+    net_benefit: Decimal = Field(..., description="Net benefit over time horizon")
+    risk_score: float = Field(..., ge=0, le=10, description="Risk score for scenario")
+    success_probability: float = Field(..., ge=0, le=1, description="Probability of success")
+
+class ScenarioPlanningResponse(BaseModel):
+    """Response model for scenario planning."""
+    scenario_analysis_id: UUID = Field(default_factory=uuid4, description="Unique scenario analysis identifier")
+    farm_location_id: UUID = Field(..., description="Farm location identifier")
+    analysis_date: datetime = Field(default_factory=datetime.utcnow, description="Analysis date")
+    scenario_name: str = Field(..., description="Scenario name")
+    time_horizon_months: int = Field(..., description="Planning horizon")
+    scenarios_evaluated: List[ScenarioOutcome] = Field(..., description="Evaluated scenarios")
+    recommended_scenario: Optional[str] = Field(None, description="Recommended scenario name")
+    recommendation_reason: str = Field(..., description="Reason for recommendation")
+    risk_assessment: Dict[str, Any] = Field(..., description="Overall risk assessment")
+    economic_summary: Dict[str, Any] = Field(..., description="Economic analysis summary")
+    implementation_timeline: List[Dict[str, Any]] = Field(..., description="Recommended implementation timeline")

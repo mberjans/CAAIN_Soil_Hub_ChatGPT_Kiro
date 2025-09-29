@@ -19,7 +19,7 @@ from ..models.crop_diversification_models import (
     RiskLevel,
     DiversificationStrategy
 )
-from ..services.crop_diversification_service import CropDiversificationService
+from services.crop_diversification_service import CropDiversificationService
 
 logger = logging.getLogger(__name__)
 
