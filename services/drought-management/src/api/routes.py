@@ -61,6 +61,13 @@ async def get_soil_assessment_service():
     from ..services.soil_assessment_service import SoilManagementAssessmentService
     return SoilManagementAssessmentService()
 
+async def get_soil_moisture_monitoring_service():
+    """Get soil moisture monitoring service instance."""
+    from ..services.soil_moisture_monitoring_service import SoilMoistureMonitoringService
+    service = SoilMoistureMonitoringService()
+    await service.initialize()
+    return service
+
 # Drought Assessment Endpoints
 @router.post("/assess", response_model=DroughtAssessmentResponse)
 async def assess_drought_risk(
@@ -277,6 +284,261 @@ async def get_soil_moisture_status(
     except Exception as e:
         logger.error(f"Error getting soil moisture status: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to get soil moisture status: {str(e)}")
+
+# Soil Moisture Monitoring Endpoints
+@router.post("/soil-moisture/setup-monitoring")
+async def setup_soil_moisture_monitoring(
+    field_id: UUID = Body(..., description="Field ID for monitoring setup"),
+    soil_characteristics: Dict[str, Any] = Body(..., description="Soil characteristics and properties"),
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Set up soil moisture monitoring for a field.
+    
+    Configures monitoring parameters:
+    - Soil characteristics (field capacity, wilting point, bulk density)
+    - Alert thresholds for moisture levels
+    - Monitoring depth and frequency
+    - Integration with weather and crop data
+    
+    Returns monitoring configuration and initial status.
+    """
+    try:
+        logger.info(f"Setting up soil moisture monitoring for field: {field_id}")
+        config = await service.setup_field_monitoring(field_id, soil_characteristics)
+        return {
+            "field_id": field_id,
+            "monitoring_config": config,
+            "status": "active",
+            "message": "Soil moisture monitoring setup completed successfully"
+        }
+    except Exception as e:
+        logger.error(f"Error setting up soil moisture monitoring: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to setup soil moisture monitoring: {str(e)}")
+
+@router.get("/soil-moisture/monitoring/{field_id}", response_model=SoilMoistureStatus)
+async def get_monitored_soil_moisture_status(
+    field_id: UUID,
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Get current monitored soil moisture status for a field.
+    
+    Returns comprehensive soil moisture information:
+    - Current moisture levels (surface and deep)
+    - Available water capacity
+    - Overall moisture level classification
+    - Irrigation recommendations
+    - Days until critical moisture level
+    """
+    try:
+        logger.info(f"Getting monitored soil moisture status for field: {field_id}")
+        status = await service.get_current_moisture_status(field_id)
+        return status
+    except Exception as e:
+        logger.error(f"Error getting monitored soil moisture status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get monitored soil moisture status: {str(e)}")
+
+@router.get("/soil-moisture/predict-deficit/{field_id}")
+async def predict_soil_moisture_deficit(
+    field_id: UUID,
+    forecast_days: int = Query(7, ge=1, le=30, description="Number of days to forecast"),
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Predict soil moisture deficit over the forecast period.
+    
+    Uses water balance models to predict:
+    - Daily moisture levels
+    - Moisture deficit accumulation
+    - Risk levels for each day
+    - Overall drought risk assessment
+    
+    Returns detailed deficit prediction with recommendations.
+    """
+    try:
+        logger.info(f"Predicting soil moisture deficit for field: {field_id}, days: {forecast_days}")
+        prediction = await service.predict_moisture_deficit(field_id, forecast_days)
+        return prediction
+    except Exception as e:
+        logger.error(f"Error predicting soil moisture deficit: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to predict soil moisture deficit: {str(e)}")
+
+@router.get("/soil-moisture/evapotranspiration/{field_id}")
+async def calculate_field_evapotranspiration(
+    field_id: UUID,
+    date: Optional[datetime] = Query(None, description="Date for calculation (defaults to today)"),
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Calculate evapotranspiration for a field on a specific date.
+    
+    Calculates:
+    - Reference evapotranspiration (ET₀) using Penman-Monteith equation
+    - Crop coefficient (Kc) based on growth stage
+    - Actual crop evapotranspiration (ETc)
+    - Soil evaporation component
+    - Total evapotranspiration
+    
+    Returns detailed ET calculation results.
+    """
+    try:
+        if date is None:
+            date = datetime.utcnow()
+        
+        logger.info(f"Calculating evapotranspiration for field: {field_id}, date: {date}")
+        et_result = await service.calculate_evapotranspiration(field_id, date)
+        return et_result
+    except Exception as e:
+        logger.error(f"Error calculating evapotranspiration: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to calculate evapotranspiration: {str(e)}")
+
+@router.get("/soil-moisture/irrigation-recommendations/{field_id}")
+async def get_irrigation_recommendations(
+    field_id: UUID,
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Get irrigation recommendations for a field.
+    
+    Provides recommendations based on:
+    - Current soil moisture status
+    - Weather forecast
+    - Crop water requirements
+    - Evapotranspiration rates
+    
+    Returns detailed irrigation recommendations with timing and amounts.
+    """
+    try:
+        logger.info(f"Getting irrigation recommendations for field: {field_id}")
+        recommendations = await service.get_irrigation_recommendations(field_id)
+        return recommendations
+    except Exception as e:
+        logger.error(f"Error getting irrigation recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get irrigation recommendations: {str(e)}")
+
+@router.get("/soil-moisture/alerts/{field_id}")
+async def get_soil_moisture_alerts(
+    field_id: UUID,
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Get moisture-related alerts for a field.
+    
+    Returns alerts for:
+    - Low soil moisture levels
+    - Critical moisture conditions
+    - Drought stress warnings
+    - Irrigation timing recommendations
+    
+    Returns prioritized list of moisture alerts with recommendations.
+    """
+    try:
+        logger.info(f"Getting soil moisture alerts for field: {field_id}")
+        alerts = await service.get_moisture_alerts(field_id)
+        return {
+            "field_id": field_id,
+            "alerts": alerts,
+            "alert_count": len(alerts),
+            "timestamp": datetime.utcnow()
+        }
+    except Exception as e:
+        logger.error(f"Error getting soil moisture alerts: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get soil moisture alerts: {str(e)}")
+
+@router.post("/soil-moisture/alerts/{alert_id}/acknowledge")
+async def acknowledge_soil_moisture_alert(
+    alert_id: UUID,
+    user_id: UUID = Body(..., description="User ID acknowledging the alert"),
+    notes: Optional[str] = Body(None, description="Optional acknowledgment notes"),
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Acknowledge a soil moisture alert.
+    
+    Marks an alert as acknowledged with optional notes.
+    """
+    try:
+        logger.info(f"Acknowledging soil moisture alert: {alert_id}")
+        
+        # Get alert service
+        if not hasattr(service, 'alert_service'):
+            from ..services.soil_moisture_alert_service import SoilMoistureAlertService
+            service.alert_service = SoilMoistureAlertService()
+            await service.alert_service.initialize()
+        
+        success = await service.alert_service.acknowledge_alert(alert_id, user_id, notes)
+        
+        if success:
+            return {"success": True, "message": "Alert acknowledged successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Alert not found")
+            
+    except Exception as e:
+        logger.error(f"Error acknowledging alert: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to acknowledge alert: {str(e)}")
+
+@router.post("/soil-moisture/alerts/{alert_id}/resolve")
+async def resolve_soil_moisture_alert(
+    alert_id: UUID,
+    user_id: UUID = Body(..., description="User ID resolving the alert"),
+    resolution_notes: Optional[str] = Body(None, description="Optional resolution notes"),
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Resolve a soil moisture alert.
+    
+    Marks an alert as resolved with optional resolution notes.
+    """
+    try:
+        logger.info(f"Resolving soil moisture alert: {alert_id}")
+        
+        # Get alert service
+        if not hasattr(service, 'alert_service'):
+            from ..services.soil_moisture_alert_service import SoilMoistureAlertService
+            service.alert_service = SoilMoistureAlertService()
+            await service.alert_service.initialize()
+        
+        success = await service.alert_service.resolve_alert(alert_id, user_id, resolution_notes)
+        
+        if success:
+            return {"success": True, "message": "Alert resolved successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Alert not found")
+            
+    except Exception as e:
+        logger.error(f"Error resolving alert: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to resolve alert: {str(e)}")
+
+@router.get("/soil-moisture/alerts/{field_id}/statistics")
+async def get_soil_moisture_alert_statistics(
+    field_id: UUID,
+    days: int = Query(30, ge=1, le=365, description="Number of days to include in statistics"),
+    service: SoilMoistureMonitoringService = Depends(get_soil_moisture_monitoring_service)
+):
+    """
+    Get soil moisture alert statistics for a field.
+    
+    Returns comprehensive statistics including:
+    - Total alerts by severity and type
+    - Resolution times
+    - Alert trends
+    """
+    try:
+        logger.info(f"Getting soil moisture alert statistics for field: {field_id}")
+        
+        # Get alert service
+        if not hasattr(service, 'alert_service'):
+            from ..services.soil_moisture_alert_service import SoilMoistureAlertService
+            service.alert_service = SoilMoistureAlertService()
+            await service.alert_service.initialize()
+        
+        statistics = await service.alert_service.get_alert_statistics(field_id, days)
+        return statistics
+        
+    except Exception as e:
+        logger.error(f"Error getting alert statistics: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get alert statistics: {str(e)}")
 
 # Soil Assessment Endpoints
 @router.post("/soil-assessment", response_model=SoilAssessmentResponse)

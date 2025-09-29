@@ -1359,7 +1359,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Integration**: Connect with existing soil pH management service, soil data from USDA Web Soil Survey
   **Scoring**: Develop scoring system for current practices (0-100 scale), identify improvement opportunities
   **Output**: Practice assessment report, improvement recommendations, water conservation potential
-- [ ] TICKET-014_drought-management-2.2 Create soil moisture monitoring and prediction system
+- [x] TICKET-014_drought-management-2.2 Create soil moisture monitoring and prediction system
   **Implementation**: Develop `SoilMoistureMonitoringService` with predictive capabilities
   **Features**: Soil moisture tracking, evapotranspiration calculations, moisture deficit predictions
   **Data Sources**: Weather data, soil characteristics, crop water requirements, irrigation records
