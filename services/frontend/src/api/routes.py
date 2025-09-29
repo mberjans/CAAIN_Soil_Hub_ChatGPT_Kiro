@@ -170,6 +170,15 @@ async def mobile_rotation_planning(request: Request):
     })
 
 
+@router.get("/mobile-drought-management", response_class=HTMLResponse)
+async def mobile_drought_management(request: Request):
+    """Serve the mobile drought management page."""
+    return templates.TemplateResponse("mobile_drought_management.html", {
+        "request": request,
+        "title": "Drought Management"
+    })
+
+
 @router.get("/variety-detail/{variety_id}", response_class=HTMLResponse)
 async def variety_detail(request: Request, variety_id: str):
     """Serve the variety detail page."""

@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>{{ title }} - CAAIN Soil Hub Mobile</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#28a745">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Drought Management">
+    <link rel="apple-touch-icon" href="{{ url_for('static', path='/images/app-icon-192.png') }}">
+    <link rel="manifest" href="{{ url_for('static', path='/manifest.json') }}">
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Mobile Drought Management CSS -->
+    <link href="{{ url_for('static', path='/css/mobile-drought-management.css') }}" rel="stylesheet">
+    
+    <style>
+        /* Inline critical styles for faster loading */
+        :root {
+            --primary-color: #28a745;
+            --primary-dark: #218838;
+            --secondary-color: #6c757d;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --border-radius: 12px;
+            --box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-color);
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* Mobile Header */
+        .mobile-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: linear-gradient(135deg, var(--danger-color) 0%, #fd7e14 50%, var(--warning-color) 100%);
+            color: white;
+            box-shadow: var(--box-shadow);
+            padding-top: env(safe-area-inset-top);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem;
+            min-height: 60px;
+        }
+
+        .header-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 0;
+            flex: 1;
+            text-align: center;
+        }
+
+        .btn-link {
+            color: white !important;
+            text-decoration: none;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: var(--transition);
+            min-width: 44px;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-link:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white !important;
+        }
+
+        /* Main Container */
+        .mobile-container {
+            margin-top: calc(60px + env(safe-area-inset-top));
+            padding: 1rem;
+            padding-bottom: calc(80px + env(safe-area-inset-bottom));
+            min-height: calc(100vh - 60px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        }
+
+        /* Quick Assessment Card */
+        .quick-assessment-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
+            border-left: 4px solid var(--danger-color);
+        }
+
+        .risk-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .risk-level {
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+
+        .risk-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        /* Emergency Actions */
+        .emergency-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .emergency-btn {
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            border: none;
+            font-weight: 600;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            transition: var(--transition);
+        }
+
+        .emergency-btn:active {
+            transform: scale(0.95);
+        }
+
+        .emergency-btn.assess {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .emergency-btn.protocol {
+            background: var(--danger-color);
+            color: white;
+        }
+
+        .emergency-btn.monitor {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .emergency-btn.report {
+            background: var(--secondary-color);
+            color: white;
+        }
+
+        /* Field Status Cards */
+        .field-status-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
+            border-left: 4px solid var(--success-color);
+        }
+
+        .field-status-card.high-risk {
+            border-left-color: var(--danger-color);
+        }
+
+        .field-status-card.moderate-risk {
+            border-left-color: var(--warning-color);
+        }
+
+        .field-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .field-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .field-moisture {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .field-moisture.low {
+            color: var(--danger-color);
+        }
+
+        .field-moisture.moderate {
+            color: var(--warning-color);
+        }
+
+        /* Assessment Wizard */
+        .assessment-wizard {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .wizard-step {
+            display: none;
+        }
+
+        .wizard-step.active {
+            display: block;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .step-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e9ecef;
+            margin: 0 0.25rem;
+            transition: var(--transition);
+        }
+
+        .step-dot.active {
+            background: var(--primary-color);
+        }
+
+        .step-dot.completed {
+            background: var(--success-color);
+        }
+
+        /* Form Elements */
+        .form-control, .form-select {
+            border-radius: var(--border-radius);
+            border: 2px solid #e9ecef;
+            padding: 0.75rem;
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+
+        .form-label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        /* Camera Integration */
+        .camera-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
+            text-align: center;
+        }
+
+        .camera-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            padding: 1rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            min-height: 60px;
+            width: 100%;
+            transition: var(--transition);
+        }
+
+        .camera-btn:active {
+            transform: scale(0.95);
+        }
+
+        .camera-preview {
+            width: 100%;
+            max-width: 300px;
+            height: 200px;
+            border-radius: var(--border-radius);
+            object-fit: cover;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        /* Voice Notes */
+        .voice-notes-section {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: var(--box-shadow);
+        }
+
+        .voice-btn {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+            transition: var(--transition);
+        }
+
+        .voice-btn.recording {
+            background: var(--danger-color);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            border-top: 1px solid #e9ecef;
+            padding: 0.5rem;
+            padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+            z-index: 1000;
+        }
+
+        .nav-items {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: var(--secondary-color);
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+            min-width: 60px;
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+            background: rgba(40, 167, 69, 0.1);
+        }
+
+        .nav-item i {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .nav-item span {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Loading States */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid transparent;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Offline Indicator */
+        .offline-indicator {
+            position: fixed;
+            top: calc(60px + env(safe-area-inset-top));
+            left: 0;
+            right: 0;
+            background: var(--warning-color);
+            color: white;
+            text-align: center;
+            padding: 0.5rem;
+            z-index: 999;
+            display: none;
+        }
+
+        .offline-indicator.show {
+            display: block;
+        }
+
+        /* Touch-friendly buttons */
+        .btn {
+            min-height: 44px;
+            min-width: 44px;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            .form-control, .form-select {
+                border-width: 3px;
+            }
+            
+            .field-status-card {
+                border-left-width: 6px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offlineIndicator">
+        <i class="fas fa-wifi-slash me-2"></i>You're offline - data will sync when connection is restored
+    </div>
+
+    <!-- Mobile Header -->
+    <div class="mobile-header">
+        <div class="header-content">
+            <a href="/mobile" class="btn-link">
+                <i class="fas fa-arrow-left"></i>
+            </a>
+            <h1 class="header-title">
+                <i class="fas fa-tint-slash me-2"></i>Drought Management
+            </h1>
+            <a href="#" class="btn-link" onclick="mobileDroughtSystem.showSettings()">
+                <i class="fas fa-cog"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="mobile-container">
+        <!-- Quick Assessment Card -->
+        <div class="quick-assessment-card">
+            <div class="risk-indicator">
+                <div>
+                    <div class="risk-level" id="currentRiskLevel">Moderate</div>
+                    <small class="text-muted">Current Risk Level</small>
+                </div>
+                <span class="risk-badge bg-warning" id="riskBadge">MODERATE</span>
+            </div>
+            
+            <div class="emergency-actions">
+                <button class="emergency-btn assess" onclick="mobileDroughtSystem.startQuickAssessment()">
+                    <i class="fas fa-play"></i>
+                    <span>Quick Assess</span>
+                </button>
+                <button class="emergency-btn protocol" onclick="mobileDroughtSystem.showEmergencyProtocol()">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Emergency</span>
+                </button>
+                <button class="emergency-btn monitor" onclick="mobileDroughtSystem.openMonitoring()">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Monitor</span>
+                </button>
+                <button class="emergency-btn report" onclick="mobileDroughtSystem.generateReport()">
+                    <i class="fas fa-file-alt"></i>
+                    <span>Report</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Field Status Cards -->
+        <div id="fieldStatusCards">
+            <!-- Field status cards will be populated by JavaScript -->
+        </div>
+
+        <!-- Assessment Wizard -->
+        <div class="assessment-wizard" id="assessmentWizard" style="display: none;">
+            <div class="step-indicator">
+                <div class="step-dot active" data-step="1"></div>
+                <div class="step-dot" data-step="2"></div>
+                <div class="step-dot" data-step="3"></div>
+            </div>
+
+            <!-- Step 1: Field Selection -->
+            <div class="wizard-step active" id="step1">
+                <h5>Select Field</h5>
+                <div class="mb-3">
+                    <label for="fieldSelect" class="form-label">Choose Field</label>
+                    <select class="form-select" id="fieldSelect" required>
+                        <option value="">Select Field</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="assessmentType" class="form-label">Assessment Type</label>
+                    <select class="form-select" id="assessmentType" required>
+                        <option value="quick">Quick Assessment</option>
+                        <option value="comprehensive">Comprehensive</option>
+                        <option value="emergency">Emergency Assessment</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Step 2: Field Conditions -->
+            <div class="wizard-step" id="step2">
+                <h5>Field Conditions</h5>
+                <div class="mb-3">
+                    <label for="soilMoisture" class="form-label">Soil Moisture Level</label>
+                    <select class="form-select" id="soilMoisture" required>
+                        <option value="">Select Moisture Level</option>
+                        <option value="very_dry">Very Dry</option>
+                        <option value="dry">Dry</option>
+                        <option value="moderate">Moderate</option>
+                        <option value="moist">Moist</option>
+                        <option value="wet">Wet</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="cropStage" class="form-label">Crop Growth Stage</label>
+                    <select class="form-select" id="cropStage" required>
+                        <option value="">Select Growth Stage</option>
+                        <option value="emergence">Emergence</option>
+                        <option value="vegetative">Vegetative</option>
+                        <option value="reproductive">Reproductive</option>
+                        <option value="maturity">Maturity</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="weatherConditions" class="form-label">Current Weather</label>
+                    <select class="form-select" id="weatherConditions" required>
+                        <option value="">Select Weather</option>
+                        <option value="sunny">Sunny</option>
+                        <option value="partly_cloudy">Partly Cloudy</option>
+                        <option value="cloudy">Cloudy</option>
+                        <option value="rainy">Rainy</option>
+                        <option value="windy">Windy</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Step 3: Documentation -->
+            <div class="wizard-step" id="step3">
+                <h5>Document Conditions</h5>
+                
+                <!-- Camera Section -->
+                <div class="camera-section">
+                    <h6><i class="fas fa-camera me-2"></i>Field Photos</h6>
+                    <button class="camera-btn" onclick="mobileDroughtSystem.takePhoto()">
+                        <i class="fas fa-camera me-2"></i>Take Photo
+                    </button>
+                    <img id="cameraPreview" class="camera-preview" alt="Field photo preview">
+                    <div id="photoList" class="mt-2"></div>
+                </div>
+
+                <!-- Voice Notes Section -->
+                <div class="voice-notes-section">
+                    <h6><i class="fas fa-microphone me-2"></i>Voice Notes</h6>
+                    <div class="d-flex align-items-center gap-3">
+                        <button class="voice-btn" id="voiceBtn" onclick="mobileDroughtSystem.toggleRecording()">
+                            <i class="fas fa-microphone"></i>
+                        </button>
+                        <div class="flex-grow-1">
+                            <div id="recordingStatus" class="text-muted small">Tap to record voice notes</div>
+                            <div id="recordingTimer" class="text-danger small" style="display: none;">Recording...</div>
+                        </div>
+                    </div>
+                    <div id="voiceNotesList" class="mt-2"></div>
+                </div>
+
+                <!-- Additional Notes -->
+                <div class="mb-3">
+                    <label for="additionalNotes" class="form-label">Additional Notes</label>
+                    <textarea class="form-control" id="additionalNotes" rows="3" placeholder="Any additional observations..."></textarea>
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+                <button type="button" class="btn btn-outline-secondary" id="prevStepBtn" onclick="mobileDroughtSystem.previousStep()" style="display: none;">
+                    <i class="fas fa-arrow-left me-2"></i>Previous
+                </button>
+                <button type="button" class="btn btn-primary" id="nextStepBtn" onclick="mobileDroughtSystem.nextStep()">
+                    Next<i class="fas fa-arrow-right ms-2"></i>
+                </button>
+                <button type="submit" class="btn btn-success" id="submitBtn" style="display: none;" onclick="mobileDroughtSystem.submitAssessment()">
+                    <i class="fas fa-check me-2"></i>Submit
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" style="display: none;">
+            <!-- Results will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <div class="nav-items">
+            <a href="#" class="nav-item active" onclick="mobileDroughtSystem.showDashboard()">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item" onclick="mobileDroughtSystem.showAssessment()">
+                <i class="fas fa-clipboard-check"></i>
+                <span>Assess</span>
+            </a>
+            <a href="#" class="nav-item" onclick="mobileDroughtSystem.showMonitoring()">
+                <i class="fas fa-chart-line"></i>
+                <span>Monitor</span>
+            </a>
+            <a href="#" class="nav-item" onclick="mobileDroughtSystem.showPractices()">
+                <i class="fas fa-seedling"></i>
+                <span>Practices</span>
+            </a>
+            <a href="#" class="nav-item" onclick="mobileDroughtSystem.showSettings()">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Mobile Drought Management JavaScript -->
+    <script src="{{ url_for('static', path='/js/mobile-drought-management.js') }}"></script>
+    
+    <script>
+        // Initialize the mobile drought management system
+        let mobileDroughtSystem;
+        document.addEventListener('DOMContentLoaded', function() {
+            mobileDroughtSystem = new MobileDroughtManagementSystem();
+        });
+    </script>
+</body>
+</html>
