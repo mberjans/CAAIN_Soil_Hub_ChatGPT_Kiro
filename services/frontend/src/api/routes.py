@@ -35,6 +35,15 @@ async def crop_selection(request: Request):
     })
 
 
+@router.get("/variety-selection", response_class=HTMLResponse)
+async def variety_selection(request: Request):
+    """Serve the variety selection page."""
+    return templates.TemplateResponse("variety_selection.html", {
+        "request": request,
+        "title": "Variety Selection"
+    })
+
+
 @router.get("/crop-filtering", response_class=HTMLResponse)
 async def crop_filtering(request: Request):
     """Serve the crop filtering page."""

@@ -71,7 +71,7 @@ jobs:
       matrix:
         service: 
           - question-router
-          - recommendation-engine
+          - recommendation_engine
           - ai-agent
           - data-integration
           - image-analysis

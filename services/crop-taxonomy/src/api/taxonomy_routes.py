@@ -204,6 +204,129 @@ async def get_botanical_families():
         raise HTTPException(status_code=500, detail=f"Error retrieving families: {str(e)}")
 
 
+@router.get("/crops/search", response_model=List[Dict[str, Any]])
+async def search_crops(
+    query: str = Query(..., description="Search query for crop names or characteristics"),
+    limit: int = Query(10, description="Maximum number of results to return")
+):
+    """
+    Search crops by name or characteristics.
+    
+    This endpoint provides crop search functionality for the frontend variety selection interface.
+    It searches through crop names, scientific names, and common characteristics.
+    
+    Args:
+        query: Search term (crop name, scientific name, or characteristic)
+        limit: Maximum number of results to return
+        
+    Returns:
+        List of matching crops with basic information
+    """
+    try:
+        # For now, return demo data since database integration is not yet implemented
+        # This matches the structure expected by the frontend JavaScript
+        
+        # Sample crop data that matches frontend expectations
+        sample_crops = [
+            {
+                "id": "corn",
+                "name": "Corn",
+                "scientific_name": "Zea mays",
+                "category": "Grain",
+                "family": "Poaceae",
+                "description": "Major cereal crop grown worldwide for grain and silage"
+            },
+            {
+                "id": "soybean", 
+                "name": "Soybean",
+                "scientific_name": "Glycine max",
+                "category": "Legume",
+                "family": "Fabaceae",
+                "description": "Important legume crop for protein and oil production"
+            },
+            {
+                "id": "wheat",
+                "name": "Wheat", 
+                "scientific_name": "Triticum aestivum",
+                "category": "Grain",
+                "family": "Poaceae",
+                "description": "Major cereal crop for bread and flour production"
+            },
+            {
+                "id": "cotton",
+                "name": "Cotton",
+                "scientific_name": "Gossypium hirsutum", 
+                "category": "Fiber",
+                "family": "Malvaceae",
+                "description": "Fiber crop grown for cotton production"
+            },
+            {
+                "id": "rice",
+                "name": "Rice",
+                "scientific_name": "Oryza sativa",
+                "category": "Grain", 
+                "family": "Poaceae",
+                "description": "Staple cereal crop in many regions"
+            },
+            {
+                "id": "barley",
+                "name": "Barley",
+                "scientific_name": "Hordeum vulgare",
+                "category": "Grain",
+                "family": "Poaceae", 
+                "description": "Cereal crop used for feed, malting, and food"
+            },
+            {
+                "id": "oats",
+                "name": "Oats",
+                "scientific_name": "Avena sativa",
+                "category": "Grain",
+                "family": "Poaceae",
+                "description": "Cereal crop for feed and human consumption"
+            },
+            {
+                "id": "canola",
+                "name": "Canola",
+                "scientific_name": "Brassica napus",
+                "category": "Oilseed",
+                "family": "Brassicaceae",
+                "description": "Oilseed crop for edible oil production"
+            },
+            {
+                "id": "sunflower",
+                "name": "Sunflower", 
+                "scientific_name": "Helianthus annuus",
+                "category": "Oilseed",
+                "family": "Asteraceae",
+                "description": "Oilseed crop for oil and confectionery markets"
+            },
+            {
+                "id": "alfalfa",
+                "name": "Alfalfa",
+                "scientific_name": "Medicago sativa",
+                "category": "Forage",
+                "family": "Fabaceae",
+                "description": "Perennial forage legume for livestock feed"
+            }
+        ]
+        
+        # Filter crops based on query
+        query_lower = query.lower()
+        matching_crops = [
+            crop for crop in sample_crops
+            if (query_lower in crop["name"].lower() or 
+                query_lower in crop["scientific_name"].lower() or
+                query_lower in crop["category"].lower() or
+                query_lower in crop["description"].lower())
+        ]
+        
+        # Return limited results
+        return matching_crops[:limit]
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Crop search error: {str(e)}")
+
+
 @router.get("/categories", response_model=List[str])
 async def get_agricultural_categories():
     """

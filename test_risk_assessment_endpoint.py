@@ -9,7 +9,7 @@ import os
 from datetime import datetime
 
 # Add the service path
-sys.path.append(os.path.join(os.path.dirname(__file__), 'services/recommendation-engine/src'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'services/recommendation_engine/src'))
 
 def test_risk_assessment_endpoint():
     """Test the risk assessment endpoint logic."""

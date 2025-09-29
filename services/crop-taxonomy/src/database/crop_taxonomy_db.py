@@ -21,15 +21,23 @@ from contextlib import contextmanager
 import os
 import sys
 
+logger = logging.getLogger(__name__)
+
 # Add the databases directory to the Python path for imports
 sys.path.append('/Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro/databases/python')
 
-from models import (
-    Base, Crop, CropTaxonomicHierarchy, CropAgriculturalClassification,
-    CropClimateAdaptations, CropSoilRequirements, CropNutritionalProfiles,
-    CropFilteringAttributes, CropAttributeTag, FarmerCropPreference,
-    EnhancedCropVarieties, CropRegionalAdaptations
-)
+try:
+    from models import (
+        Base, Crop, CropTaxonomicHierarchy, CropAgriculturalClassification,
+        CropClimateAdaptations, CropSoilRequirements, CropNutritionalProfiles,
+        CropFilteringAttributes, CropAttributeTag, FarmerCropPreference,
+        EnhancedCropVarieties, CropRegionalAdaptations
+    )
+except ImportError as e:
+    logger.warning(f"Could not import database models: {e}")
+    # Create a minimal Base for testing
+    from sqlalchemy.ext.declarative import declarative_base
+    Base = declarative_base()
 
 # Import Pydantic models from our service
 from ..models.crop_taxonomy_models import (

@@ -59,6 +59,7 @@ try:
     from api.filter_analytics_routes import router as analytics_router
     from api.personalization_routes import router as personalization_router
     from api.recommendation_management_routes import router as recommendation_management_router
+    from api.comprehensive_explanation_routes import router as comprehensive_explanation_router
 except ImportError as e:
     logging.error(f"Import error: {e}")
     # Create placeholder routers if imports fail
@@ -76,6 +77,7 @@ except ImportError as e:
     analytics_router = APIRouter()
     personalization_router = APIRouter()
     recommendation_management_router = APIRouter()
+    comprehensive_explanation_router = APIRouter()
 
 # Configure logging
 logging.basicConfig(
@@ -186,6 +188,7 @@ app.include_router(explanation_routes.router)
 app.include_router(result_processor_routes.router)
 app.include_router(personalization_router)
 app.include_router(recommendation_management_router)
+app.include_router(comprehensive_explanation_router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
