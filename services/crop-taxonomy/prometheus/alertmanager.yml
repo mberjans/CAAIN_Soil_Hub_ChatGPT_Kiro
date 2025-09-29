@@ -1,0 +1,184 @@
+global:
+  smtp_smarthost: 'localhost:587'
+  smtp_from: 'crop-variety-alerts@afas.local'
+  smtp_auth_username: 'crop-variety-alerts@afas.local'
+  smtp_auth_password: 'alert_password'
+
+# Templates for agricultural-specific alert formatting
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Route alerts based on agricultural context and severity
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default-receiver'
+  
+  routes:
+    # Critical agricultural alerts - immediate notification
+    - match:
+        severity: critical
+        impact: agricultural_accuracy
+      receiver: 'agricultural-critical'
+      group_wait: 0s
+      repeat_interval: 15m
+    
+    # Critical system alerts - immediate notification
+    - match:
+        severity: critical
+        impact: system_reliability
+      receiver: 'system-critical'
+      group_wait: 0s
+      repeat_interval: 15m
+    
+    # Data quality issues affecting recommendations
+    - match:
+        component: data-integration
+        severity: warning
+      receiver: 'data-quality-team'
+      group_interval: 5m
+      repeat_interval: 30m
+    
+    # Performance issues during critical agricultural periods
+    - match_re:
+        alertname: 'Slow.*Response|.*Down.*'
+      receiver: 'performance-team'
+      group_interval: 2m
+      repeat_interval: 10m
+    
+    # Business metrics alerts
+    - match:
+        impact: user_adoption
+      receiver: 'business-team'
+      group_interval: 30m
+      repeat_interval: 4h
+    
+    # User experience alerts
+    - match:
+        impact: user_experience
+      receiver: 'user-experience-team'
+      group_interval: 10m
+      repeat_interval: 30m
+
+# Notification receivers
+receivers:
+  - name: 'default-receiver'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+
+  - name: 'agricultural-critical'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+    email_configs:
+      - to: 'agricultural-team@afas.local'
+        subject: '🚨 CRITICAL: Agricultural Accuracy Alert'
+        body: |
+          CRITICAL ALERT: {{ .GroupLabels.alertname }}
+          
+          Impact: Agricultural Accuracy
+          Severity: {{ .GroupLabels.severity }}
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+
+  - name: 'system-critical'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+    email_configs:
+      - to: 'devops-team@afas.local'
+        subject: '🚨 CRITICAL: System Alert'
+        body: |
+          CRITICAL SYSTEM ALERT: {{ .GroupLabels.alertname }}
+          
+          Impact: System Reliability
+          Severity: {{ .GroupLabels.severity }}
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+
+  - name: 'data-quality-team'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+    email_configs:
+      - to: 'data-team@afas.local'
+        subject: '⚠️ Data Quality Alert'
+        body: |
+          Data Quality Alert: {{ .GroupLabels.alertname }}
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+
+  - name: 'performance-team'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+    email_configs:
+      - to: 'performance-team@afas.local'
+        subject: '⚠️ Performance Alert'
+        body: |
+          Performance Alert: {{ .GroupLabels.alertname }}
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+
+  - name: 'business-team'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+    email_configs:
+      - to: 'business-team@afas.local'
+        subject: '📊 Business Metrics Alert'
+        body: |
+          Business Metrics Alert: {{ .GroupLabels.alertname }}
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+
+  - name: 'user-experience-team'
+    webhook_configs:
+      - url: 'http://localhost:5001/webhook'
+        send_resolved: true
+    email_configs:
+      - to: 'ux-team@afas.local'
+        subject: '👤 User Experience Alert'
+        body: |
+          User Experience Alert: {{ .GroupLabels.alertname }}
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          {{ end }}
+
+# Inhibit rules to prevent alert spam
+inhibit_rules:
+  # Inhibit warning alerts when critical alerts are firing
+  - source_match:
+      severity: 'critical'
+    target_match:
+      severity: 'warning'
+    equal: ['alertname', 'cluster', 'service']
+  
+  # Inhibit system alerts when agricultural alerts are firing
+  - source_match:
+      impact: 'agricultural_accuracy'
+    target_match:
+      impact: 'system_reliability'
+    equal: ['cluster', 'service']

@@ -1,0 +1,299 @@
+groups:
+  - name: crop_variety_recommendations
+    rules:
+      # Response time alerts
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(crop_variety_recommendation_duration_seconds_bucket[5m])) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: user_experience
+        annotations:
+          summary: "High response time for crop variety recommendations"
+          description: "P95 response time is {{ $value }}s, exceeding critical threshold of 5s"
+          runbook_url: "https://docs.afas.com/runbooks/high-response-time"
+
+      - alert: ElevatedResponseTime
+        expr: histogram_quantile(0.95, rate(crop_variety_recommendation_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: user_experience
+        annotations:
+          summary: "Elevated response time for crop variety recommendations"
+          description: "P95 response time is {{ $value }}s, exceeding warning threshold of 2s"
+          runbook_url: "https://docs.afas.com/runbooks/elevated-response-time"
+
+      # Confidence score alerts
+      - alert: LowRecommendationConfidence
+        expr: histogram_quantile(0.50, rate(crop_variety_recommendation_confidence_bucket[5m])) < 0.7
+        for: 3m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: agricultural_accuracy
+        annotations:
+          summary: "Low recommendation confidence for crop variety recommendations"
+          description: "P50 confidence score is {{ $value }}, below critical threshold of 0.7"
+          runbook_url: "https://docs.afas.com/runbooks/low-confidence"
+
+      - alert: ReducedRecommendationConfidence
+        expr: histogram_quantile(0.50, rate(crop_variety_recommendation_confidence_bucket[5m])) < 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: agricultural_accuracy
+        annotations:
+          summary: "Reduced recommendation confidence for crop variety recommendations"
+          description: "P50 confidence score is {{ $value }}, below warning threshold of 0.8"
+          runbook_url: "https://docs.afas.com/runbooks/reduced-confidence"
+
+      # User satisfaction alerts
+      - alert: LowUserSatisfaction
+        expr: histogram_quantile(0.50, rate(crop_variety_user_satisfaction_bucket[5m])) < 0.7
+        for: 5m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: user_adoption
+        annotations:
+          summary: "Low user satisfaction with crop variety recommendations"
+          description: "P50 user satisfaction is {{ $value }}, below critical threshold of 0.7"
+          runbook_url: "https://docs.afas.com/runbooks/low-user-satisfaction"
+
+      - alert: ReducedUserSatisfaction
+        expr: histogram_quantile(0.50, rate(crop_variety_user_satisfaction_bucket[5m])) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: user_adoption
+        annotations:
+          summary: "Reduced user satisfaction with crop variety recommendations"
+          description: "P50 user satisfaction is {{ $value }}, below warning threshold of 0.8"
+          runbook_url: "https://docs.afas.com/runbooks/reduced-user-satisfaction"
+
+      # Agricultural success rate alerts
+      - alert: LowAgriculturalSuccessRate
+        expr: agricultural_success_rate < 0.65
+        for: 10m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: agricultural_accuracy
+        annotations:
+          summary: "Low agricultural success rate for crop variety recommendations"
+          description: "Agricultural success rate is {{ $value }}, below critical threshold of 0.65"
+          runbook_url: "https://docs.afas.com/runbooks/low-agricultural-success"
+
+      - alert: ReducedAgriculturalSuccessRate
+        expr: agricultural_success_rate < 0.75
+        for: 15m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: agricultural_accuracy
+        annotations:
+          summary: "Reduced agricultural success rate for crop variety recommendations"
+          description: "Agricultural success rate is {{ $value }}, below warning threshold of 0.75"
+          runbook_url: "https://docs.afas.com/runbooks/reduced-agricultural-success"
+
+      # Error rate alerts
+      - alert: HighErrorRate
+        expr: rate(crop_variety_recommendations_total{status="error"}[5m]) / rate(crop_variety_recommendations_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: system_reliability
+        annotations:
+          summary: "High error rate for crop variety recommendations"
+          description: "Error rate is {{ $value | humanizePercentage }}, exceeding critical threshold of 10%"
+          runbook_url: "https://docs.afas.com/runbooks/high-error-rate"
+
+      - alert: ElevatedErrorRate
+        expr: rate(crop_variety_recommendations_total{status="error"}[5m]) / rate(crop_variety_recommendations_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: system_reliability
+        annotations:
+          summary: "Elevated error rate for crop variety recommendations"
+          description: "Error rate is {{ $value | humanizePercentage }}, exceeding warning threshold of 5%"
+          runbook_url: "https://docs.afas.com/runbooks/elevated-error-rate"
+
+      # System resource alerts
+      - alert: HighCPUUsage
+        expr: system_cpu_usage_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: system_performance
+        annotations:
+          summary: "High CPU usage for crop variety recommendations service"
+          description: "CPU usage is {{ $value }}%, exceeding critical threshold of 95%"
+          runbook_url: "https://docs.afas.com/runbooks/high-cpu-usage"
+
+      - alert: ElevatedCPUUsage
+        expr: system_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: system_performance
+        annotations:
+          summary: "Elevated CPU usage for crop variety recommendations service"
+          description: "CPU usage is {{ $value }}%, exceeding warning threshold of 80%"
+          runbook_url: "https://docs.afas.com/runbooks/elevated-cpu-usage"
+
+      - alert: HighMemoryUsage
+        expr: system_memory_usage_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: system_performance
+        annotations:
+          summary: "High memory usage for crop variety recommendations service"
+          description: "Memory usage is {{ $value }}%, exceeding critical threshold of 95%"
+          runbook_url: "https://docs.afas.com/runbooks/high-memory-usage"
+
+      - alert: ElevatedMemoryUsage
+        expr: system_memory_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: system_performance
+        annotations:
+          summary: "Elevated memory usage for crop variety recommendations service"
+          description: "Memory usage is {{ $value }}%, exceeding warning threshold of 85%"
+          runbook_url: "https://docs.afas.com/runbooks/elevated-memory-usage"
+
+      - alert: HighDiskUsage
+        expr: system_disk_usage_percent > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: system_performance
+        annotations:
+          summary: "High disk usage for crop variety recommendations service"
+          description: "Disk usage is {{ $value }}%, exceeding critical threshold of 95%"
+          runbook_url: "https://docs.afas.com/runbooks/high-disk-usage"
+
+      - alert: ElevatedDiskUsage
+        expr: system_disk_usage_percent > 90
+        for: 5m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: system_performance
+        annotations:
+          summary: "Elevated disk usage for crop variety recommendations service"
+          description: "Disk usage is {{ $value }}%, exceeding warning threshold of 90%"
+          runbook_url: "https://docs.afas.com/runbooks/elevated-disk-usage"
+
+      # Data quality alerts
+      - alert: StaleData
+        expr: data_freshness_hours > 48
+        for: 5m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: agricultural_accuracy
+        annotations:
+          summary: "Stale data detected for crop variety recommendations"
+          description: "Data is {{ $value }} hours old, exceeding critical threshold of 48 hours"
+          runbook_url: "https://docs.afas.com/runbooks/stale-data"
+
+      - alert: AgingData
+        expr: data_freshness_hours > 24
+        for: 10m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: agricultural_accuracy
+        annotations:
+          summary: "Aging data detected for crop variety recommendations"
+          description: "Data is {{ $value }} hours old, exceeding warning threshold of 24 hours"
+          runbook_url: "https://docs.afas.com/runbooks/aging-data"
+
+      - alert: LowAPIAvailability
+        expr: external_api_availability < 0.90
+        for: 5m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: data_quality
+        annotations:
+          summary: "Low external API availability for crop variety recommendations"
+          description: "API availability is {{ $value | humanizePercentage }}, below critical threshold of 90%"
+          runbook_url: "https://docs.afas.com/runbooks/low-api-availability"
+
+      - alert: ReducedAPIAvailability
+        expr: external_api_availability < 0.95
+        for: 10m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: data_quality
+        annotations:
+          summary: "Reduced external API availability for crop variety recommendations"
+          description: "API availability is {{ $value | humanizePercentage }}, below warning threshold of 95%"
+          runbook_url: "https://docs.afas.com/runbooks/reduced-api-availability"
+
+      # Service availability alerts
+      - alert: ServiceDown
+        expr: up{job="crop-variety-recommendations"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: service_availability
+        annotations:
+          summary: "Crop variety recommendations service is down"
+          description: "The crop variety recommendations service has been down for more than 1 minute"
+          runbook_url: "https://docs.afas.com/runbooks/service-down"
+
+      - alert: ServiceUnhealthy
+        expr: up{job="crop-variety-recommendations"} == 0
+        for: 30s
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: service_availability
+        annotations:
+          summary: "Crop variety recommendations service is unhealthy"
+          description: "The crop variety recommendations service appears to be unhealthy"
+          runbook_url: "https://docs.afas.com/runbooks/service-unhealthy"
+
+      # Business metrics alerts
+      - alert: LowRecommendationVolume
+        expr: rate(crop_variety_recommendations_total[1h]) < 0.1
+        for: 30m
+        labels:
+          severity: warning
+          service: crop_variety_recommendations
+          impact: business_metrics
+        annotations:
+          summary: "Low recommendation volume for crop variety recommendations"
+          description: "Recommendation rate is {{ $value }}/second, below expected threshold"
+          runbook_url: "https://docs.afas.com/runbooks/low-recommendation-volume"
+
+      - alert: NoRecommendations
+        expr: rate(crop_variety_recommendations_total[5m]) == 0
+        for: 10m
+        labels:
+          severity: critical
+          service: crop_variety_recommendations
+          impact: business_metrics
+        annotations:
+          summary: "No crop variety recommendations being generated"
+          description: "No recommendations have been generated in the last 5 minutes"
+          runbook_url: "https://docs.afas.com/runbooks/no-recommendations"
