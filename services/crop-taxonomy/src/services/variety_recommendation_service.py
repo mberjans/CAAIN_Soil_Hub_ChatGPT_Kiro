@@ -22,31 +22,16 @@ try:
         VarietyRecommendation,
         VarietyComparisonRequest,
         VarietyComparisonResponse,
-        RegionalAdaptationRequest,
-        RegionalAdaptationResponse,
-        RiskAssessment,
-        AdaptationStrategy,
-        VarietyCharacteristics,
-        DiseaseResistanceProfile,
-        PestResistanceProfile,
-        AbioticStressTolerances,
-        RegionalPerformanceData,
-        SeasonalTiming,
-        YieldPotential,
-        QualityAttributes,
-        MarketAttributes,
-        RiskLevel,
-        AdaptationLevel
+        RegionalPerformanceEntry,
+        QualityCharacteristic,
+        RiskLevel
     )
     from ..models.crop_taxonomy_models import (
         ComprehensiveCropData,
         CropCategory,
-        LifeCycle,
-        ClimateZone
     )
     from ..models.service_models import (
         ConfidenceLevel,
-        ValidationResult
     )
 except ImportError:
     from models.crop_variety_models import (
@@ -55,31 +40,16 @@ except ImportError:
         VarietyRecommendation,
         VarietyComparisonRequest,
         VarietyComparisonResponse,
-        RegionalAdaptationRequest,
-        RegionalAdaptationResponse,
-        RiskAssessment,
-        AdaptationStrategy,
-        VarietyCharacteristics,
-        DiseaseResistanceProfile,
-        PestResistanceProfile,
-        AbioticStressTolerances,
-        RegionalPerformanceData,
-        SeasonalTiming,
-        YieldPotential,
-        QualityAttributes,
-        MarketAttributes,
-        RiskLevel,
-        AdaptationLevel
+        RegionalPerformanceEntry,
+        QualityCharacteristic,
+        RiskLevel
     )
     from models.crop_taxonomy_models import (
         ComprehensiveCropData,
         CropCategory,
-        LifeCycle,
-        ClimateZone
     )
     from models.service_models import (
         ConfidenceLevel,
-        ValidationResult
     )
 
 
@@ -112,6 +82,15 @@ class VarietyRecommendationService:
         except ImportError:
             logger.warning("Seed company integration not available")
             self.seed_company_service = None
+        
+        # Initialize economic analysis service
+        try:
+            from .variety_economics import VarietyEconomicAnalysisService
+            self.economic_analysis_service = VarietyEconomicAnalysisService(database_url)
+            logger.info("Economic analysis service initialized")
+        except ImportError:
+            logger.warning("Economic analysis service not available")
+            self.economic_analysis_service = None
             
         self.regional_data = {}
         self.performance_models = {}
@@ -125,13 +104,14 @@ class VarietyRecommendationService:
         """Initialize variety recommendation algorithms and scoring systems."""
         # Scoring weights for variety selection
         self.scoring_weights = {
-            "yield_potential": 0.25,
-            "disease_resistance": 0.20,
-            "climate_adaptation": 0.18,
+            "yield_potential": 0.20,
+            "disease_resistance": 0.18,
+            "climate_adaptation": 0.15,
+            "economic_viability": 0.15,  # New economic viability scoring
             "market_desirability": 0.12,
             "management_ease": 0.10,
-            "quality_attributes": 0.08,
-            "risk_tolerance": 0.07
+            "quality_attributes": 0.06,
+            "risk_tolerance": 0.04
         }
         
         # Regional adaptation factors
@@ -470,34 +450,34 @@ class VarietyRecommendationService:
             parent_crop_id=crop_data.id,
             release_year=2024,
             breeding_institution="University Research Station",
-            characteristics=VarietyCharacteristics(
-                maturity_class="medium",
-                plant_height_range=(75, 95),
-                grain_characteristics={
-                    "kernel_color": "red" if "Red" in variety_name else "white",
-                    "kernel_hardness": "hard" if "Hard" in variety_name else "soft",
-                    "protein_content_range": (11.5, 14.2)
-                }
-            ),
+            # characteristics={
+            #     "maturity_class": "medium",
+            #     "plant_height_range": (75, 95),
+            #     "grain_characteristics": {
+            #         "kernel_color": "red" if "Red" in variety_name else "white",
+            #         "kernel_hardness": "hard" if "Hard" in variety_name else "soft",
+            #         "protein_content_range": (11.5, 14.2)
+            #     }
+            # },
             yield_potential=yield_potential,
             disease_resistance=disease_resistance,
-            pest_resistance=PestResistanceProfile(
-                insect_resistance={"aphids": 3, "wheat_midge": 2},
-                nematode_resistance={}
-            ),
-            abiotic_stress_tolerances=AbioticStressTolerances(
-                drought_tolerance=4 if focus_type == "high_yield" else 3,
-                heat_tolerance=3,
-                cold_tolerance=4,
-                salt_tolerance=2,
-                waterlogging_tolerance=2
-            ),
-            quality_attributes=QualityAttributes(
-                protein_content_range=(11.5, 14.2),
-                test_weight_range=(76, 82),
-                falling_number_range=(250, 400),
-                other_quality_metrics={"gluten_strength": "medium-strong"}
-            ),
+            # pest_resistance={
+            #     "insect_resistance": {"aphids": 3, "wheat_midge": 2},
+            #     "nematode_resistance": {}
+            # },
+            # abiotic_stress_tolerances={
+            #     "drought_tolerance": 4 if focus_type == "high_yield" else 3,
+            #     "heat_tolerance": 3,
+            #     "cold_tolerance": 4,
+            #     "salt_tolerance": 2,
+            #     "waterlogging_tolerance": 2
+            # },
+            # quality_attributes={
+            #     "protein_content_range": (11.5, 14.2),
+            #     "test_weight_range": (76, 82),
+            #     "falling_number_range": (250, 400),
+            #     "other_quality_metrics": {"gluten_strength": "medium-strong"}
+            # },
             market_attributes=MarketAttributes(
                 market_class=variety_name,
                 end_use_suitability=["bread", "general_purpose"],
@@ -574,6 +554,9 @@ class VarietyRecommendationService:
         
         # Market desirability scoring
         scores["market_desirability"] = await self._score_market_desirability(variety, regional_context)
+        
+        # Economic viability scoring (new advanced economic analysis)
+        scores["economic_viability"] = await self._score_economic_viability(variety, regional_context, farmer_preferences)
         
         # Management ease scoring
         scores["management_ease"] = await self._score_management_ease(variety, regional_context)
@@ -691,6 +674,33 @@ class VarietyRecommendationService:
                 base_score += 0.2
                 
         return max(0.0, min(1.0, base_score))
+
+    async def _score_economic_viability(
+        self, 
+        variety: EnhancedCropVariety, 
+        context: Dict[str, Any], 
+        farmer_preferences: Optional[Dict[str, Any]] = None
+    ) -> float:
+        """Score economic viability using advanced economic analysis."""
+        
+        # If economic analysis service is not available, fall back to simple market desirability
+        if not self.economic_analysis_service:
+            logger.warning("Economic analysis service not available, using market desirability fallback")
+            return await self._score_market_desirability(variety, context)
+        
+        try:
+            # Perform comprehensive economic analysis
+            economic_result = await self.economic_analysis_service.analyze_variety_economics(
+                variety, context, farmer_preferences
+            )
+            
+            # Return the economic viability score (0-1)
+            return economic_result.economic_viability_score
+            
+        except Exception as e:
+            logger.error(f"Error in economic viability scoring for variety {variety.id}: {e}")
+            # Fall back to market desirability scoring
+            return await self._score_market_desirability(variety, context)
 
     async def _score_management_ease(self, variety: EnhancedCropVariety, context: Dict[str, Any]) -> float:
         """Score management complexity and input requirements."""
@@ -905,7 +915,7 @@ class VarietyRecommendationService:
         self, 
         variety: EnhancedCropVariety, 
         context: Dict[str, Any]
-    ) -> RiskAssessment:
+    ) -> Dict[str, Any]:
         """Assess risks associated with growing this variety."""
         
         risks = []
@@ -950,21 +960,21 @@ class VarietyRecommendationService:
                     "description": "Limited drought tolerance in drought-prone region"
                 })
                 
-        return RiskAssessment(
-            overall_risk_level=RiskLevel.MODERATE,  # Default
-            specific_risks=risks,
-            mitigation_strategies=[
+        return {
+            "overall_risk_level": "MODERATE",  # Default
+            "specific_risks": risks,
+            "mitigation_strategies": [
                 "Monitor disease development closely",
                 "Consider fungicide applications if needed",
                 "Ensure adequate soil fertility"
             ]
-        )
+        }
 
     async def _generate_adaptation_strategies(
         self, 
         variety: EnhancedCropVariety, 
         context: Dict[str, Any]
-    ) -> List[AdaptationStrategy]:
+    ) -> List[Dict[str, Any]]:
         """Generate adaptation strategies for successful cultivation."""
         
         strategies = []
