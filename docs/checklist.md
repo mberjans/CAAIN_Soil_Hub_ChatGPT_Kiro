@@ -1390,7 +1390,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Constraints**: Water rights, source limitations, equipment capacity, energy costs, labor requirements
   **Optimization**: Irrigation scheduling, system efficiency improvements, water conservation strategies
   **Integration**: Connect with field management, crop requirements, weather forecasting
-- [ ] TICKET-014_drought-management-4.2 Implement water source and availability analysis system
+- [x] TICKET-014_drought-management-4.2 Implement water source and availability analysis system
   **Implementation**: Develop water resource assessment and management system
   **Features**: Water source evaluation, availability forecasting, usage optimization
   **Sources**: Wells, surface water, municipal water, recycled water, rainwater harvesting

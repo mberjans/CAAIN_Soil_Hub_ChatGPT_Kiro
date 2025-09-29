@@ -5,7 +5,7 @@ Pydantic models for drought assessment, conservation practices,
 and monitoring data structures.
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime, date
 from uuid import UUID
@@ -69,7 +69,8 @@ class ConservationPractice(BaseModel):
     maintenance_cost_per_year: Decimal = Field(..., description="Annual maintenance cost per acre")
     effectiveness_rating: float = Field(..., ge=0, le=10, description="Effectiveness rating (0-10)")
     
-    @validator('water_savings_percent')
+    @field_validator('water_savings_percent')
+    @classmethod
     def validate_water_savings(cls, v):
         if v < 0 or v > 100:
             raise ValueError('Water savings percentage must be between 0 and 100')
@@ -95,7 +96,8 @@ class SoilMoistureStatus(BaseModel):
     irrigation_recommendation: str = Field(..., description="Irrigation recommendation")
     days_until_critical: Optional[int] = Field(None, description="Days until critical moisture level")
     
-    @validator('surface_moisture_percent', 'deep_moisture_percent')
+    @field_validator('surface_moisture_percent', 'deep_moisture_percent')
+    @classmethod
     def validate_moisture_percent(cls, v):
         if v < 0 or v > 100:
             raise ValueError('Moisture percentage must be between 0 and 100')
@@ -121,7 +123,8 @@ class WaterSavingsPotential(BaseModel):
     implementation_cost: Decimal = Field(..., description="Implementation cost")
     payback_period_years: float = Field(..., description="Payback period in years")
     
-    @validator('savings_percentage')
+    @field_validator('savings_percentage')
+    @classmethod
     def validate_savings_percentage(cls, v):
         if v < 0 or v > 100:
             raise ValueError('Savings percentage must be between 0 and 100')
@@ -140,7 +143,8 @@ class DroughtAssessment(BaseModel):
     water_savings_potential: WaterSavingsPotential = Field(..., description="Water savings potential")
     confidence_score: float = Field(..., ge=0, le=1, description="Assessment confidence score")
     
-    @validator('confidence_score')
+    @field_validator('confidence_score')
+    @classmethod
     def validate_confidence_score(cls, v):
         if v < 0 or v > 1:
             raise ValueError('Confidence score must be between 0 and 1')
