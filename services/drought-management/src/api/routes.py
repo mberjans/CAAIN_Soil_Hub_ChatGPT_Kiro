@@ -2592,3 +2592,452 @@ def _get_monitoring_metrics(target):
         "Weed pressure",
         "Soil compaction levels"
     ]
+
+
+# Tillage Transition Planning Endpoints
+
+@router.post("/tillage-transition-planning/comprehensive-plan")
+async def create_comprehensive_transition_plan(
+    current_system: str = Query(..., description="Current tillage system"),
+    target_system: str = Query(..., description="Target tillage system"),
+    field_conditions: TillageOptimizationRequest = Body(..., description="Field conditions and constraints"),
+    transition_preferences: Dict[str, Any] = Body(default_factory=dict, description="Transition preferences")
+):
+    """
+    Create comprehensive multi-year tillage transition plan.
+    
+    This endpoint provides comprehensive transition planning including:
+    - Multi-year timeline with detailed phases
+    - Practice adaptation recommendations
+    - Troubleshooting support system
+    - Success monitoring framework
+    - Educational resources and training
+    - Expert consultation planning
+    - Peer networking opportunities
+    - Extension services integration
+    - Equipment dealer coordination
+    
+    Agricultural Benefits:
+    - Structured approach to tillage system transition
+    - Risk mitigation and success optimization
+    - Access to expert knowledge and peer experience
+    - Integration with local extension services
+    - Comprehensive support throughout transition process
+    """
+    try:
+        from ..models.tillage_models import TillageSystem
+        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        
+        # Validate tillage systems
+        try:
+            current = TillageSystem(current_system)
+            target = TillageSystem(target_system)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tillage system")
+        
+        # Create transition planning service
+        service = TillageTransitionPlanningService()
+        
+        # Generate comprehensive transition plan
+        transition_plan = await service.create_comprehensive_transition_plan(
+            current, target, field_conditions, transition_preferences
+        )
+        
+        logger.info(f"Comprehensive transition plan created: {transition_plan['plan_id']}")
+        return transition_plan
+        
+    except Exception as e:
+        logger.error(f"Error creating transition plan: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Transition planning failed: {str(e)}")
+
+
+@router.get("/tillage-transition-planning/feasibility-assessment")
+async def assess_transition_feasibility(
+    current_system: str = Query(..., description="Current tillage system"),
+    target_system: str = Query(..., description="Target tillage system"),
+    soil_type: str = Query(..., description="Primary soil type"),
+    field_size_acres: float = Query(..., description="Field size in acres"),
+    slope_percent: float = Query(..., description="Field slope percentage"),
+    organic_matter_percent: float = Query(..., description="Soil organic matter percentage")
+):
+    """
+    Assess feasibility of tillage system transition.
+    
+    Provides detailed feasibility assessment including:
+    - Feasibility score and level
+    - Key factors affecting feasibility
+    - Potential challenges and recommendations
+    - Transition difficulty assessment
+    
+    Agricultural Use Cases:
+    - Pre-transition planning and decision making
+    - Risk assessment and mitigation planning
+    - Resource allocation and timeline planning
+    """
+    try:
+        from ..models.tillage_models import TillageSystem, TillageOptimizationRequest
+        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        
+        # Validate tillage systems
+        try:
+            current = TillageSystem(current_system)
+            target = TillageSystem(target_system)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tillage system")
+        
+        # Create field conditions object
+        field_conditions = TillageOptimizationRequest(
+            field_id=uuid4(),
+            current_tillage_system=current,
+            soil_type=soil_type,
+            soil_texture=f"{soil_type} soil",
+            field_size_acres=field_size_acres,
+            slope_percent=slope_percent,
+            drainage_class="moderate",
+            organic_matter_percent=organic_matter_percent,
+            compaction_level="moderate",
+            crop_rotation=["corn", "soybean"],
+            water_conservation_priority=8.0,
+            soil_health_priority=7.0,
+            labor_availability=6.0
+        )
+        
+        # Create service and assess feasibility
+        service = TillageTransitionPlanningService()
+        feasibility_assessment = await service._assess_transition_feasibility(
+            current, target, field_conditions
+        )
+        
+        return {
+            "current_system": current_system,
+            "target_system": target_system,
+            "feasibility_assessment": feasibility_assessment,
+            "recommendation": "Proceed with transition" if feasibility_assessment["feasibility_score"] >= 70 else "Consider gradual approach or alternative systems"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error assessing feasibility: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Feasibility assessment failed: {str(e)}")
+
+
+@router.get("/tillage-transition-planning/troubleshooting-guide")
+async def get_troubleshooting_guide(
+    tillage_system: str = Query(..., description="Tillage system for troubleshooting")
+):
+    """
+    Get troubleshooting guide for specific tillage system.
+    
+    Provides comprehensive troubleshooting support including:
+    - Common issues and symptoms
+    - Diagnostic procedures
+    - Solution strategies
+    - Prevention methods
+    - Expert contacts
+    - Emergency procedures
+    
+    Agricultural Use Cases:
+    - Problem diagnosis and resolution
+    - Preventive maintenance planning
+    - Emergency response procedures
+    - Expert consultation coordination
+    """
+    try:
+        from ..models.tillage_models import TillageSystem
+        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        
+        # Validate tillage system
+        try:
+            system = TillageSystem(tillage_system)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tillage system")
+        
+        # Create service and get troubleshooting guide
+        service = TillageTransitionPlanningService()
+        
+        # Get troubleshooting database
+        troubleshooting_data = service.troubleshooting_database.get(system, {})
+        
+        # Get expert contacts
+        expert_contacts = service.expert_contacts.get(system, [])
+        
+        # Get educational resources
+        educational_resources = service.educational_resources.get(system, [])
+        
+        return {
+            "tillage_system": tillage_system,
+            "common_issues": troubleshooting_data,
+            "expert_contacts": expert_contacts,
+            "educational_resources": educational_resources,
+            "prevention_strategies": [
+                "Regular monitoring and assessment",
+                "Proactive maintenance",
+                "Proper equipment calibration",
+                "Integrated management approach"
+            ],
+            "emergency_contacts": [
+                {"name": "Extension Specialist", "phone": "1-800-EXTENSION"},
+                {"name": "Equipment Dealer", "phone": "Local dealer contact"},
+                {"name": "Emergency Services", "phone": "911"}
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting troubleshooting guide: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Troubleshooting guide failed: {str(e)}")
+
+
+@router.get("/tillage-transition-planning/educational-resources")
+async def get_educational_resources(
+    tillage_system: str = Query(..., description="Tillage system for educational resources")
+):
+    """
+    Get educational resources for tillage system transition.
+    
+    Provides comprehensive educational support including:
+    - Learning modules and courses
+    - Training schedules and opportunities
+    - Certification programs
+    - Online resources and materials
+    - Workshop recommendations
+    - Peer learning opportunities
+    
+    Agricultural Use Cases:
+    - Farmer education and training
+    - Skill development and certification
+    - Knowledge transfer and best practices
+    - Continuous learning and improvement
+    """
+    try:
+        from ..models.tillage_models import TillageSystem
+        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        
+        # Validate tillage system
+        try:
+            system = TillageSystem(tillage_system)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tillage system")
+        
+        # Create service and get educational resources
+        service = TillageTransitionPlanningService()
+        
+        educational_resources = service.educational_resources.get(system, [])
+        expert_contacts = service.expert_contacts.get(system, [])
+        peer_contacts = service.peer_network_contacts.get(system, [])
+        
+        return {
+            "tillage_system": tillage_system,
+            "learning_modules": educational_resources,
+            "training_opportunities": [
+                "Extension workshops",
+                "Equipment dealer training",
+                "Online courses",
+                "Field days and demonstrations"
+            ],
+            "certification_programs": [
+                "Conservation Agriculture Certification",
+                "Soil Health Specialist",
+                "Precision Agriculture Certification"
+            ],
+            "online_resources": [
+                "Extension websites",
+                "Research publications",
+                "Video tutorials",
+                "Interactive tools"
+            ],
+            "workshop_recommendations": [
+                f"{system.value.title()} System Workshop",
+                "Cover Crop Management",
+                "Soil Health Assessment",
+                "Equipment Operation and Maintenance"
+            ],
+            "peer_learning_opportunities": [
+                "Study groups",
+                "Mentorship programs",
+                "Peer-to-peer exchanges",
+                "Farmer networks"
+            ],
+            "expert_contacts": expert_contacts,
+            "peer_contacts": peer_contacts
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting educational resources: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Educational resources failed: {str(e)}")
+
+
+@router.get("/tillage-transition-planning/support-network")
+async def get_support_network(
+    tillage_system: str = Query(..., description="Tillage system for support network"),
+    location: str = Query(None, description="Geographic location for local contacts")
+):
+    """
+    Get comprehensive support network for tillage transition.
+    
+    Provides access to support network including:
+    - Extension service contacts
+    - Expert consultants and specialists
+    - Peer farmers and mentors
+    - Equipment dealers and suppliers
+    - Educational institutions
+    - Government programs and services
+    
+    Agricultural Use Cases:
+    - Building support network for transition
+    - Accessing local expertise and resources
+    - Connecting with peer farmers
+    - Coordinating with service providers
+    """
+    try:
+        from ..models.tillage_models import TillageSystem
+        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        
+        # Validate tillage system
+        try:
+            system = TillageSystem(tillage_system)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tillage system")
+        
+        # Create service and get support network
+        service = TillageTransitionPlanningService()
+        
+        expert_contacts = service.expert_contacts.get(system, [])
+        peer_contacts = service.peer_network_contacts.get(system, [])
+        
+        return {
+            "tillage_system": tillage_system,
+            "location": location,
+            "extension_services": [
+                {"name": "Local Extension Office", "services": ["Technical assistance", "Soil testing", "Educational programs"]},
+                {"name": "State Extension Specialist", "services": ["Expert consultation", "Research updates", "Training programs"]}
+            ],
+            "expert_consultants": expert_contacts,
+            "peer_farmers": peer_contacts,
+            "equipment_dealers": [
+                {"name": "Local Equipment Dealer", "specialty": system.value, "services": ["Sales", "Service", "Training"]}
+            ],
+            "educational_institutions": [
+                {"name": "Land Grant University", "services": ["Research", "Extension", "Education"]},
+                {"name": "Community College", "services": ["Technical training", "Certification programs"]}
+            ],
+            "government_programs": [
+                {"name": "NRCS", "services": ["Technical assistance", "Cost share programs"]},
+                {"name": "FSA", "services": ["Program enrollment", "Financial assistance"]}
+            ],
+            "professional_organizations": [
+                {"name": "Conservation Tillage Association", "services": ["Networking", "Education", "Advocacy"]},
+                {"name": "Soil Health Partnership", "services": ["Research", "Demonstration", "Education"]}
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting support network: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Support network failed: {str(e)}")
+
+
+@router.get("/tillage-transition-planning/monitoring-framework")
+async def get_monitoring_framework(
+    tillage_system: str = Query(..., description="Tillage system for monitoring framework")
+):
+    """
+    Get success monitoring framework for tillage transition.
+    
+    Provides comprehensive monitoring framework including:
+    - Key performance indicators (KPIs)
+    - Monitoring schedule and frequency
+    - Data collection methods
+    - Benchmarking criteria
+    - Reporting templates
+    - Success thresholds
+    
+    Agricultural Use Cases:
+    - Performance tracking and evaluation
+    - Success measurement and validation
+    - Continuous improvement planning
+    - Documentation and reporting
+    """
+    try:
+        from ..models.tillage_models import TillageSystem
+        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        
+        # Validate tillage system
+        try:
+            system = TillageSystem(tillage_system)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tillage system")
+        
+        # Create service and get monitoring framework
+        service = TillageTransitionPlanningService()
+        
+        return {
+            "tillage_system": tillage_system,
+            "key_performance_indicators": [
+                "Soil moisture retention percentage",
+                "Soil organic matter content",
+                "Erosion reduction percentage",
+                "Fuel consumption per acre",
+                "Labor efficiency improvement",
+                "Crop yield maintenance/improvement",
+                "Weed control effectiveness",
+                "Soil compaction reduction"
+            ],
+            "monitoring_schedule": {
+                "soil_health": "Annual",
+                "soil_moisture": "Monthly during growing season",
+                "crop_performance": "Seasonal",
+                "equipment_efficiency": "Per operation",
+                "economic_metrics": "Annual"
+            },
+            "data_collection_methods": [
+                "Soil testing and analysis",
+                "Visual assessment and scoring",
+                "Yield monitoring and measurement",
+                "Fuel consumption tracking",
+                "Labor hour documentation",
+                "Equipment performance monitoring"
+            ],
+            "benchmarking_criteria": {
+                "regional_averages": "County/state level comparisons",
+                "historical_performance": "Farm-specific baseline",
+                "industry_standards": "Best practice benchmarks"
+            },
+            "reporting_templates": [
+                "Monthly progress report",
+                "Seasonal assessment",
+                "Annual summary report",
+                "Transition milestone report"
+            ],
+            "success_thresholds": {
+                "soil_health_improvement": ">10% increase in organic matter",
+                "water_conservation": ">20% reduction in irrigation needs",
+                "fuel_savings": ">30% reduction in fuel consumption",
+                "yield_maintenance": ">95% of baseline yield",
+                "erosion_reduction": ">50% reduction in soil loss"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting monitoring framework: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Monitoring framework failed: {str(e)}")
+
+
+@router.get("/tillage-transition-planning/health")
+async def tillage_transition_planning_health():
+    """Health check endpoint for tillage transition planning service."""
+    try:
+        return {
+            "status": "healthy",
+            "service": "tillage-transition-planning",
+            "timestamp": datetime.utcnow(),
+            "features": [
+                "comprehensive_transition_planning",
+                "feasibility_assessment",
+                "troubleshooting_support",
+                "educational_resources",
+                "support_network",
+                "monitoring_framework"
+            ],
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        logger.error(f"Health check error: {str(e)}")
+        raise HTTPException(status_code=500, detail="Service health check failed")
