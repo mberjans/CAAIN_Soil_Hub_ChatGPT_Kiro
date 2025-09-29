@@ -63,6 +63,13 @@ from ..models.practice_effectiveness_models import (
     PerformanceMetric,
     ValidationStatus
 )
+from ..models.tillage_models import (
+    TillageOptimizationRequest,
+    TillageOptimizationResponse,
+    TillageSystemAssessment,
+    EquipmentRecommendation,
+    TransitionPlan
+)
 from ..services.drought_assessment_service import DroughtAssessmentService
 from ..services.moisture_conservation_service import MoistureConservationService
 from ..services.drought_monitoring_service import DroughtMonitoringService
@@ -2148,3 +2155,440 @@ async def water_source_analysis_health():
             "usage_optimization"
         ]
     }
+
+# Tillage Optimization Endpoints
+
+@router.post("/tillage-optimization/optimize", response_model=TillageOptimizationResponse)
+async def optimize_tillage_system(request: TillageOptimizationRequest):
+    """
+    Optimize tillage system for drought management and water conservation.
+    
+    This endpoint provides comprehensive tillage system optimization including:
+    - Assessment of current tillage practices
+    - Evaluation of alternative tillage systems
+    - Equipment recommendations with cost analysis
+    - Transition planning for system changes
+    - Water conservation and soil health impact analysis
+    - Economic analysis and ROI calculations
+    
+    Agricultural Benefits:
+    - Water conservation through reduced soil disturbance
+    - Improved soil health and organic matter accumulation
+    - Erosion control and soil structure preservation
+    - Reduced fuel consumption and labor requirements
+    - Enhanced drought resilience
+    """
+    try:
+        from ..services.tillage_service import TillageOptimizationService
+        
+        service = TillageOptimizationService()
+        result = await service.optimize_tillage_system(request)
+        
+        logger.info(f"Tillage optimization completed for field {request.field_id}")
+        return result
+        
+    except Exception as e:
+        logger.error(f"Error in tillage optimization: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Tillage optimization failed: {str(e)}")
+
+@router.get("/tillage-optimization/systems")
+async def get_tillage_systems():
+    """
+    Get available tillage systems and their characteristics.
+    
+    Returns comprehensive information about different tillage systems
+    including water conservation potential, soil health benefits,
+    equipment requirements, and implementation considerations.
+    """
+    try:
+        from ..models.tillage_models import TillageSystem
+        
+        systems = []
+        for system in TillageSystem:
+            systems.append({
+                "system": system.value,
+                "name": system.value.replace("_", " ").title(),
+                "description": _get_tillage_system_description(system),
+                "water_conservation_potential": _get_water_conservation_potential(system),
+                "soil_health_benefits": _get_soil_health_benefits(system),
+                "equipment_requirements": _get_equipment_requirements(system),
+                "implementation_considerations": _get_implementation_considerations(system)
+            })
+        
+        return {
+            "tillage_systems": systems,
+            "total_systems": len(systems),
+            "description": "Comprehensive tillage systems for drought management"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting tillage systems: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tillage systems: {str(e)}")
+
+@router.get("/tillage-optimization/equipment")
+async def get_tillage_equipment():
+    """
+    Get available tillage equipment and specifications.
+    
+    Returns detailed information about tillage equipment including
+    cost estimates, fuel consumption, labor requirements, and
+    compatibility with different soil types and field conditions.
+    """
+    try:
+        from ..models.tillage_models import TillageEquipment
+        
+        equipment = []
+        for eq_type in TillageEquipment:
+            equipment.append({
+                "equipment_type": eq_type.value,
+                "name": eq_type.value.replace("_", " ").title(),
+                "description": _get_equipment_description(eq_type),
+                "typical_cost_range": _get_equipment_cost_range(eq_type),
+                "fuel_consumption": _get_fuel_consumption(eq_type),
+                "labor_requirements": _get_labor_requirements(eq_type),
+                "soil_compatibility": _get_soil_compatibility(eq_type),
+                "maintenance_requirements": _get_maintenance_requirements(eq_type)
+            })
+        
+        return {
+            "tillage_equipment": equipment,
+            "total_equipment": len(equipment),
+            "description": "Comprehensive tillage equipment database"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting tillage equipment: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get tillage equipment: {str(e)}")
+
+@router.get("/tillage-optimization/transition-guide")
+async def get_transition_guide(
+    current_system: str = Query(..., description="Current tillage system"),
+    target_system: str = Query(..., description="Target tillage system")
+):
+    """
+    Get transition guide between tillage systems.
+    
+    Provides step-by-step guidance for transitioning from one
+    tillage system to another, including timeline, equipment needs,
+    cost estimates, and risk mitigation strategies.
+    """
+    try:
+        from ..models.tillage_models import TillageSystem, TillageOptimizationValidator
+        
+        # Validate systems
+        try:
+            current = TillageSystem(current_system)
+            target = TillageSystem(target_system)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid tillage system")
+        
+        validator = TillageOptimizationValidator()
+        difficulty = validator.calculate_transition_difficulty(current, target)
+        
+        transition_guide = {
+            "current_system": current.value,
+            "target_system": target.value,
+            "transition_difficulty": difficulty,
+            "estimated_duration_years": _get_transition_duration(difficulty),
+            "phases": _get_transition_phases(current, target),
+            "equipment_needs": _get_transition_equipment_needs(current, target),
+            "cost_estimates": _get_transition_cost_estimates(current, target),
+            "risk_factors": _get_transition_risks(current, target),
+            "success_factors": _get_success_factors(current, target),
+            "monitoring_metrics": _get_monitoring_metrics(target)
+        }
+        
+        return transition_guide
+        
+    except Exception as e:
+        logger.error(f"Error getting transition guide: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get transition guide: {str(e)}")
+
+@router.get("/tillage-optimization/health")
+async def tillage_optimization_health():
+    """Health check endpoint for tillage optimization service."""
+    return {
+        "status": "healthy",
+        "service": "tillage-optimization",
+        "timestamp": datetime.utcnow().isoformat(),
+        "features": [
+            "tillage_system_assessment",
+            "equipment_recommendations",
+            "transition_planning",
+            "water_conservation_analysis",
+            "soil_health_optimization",
+            "economic_analysis",
+            "drought_resilience_planning"
+        ]
+    }
+
+# Helper functions for tillage optimization endpoints
+
+def _get_tillage_system_description(system):
+    """Get description for tillage system."""
+    descriptions = {
+        TillageSystem.NO_TILL: "Complete elimination of tillage operations, planting directly into undisturbed soil",
+        TillageSystem.STRIP_TILL: "Tillage only in narrow strips where seeds will be planted",
+        TillageSystem.VERTICAL_TILL: "Minimal soil disturbance using vertical tillage tools",
+        TillageSystem.REDUCED_TILL: "Reduced frequency and intensity of tillage operations",
+        TillageSystem.MINIMUM_TILL: "Minimal tillage required for seedbed preparation",
+        TillageSystem.CONVENTIONAL: "Traditional intensive tillage with moldboard plow"
+    }
+    return descriptions.get(system, "Tillage system description not available")
+
+def _get_water_conservation_potential(system):
+    """Get water conservation potential for tillage system."""
+    potential = {
+        TillageSystem.NO_TILL: "Excellent (90-95%)",
+        TillageSystem.STRIP_TILL: "Very Good (80-85%)",
+        TillageSystem.VERTICAL_TILL: "Good (70-75%)",
+        TillageSystem.REDUCED_TILL: "Moderate (60-65%)",
+        TillageSystem.MINIMUM_TILL: "Fair (50-55%)",
+        TillageSystem.CONVENTIONAL: "Poor (30-35%)"
+    }
+    return potential.get(system, "Unknown")
+
+def _get_soil_health_benefits(system):
+    """Get soil health benefits for tillage system."""
+    benefits = {
+        TillageSystem.NO_TILL: ["Preserves soil structure", "Increases organic matter", "Enhances biological activity"],
+        TillageSystem.STRIP_TILL: ["Balanced soil disturbance", "Maintains soil structure", "Supports biological activity"],
+        TillageSystem.VERTICAL_TILL: ["Minimal soil disturbance", "Preserves soil layers", "Reduces compaction"],
+        TillageSystem.REDUCED_TILL: ["Moderate soil health benefits", "Gradual improvement", "Reduced erosion"],
+        TillageSystem.MINIMUM_TILL: ["Some soil health benefits", "Limited disturbance", "Basic erosion control"],
+        TillageSystem.CONVENTIONAL: ["Limited soil health benefits", "High disturbance", "Erosion risk"]
+    }
+    return benefits.get(system, [])
+
+def _get_equipment_requirements(system):
+    """Get equipment requirements for tillage system."""
+    requirements = {
+        TillageSystem.NO_TILL: ["No-till drill", "Herbicide application equipment", "Cover crop seeder"],
+        TillageSystem.STRIP_TILL: ["Strip-till implement", "No-till drill", "Fertilizer applicator"],
+        TillageSystem.VERTICAL_TILL: ["Vertical tillage tool", "Seed drill", "Fertilizer spreader"],
+        TillageSystem.REDUCED_TILL: ["Chisel plow", "Field cultivator", "Seed drill"],
+        TillageSystem.MINIMUM_TILL: ["Disk harrow", "Field cultivator", "Seed drill"],
+        TillageSystem.CONVENTIONAL: ["Moldboard plow", "Disk harrow", "Field cultivator", "Seed drill"]
+    }
+    return requirements.get(system, [])
+
+def _get_implementation_considerations(system):
+    """Get implementation considerations for tillage system."""
+    considerations = {
+        TillageSystem.NO_TILL: ["Requires good soil drainage", "May need gradual transition", "Weed management strategy needed"],
+        TillageSystem.STRIP_TILL: ["Precise equipment setup required", "Timing critical", "Soil condition dependent"],
+        TillageSystem.VERTICAL_TILL: ["Equipment calibration important", "Soil moisture dependent", "Depth control critical"],
+        TillageSystem.REDUCED_TILL: ["Easier transition", "Flexible timing", "Moderate equipment needs"],
+        TillageSystem.MINIMUM_TILL: ["Simple implementation", "Standard equipment", "Flexible approach"],
+        TillageSystem.CONVENTIONAL: ["Traditional approach", "Well-established practices", "High equipment needs"]
+    }
+    return considerations.get(system, [])
+
+def _get_equipment_description(eq_type):
+    """Get description for equipment type."""
+    descriptions = {
+        TillageEquipment.NO_TILL_DRILL: "Specialized drill for planting into undisturbed soil",
+        TillageEquipment.STRIP_TILL_IMPLEMENT: "Equipment for tillage in narrow strips",
+        TillageEquipment.CHISEL_PLOW: "Deep tillage tool for soil loosening",
+        TillageEquipment.MOLDBOARD_PLOW: "Traditional plow for complete soil inversion",
+        TillageEquipment.DISK_HARROW: "Shallow tillage tool for seedbed preparation",
+        TillageEquipment.FIELD_CULTIVATOR: "Multi-purpose tillage tool",
+        TillageEquipment.VERTICAL_TILLAGE_TOOL: "Minimal disturbance tillage tool",
+        TillageEquipment.ROTARY_HOE: "Shallow cultivation tool",
+        TillageEquipment.ROW_CULTIVATOR: "Inter-row cultivation equipment"
+    }
+    return descriptions.get(eq_type, "Equipment description not available")
+
+def _get_equipment_cost_range(eq_type):
+    """Get cost range for equipment type."""
+    cost_ranges = {
+        TillageEquipment.NO_TILL_DRILL: "$70,000 - $90,000",
+        TillageEquipment.STRIP_TILL_IMPLEMENT: "$60,000 - $80,000",
+        TillageEquipment.CHISEL_PLOW: "$30,000 - $50,000",
+        TillageEquipment.MOLDBOARD_PLOW: "$20,000 - $35,000",
+        TillageEquipment.DISK_HARROW: "$15,000 - $25,000",
+        TillageEquipment.FIELD_CULTIVATOR: "$25,000 - $40,000",
+        TillageEquipment.VERTICAL_TILLAGE_TOOL: "$40,000 - $60,000",
+        TillageEquipment.ROTARY_HOE: "$10,000 - $20,000",
+        TillageEquipment.ROW_CULTIVATOR: "$15,000 - $30,000"
+    }
+    return cost_ranges.get(eq_type, "Cost range not available")
+
+def _get_fuel_consumption(eq_type):
+    """Get fuel consumption for equipment type."""
+    fuel_consumption = {
+        TillageEquipment.NO_TILL_DRILL: "0.5-0.7 gallons/acre",
+        TillageEquipment.STRIP_TILL_IMPLEMENT: "0.8-1.0 gallons/acre",
+        TillageEquipment.CHISEL_PLOW: "1.2-1.5 gallons/acre",
+        TillageEquipment.MOLDBOARD_PLOW: "2.0-2.5 gallons/acre",
+        TillageEquipment.DISK_HARROW: "1.5-2.0 gallons/acre",
+        TillageEquipment.FIELD_CULTIVATOR: "1.0-1.3 gallons/acre",
+        TillageEquipment.VERTICAL_TILLAGE_TOOL: "1.0-1.2 gallons/acre",
+        TillageEquipment.ROTARY_HOE: "0.8-1.0 gallons/acre",
+        TillageEquipment.ROW_CULTIVATOR: "0.5-0.7 gallons/acre"
+    }
+    return fuel_consumption.get(eq_type, "Fuel consumption not available")
+
+def _get_labor_requirements(eq_type):
+    """Get labor requirements for equipment type."""
+    labor_requirements = {
+        TillageEquipment.NO_TILL_DRILL: "0.3-0.5 hours/acre",
+        TillageEquipment.STRIP_TILL_IMPLEMENT: "0.5-0.7 hours/acre",
+        TillageEquipment.CHISEL_PLOW: "0.7-1.0 hours/acre",
+        TillageEquipment.MOLDBOARD_PLOW: "1.0-1.3 hours/acre",
+        TillageEquipment.DISK_HARROW: "0.8-1.0 hours/acre",
+        TillageEquipment.FIELD_CULTIVATOR: "0.6-0.8 hours/acre",
+        TillageEquipment.VERTICAL_TILLAGE_TOOL: "0.6-0.8 hours/acre",
+        TillageEquipment.ROTARY_HOE: "0.4-0.6 hours/acre",
+        TillageEquipment.ROW_CULTIVATOR: "0.3-0.5 hours/acre"
+    }
+    return labor_requirements.get(eq_type, "Labor requirements not available")
+
+def _get_soil_compatibility(eq_type):
+    """Get soil compatibility for equipment type."""
+    soil_compatibility = {
+        TillageEquipment.NO_TILL_DRILL: ["Loam", "Sandy loam", "Silt loam"],
+        TillageEquipment.STRIP_TILL_IMPLEMENT: ["Clay loam", "Loam", "Sandy loam"],
+        TillageEquipment.CHISEL_PLOW: ["Clay", "Clay loam", "Loam"],
+        TillageEquipment.MOLDBOARD_PLOW: ["Clay", "Clay loam", "Loam"],
+        TillageEquipment.DISK_HARROW: ["Sandy loam", "Loam", "Silt loam"],
+        TillageEquipment.FIELD_CULTIVATOR: ["All soil types"],
+        TillageEquipment.VERTICAL_TILLAGE_TOOL: ["Loam", "Sandy loam", "Silt loam"],
+        TillageEquipment.ROTARY_HOE: ["All soil types"],
+        TillageEquipment.ROW_CULTIVATOR: ["All soil types"]
+    }
+    return soil_compatibility.get(eq_type, [])
+
+def _get_maintenance_requirements(eq_type):
+    """Get maintenance requirements for equipment type."""
+    maintenance = {
+        TillageEquipment.NO_TILL_DRILL: "High - precision components",
+        TillageEquipment.STRIP_TILL_IMPLEMENT: "Medium-High - precision setup",
+        TillageEquipment.CHISEL_PLOW: "Medium - wear parts",
+        TillageEquipment.MOLDBOARD_PLOW: "Medium - wear parts",
+        TillageEquipment.DISK_HARROW: "Medium - disk maintenance",
+        TillageEquipment.FIELD_CULTIVATOR: "Low-Medium - standard maintenance",
+        TillageEquipment.VERTICAL_TILLAGE_TOOL: "Medium - precision components",
+        TillageEquipment.ROTARY_HOE: "Low - simple design",
+        TillageEquipment.ROW_CULTIVATOR: "Low-Medium - standard maintenance"
+    }
+    return maintenance.get(eq_type, "Maintenance requirements not available")
+
+def _get_transition_duration(difficulty):
+    """Get transition duration based on difficulty."""
+    durations = {
+        "low": 1,
+        "medium": 2,
+        "high": 3
+    }
+    return durations.get(difficulty, 2)
+
+def _get_transition_phases(current, target):
+    """Get transition phases."""
+    phases = [
+        {
+            "phase": "Planning",
+            "duration_months": 3,
+            "description": "Assessment and planning phase",
+            "activities": ["Soil testing", "Equipment evaluation", "Strategy development"]
+        },
+        {
+            "phase": "Preparation", 
+            "duration_months": 6,
+            "description": "Preparation and equipment acquisition",
+            "activities": ["Equipment purchase", "Staff training", "Field preparation"]
+        },
+        {
+            "phase": "Implementation",
+            "duration_months": 12,
+            "description": "Initial implementation and monitoring",
+            "activities": ["System implementation", "Performance monitoring", "Adjustments"]
+        },
+        {
+            "phase": "Optimization",
+            "duration_months": 12,
+            "description": "System optimization and refinement",
+            "activities": ["Performance optimization", "Practice refinement", "Long-term planning"]
+        }
+    ]
+    return phases
+
+def _get_transition_equipment_needs(current, target):
+    """Get equipment needs for transition."""
+    if target == TillageSystem.NO_TILL:
+        return ["No-till drill", "Herbicide application equipment", "Cover crop seeder"]
+    elif target == TillageSystem.STRIP_TILL:
+        return ["Strip-till implement", "No-till drill", "Fertilizer applicator"]
+    else:
+        return ["Appropriate tillage equipment", "Seed drill", "Fertilizer spreader"]
+
+def _get_transition_cost_estimates(current, target):
+    """Get cost estimates for transition."""
+    if target == TillageSystem.NO_TILL:
+        return {
+            "equipment": "$70,000 - $90,000",
+            "training": "$2,000 - $5,000",
+            "soil_testing": "$500 - $1,000",
+            "total": "$72,500 - $96,000"
+        }
+    elif target == TillageSystem.STRIP_TILL:
+        return {
+            "equipment": "$60,000 - $80,000",
+            "training": "$1,500 - $3,000",
+            "soil_testing": "$500 - $1,000",
+            "total": "$62,000 - $84,000"
+        }
+    else:
+        return {
+            "equipment": "$30,000 - $50,000",
+            "training": "$1,000 - $2,000",
+            "soil_testing": "$500 - $1,000",
+            "total": "$31,500 - $53,000"
+        }
+
+def _get_transition_risks(current, target):
+    """Get transition risks."""
+    return [
+        {
+            "risk": "Yield reduction",
+            "probability": "Medium",
+            "impact": "Medium",
+            "mitigation": "Gradual transition and proper soil preparation"
+        },
+        {
+            "risk": "Equipment failure",
+            "probability": "Low",
+            "impact": "High",
+            "mitigation": "Equipment maintenance and backup plans"
+        },
+        {
+            "risk": "Weed pressure",
+            "probability": "High",
+            "impact": "Medium",
+            "mitigation": "Integrated weed management strategy"
+        }
+    ]
+
+def _get_success_factors(current, target):
+    """Get success factors for transition."""
+    return [
+        "Proper soil preparation and drainage",
+        "Appropriate equipment selection and calibration",
+        "Integrated pest management strategy",
+        "Gradual implementation approach",
+        "Regular monitoring and adjustment",
+        "Staff training and education"
+    ]
+
+def _get_monitoring_metrics(target):
+    """Get monitoring metrics for target system."""
+    return [
+        "Soil moisture retention",
+        "Soil organic matter content",
+        "Erosion indicators",
+        "Fuel consumption",
+        "Labor efficiency",
+        "Crop yield and quality",
+        "Weed pressure",
+        "Soil compaction levels"
+    ]
