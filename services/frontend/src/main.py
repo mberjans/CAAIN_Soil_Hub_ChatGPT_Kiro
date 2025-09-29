@@ -76,6 +76,28 @@ async def crop_selection_page(request: Request):
     else:
         return HTMLResponse("<h1>Crop Selection - Coming Soon</h1>")
 
+@app.get("/variety-selection", response_class=HTMLResponse)
+async def variety_selection_page(request: Request):
+    """Advanced variety selection page"""
+    if templates:
+        return templates.TemplateResponse("variety_selection.html", {
+            "request": request,
+            "title": "Variety Selection"
+        })
+    else:
+        return HTMLResponse("<h1>Variety Selection - Coming Soon</h1>")
+
+@app.get("/advanced-variety-display", response_class=HTMLResponse)
+async def advanced_variety_display_page(request: Request):
+    """Advanced variety display and visualization page"""
+    if templates:
+        return templates.TemplateResponse("advanced_variety_display.html", {
+            "request": request,
+            "title": "Advanced Variety Display"
+        })
+    else:
+        return HTMLResponse("<h1>Advanced Variety Display - Coming Soon</h1>")
+
 @app.get("/soil-fertility", response_class=HTMLResponse)
 async def soil_fertility_page(request: Request):
     """Soil fertility management page"""
@@ -1309,6 +1331,155 @@ async def proxy_benefit_analytics(
         raise HTTPException(status_code=503, detail="Cover crop service temporarily unavailable")
 
 
+# Variety Selection API Proxy Routes
+
+@app.api_route("/api/v1/crops/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_crops_api(path: str, request: Request):
+    """Proxy requests to the crop taxonomy crops API"""
+    try:
+        method = request.method
+        
+        # Prepare headers
+        headers = {
+            "content-type": request.headers.get("content-type", "application/json")
+        }
+        
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+        
+        # Forward the request to the crop taxonomy service
+        async with httpx.AsyncClient() as client:
+            url = f"{CROP_TAXONOMY_URL}/api/v1/crops/{path}"
+            
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+            
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+                
+    except httpx.RequestError as e:
+        logger.error(f"Crops API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Crops service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Crops API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.api_route("/api/v1/varieties/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_varieties_api(path: str, request: Request):
+    """Proxy requests to the crop taxonomy varieties API"""
+    try:
+        method = request.method
+        
+        # Prepare headers
+        headers = {
+            "content-type": request.headers.get("content-type", "application/json")
+        }
+        
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+        
+        # Forward the request to the crop taxonomy service
+        async with httpx.AsyncClient() as client:
+            url = f"{CROP_TAXONOMY_URL}/api/v1/varieties/{path}"
+            
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+            
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+                
+    except httpx.RequestError as e:
+        logger.error(f"Varieties API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Varieties service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Varieties API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.api_route("/api/v1/recommendations/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_recommendations_api(path: str, request: Request):
+    """Proxy requests to the crop taxonomy recommendations API"""
+    try:
+        method = request.method
+        
+        # Prepare headers
+        headers = {
+            "content-type": request.headers.get("content-type", "application/json")
+        }
+        
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+        
+        # Forward the request to the crop taxonomy service
+        async with httpx.AsyncClient() as client:
+            url = f"{CROP_TAXONOMY_URL}/api/v1/recommendations/{path}"
+            
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+            
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+                
+    except httpx.RequestError as e:
+        logger.error(f"Recommendations API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Recommendations service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Recommendations API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
 # Filter Analytics API Proxy Routes
 
 @app.api_route("/api/v1/crop-taxonomy/analytics/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
@@ -1413,6 +1584,20 @@ async def health_check():
                 "/api/v1/crop-taxonomy/analytics/a-b-test",
                 "/api/v1/crop-taxonomy/analytics/dashboard-summary",
                 "/api/v1/crop-taxonomy/analytics/record-usage"
+            ]
+        },
+        "variety_selection": {
+            "status": "integrated",
+            "endpoints": [
+                "/api/v1/crops/search",
+                "/api/v1/crops/{crop_id}/varieties",
+                "/api/v1/varieties/recommend",
+                "/api/v1/varieties/filter",
+                "/api/v1/varieties/search",
+                "/api/v1/varieties/compare",
+                "/api/v1/varieties/{variety_id}/details",
+                "/api/v1/recommendations/crop-varieties",
+                "/api/v1/recommendations/explain"
             ]
         }
     }

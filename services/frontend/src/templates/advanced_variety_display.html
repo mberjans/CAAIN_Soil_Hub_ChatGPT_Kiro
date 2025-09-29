@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Variety Display - AFAS</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <link href="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.css" rel="stylesheet">
+    
+    <!-- Custom Styles -->
+    <link href="/static/css/advanced-variety-display.css" rel="stylesheet">
+    
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa, #c3cfe2);
+            min-height: 100vh;
+        }
+        
+        .main-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            margin: 2rem auto;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header-section {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .header-section h1 {
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header-section p {
+            opacity: 0.9;
+            margin: 0;
+        }
+        
+        .control-panel {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .filter-section h5 {
+            color: #2c3e50;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-group label {
+            font-weight: 500;
+            color: #495057;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .filter-group input,
+        .filter-group select {
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            padding: 0.5rem 0.75rem;
+            transition: all 0.2s ease;
+        }
+        
+        .filter-group input:focus,
+        .filter-group select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        
+        .range-slider {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .range-slider input[type="range"] {
+            flex: 1;
+        }
+        
+        .range-value {
+            min-width: 50px;
+            text-align: center;
+            font-weight: 600;
+            color: #007bff;
+        }
+        
+        .stats-panel {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="main-container">
+            <!-- Header Section -->
+            <div class="header-section">
+                <h1><i class="fas fa-seedling"></i> Advanced Variety Display</h1>
+                <p>Comprehensive variety ranking, visualization, and comparison tools</p>
+            </div>
+            
+            <!-- Control Panel -->
+            <div class="control-panel">
+                <div class="row">
+                    <div class="col-md-8">
+                        <!-- View Controls -->
+                        <div class="view-controls mb-3">
+                            <div class="btn-group" role="group">
+                                <button class="btn btn-outline-primary view-toggle active" data-view="grid">
+                                    <i class="fas fa-th"></i> Grid View
+                                </button>
+                                <button class="btn btn-outline-primary view-toggle" data-view="table">
+                                    <i class="fas fa-table"></i> Table View
+                                </button>
+                                <button class="btn btn-outline-primary view-toggle" data-view="comparison">
+                                    <i class="fas fa-balance-scale"></i> Compare
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Sort Controls -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="sort-criteria" class="form-label">Sort by:</label>
+                                <select class="form-select variety-filter" id="sort-criteria">
+                                    <option value="overall_score">Overall Score</option>
+                                    <option value="yield_potential">Yield Potential</option>
+                                    <option value="disease_resistance">Disease Resistance</option>
+                                    <option value="maturity_days">Maturity Days</option>
+                                    <option value="confidence">Confidence</option>
+                                    <option value="name">Name</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="sort-direction" class="form-label">Direction:</label>
+                                <select class="form-select variety-filter" id="sort-direction">
+                                    <option value="desc">High to Low</option>
+                                    <option value="asc">Low to High</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <!-- Export Controls -->
+                        <div class="d-flex gap-2 mb-3">
+                            <button class="btn btn-success" onclick="advancedVarietyDisplay.exportVarieties('json')">
+                                <i class="fas fa-download"></i> Export JSON
+                            </button>
+                            <button class="btn btn-info" onclick="advancedVarietyDisplay.exportVarieties('csv')">
+                                <i class="fas fa-file-csv"></i> Export CSV
+                            </button>
+                        </div>
+                        
+                        <!-- Selection Stats -->
+                        <div id="selection-stats" class="selection-stats">
+                            <span class="stat-item">
+                                <strong>0</strong> varieties selected
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Filter Section -->
+            <div class="filter-section">
+                <h5><i class="fas fa-filter"></i> Advanced Filters</h5>
+                
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="min-score">Min Overall Score</label>
+                        <div class="range-slider">
+                            <input type="range" class="form-range variety-filter" id="min-score" 
+                                   min="0" max="1" step="0.01" value="0">
+                            <span class="range-value" id="min-score-value">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="max-score">Max Overall Score</label>
+                        <div class="range-slider">
+                            <input type="range" class="form-range variety-filter" id="max-score" 
+                                   min="0" max="1" step="0.01" value="1">
+                            <span class="range-value" id="max-score-value">100%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="min-confidence">Min Confidence</label>
+                        <div class="range-slider">
+                            <input type="range" class="form-range variety-filter" id="min-confidence" 
+                                   min="0" max="1" step="0.01" value="0">
+                            <span class="range-value" id="min-confidence-value">0%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="max-confidence">Max Confidence</label>
+                        <div class="range-slider">
+                            <input type="range" class="form-range variety-filter" id="max-confidence" 
+                                   min="0" max="1" step="0.01" value="1">
+                            <span class="range-value" id="max-confidence-value">100%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <label for="min-maturity">Min Maturity (days)</label>
+                        <div class="range-slider">
+                            <input type="range" class="form-range variety-filter" id="min-maturity" 
+                                   min="0" max="365" step="1" value="0">
+                            <span class="range-value" id="min-maturity-value">0</span>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="max-maturity">Max Maturity (days)</label>
+                        <div class="range-slider">
+                            <input type="range" class="form-range variety-filter" id="max-maturity" 
+                                   min="0" max="365" step="1" value="365">
+                            <span class="range-value" id="max-maturity-value">365</span>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="disease-resistance">Disease Resistance</label>
+                        <select class="form-select variety-filter" id="disease-resistance">
+                            <option value="all">All Levels</option>
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="company-filter">Seed Company</label>
+                        <select class="form-select variety-filter" id="company-filter">
+                            <option value="all">All Companies</option>
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Filter Stats -->
+                <div id="filter-stats" class="filter-stats">
+                    <span class="stat-item">
+                        <strong>0</strong> of <strong>0</strong> varieties
+                    </span>
+                    <span class="stat-item">
+                        <strong>0%</strong> filtered out
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Stats Panel -->
+            <div class="stats-panel">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-varieties">0</div>
+                        <div class="stat-label">Total Varieties</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="filtered-varieties">0</div>
+                        <div class="stat-label">Filtered Varieties</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="selected-varieties">0</div>
+                        <div class="stat-label">Selected Varieties</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-score">0%</div>
+                        <div class="stat-label">Average Score</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Variety Display Container -->
+            <div id="variety-display-container" class="variety-display-container">
+                <!-- Variety content will be populated here -->
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loading-state" class="text-center py-5" style="display: none;">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-3">Loading variety data...</p>
+            </div>
+            
+            <!-- No Results State -->
+            <div id="no-results-state" class="text-center py-5" style="display: none;">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">No varieties found</h5>
+                <p class="text-muted">Try adjusting your filters to see more results.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    
+    <!-- Advanced Variety Display JS -->
+    <script src="/static/js/advanced-variety-display.js"></script>
+    
+    <!-- Initialize the application -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize range slider value displays
+            initializeRangeSliders();
+            
+            // Load sample data (replace with actual API call)
+            loadSampleData();
+        });
+        
+        function initializeRangeSliders() {
+            const sliders = document.querySelectorAll('input[type="range"]');
+            sliders.forEach(slider => {
+                const valueDisplay = document.getElementById(slider.id + '-value');
+                if (valueDisplay) {
+                    slider.addEventListener('input', function() {
+                        if (this.id.includes('score') || this.id.includes('confidence')) {
+                            valueDisplay.textContent = (this.value * 100).toFixed(0) + '%';
+                        } else {
+                            valueDisplay.textContent = this.value;
+                        }
+                    });
+                }
+            });
+        }
+        
+        function loadSampleData() {
+            // Sample variety data for demonstration
+            const sampleVarieties = [
+                {
+                    id: '1',
+                    variety_name: 'Pioneer P1234',
+                    name: 'Pioneer P1234',
+                    company: 'Pioneer',
+                    overall_score: 0.92,
+                    confidence: 0.88,
+                    yield_expectation: { score: 'High' },
+                    maturity_days: 115,
+                    disease_resistance_level: 'high',
+                    disease_resistance_score: 0.85,
+                    individual_scores: {
+                        yield_potential: 0.95,
+                        disease_resistance: 0.85,
+                        climate_adaptation: 0.90,
+                        market_desirability: 0.88,
+                        management_ease: 0.85,
+                        risk_tolerance: 0.90
+                    },
+                    traits: [
+                        { name: 'High Yield', category: 'yield' },
+                        { name: 'Disease Resistant', category: 'disease' },
+                        { name: 'Early Maturity', category: 'quality' }
+                    ],
+                    description: 'High-yielding corn variety with excellent disease resistance and early maturity. Ideal for short growing seasons.'
+                },
+                {
+                    id: '2',
+                    variety_name: 'Monsanto M5678',
+                    name: 'Monsanto M5678',
+                    company: 'Monsanto',
+                    overall_score: 0.87,
+                    confidence: 0.82,
+                    yield_expectation: { score: 'High' },
+                    maturity_days: 125,
+                    disease_resistance_level: 'medium',
+                    disease_resistance_score: 0.75,
+                    individual_scores: {
+                        yield_potential: 0.90,
+                        disease_resistance: 0.75,
+                        climate_adaptation: 0.85,
+                        market_desirability: 0.90,
+                        management_ease: 0.80,
+                        risk_tolerance: 0.85
+                    },
+                    traits: [
+                        { name: 'High Yield', category: 'yield' },
+                        { name: 'Market Preferred', category: 'market' },
+                        { name: 'Drought Tolerant', category: 'quality' }
+                    ],
+                    description: 'Premium corn variety with high market desirability and drought tolerance. Requires careful management.'
+                },
+                {
+                    id: '3',
+                    variety_name: 'Syngenta S9012',
+                    name: 'Syngenta S9012',
+                    company: 'Syngenta',
+                    overall_score: 0.79,
+                    confidence: 0.75,
+                    yield_expectation: { score: 'Medium' },
+                    maturity_days: 110,
+                    disease_resistance_level: 'high',
+                    disease_resistance_score: 0.90,
+                    individual_scores: {
+                        yield_potential: 0.75,
+                        disease_resistance: 0.90,
+                        climate_adaptation: 0.80,
+                        market_desirability: 0.70,
+                        management_ease: 0.85,
+                        risk_tolerance: 0.75
+                    },
+                    traits: [
+                        { name: 'Disease Resistant', category: 'disease' },
+                        { name: 'Easy Management', category: 'quality' },
+                        { name: 'Early Maturity', category: 'quality' }
+                    ],
+                    description: 'Reliable corn variety with excellent disease resistance and easy management. Good for organic farming.'
+                },
+                {
+                    id: '4',
+                    variety_name: 'Bayer B3456',
+                    name: 'Bayer B3456',
+                    company: 'Bayer',
+                    overall_score: 0.83,
+                    confidence: 0.79,
+                    yield_expectation: { score: 'High' },
+                    maturity_days: 120,
+                    disease_resistance_level: 'medium',
+                    disease_resistance_score: 0.80,
+                    individual_scores: {
+                        yield_potential: 0.88,
+                        disease_resistance: 0.80,
+                        climate_adaptation: 0.85,
+                        market_desirability: 0.85,
+                        management_ease: 0.75,
+                        risk_tolerance: 0.80
+                    },
+                    traits: [
+                        { name: 'High Yield', category: 'yield' },
+                        { name: 'Climate Adaptive', category: 'quality' },
+                        { name: 'Market Preferred', category: 'market' }
+                    ],
+                    description: 'Balanced corn variety with high yield potential and good climate adaptation. Moderate management requirements.'
+                },
+                {
+                    id: '5',
+                    variety_name: 'Corteva C7890',
+                    name: 'Corteva C7890',
+                    company: 'Corteva',
+                    overall_score: 0.76,
+                    confidence: 0.72,
+                    yield_expectation: { score: 'Medium' },
+                    maturity_days: 130,
+                    disease_resistance_level: 'low',
+                    disease_resistance_score: 0.65,
+                    individual_scores: {
+                        yield_potential: 0.80,
+                        disease_resistance: 0.65,
+                        climate_adaptation: 0.75,
+                        market_desirability: 0.70,
+                        management_ease: 0.70,
+                        risk_tolerance: 0.75
+                    },
+                    traits: [
+                        { name: 'Late Maturity', category: 'quality' },
+                        { name: 'Climate Adaptive', category: 'quality' },
+                        { name: 'Cost Effective', category: 'market' }
+                    ],
+                    description: 'Cost-effective corn variety with late maturity and good climate adaptation. Suitable for longer growing seasons.'
+                }
+            ];
+            
+            // Populate company filter
+            const companies = [...new Set(sampleVarieties.map(v => v.company))];
+            const companyFilter = document.getElementById('company-filter');
+            companies.forEach(company => {
+                const option = document.createElement('option');
+                option.value = company;
+                option.textContent = company;
+                companyFilter.appendChild(option);
+            });
+            
+            // Load varieties into the display
+            if (window.advancedVarietyDisplay) {
+                window.advancedVarietyDisplay.loadVarieties(sampleVarieties);
+                updateStats(sampleVarieties);
+            }
+        }
+        
+        function updateStats(varieties) {
+            const totalVarieties = varieties.length;
+            const avgScore = varieties.reduce((sum, v) => sum + v.overall_score, 0) / totalVarieties;
+            
+            document.getElementById('total-varieties').textContent = totalVarieties;
+            document.getElementById('filtered-varieties').textContent = totalVarieties;
+            document.getElementById('selected-varieties').textContent = '0';
+            document.getElementById('avg-score').textContent = (avgScore * 100).toFixed(1) + '%';
+        }
+    </script>
+</body>
+</html>
