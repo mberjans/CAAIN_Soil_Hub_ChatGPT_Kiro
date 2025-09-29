@@ -34,7 +34,11 @@ from .api import (
     resistance_explanation_routes,
     trial_data_routes,
     regional_performance_routes,
-    scalability_routes
+    scalability_routes,
+    integration_routes,
+    monitoring_analytics_routes,
+    reporting_routes,
+    monitoring_integration_routes
 )
 
 # Add services to Python path for imports
@@ -216,6 +220,10 @@ app.include_router(resistance_explanation_routes.router)
 app.include_router(trial_data_routes.router)
 app.include_router(regional_performance_routes.router)
 app.include_router(scalability_routes.router)
+app.include_router(integration_routes.router)
+app.include_router(monitoring_analytics_routes.router)
+app.include_router(reporting_routes.router)
+app.include_router(monitoring_integration_routes.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -462,6 +470,17 @@ async def health_check():
     """
     Overall service health check.
     """
+    # Get integration status
+    integration_status = "operational"
+    try:
+        from .services.caain_integration_service import get_integration_service
+        integration_service = get_integration_service()
+        integration_status_data = await integration_service.get_integration_status()
+        integration_status = integration_status_data["overall_status"]
+    except Exception as e:
+        logger.warning(f"Could not get integration status: {e}")
+        integration_status = "degraded"
+    
     return {
         "service": "crop-taxonomy",
         "status": "healthy",
@@ -474,6 +493,7 @@ async def health_check():
             "timing_based_filtering": "operational",
             "market_intelligence": "operational",
             "disease_pressure_analysis": "operational",
+            "caain_integration": integration_status,
             "database": "not_connected",  # Would be actual database status
             "ml_services": "limited"      # ML features partially implemented
         },
@@ -484,7 +504,8 @@ async def health_check():
             "regional": "/api/v1/regional/*",
             "timing_filter": "/api/v1/timing-filter/*",
             "market_intelligence": "/api/v1/market-intelligence/*",
-            "disease_pressure": "/api/v1/disease-pressure/*"
+            "disease_pressure": "/api/v1/disease-pressure/*",
+            "integration": "/api/v1/integration/*"
         },
         "documentation": {
             "swagger_ui": "/docs",
