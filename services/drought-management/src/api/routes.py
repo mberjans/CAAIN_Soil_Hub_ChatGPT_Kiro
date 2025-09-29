@@ -3322,3 +3322,6 @@ router.include_router(optimization_router)
 
 # Include diversification routes
 router.include_router(diversification_router)
+# Include water usage monitoring routes
+from .water_usage_routes import water_usage_router
+router.include_router(water_usage_router)

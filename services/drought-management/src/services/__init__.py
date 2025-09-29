@@ -18,6 +18,8 @@ from .irrigation_service import IrrigationManagementService
 from .water_source_analysis_service import WaterSourceAnalysisService
 from .tillage_service import TillageOptimizationService
 from .tillage_transition_planning_service import TillageTransitionPlanningService
+from .water_usage_monitoring_service import WaterUsageMonitoringService
+from .water_usage_reporting_service import WaterUsageReportingService
 
 __all__ = [
     "SoilWeatherIntegrationService",
@@ -33,5 +35,7 @@ __all__ = [
     "IrrigationManagementService",
     "WaterSourceAnalysisService",
     "TillageOptimizationService",
-    "TillageTransitionPlanningService"
+    "TillageTransitionPlanningService",
+    "WaterUsageMonitoringService",
+    "WaterUsageReportingService"
 ]

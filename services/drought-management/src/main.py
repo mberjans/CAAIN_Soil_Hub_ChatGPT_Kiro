@@ -49,11 +49,13 @@ soil_assessment_service = None
 soil_weather_integration_service = None
 practice_effectiveness_service = None
 cover_crop_mulch_optimization_service = None
+water_usage_monitoring_service = None
+water_usage_reporting_service = None
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service
     try:
         logger.info("Initializing Drought Management Service...")
         
@@ -88,6 +90,16 @@ async def startup_event():
         cover_crop_mulch_optimization_service = CoverCropMulchOptimizationService()
         await cover_crop_mulch_optimization_service.initialize()
         
+        # Initialize water usage monitoring services
+        from .services.water_usage_monitoring_service import WaterUsageMonitoringService
+        from .services.water_usage_reporting_service import WaterUsageReportingService
+        
+        water_usage_monitoring_service = WaterUsageMonitoringService()
+        await water_usage_monitoring_service.initialize()
+        
+        water_usage_reporting_service = WaterUsageReportingService()
+        await water_usage_reporting_service.initialize()
+        
         logger.info("Drought Management Service initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize Drought Management Service: {str(e)}")
@@ -97,7 +109,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service
     try:
         if drought_assessment_service:
             await drought_assessment_service.cleanup()
@@ -113,6 +125,10 @@ async def shutdown_event():
             await practice_effectiveness_service.cleanup()
         if cover_crop_mulch_optimization_service:
             await cover_crop_mulch_optimization_service.cleanup()
+        if water_usage_monitoring_service:
+            await water_usage_monitoring_service.cleanup()
+        if water_usage_reporting_service:
+            await water_usage_reporting_service.cleanup()
         logger.info("Drought Management Service shutdown completed")
     except Exception as e:
         logger.error(f"Error during shutdown: {str(e)}")
