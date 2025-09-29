@@ -8,7 +8,7 @@ to improve water efficiency and drought resilience.
 import logging
 from typing import List, Optional, Dict, Any
 from datetime import datetime
-from uuid import UUID
+from uuid import UUID, uuid4
 from decimal import Decimal
 
 from ..models.drought_models import (
@@ -271,7 +271,7 @@ class MoistureConservationService:
             # Check if practice is suitable for field conditions
             if await self._is_practice_suitable(practice_type, request, field_characteristics):
                 practice = ConservationPractice(
-                    practice_id=UUID(),
+                    practice_id=uuid4(),
                     practice_name=practice_data["name"],
                     practice_type=practice_type,
                     description=practice_data["description"],
@@ -412,8 +412,8 @@ class MoistureConservationService:
         field_size = field_characteristics["field_size_acres"]
         
         # Calculate costs
-        total_cost = practice.implementation_cost * field_size
-        annual_cost = practice.maintenance_cost_per_year * field_size
+        total_cost = practice.implementation_cost * Decimal(str(field_size))
+        annual_cost = practice.maintenance_cost_per_year * Decimal(str(field_size))
         
         # Calculate benefits
         water_savings_value = Decimal(str(practice.water_savings_percent * field_size * 5))
@@ -422,7 +422,7 @@ class MoistureConservationService:
         annual_benefit = water_savings_value + yield_increase_value
         
         # Calculate ROI and payback
-        roi_percentage = ((annual_benefit - annual_cost) / total_cost) * 100 if total_cost > 0 else 0
+        roi_percentage = float(((annual_benefit - annual_cost) / total_cost) * 100) if total_cost > 0 else 0.0
         payback_years = float(total_cost / (annual_benefit - annual_cost)) if (annual_benefit - annual_cost) > 0 else float('inf')
         
         return {
@@ -454,7 +454,7 @@ class MoistureConservationService:
         return {
             "practice_type": practice_data["practice_type"],
             "water_savings_percent": practice_data["water_savings_percent"],
-            "implementation_cost": practice_data["implementation_cost"] * field_size,
+            "implementation_cost": practice_data["implementation_cost"] * Decimal(str(field_size)),
             "soil_health_score": practice_data["soil_health_score"],
             "annual_benefit": Decimal(str(practice_data["water_savings_percent"] * field_size * 5))
         }
@@ -504,7 +504,7 @@ class MoistureConservationService:
         annual_benefit = combined_benefits["total_annual_benefit"]
         annual_cost = total_cost * Decimal("0.1")  # 10% annual maintenance
         
-        roi_percentage = ((annual_benefit - annual_cost) / total_cost) * 100 if total_cost > 0 else 0
+        roi_percentage = float(((annual_benefit - annual_cost) / total_cost) * 100) if total_cost > 0 else 0.0
         payback_years = float(total_cost / (annual_benefit - annual_cost)) if (annual_benefit - annual_cost) > 0 else float('inf')
         
         return {
@@ -540,7 +540,10 @@ class MoistureConservationService:
             ConservationPracticeType.NO_TILL: 3,
             ConservationPracticeType.MULCHING: 5,
             ConservationPracticeType.IRRIGATION_EFFICIENCY: 14,
-            ConservationPracticeType.SOIL_AMENDMENTS: 10
+            ConservationPracticeType.SOIL_AMENDMENTS: 10,
+            ConservationPracticeType.WATER_HARVESTING: 21,
+            ConservationPracticeType.CROP_ROTATION: 1,
+            ConservationPracticeType.TERRAIN_MODIFICATION: 30
         }
         return time_map.get(practice_type, 7)
     
@@ -551,9 +554,12 @@ class MoistureConservationService:
             ConservationPracticeType.NO_TILL: ["Herbicide", "No-till planter"],
             ConservationPracticeType.MULCHING: ["Mulch material", "Mulch spreader"],
             ConservationPracticeType.IRRIGATION_EFFICIENCY: ["Drip tape", "Filters", "Sensors"],
-            ConservationPracticeType.SOIL_AMENDMENTS: ["Compost", "Organic matter"]
+            ConservationPracticeType.SOIL_AMENDMENTS: ["Compost", "Organic matter"],
+            ConservationPracticeType.WATER_HARVESTING: ["Storage tanks", "Collection systems", "Pumps"],
+            ConservationPracticeType.CROP_ROTATION: ["Seed varieties", "Planning materials"],
+            ConservationPracticeType.TERRAIN_MODIFICATION: ["Earthmoving equipment", "Drainage materials"]
         }
-        return materials_map.get(practice_type, [])
+        return materials_map.get(practice_type, ["General materials"])
     
     async def _get_practice_type_data(self, practice_type: ConservationPracticeType) -> Dict[str, Any]:
         """Get data for a specific practice type."""
@@ -578,9 +584,12 @@ class MoistureConservationService:
             ConservationPracticeType.NO_TILL: ["Slope < 10%", "Good drainage"],
             ConservationPracticeType.MULCHING: ["All soil types", "Moderate slope"],
             ConservationPracticeType.IRRIGATION_EFFICIENCY: ["Irrigated fields", "Water source available"],
-            ConservationPracticeType.SOIL_AMENDMENTS: ["Low organic matter", "All soil types"]
+            ConservationPracticeType.SOIL_AMENDMENTS: ["Low organic matter", "All soil types"],
+            ConservationPracticeType.WATER_HARVESTING: ["Adequate rainfall", "Storage capacity"],
+            ConservationPracticeType.CROP_ROTATION: ["All soil types", "Multiple crop options"],
+            ConservationPracticeType.TERRAIN_MODIFICATION: ["Sloping fields", "Erosion concerns"]
         }
-        return conditions_map.get(practice_type, [])
+        return conditions_map.get(practice_type, ["General agricultural conditions"])
     
     def _get_practice_benefits(self, practice_type: ConservationPracticeType) -> List[str]:
         """Get benefits of a practice type."""
@@ -589,6 +598,9 @@ class MoistureConservationService:
             ConservationPracticeType.NO_TILL: ["Reduced soil disturbance", "Improved water infiltration", "Carbon sequestration"],
             ConservationPracticeType.MULCHING: ["Reduced evaporation", "Temperature moderation", "Weed suppression"],
             ConservationPracticeType.IRRIGATION_EFFICIENCY: ["Reduced water waste", "Better crop uniformity", "Lower energy costs"],
-            ConservationPracticeType.SOIL_AMENDMENTS: ["Improved water retention", "Enhanced nutrient availability", "Better soil structure"]
+            ConservationPracticeType.SOIL_AMENDMENTS: ["Improved water retention", "Enhanced nutrient availability", "Better soil structure"],
+            ConservationPracticeType.WATER_HARVESTING: ["Water storage", "Drought resilience", "Cost savings"],
+            ConservationPracticeType.CROP_ROTATION: ["Pest management", "Nutrient cycling", "Soil health"],
+            ConservationPracticeType.TERRAIN_MODIFICATION: ["Erosion control", "Water management", "Accessibility"]
         }
-        return benefits_map.get(practice_type, [])
+        return benefits_map.get(practice_type, ["General agricultural benefits"])
