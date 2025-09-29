@@ -14,8 +14,8 @@ try:
     from ..models.service_models import (
         TaxonomicClassificationRequest,
         TaxonomicClassificationResponse,
-        CropValidationRequest,
-        CropValidationResponse,
+        ValidationRequest,
+        ValidationResponse,
         AutoTagGenerationRequest,
         AutoTagGenerationResponse,
         TagManagementRequest,
@@ -32,8 +32,8 @@ except ImportError:
     from models.service_models import (
         TaxonomicClassificationRequest,
         TaxonomicClassificationResponse,
-        CropValidationRequest,
-        CropValidationResponse,
+        ValidationRequest,
+        ValidationResponse,
         AutoTagGenerationRequest,
         AutoTagGenerationResponse,
         TagManagementRequest,
@@ -69,9 +69,9 @@ async def classify_crop_taxonomically(
         raise HTTPException(status_code=500, detail=f"Classification error: {str(e)}")
 
 
-@router.post("/validate", response_model=CropValidationResponse)
+@router.post("/validate", response_model=ValidationResponse)
 async def validate_crop_data(
-    request: CropValidationRequest
+    request: ValidationRequest
 ):
     """
     Validate comprehensive crop data for accuracy and completeness.
