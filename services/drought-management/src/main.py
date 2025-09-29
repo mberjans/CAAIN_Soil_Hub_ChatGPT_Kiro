@@ -45,11 +45,12 @@ app = FastAPI(
 drought_assessment_service = None
 moisture_conservation_service = None
 drought_monitoring_service = None
+soil_assessment_service = None
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service
     try:
         logger.info("Initializing Drought Management Service...")
         
@@ -60,12 +61,16 @@ async def startup_event():
         # Import and initialize other services
         from .services.moisture_conservation_service import MoistureConservationService
         from .services.drought_monitoring_service import DroughtMonitoringService
+        from .services.soil_assessment_service import SoilManagementAssessmentService
         
         moisture_conservation_service = MoistureConservationService()
         await moisture_conservation_service.initialize()
         
         drought_monitoring_service = DroughtMonitoringService()
         await drought_monitoring_service.initialize()
+        
+        soil_assessment_service = SoilManagementAssessmentService()
+        await soil_assessment_service.initialize()
         
         logger.info("Drought Management Service initialized successfully")
     except Exception as e:
@@ -76,7 +81,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service
     try:
         if drought_assessment_service:
             await drought_assessment_service.cleanup()
@@ -84,6 +89,8 @@ async def shutdown_event():
             await moisture_conservation_service.cleanup()
         if drought_monitoring_service:
             await drought_monitoring_service.cleanup()
+        if soil_assessment_service:
+            await soil_assessment_service.cleanup()
         logger.info("Drought Management Service shutdown completed")
     except Exception as e:
         logger.error(f"Error during shutdown: {str(e)}")
@@ -103,7 +110,7 @@ app.include_router(router)
 @app.get("/health")
 async def health_check():
     """Health check endpoint for service monitoring."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service
     
     service_healthy = True
     service_status = "healthy"
@@ -144,6 +151,17 @@ async def health_check():
         components["drought_monitoring"] = "not_initialized"
         service_healthy = False
     
+    if soil_assessment_service:
+        try:
+            components["soil_assessment"] = "healthy"
+        except Exception as e:
+            logger.error(f"Soil assessment service health check failed: {str(e)}")
+            components["soil_assessment"] = "unhealthy"
+            service_healthy = False
+    else:
+        components["soil_assessment"] = "not_initialized"
+        service_healthy = False
+    
     if not service_healthy:
         service_status = "unhealthy"
     
@@ -175,6 +193,7 @@ async def root():
             "drought_monitoring": "/api/v1/drought/monitor",
             "water_savings": "/api/v1/drought/water-savings",
             "drought_risk": "/api/v1/drought/risk-assessment",
+            "soil_assessment": "/api/v1/drought/soil-assessment",
             "health": "/health",
             "docs": "/docs"
         },
@@ -183,6 +202,7 @@ async def root():
             "moisture_conservation_recommendations",
             "water_savings_calculations",
             "drought_monitoring_alerts",
+            "soil_management_assessment",
             "weather_integration",
             "soil_moisture_modeling",
             "crop_water_requirements"
