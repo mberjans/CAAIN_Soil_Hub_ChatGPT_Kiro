@@ -88,6 +88,7 @@ from ..services.cover_management_service import (
     MulchMaterial
 )
 from .optimization_routes import router as optimization_router
+from .diversification_routes import router as diversification_router
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +114,9 @@ async def get_drought_monitoring_service():
 async def get_water_savings_calculator():
     """Get water savings calculator instance."""
     from ..services.water_savings_calculator import WaterSavingsCalculator
-    return WaterSavingsCalculator()
+    calculator = WaterSavingsCalculator()
+    await calculator.initialize()
+    return calculator
 
 async def get_soil_assessment_service():
     """Get soil assessment service instance."""
@@ -3060,6 +3063,9 @@ async def tillage_transition_planning_health():
 # Include optimization routes
 router.include_router(optimization_router)
 
+# Include diversification routes
+router.include_router(diversification_router)
+
 
 # Cover Management Endpoints
 @router.post("/cover-management/recommendations", response_model=CoverManagementResponse)
@@ -3313,3 +3319,6 @@ async def cover_management_health():
 
 # Include optimization routes
 router.include_router(optimization_router)
+
+# Include diversification routes
+router.include_router(diversification_router)

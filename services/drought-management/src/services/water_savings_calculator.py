@@ -73,11 +73,11 @@ class WaterSavingsCalculator:
             
             for practice in request.proposed_practices:
                 practice_saving = await self._calculate_practice_savings(
-                    practice, field_characteristics, request.effectiveness_assumptions
+                    practice, field_characteristics, request.effectiveness_assumptions, request.current_water_usage
                 )
                 practice_savings.append(practice_saving)
                 total_savings += practice_saving["water_savings"]
-                total_implementation_cost += practice.implementation_cost * field_characteristics["field_size_acres"]
+                total_implementation_cost += practice.implementation_cost * Decimal(str(field_characteristics["field_size_acres"]))
             
             # Calculate combined savings (accounting for overlap)
             combined_savings = await self._calculate_combined_savings(
@@ -216,7 +216,7 @@ class WaterSavingsCalculator:
                 }
             },
             "cost_models": {
-                "water_cost_per_gallon": 0.001,  # $0.001 per gallon
+                "water_cost_per_gallon": 0.01,  # $0.01 per gallon (more realistic)
                 "energy_cost_per_kwh": 0.12,    # $0.12 per kWh
                 "maintenance_cost_percent": 10.0  # 10% of implementation cost
             }
@@ -240,7 +240,8 @@ class WaterSavingsCalculator:
     
     async def _calculate_practice_savings(self, practice: ConservationPractice, 
                                         field_characteristics: Dict[str, Any],
-                                        effectiveness_assumptions: Dict[str, float]) -> Dict[str, Any]:
+                                        effectiveness_assumptions: Dict[str, float],
+                                        current_water_usage: Decimal) -> Dict[str, Any]:
         """Calculate water savings for a specific practice."""
         practice_type = practice.practice_type.value
         
@@ -259,7 +260,9 @@ class WaterSavingsCalculator:
         
         # Calculate absolute water savings
         field_size = field_characteristics["field_size_acres"]
-        water_savings_gallons = (adjusted_savings_percent / 100) * field_size * 325851  # gallons per acre per year
+        # Use current water usage per acre from the request, not a fixed constant
+        current_usage_per_acre = current_water_usage / Decimal(str(field_size))
+        water_savings_gallons = (Decimal(str(adjusted_savings_percent)) / Decimal("100")) * current_usage_per_acre * Decimal(str(field_size))
         
         return {
             "practice_type": practice_type,
@@ -267,8 +270,8 @@ class WaterSavingsCalculator:
             "savings_percentage": adjusted_savings_percent,
             "water_savings": Decimal(str(water_savings_gallons)),
             "field_size_acres": field_size,
-            "implementation_cost": practice.implementation_cost * field_size,
-            "annual_maintenance_cost": practice.maintenance_cost_per_year * field_size
+            "implementation_cost": practice.implementation_cost * Decimal(str(field_size)),
+            "annual_maintenance_cost": practice.maintenance_cost_per_year * Decimal(str(field_size))
         }
     
     async def _apply_field_adjustments(self, base_savings: float, practice_type: str, 

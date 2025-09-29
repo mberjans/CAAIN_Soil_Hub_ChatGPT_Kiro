@@ -6,7 +6,7 @@ and portfolio optimization for drought resilience.
 """
 
 from pydantic import BaseModel, Field, field_validator
-from typing import List, Optional, Dict, Any, Union
+from typing import List, Optional, Dict, Any, Union, Tuple
 from datetime import datetime, date
 from uuid import UUID
 from decimal import Decimal
