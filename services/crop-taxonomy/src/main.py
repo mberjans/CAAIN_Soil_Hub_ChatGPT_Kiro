@@ -6,6 +6,8 @@ variety recommendations, and regional adaptation services.
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 import sys
 from pathlib import Path
 import logging
@@ -55,6 +57,8 @@ try:
     from api.filtering_routes import router as filtering_router
     from api.smart_filter_routes import router as smart_filter_router
     from api.filter_analytics_routes import router as analytics_router
+    from api.personalization_routes import router as personalization_router
+    from api.recommendation_management_routes import router as recommendation_management_router
 except ImportError as e:
     logging.error(f"Import error: {e}")
     # Create placeholder routers if imports fail
@@ -70,6 +74,8 @@ except ImportError as e:
     filtering_router = APIRouter()
     smart_filter_router = APIRouter()
     analytics_router = APIRouter()
+    personalization_router = APIRouter()
+    recommendation_management_router = APIRouter()
 
 # Configure logging
 logging.basicConfig(
@@ -178,6 +184,8 @@ app.include_router(community_routes.router)
 app.include_router(filter_analytics_routes.router)
 app.include_router(explanation_routes.router)
 app.include_router(result_processor_routes.router)
+app.include_router(personalization_router)
+app.include_router(recommendation_management_router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():

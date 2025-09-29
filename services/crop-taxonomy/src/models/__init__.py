@@ -14,6 +14,7 @@ from .crop_filtering_models import *
 from .crop_variety_models import *
 from .service_models import *
 from .preference_models import *
+from .recommendation_management_models import *
 
 __all__ = [
     # Core taxonomy models
@@ -97,6 +98,24 @@ __all__ = [
     'ConstraintType',
     'RiskTolerance',
     'ManagementStyle',
+    
+    # Recommendation management models
+    'SavedVarietyRecommendation',
+    'RecommendationHistory',
+    'RecommendationFeedback',
+    'SaveRecommendationRequest',
+    'RecommendationHistoryRequest',
+    'RecommendationFeedbackRequest',
+    'UpdateRecommendationRequest',
+    'SaveRecommendationResponse',
+    'RecommendationHistoryResponse',
+    'RecommendationFeedbackResponse',
+    'UpdateRecommendationResponse',
+    'RecommendationAnalytics',
+    'RecommendationStatus',
+    'FeedbackType',
+    'RecommendationSource',
+    'RecommendationManagementValidator',
     'PreferenceWeight',
     'PreferenceConstraint',
     'PreferenceConfidence',
