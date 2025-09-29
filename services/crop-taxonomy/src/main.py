@@ -62,6 +62,7 @@ try:
     from api.personalization_routes import router as personalization_router
     from api.recommendation_management_routes import router as recommendation_management_router
     from api.comprehensive_explanation_routes import router as comprehensive_explanation_router
+    from api.timing_filter_routes import router as timing_filter_router
 except ImportError as e:
     logging.error(f"Import error: {e}")
     # Create placeholder routers if imports fail
@@ -80,6 +81,7 @@ except ImportError as e:
     personalization_router = APIRouter()
     recommendation_management_router = APIRouter()
     comprehensive_explanation_router = APIRouter()
+    timing_filter_router = APIRouter()
 
 # Configure logging
 logging.basicConfig(
@@ -193,6 +195,7 @@ app.include_router(growing_season_routes.router)
 app.include_router(personalization_router)
 app.include_router(recommendation_management_router)
 app.include_router(comprehensive_explanation_router)
+app.include_router(timing_filter_router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
@@ -387,7 +390,7 @@ async def root():
                 <div class="service-card">
                     <div class="service-title">🌱 Variety Recommendations</div>
                     <div class="service-desc">
-                        Performance-based variety selection with regional adaptation analysis.
+                        Performance-based variety selection with regional adaptation analysis and sophisticated timing-based filtering.
                     </div>
                     <ul class="service-features">
                         <li>Performance predictions</li>
@@ -395,6 +398,7 @@ async def root():
                         <li>Economic analysis</li>
                         <li>Variety comparisons</li>
                         <li>Trait-based search</li>
+                        <li>Timing-based filtering</li>
                     </ul>
                 </div>
 
@@ -447,6 +451,7 @@ async def health_check():
             "crop_search": "operational", 
             "variety_recommendations": "operational",
             "regional_adaptation": "operational",
+            "timing_based_filtering": "operational",
             "database": "not_connected",  # Would be actual database status
             "ml_services": "limited"      # ML features partially implemented
         },
@@ -454,7 +459,8 @@ async def health_check():
             "taxonomy": "/api/v1/taxonomy/*",
             "search": "/api/v1/search/*",
             "varieties": "/api/v1/varieties/*", 
-            "regional": "/api/v1/regional/*"
+            "regional": "/api/v1/regional/*",
+            "timing_filter": "/api/v1/timing-filter/*"
         },
         "documentation": {
             "swagger_ui": "/docs",
@@ -495,7 +501,8 @@ async def service_info():
                 "economic_analysis": True,
                 "variety_comparison": True,
                 "trait_based_search": True,
-                "regional_adaptation": True
+                "regional_adaptation": True,
+                "timing_based_filtering": True
             },
             "regional_adaptation": {
                 "climate_matching": True,

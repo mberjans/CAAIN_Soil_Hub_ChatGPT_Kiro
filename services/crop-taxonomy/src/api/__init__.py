@@ -14,6 +14,7 @@ from .learning_routes import router as learning_router
 from .smart_filter_routes import router as smart_filter_router
 from .personalization_routes import router as personalization_router
 from .comprehensive_explanation_routes import router as comprehensive_explanation_router
+from .timing_filter_routes import router as timing_filter_router
 
 __all__ = [
     "taxonomy_router",
@@ -24,5 +25,6 @@ __all__ = [
     "learning_router",
     "smart_filter_router",
     "personalization_router",
-    "comprehensive_explanation_router"
+    "comprehensive_explanation_router",
+    "timing_filter_router"
 ]
