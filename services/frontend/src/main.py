@@ -197,6 +197,17 @@ async def ph_management_page(request: Request):
     else:
         return HTMLResponse("<h1>pH Management - Coming Soon</h1>")
 
+@app.get("/drought-management", response_class=HTMLResponse)
+async def drought_management_page(request: Request):
+    """Comprehensive drought management page"""
+    if templates:
+        return templates.TemplateResponse("drought_management.html", {
+            "request": request,
+            "title": "Drought Management"
+        })
+    else:
+        return HTMLResponse("<h1>Drought Management - Coming Soon</h1>")
+
 @app.post("/api/ask-question")
 async def ask_question(
     question: str = Form(...),

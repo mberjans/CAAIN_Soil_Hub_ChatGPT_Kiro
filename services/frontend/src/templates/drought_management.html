@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - CAAIN Soil Hub</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Leaflet for maps -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Agricultural CSS -->
+    <link href="{{ url_for('static', path='/css/agricultural.css') }}" rel="stylesheet">
+    
+    <style>
+        /* Drought Management Specific Styles */
+        .drought-management-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .drought-header {
+            background: linear-gradient(135deg, #dc3545 0%, #fd7e14 50%, #ffc107 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .drought-tabs {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .nav-pills .nav-link {
+            border-radius: 8px;
+            margin: 0 0.25rem;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .nav-pills .nav-link.active {
+            background: var(--primary-green);
+            border: none;
+            box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+        }
+        
+        .nav-pills .nav-link:hover:not(.active) {
+            background: rgba(40, 167, 69, 0.1);
+            color: var(--primary-green);
+        }
+        
+        /* Drought Risk Visualization */
+        .drought-risk-container {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .risk-meter {
+            background: linear-gradient(to right, 
+                #28a745 0%, #28a745 20%,
+                #ffc107 20%, #ffc107 40%,
+                #fd7e14 40%, #fd7e14 60%,
+                #dc3545 60%, #dc3545 80%,
+                #6f42c1 80%, #6f42c1 100%);
+            height: 40px;
+            border-radius: 20px;
+            position: relative;
+            margin: 2rem 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .risk-meter-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        
+        .risk-indicator {
+            position: absolute;
+            top: -8px;
+            width: 16px;
+            height: 56px;
+            background: #333;
+            border-radius: 8px;
+            transform: translateX(-50%);
+            transition: left 0.5s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .risk-indicator::after {
+            content: '';
+            position: absolute;
+            top: 56px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #333;
+        }
+        
+        /* Water Savings Visualization */
+        .water-savings-card {
+            background: linear-gradient(135deg, #17a2b8, #20c997);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        
+        .savings-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+        
+        .savings-unit {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        /* Practice Comparison */
+        .practice-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .practice-card:hover {
+            border-color: var(--primary-green);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .practice-card.selected {
+            border-color: var(--primary-green);
+            background: rgba(40, 167, 69, 0.05);
+        }
+        
+        .practice-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 1rem;
+        }
+        
+        .practice-icon.no-till { background: #28a745; }
+        .practice-icon.mulching { background: #17a2b8; }
+        .practice-icon.cover-crops { background: #6f42c1; }
+        .practice-icon.irrigation { background: #fd7e14; }
+        
+        /* Alert System */
+        .alert-card {
+            border-left: 4px solid #dc3545;
+            background: #fff5f5;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .alert-card.warning {
+            border-left-color: #ffc107;
+            background: #fffbf0;
+        }
+        
+        .alert-card.info {
+            border-left-color: #17a2b8;
+            background: #f0f9ff;
+        }
+        
+        /* Map Container */
+        .map-container {
+            height: 400px;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .drought-management-container {
+                padding: 10px;
+            }
+            
+            .drought-header {
+                padding: 1rem;
+                text-align: center;
+            }
+            
+            .nav-pills .nav-link {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .savings-value {
+                font-size: 2rem;
+            }
+        }
+        
+        /* Loading States */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+        
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            top: 50%;
+            left: 50%;
+            margin-left: -8px;
+            margin-top: -8px;
+            border: 2px solid transparent;
+            border-top-color: #ffffff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="drought-management-container">
+        <!-- Header -->
+        <div class="drought-header">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1><i class="fas fa-tint-slash me-2"></i>Drought Management</h1>
+                    <p class="mb-0">Comprehensive drought assessment, water conservation, and resilience planning for your farm</p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex justify-content-end align-items-center">
+                        <span class="me-3">Current Risk:</span>
+                        <span id="currentRiskLevel" class="badge bg-warning fs-6">Loading...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="drought-tabs">
+            <ul class="nav nav-pills justify-content-center" id="droughtTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="dashboard-tab" data-bs-toggle="pill" data-bs-target="#dashboard" type="button" role="tab">
+                        <i class="fas fa-tachometer-alt me-2"></i>Dashboard
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="assessment-tab" data-bs-toggle="pill" data-bs-target="#assessment" type="button" role="tab">
+                        <i class="fas fa-clipboard-check me-2"></i>Assessment
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="practices-tab" data-bs-toggle="pill" data-bs-target="#practices" type="button" role="tab">
+                        <i class="fas fa-seedling me-2"></i>Practices
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="monitoring-tab" data-bs-toggle="pill" data-bs-target="#monitoring" type="button" role="tab">
+                        <i class="fas fa-chart-line me-2"></i>Monitoring
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="planning-tab" data-bs-toggle="pill" data-bs-target="#planning" type="button" role="tab">
+                        <i class="fas fa-calendar-alt me-2"></i>Planning
+                    </button>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="droughtTabContent">
+            <!-- Dashboard Tab -->
+            <div class="tab-pane fade show active" id="dashboard" role="tabpanel">
+                <div class="row">
+                    <!-- Risk Overview -->
+                    <div class="col-lg-8">
+                        <div class="drought-risk-container">
+                            <h3><i class="fas fa-exclamation-triangle me-2"></i>Drought Risk Assessment</h3>
+                            <div class="risk-meter" id="riskMeter">
+                                <div class="risk-indicator" id="riskIndicator" style="left: 30%;"></div>
+                            </div>
+                            <div class="risk-meter-labels">
+                                <span>Low</span>
+                                <span>Moderate</span>
+                                <span>High</span>
+                                <span>Severe</span>
+                                <span>Extreme</span>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-md-6">
+                                    <div class="text-center">
+                                        <h5>Current Risk Level</h5>
+                                        <span id="currentRisk" class="badge bg-warning fs-5">Moderate</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="text-center">
+                                        <h5>Risk Trend</h5>
+                                        <span id="riskTrend" class="badge bg-success fs-5">
+                                            <i class="fas fa-arrow-down me-1"></i>Decreasing
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Water Savings Summary -->
+                    <div class="col-lg-4">
+                        <div class="water-savings-card">
+                            <h4><i class="fas fa-water me-2"></i>Water Savings</h4>
+                            <div class="savings-value" id="totalSavings">0</div>
+                            <div class="savings-unit">gallons/acre/year</div>
+                            <div class="mt-3">
+                                <small>Potential savings from implemented practices</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-bolt me-2"></i>Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <button class="btn btn-primary w-100 mb-2" onclick="droughtSystem.runQuickAssessment()">
+                                    <i class="fas fa-play me-2"></i>Quick Assessment
+                                </button>
+                                <button class="btn btn-outline-primary w-100 mb-2" onclick="droughtSystem.viewRecommendations()">
+                                    <i class="fas fa-lightbulb me-2"></i>View Recommendations
+                                </button>
+                                <button class="btn btn-outline-success w-100" onclick="droughtSystem.setupMonitoring()">
+                                    <i class="fas fa-bell me-2"></i>Setup Alerts
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Alerts -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-bell me-2"></i>Recent Alerts</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="recentAlerts">
+                                    <div class="alert-card info">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>Soil Moisture Low</strong>
+                                                <p class="mb-0">Field A moisture levels below optimal range</p>
+                                            </div>
+                                            <small class="text-muted">2 hours ago</small>
+                                        </div>
+                                    </div>
+                                    <div class="alert-card warning">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <strong>Drought Watch</strong>
+                                                <p class="mb-0">Extended dry period forecasted for next 7 days</p>
+                                            </div>
+                                            <small class="text-muted">1 day ago</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Assessment Tab -->
+            <div class="tab-pane fade" id="assessment" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-clipboard-check me-2"></i>Drought Assessment Wizard</h4>
+                            </div>
+                            <div class="card-body">
+                                <form id="droughtAssessmentForm">
+                                    <!-- Step 1: Farm Information -->
+                                    <div class="assessment-step" id="step1">
+                                        <h5>Step 1: Farm Information</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="farmLocation" class="form-label">Farm Location</label>
+                                                    <select class="form-select" id="farmLocation" required>
+                                                        <option value="">Select Farm Location</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="assessmentType" class="form-label">Assessment Type</label>
+                                                    <select class="form-select" id="assessmentType" required>
+                                                        <option value="comprehensive">Comprehensive</option>
+                                                        <option value="quick">Quick Assessment</option>
+                                                        <option value="emergency">Emergency Assessment</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="cropType" class="form-label">Primary Crop</label>
+                                                    <select class="form-select" id="cropType" required>
+                                                        <option value="">Select Crop</option>
+                                                        <option value="corn">Corn</option>
+                                                        <option value="soybean">Soybean</option>
+                                                        <option value="wheat">Wheat</option>
+                                                        <option value="cotton">Cotton</option>
+                                                        <option value="other">Other</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="fieldSize" class="form-label">Field Size (acres)</label>
+                                                    <input type="number" class="form-control" id="fieldSize" min="1" max="10000" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 2: Current Conditions -->
+                                    <div class="assessment-step" id="step2" style="display: none;">
+                                        <h5>Step 2: Current Conditions</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="soilMoisture" class="form-label">Soil Moisture Level</label>
+                                                    <select class="form-select" id="soilMoisture" required>
+                                                        <option value="">Select Moisture Level</option>
+                                                        <option value="very_dry">Very Dry</option>
+                                                        <option value="dry">Dry</option>
+                                                        <option value="moderate">Moderate</option>
+                                                        <option value="moist">Moist</option>
+                                                        <option value="wet">Wet</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="irrigationAvailable" class="form-label">Irrigation Available</label>
+                                                    <select class="form-select" id="irrigationAvailable" required>
+                                                        <option value="yes">Yes</option>
+                                                        <option value="no">No</option>
+                                                        <option value="limited">Limited</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="currentPractices" class="form-label">Current Conservation Practices</label>
+                                                    <select class="form-select" id="currentPractices" multiple>
+                                                        <option value="no_till">No-Till</option>
+                                                        <option value="cover_crops">Cover Crops</option>
+                                                        <option value="mulching">Mulching</option>
+                                                        <option value="strip_tillage">Strip Tillage</option>
+                                                        <option value="conservation_tillage">Conservation Tillage</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="soilType" class="form-label">Soil Type</label>
+                                                    <select class="form-select" id="soilType" required>
+                                                        <option value="">Select Soil Type</option>
+                                                        <option value="clay">Clay</option>
+                                                        <option value="clay_loam">Clay Loam</option>
+                                                        <option value="loam">Loam</option>
+                                                        <option value="sandy_loam">Sandy Loam</option>
+                                                        <option value="sand">Sand</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Step 3: Goals and Constraints -->
+                                    <div class="assessment-step" id="step3" style="display: none;">
+                                        <h5>Step 3: Goals and Constraints</h5>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="waterConservationGoal" class="form-label">Water Conservation Goal (%)</label>
+                                                    <input type="range" class="form-range" id="waterConservationGoal" min="10" max="50" value="25">
+                                                    <div class="d-flex justify-content-between">
+                                                        <span>10%</span>
+                                                        <span id="goalValue">25%</span>
+                                                        <span>50%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="budgetConstraint" class="form-label">Budget Constraint</label>
+                                                    <select class="form-select" id="budgetConstraint" required>
+                                                        <option value="low">Low ($0-500/acre)</option>
+                                                        <option value="medium">Medium ($500-1500/acre)</option>
+                                                        <option value="high">High ($1500+/acre)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Priority Areas</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="priorityMoisture" value="moisture">
+                                                <label class="form-check-label" for="priorityMoisture">Soil Moisture Conservation</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="priorityErosion" value="erosion">
+                                                <label class="form-check-label" for="priorityErosion">Erosion Control</label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="priorityOrganic" value="organic">
+                                                <label class="form-check-label" for="priorityOrganic">Organic Matter Building</label>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Navigation Buttons -->
+                                    <div class="d-flex justify-content-between mt-4">
+                                        <button type="button" class="btn btn-outline-secondary" id="prevStep" onclick="droughtSystem.previousStep()" style="display: none;">
+                                            <i class="fas fa-arrow-left me-2"></i>Previous
+                                        </button>
+                                        <button type="button" class="btn btn-primary" id="nextStep" onclick="droughtSystem.nextStep()">
+                                            Next<i class="fas fa-arrow-right ms-2"></i>
+                                        </button>
+                                        <button type="submit" class="btn btn-success" id="submitAssessment" style="display: none;">
+                                            <i class="fas fa-check me-2"></i>Complete Assessment
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Assessment Results Preview -->
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-chart-pie me-2"></i>Assessment Preview</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="assessmentPreview">
+                                    <p class="text-muted">Complete the assessment to see results</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Practices Tab -->
+            <div class="tab-pane fade" id="practices" role="tabpanel">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-seedling me-2"></i>Conservation Practices</h4>
+                                <p class="mb-0">Compare and select drought-resilient practices for your farm</p>
+                            </div>
+                            <div class="card-body">
+                                <div class="row" id="practicesGrid">
+                                    <!-- Practice cards will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Practice Comparison -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-balance-scale me-2"></i>Practice Comparison</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="practiceComparison">
+                                    <p class="text-muted">Select practices to compare their effectiveness</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Monitoring Tab -->
+            <div class="tab-pane fade" id="monitoring" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-chart-line me-2"></i>Drought Monitoring Dashboard</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="chart-container">
+                                            <canvas id="moistureChart"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="chart-container">
+                                            <canvas id="precipitationChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mt-3">
+                                    <div class="col-md-6">
+                                        <div class="chart-container">
+                                            <canvas id="temperatureChart"></canvas>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="chart-container">
+                                            <canvas id="droughtIndexChart"></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-map-marked-alt me-2"></i>Field Map</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="map-container" id="fieldMap"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-bell me-2"></i>Alert Settings</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="alertSettingsForm">
+                                    <div class="mb-3">
+                                        <label for="alertThreshold" class="form-label">Alert Threshold</label>
+                                        <select class="form-select" id="alertThreshold">
+                                            <option value="low">Low Risk</option>
+                                            <option value="moderate" selected>Moderate Risk</option>
+                                            <option value="high">High Risk</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="emailAlerts" checked>
+                                            <label class="form-check-label" for="emailAlerts">Email Alerts</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="smsAlerts">
+                                            <label class="form-check-label" for="smsAlerts">SMS Alerts</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="pushAlerts" checked>
+                                            <label class="form-check-label" for="pushAlerts">Push Notifications</label>
+                                        </div>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary w-100">Save Settings</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Planning Tab -->
+            <div class="tab-pane fade" id="planning" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h4><i class="fas fa-calendar-alt me-2"></i>Drought Management Planning</h4>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h5>Implementation Timeline</h5>
+                                        <div id="implementationTimeline">
+                                            <!-- Timeline will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h5>Cost-Benefit Analysis</h5>
+                                        <div id="costBenefitAnalysis">
+                                            <!-- Cost-benefit analysis will be populated by JavaScript -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-lg-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5><i class="fas fa-tasks me-2"></i>Action Items</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="actionItems">
+                                    <!-- Action items will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5><i class="fas fa-download me-2"></i>Export Options</h5>
+                            </div>
+                            <div class="card-body">
+                                <button class="btn btn-outline-primary w-100 mb-2" onclick="droughtSystem.exportReport('pdf')">
+                                    <i class="fas fa-file-pdf me-2"></i>Export PDF Report
+                                </button>
+                                <button class="btn btn-outline-success w-100 mb-2" onclick="droughtSystem.exportReport('excel')">
+                                    <i class="fas fa-file-excel me-2"></i>Export Excel Data
+                                </button>
+                                <button class="btn btn-outline-info w-100" onclick="droughtSystem.exportReport('csv')">
+                                    <i class="fas fa-file-csv me-2"></i>Export CSV Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Agricultural JavaScript -->
+    <script src="{{ url_for('static', path='/js/agricultural.js') }}"></script>
+    
+    <!-- Drought Management JavaScript -->
+    <script src="{{ url_for('static', path='/js/drought-management.js') }}"></script>
+    
+    <script>
+        // Initialize the drought management system
+        let droughtSystem;
+        document.addEventListener('DOMContentLoaded', function() {
+            droughtSystem = new DroughtManagementSystem();
+        });
+    </script>
+</body>
+</html>
