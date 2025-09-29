@@ -87,6 +87,7 @@ from ..services.cover_management_service import (
     CoverCropSpecies,
     MulchMaterial
 )
+from .optimization_routes import router as optimization_router
 
 logger = logging.getLogger(__name__)
 
@@ -3056,6 +3057,9 @@ async def tillage_transition_planning_health():
         logger.error(f"Health check error: {str(e)}")
         raise HTTPException(status_code=500, detail="Service health check failed")
 
+# Include optimization routes
+router.include_router(optimization_router)
+
 
 # Cover Management Endpoints
 @router.post("/cover-management/recommendations", response_model=CoverManagementResponse)
@@ -3306,3 +3310,6 @@ async def cover_management_health():
     except Exception as e:
         logger.error(f"Health check error: {str(e)}")
         raise HTTPException(status_code=500, detail="Service health check failed")
+
+# Include optimization routes
+router.include_router(optimization_router)

@@ -48,11 +48,12 @@ drought_monitoring_service = None
 soil_assessment_service = None
 soil_weather_integration_service = None
 practice_effectiveness_service = None
+cover_crop_mulch_optimization_service = None
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service
     try:
         logger.info("Initializing Drought Management Service...")
         
@@ -82,6 +83,11 @@ async def startup_event():
         practice_effectiveness_service = PracticeEffectivenessService()
         await practice_effectiveness_service.initialize()
         
+        # Initialize cover crop and mulch optimization service
+        from .services.cover_crop_mulch_optimization_service import CoverCropMulchOptimizationService
+        cover_crop_mulch_optimization_service = CoverCropMulchOptimizationService()
+        await cover_crop_mulch_optimization_service.initialize()
+        
         logger.info("Drought Management Service initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize Drought Management Service: {str(e)}")
@@ -91,7 +97,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service
     try:
         if drought_assessment_service:
             await drought_assessment_service.cleanup()
@@ -105,6 +111,8 @@ async def shutdown_event():
             await soil_weather_integration_service.cleanup()
         if practice_effectiveness_service:
             await practice_effectiveness_service.cleanup()
+        if cover_crop_mulch_optimization_service:
+            await cover_crop_mulch_optimization_service.cleanup()
         logger.info("Drought Management Service shutdown completed")
     except Exception as e:
         logger.error(f"Error during shutdown: {str(e)}")
@@ -124,7 +132,7 @@ app.include_router(router)
 @app.get("/health")
 async def health_check():
     """Health check endpoint for service monitoring."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, practice_effectiveness_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, practice_effectiveness_service, cover_crop_mulch_optimization_service
     
     service_healthy = True
     service_status = "healthy"
@@ -198,6 +206,17 @@ async def health_check():
         components["practice_effectiveness"] = "not_initialized"
         service_healthy = False
     
+    if cover_crop_mulch_optimization_service:
+        try:
+            components["cover_crop_mulch_optimization"] = "healthy"
+        except Exception as e:
+            logger.error(f"Cover crop mulch optimization service health check failed: {str(e)}")
+            components["cover_crop_mulch_optimization"] = "unhealthy"
+            service_healthy = False
+    else:
+        components["cover_crop_mulch_optimization"] = "not_initialized"
+        service_healthy = False
+    
     if not service_healthy:
         service_status = "unhealthy"
     
@@ -231,6 +250,7 @@ async def root():
             "drought_risk": "/api/v1/drought/risk-assessment",
             "soil_assessment": "/api/v1/drought/soil-assessment",
             "practice_effectiveness": "/api/v1/drought/practice-effectiveness",
+            "cover_crop_mulch_optimization": "/api/v1/optimization",
             "health": "/health",
             "docs": "/docs"
         },
@@ -246,7 +266,12 @@ async def root():
             "practice_effectiveness_tracking",
             "performance_measurement_collection",
             "effectiveness_validation",
-            "adaptive_recommendations"
+            "adaptive_recommendations",
+            "cover_crop_species_optimization",
+            "mulch_material_optimization",
+            "comprehensive_optimization",
+            "timing_optimization",
+            "performance_insights"
         ],
         "integration": {
             "weather_services": "NOAA, OpenWeatherMap integration",
