@@ -12,7 +12,7 @@ import uuid
 from datetime import datetime, date
 from uuid import UUID
 
-from ..models.drought_models import (
+from models.drought_models import (
     DroughtAssessmentRequest,
     DroughtAssessmentResponse,
     ConservationPracticeRequest,
@@ -28,16 +28,30 @@ from ..models.drought_models import (
     IrrigationScheduleRequest,
     IrrigationScheduleResponse,
     IrrigationOptimizationRequest,
-    IrrigationOptimizationResponse
+    IrrigationOptimizationResponse,
+    # New models for TICKET-014_drought-management-12.1
+    ComprehensiveDroughtAssessmentRequest,
+    ComprehensiveDroughtAssessmentResponse,
+    DetailedRecommendationsResponse,
+    WaterSavingsAnalysisResponse,
+    AlertSubscriptionRequest,
+    AlertSubscriptionResponse,
+    # New models for TICKET-014_drought-management-12.2
+    PracticeComparisonRequest,
+    PracticeComparisonResponse,
+    DashboardDataRequest,
+    MonitoringDashboardResponse,
+    ScenarioPlanningRequest,
+    ScenarioPlanningResponse
 )
-from ..models.water_source_models import WaterSourceAnalysisRequest
-from ..models.soil_assessment_models import (
+from models.water_source_models import WaterSourceAnalysisRequest
+from models.soil_assessment_models import (
     SoilAssessmentRequest,
     SoilAssessmentResponse,
     PracticeRecommendationResponse,
     SoilHealthTrendResponse
 )
-from ..models.regional_drought_models import (
+from models.regional_drought_models import (
     RegionalDroughtAnalysisRequest,
     RegionalDroughtAnalysisResponse,
     DroughtForecastRequest,
@@ -51,7 +65,7 @@ from ..models.regional_drought_models import (
     DroughtPatternMapResponse,
     DroughtAlertResponse
 )
-from ..models.practice_effectiveness_models import (
+from models.practice_effectiveness_models import (
     PracticeEffectivenessRequest,
     PracticeEffectivenessResponse,
     PracticeImplementation,
@@ -63,7 +77,7 @@ from ..models.practice_effectiveness_models import (
     PerformanceMetric,
     ValidationStatus
 )
-from ..models.tillage_models import (
+from models.tillage_models import (
     TillageOptimizationRequest,
     TillageOptimizationResponse,
     TillageSystemAssessment,
@@ -71,17 +85,21 @@ from ..models.tillage_models import (
     TransitionPlan
 )
 from .personalized_alert_routes import router as personalized_alert_router
-from ..services.drought_assessment_service import DroughtAssessmentService
-from ..services.moisture_conservation_service import MoistureConservationService
-from ..services.drought_monitoring_service import DroughtMonitoringService
-from ..services.water_savings_calculator import WaterSavingsCalculator
-from ..services.soil_assessment_service import SoilManagementAssessmentService
-from ..services.soil_weather_service import SoilWeatherIntegrationService
-from ..services.soil_moisture_monitoring_service import SoilMoistureMonitoringService
-from ..services.regional_drought_analysis_service import RegionalDroughtAnalysisService
-from ..services.irrigation_service import IrrigationManagementService
-from ..services.practice_effectiveness_service import PracticeEffectivenessService
-from ..services.cover_management_service import (
+from services.drought_assessment_service import DroughtAssessmentService
+from services.moisture_conservation_service import MoistureConservationService
+from services.drought_monitoring_service import DroughtMonitoringService
+from services.water_savings_calculator import WaterSavingsCalculator
+from services.soil_assessment_service import SoilManagementAssessmentService
+from services.soil_weather_service import SoilWeatherIntegrationService
+from services.soil_moisture_monitoring_service import SoilMoistureMonitoringService
+from services.regional_drought_analysis_service import RegionalDroughtAnalysisService
+from services.irrigation_service import IrrigationManagementService
+from services.practice_effectiveness_service import PracticeEffectivenessService
+from services.personalized_alert_service import PersonalizedAlertService
+from services.practice_comparison_service import PracticeComparisonService
+from services.monitoring_dashboard_service import MonitoringDashboardService
+from services.scenario_planning_service import ScenarioPlanningService
+from services.cover_management_service import (
     CoverManagementService,
     CoverManagementRequest,
     CoverManagementResponse,
@@ -99,66 +117,94 @@ router = APIRouter(prefix="/api/v1/drought", tags=["drought-management"])
 # Service dependencies (will be injected)
 async def get_drought_assessment_service():
     """Get drought assessment service instance."""
-    from ..services.drought_assessment_service import DroughtAssessmentService
+    from services.drought_assessment_service import DroughtAssessmentService
     return DroughtAssessmentService()
 
 async def get_moisture_conservation_service():
     """Get moisture conservation service instance."""
-    from ..services.moisture_conservation_service import MoistureConservationService
+    from services.moisture_conservation_service import MoistureConservationService
     return MoistureConservationService()
 
 async def get_drought_monitoring_service():
     """Get drought monitoring service instance."""
-    from ..services.drought_monitoring_service import DroughtMonitoringService
+    from services.drought_monitoring_service import DroughtMonitoringService
     return DroughtMonitoringService()
 
 async def get_water_savings_calculator():
     """Get water savings calculator instance."""
-    from ..services.water_savings_calculator import WaterSavingsCalculator
+    from services.water_savings_calculator import WaterSavingsCalculator
     calculator = WaterSavingsCalculator()
     await calculator.initialize()
     return calculator
 
 async def get_soil_assessment_service():
     """Get soil assessment service instance."""
-    from ..services.soil_assessment_service import SoilManagementAssessmentService
+    from services.soil_assessment_service import SoilManagementAssessmentService
     return SoilManagementAssessmentService()
 
 async def get_soil_weather_integration_service():
     """Get soil-weather integration service instance."""
-    from ..services.soil_weather_service import SoilWeatherIntegrationService
+    from services.soil_weather_service import SoilWeatherIntegrationService
     return SoilWeatherIntegrationService()
 
 async def get_soil_moisture_monitoring_service():
     """Get soil moisture monitoring service instance."""
-    from ..services.soil_moisture_monitoring_service import SoilMoistureMonitoringService
+    from services.soil_moisture_monitoring_service import SoilMoistureMonitoringService
     service = SoilMoistureMonitoringService()
     await service.initialize()
     return service
 
 async def get_regional_drought_analysis_service():
     """Get regional drought analysis service instance."""
-    from ..services.regional_drought_analysis_service import RegionalDroughtAnalysisService
+    from services.regional_drought_analysis_service import RegionalDroughtAnalysisService
     service = RegionalDroughtAnalysisService()
     await service.initialize()
     return service
 
 async def get_irrigation_management_service():
     """Get irrigation management service instance."""
-    from ..services.irrigation_service import IrrigationManagementService
+    from services.irrigation_service import IrrigationManagementService
     return IrrigationManagementService()
 
 async def get_practice_effectiveness_service():
     """Get practice effectiveness service instance."""
-    from ..services.practice_effectiveness_service import PracticeEffectivenessService
+    from services.practice_effectiveness_service import PracticeEffectivenessService
     service = PracticeEffectivenessService()
     await service.initialize()
     return service
 
 async def get_cover_management_service():
     """Get cover management service instance."""
-    from ..services.cover_management_service import CoverManagementService
+    from services.cover_management_service import CoverManagementService
     service = CoverManagementService()
+    await service.initialize()
+    return service
+
+async def get_personalized_alert_service():
+    """Get personalized alert service instance."""
+    from services.personalized_alert_service import PersonalizedAlertService
+    service = PersonalizedAlertService()
+    await service.initialize()
+    return service
+
+async def get_practice_comparison_service():
+    """Get practice comparison service instance."""
+    from services.practice_comparison_service import PracticeComparisonService
+    service = PracticeComparisonService()
+    await service.initialize()
+    return service
+
+async def get_monitoring_dashboard_service():
+    """Get monitoring dashboard service instance."""
+    from services.monitoring_dashboard_service import MonitoringDashboardService
+    service = MonitoringDashboardService()
+    await service.initialize()
+    return service
+
+async def get_scenario_planning_service():
+    """Get scenario planning service instance."""
+    from services.scenario_planning_service import ScenarioPlanningService
+    service = ScenarioPlanningService()
     await service.initialize()
     return service
 
@@ -727,7 +773,7 @@ async def acknowledge_soil_moisture_alert(
         
         # Get alert service
         if not hasattr(service, 'alert_service'):
-            from ..services.soil_moisture_alert_service import SoilMoistureAlertService
+            from services.soil_moisture_alert_service import SoilMoistureAlertService
             service.alert_service = SoilMoistureAlertService()
             await service.alert_service.initialize()
         
@@ -759,7 +805,7 @@ async def resolve_soil_moisture_alert(
         
         # Get alert service
         if not hasattr(service, 'alert_service'):
-            from ..services.soil_moisture_alert_service import SoilMoistureAlertService
+            from services.soil_moisture_alert_service import SoilMoistureAlertService
             service.alert_service = SoilMoistureAlertService()
             await service.alert_service.initialize()
         
@@ -793,7 +839,7 @@ async def get_soil_moisture_alert_statistics(
         
         # Get alert service
         if not hasattr(service, 'alert_service'):
-            from ..services.soil_moisture_alert_service import SoilMoistureAlertService
+            from services.soil_moisture_alert_service import SoilMoistureAlertService
             service.alert_service = SoilMoistureAlertService()
             await service.alert_service.initialize()
         
@@ -1008,7 +1054,7 @@ async def get_available_practices():
     with descriptions, benefits, and implementation requirements.
     """
     try:
-        from ..services.moisture_conservation_service import MoistureConservationService
+        from services.moisture_conservation_service import MoistureConservationService
         service = MoistureConservationService()
         practices = await service.get_available_practices()
         return practices
@@ -1036,7 +1082,7 @@ async def assess_soil_drought_vulnerability(
     Returns vulnerability score, risk level, and mitigation recommendations.
     """
     try:
-        from ..services.soil_weather_service import SoilCharacteristics, WeatherPattern
+        from services.soil_weather_service import SoilCharacteristics, WeatherPattern
         
         # Convert input data to service models
         soil = SoilCharacteristics(**soil_characteristics)
@@ -1084,7 +1130,7 @@ async def analyze_weather_pattern_impact(
     Returns detailed impact analysis with recommendations.
     """
     try:
-        from ..services.soil_weather_service import SoilCharacteristics, WeatherPattern
+        from services.soil_weather_service import SoilCharacteristics, WeatherPattern
         
         # Convert input data to service models
         soil = SoilCharacteristics(**soil_characteristics)
@@ -1126,7 +1172,7 @@ async def predict_soil_moisture_stress(
     Useful for proactive drought management and irrigation planning.
     """
     try:
-        from ..services.soil_weather_service import SoilCharacteristics, WeatherPattern
+        from services.soil_weather_service import SoilCharacteristics, WeatherPattern
         
         # Convert input data to service models
         soil = SoilCharacteristics(**soil_characteristics)
@@ -1163,7 +1209,7 @@ async def assess_crop_impact(
     Returns comprehensive crop impact analysis with mitigation strategies.
     """
     try:
-        from ..services.soil_weather_service import SoilCharacteristics, WeatherPattern
+        from services.soil_weather_service import SoilCharacteristics, WeatherPattern
         
         # Convert input data to service models
         soil = SoilCharacteristics(**soil_characteristics)
@@ -1805,7 +1851,7 @@ async def get_irrigation_system_types():
     including efficiency ratings, suitable crops, and implementation requirements.
     """
     try:
-        from ..services.irrigation_service import IrrigationManagementService
+        from services.irrigation_service import IrrigationManagementService
         service = IrrigationManagementService()
         
         system_types = []
@@ -1840,7 +1886,7 @@ async def get_water_source_types():
     including reliability, cost, and sustainability characteristics.
     """
     try:
-        from ..services.irrigation_service import IrrigationManagementService
+        from services.irrigation_service import IrrigationManagementService
         service = IrrigationManagementService()
         
         water_sources = []
@@ -2198,7 +2244,7 @@ async def analyze_water_sources(request: WaterSourceAnalysisRequest):
     - Sustainability assessment of water sources
     """
     try:
-        from ..services.water_source_analysis_service import WaterSourceAnalysisService
+        from services.water_source_analysis_service import WaterSourceAnalysisService
         
         service = WaterSourceAnalysisService()
         await service.initialize()
@@ -2299,7 +2345,7 @@ async def get_water_source_analysis_types():
     reliability factors, quality concerns, cost factors, and sustainability scores.
     """
     try:
-        from ..services.water_source_analysis_service import WaterSourceAnalysisService
+        from services.water_source_analysis_service import WaterSourceAnalysisService
         
         service = WaterSourceAnalysisService()
         
@@ -2368,7 +2414,7 @@ async def optimize_tillage_system(request: TillageOptimizationRequest):
     - Enhanced drought resilience
     """
     try:
-        from ..services.tillage_service import TillageOptimizationService
+        from services.tillage_service import TillageOptimizationService
         
         service = TillageOptimizationService()
         result = await service.optimize_tillage_system(request)
@@ -2390,7 +2436,7 @@ async def get_tillage_systems():
     equipment requirements, and implementation considerations.
     """
     try:
-        from ..models.tillage_models import TillageSystem
+        from models.tillage_models import TillageSystem
         
         systems = []
         for system in TillageSystem:
@@ -2424,7 +2470,7 @@ async def get_tillage_equipment():
     compatibility with different soil types and field conditions.
     """
     try:
-        from ..models.tillage_models import TillageEquipment
+        from models.tillage_models import TillageEquipment
         
         equipment = []
         for eq_type in TillageEquipment:
@@ -2462,7 +2508,7 @@ async def get_transition_guide(
     cost estimates, and risk mitigation strategies.
     """
     try:
-        from ..models.tillage_models import TillageSystem, TillageOptimizationValidator
+        from models.tillage_models import TillageSystem, TillageOptimizationValidator
         
         # Validate systems
         try:
@@ -2814,8 +2860,8 @@ async def create_comprehensive_transition_plan(
     - Comprehensive support throughout transition process
     """
     try:
-        from ..models.tillage_models import TillageSystem
-        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        from models.tillage_models import TillageSystem
+        from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage systems
         try:
@@ -2864,8 +2910,8 @@ async def assess_transition_feasibility(
     - Resource allocation and timeline planning
     """
     try:
-        from ..models.tillage_models import TillageSystem, TillageOptimizationRequest
-        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        from models.tillage_models import TillageSystem, TillageOptimizationRequest
+        from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage systems
         try:
@@ -2931,8 +2977,8 @@ async def get_troubleshooting_guide(
     - Expert consultation coordination
     """
     try:
-        from ..models.tillage_models import TillageSystem
-        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        from models.tillage_models import TillageSystem
+        from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage system
         try:
@@ -2997,8 +3043,8 @@ async def get_educational_resources(
     - Continuous learning and improvement
     """
     try:
-        from ..models.tillage_models import TillageSystem
-        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        from models.tillage_models import TillageSystem
+        from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage system
         try:
@@ -3077,8 +3123,8 @@ async def get_support_network(
     - Coordinating with service providers
     """
     try:
-        from ..models.tillage_models import TillageSystem
-        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        from models.tillage_models import TillageSystem
+        from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage system
         try:
@@ -3145,8 +3191,8 @@ async def get_monitoring_framework(
     - Documentation and reporting
     """
     try:
-        from ..models.tillage_models import TillageSystem
-        from ..services.tillage_transition_planning_service import TillageTransitionPlanningService
+        from models.tillage_models import TillageSystem
+        from services.tillage_transition_planning_service import TillageTransitionPlanningService
         
         # Validate tillage system
         try:
@@ -3463,6 +3509,187 @@ async def get_mulch_materials(
         logger.error(f"Error getting mulch materials: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Mulch materials retrieval failed: {str(e)}")
 
+# TICKET-014_drought-management-12.1: Core drought assessment API endpoints
+
+@router.post("/assessment", response_model=ComprehensiveDroughtAssessmentResponse)
+async def comprehensive_drought_assessment(
+    request: ComprehensiveDroughtAssessmentRequest,
+    service: DroughtAssessmentService = Depends(get_drought_assessment_service)
+):
+    """
+    Comprehensive drought assessment endpoint.
+    
+    This endpoint provides comprehensive drought assessment including:
+    - Multi-field analysis across the farm
+    - Detailed risk assessment with confidence scoring
+    - Comprehensive recommendations with implementation guidance
+    - Water savings potential analysis
+    - Economic impact assessment
+    - Implementation roadmap and monitoring strategy
+    
+    Supports different assessment types:
+    - comprehensive: Full analysis with all features
+    - quick: Rapid assessment for immediate needs
+    - emergency: Urgent assessment for critical situations
+    
+    Performance: <3s response time, supports complex multi-field assessments
+    """
+    try:
+        start_time = datetime.utcnow()
+        logger.info(f"Starting comprehensive drought assessment for farm: {request.farm_location_id}")
+        
+        # Perform comprehensive assessment
+        assessment = await service.comprehensive_drought_assessment(request)
+        
+        # Calculate processing time
+        processing_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        assessment.processing_time_ms = processing_time
+        
+        logger.info(f"Comprehensive drought assessment completed in {processing_time:.2f}ms")
+        return assessment
+        
+    except Exception as e:
+        logger.error(f"Error in comprehensive drought assessment: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Comprehensive drought assessment failed: {str(e)}")
+
+@router.get("/recommendations/{assessment_id}", response_model=DetailedRecommendationsResponse)
+async def get_detailed_recommendations(
+    assessment_id: UUID,
+    include_implementation_guides: bool = Query(True, description="Include detailed implementation guides"),
+    include_cost_analysis: bool = Query(True, description="Include comprehensive cost analysis"),
+    include_risk_assessment: bool = Query(True, description="Include risk assessment for each recommendation"),
+    service: DroughtAssessmentService = Depends(get_drought_assessment_service)
+):
+    """
+    Get detailed recommendations for a specific drought assessment.
+    
+    This endpoint provides:
+    - Ranked practice recommendations with priority scoring
+    - Detailed implementation timelines and guides
+    - Comprehensive cost-benefit analysis
+    - Resource allocation recommendations
+    - Risk mitigation strategies
+    - Success tracking plans
+    - Expert insights and agricultural best practices
+    
+    Integration: Connects with conservation practice database and economic analysis service
+    """
+    try:
+        logger.info(f"Getting detailed recommendations for assessment: {assessment_id}")
+        
+        recommendations = await service.get_detailed_recommendations(
+            assessment_id=assessment_id,
+            include_implementation_guides=include_implementation_guides,
+            include_cost_analysis=include_cost_analysis,
+            include_risk_assessment=include_risk_assessment
+        )
+        
+        return recommendations
+        
+    except Exception as e:
+        logger.error(f"Error getting detailed recommendations: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get detailed recommendations: {str(e)}")
+
+@router.get("/water-savings/{assessment_id}", response_model=WaterSavingsAnalysisResponse)
+async def get_water_savings_analysis(
+    assessment_id: UUID,
+    include_projections: bool = Query(True, description="Include future savings projections"),
+    include_uncertainty_analysis: bool = Query(True, description="Include uncertainty ranges and confidence intervals"),
+    include_validation_data: bool = Query(True, description="Include validation data and sources"),
+    service: WaterSavingsCalculator = Depends(get_water_savings_calculator)
+):
+    """
+    Get detailed water savings analysis for a specific drought assessment.
+    
+    This endpoint provides:
+    - Quantified water savings with field-specific breakdowns
+    - Practice-specific contributions to total savings
+    - Cumulative impacts across all fields
+    - Uncertainty analysis with confidence intervals
+    - Validation data from research and field studies
+    - Future savings projections based on implementation timeline
+    - Cost-benefit summary with payback periods
+    
+    Calculations: Uses water balance models, savings projections, and uncertainty ranges
+    """
+    try:
+        logger.info(f"Getting water savings analysis for assessment: {assessment_id}")
+        
+        analysis = await service.get_comprehensive_water_savings_analysis(
+            assessment_id=assessment_id,
+            include_projections=include_projections,
+            include_uncertainty_analysis=include_uncertainty_analysis,
+            include_validation_data=include_validation_data
+        )
+        
+        return analysis
+        
+    except Exception as e:
+        logger.error(f"Error getting water savings analysis: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get water savings analysis: {str(e)}")
+
+@router.post("/alerts/subscribe", response_model=AlertSubscriptionResponse)
+async def subscribe_to_drought_alerts(
+    request: AlertSubscriptionRequest,
+    service: DroughtMonitoringService = Depends(get_drought_monitoring_service)
+):
+    """
+    Subscribe to drought monitoring and alert notifications.
+    
+    This endpoint allows farmers to:
+    - Set up customizable alert thresholds for different conditions
+    - Choose notification channels (email, SMS, push notifications)
+    - Configure escalation rules for critical situations
+    - Set up custom triggers based on specific field conditions
+    - Manage notification frequency preferences
+    
+    Integration: Connects with monitoring service, notification systems, and user preferences
+    """
+    try:
+        logger.info(f"Setting up drought alert subscription for farm: {request.farm_location_id}")
+        
+        subscription = await service.create_alert_subscription(request)
+        
+        return subscription
+        
+    except Exception as e:
+        logger.error(f"Error creating alert subscription: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to create alert subscription: {str(e)}")
+
+@router.get("/alerts/status/{farm_location_id}", response_model=AlertSubscriptionResponse)
+async def get_alert_subscription_status(
+    farm_location_id: UUID,
+    include_history: bool = Query(True, description="Include alert history"),
+    include_active_alerts: bool = Query(True, description="Include currently active alerts"),
+    service: DroughtMonitoringService = Depends(get_drought_monitoring_service)
+):
+    """
+    Get current status of drought alert subscription.
+    
+    This endpoint provides:
+    - Current subscription status and health
+    - Active alerts and their severity levels
+    - Recent alert history with timestamps
+    - Notification preferences and settings
+    - Next scheduled check time
+    - Subscription health metrics
+    
+    Integration: Connects with monitoring service and notification systems
+    """
+    try:
+        logger.info(f"Getting alert subscription status for farm: {farm_location_id}")
+        
+        status = await service.get_alert_subscription_status(
+            farm_location_id=farm_location_id,
+            include_history=include_history,
+            include_active_alerts=include_active_alerts
+        )
+        
+        return status
+        
+    except Exception as e:
+        logger.error(f"Error getting alert subscription status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get alert subscription status: {str(e)}")
 
 @router.get("/cover-management/health")
 async def cover_management_health():
@@ -3507,3 +3734,118 @@ router.include_router(equipment_optimization_router)
 
 # Include personalized alert routes
 router.include_router(personalized_alert_router)
+
+# TICKET-014_drought-management-12.2 Advanced API Endpoints
+
+@router.post("/practices/compare", response_model=PracticeComparisonResponse)
+async def compare_conservation_practices(
+    request: PracticeComparisonRequest,
+    practice_comparison_service: PracticeComparisonService = Depends(get_practice_comparison_service),
+    practice_service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service),
+    drought_service: DroughtAssessmentService = Depends(get_drought_assessment_service)
+):
+    """
+    Compare conservation practices for drought management.
+    
+    This endpoint provides side-by-side comparison of conservation practices,
+    including trade-off analysis and decision support for farmers.
+    
+    Features:
+    - Multi-criteria comparison (water savings, cost, soil health)
+    - Risk assessment integration
+    - Decision matrix generation
+    - Trade-off analysis
+    - Recommendation engine
+    """
+    try:
+        logger.info(f"Comparing practices for field {request.field_id}")
+        
+        # Use the new practice comparison service
+        response = await practice_comparison_service.compare_practices(request)
+        
+        logger.info(f"Practice comparison completed for field {request.field_id}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error comparing practices: {e}")
+        raise HTTPException(status_code=500, detail=f"Practice comparison failed: {str(e)}")
+
+@router.get("/monitoring/dashboard", response_model=MonitoringDashboardResponse)
+async def get_monitoring_dashboard_data(
+    farm_location_id: UUID = Query(..., description="Farm location identifier"),
+    include_field_details: bool = Query(True, description="Include individual field details"),
+    time_range_days: int = Query(30, ge=1, le=365, description="Time range for data in days"),
+    include_forecasts: bool = Query(True, description="Include forecast data"),
+    include_alerts: bool = Query(True, description="Include alert information"),
+    dashboard_service: MonitoringDashboardService = Depends(get_monitoring_dashboard_service),
+    monitoring_service: DroughtMonitoringService = Depends(get_drought_monitoring_service),
+    alert_service: PersonalizedAlertService = Depends(get_personalized_alert_service)
+):
+    """
+    Get comprehensive monitoring dashboard data.
+    
+    This endpoint provides real-time drought conditions, trend analysis,
+    and alert status for farm management dashboards.
+    
+    Features:
+    - Real-time drought conditions
+    - Field-level moisture monitoring
+    - Trend analysis and forecasting
+    - Active alerts and notifications
+    - Irrigation recommendations
+    """
+    try:
+        logger.info(f"Generating dashboard data for farm {farm_location_id}")
+        
+        # Create dashboard request
+        dashboard_request = DashboardDataRequest(
+            farm_location_id=farm_location_id,
+            include_field_details=include_field_details,
+            time_range_days=time_range_days,
+            include_forecasts=include_forecasts,
+            include_alerts=include_alerts
+        )
+        
+        # Use the new monitoring dashboard service
+        response = await dashboard_service.get_dashboard_data(dashboard_request)
+        
+        logger.info(f"Dashboard data generated for farm {farm_location_id}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error generating dashboard data: {e}")
+        raise HTTPException(status_code=500, detail=f"Dashboard data generation failed: {str(e)}")
+
+@router.post("/planning/scenario", response_model=ScenarioPlanningResponse)
+async def analyze_drought_scenarios(
+    request: ScenarioPlanningRequest,
+    scenario_service: ScenarioPlanningService = Depends(get_scenario_planning_service),
+    drought_service: DroughtAssessmentService = Depends(get_drought_assessment_service),
+    monitoring_service: DroughtMonitoringService = Depends(get_drought_monitoring_service),
+    practice_service: PracticeEffectivenessService = Depends(get_practice_effectiveness_service)
+):
+    """
+    Analyze drought management scenarios for planning.
+    
+    This endpoint provides what-if analysis, scenario comparison,
+    and risk assessment for drought management planning.
+    
+    Features:
+    - Multiple weather scenario evaluation
+    - Practice combination analysis
+    - Economic impact assessment
+    - Risk probability analysis
+    - Implementation timeline recommendations
+    """
+    try:
+        logger.info(f"Analyzing scenarios for farm {request.farm_location_id}")
+        
+        # Use the new scenario planning service
+        response = await scenario_service.plan_scenarios(request)
+        
+        logger.info(f"Scenario analysis completed for farm {request.farm_location_id}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error analyzing scenarios: {e}")
+        raise HTTPException(status_code=500, detail=f"Scenario analysis failed: {str(e)}")

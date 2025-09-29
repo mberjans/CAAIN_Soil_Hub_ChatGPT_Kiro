@@ -1540,16 +1540,16 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
     **Endpoints**: POST `/api/v1/drought/alerts/subscribe`, GET `/api/v1/drought/alerts/status`
     **Features**: Customizable alert thresholds, multi-channel notifications, alert history
     **Integration**: Connect with monitoring service, notification systems, user preferences
-- [ ] TICKET-014_drought-management-12.2 Implement advanced drought management API endpoints
-  - [ ] TICKET-014_drought-management-12.2.1 Create POST `/api/v1/drought/practices/compare` - Practice comparison
+- [x] TICKET-014_drought-management-12.2 Implement advanced drought management API endpoints
+  - [x] TICKET-014_drought-management-12.2.1 Create POST `/api/v1/drought/practices/compare` - Practice comparison
     **Features**: Side-by-side practice comparison, trade-off analysis, decision support
     **Integration**: Connect with practice database, economic analysis, effectiveness data
     **Response**: Structured comparison with recommendations, decision matrices
-  - [ ] TICKET-014_drought-management-12.2.2 Add GET `/api/v1/drought/monitoring/dashboard` - Monitoring dashboard data
+  - [x] TICKET-014_drought-management-12.2.2 Add GET `/api/v1/drought/monitoring/dashboard` - Monitoring dashboard data
     **Features**: Real-time drought conditions, trend analysis, alert status
     **Integration**: Connect with monitoring service, weather data, alert systems
     **Response**: Dashboard data with charts, maps, trend indicators
-  - [ ] TICKET-014_drought-management-12.2.3 Implement POST `/api/v1/drought/planning/scenario` - Scenario planning
+  - [x] TICKET-014_drought-management-12.2.3 Implement POST `/api/v1/drought/planning/scenario` - Scenario planning
     **Features**: What-if analysis, scenario comparison, risk assessment
     **Integration**: Connect with weather forecasting, economic models, practice effectiveness
     **Response**: Scenario analysis with outcomes, recommendations, risk assessments
