@@ -33,7 +33,8 @@ from .api import (
     pest_resistance_routes,
     resistance_explanation_routes,
     trial_data_routes,
-    regional_performance_routes
+    regional_performance_routes,
+    scalability_routes
 )
 
 # Add services to Python path for imports
@@ -214,6 +215,7 @@ app.include_router(pest_resistance_routes.router)
 app.include_router(resistance_explanation_routes.router)
 app.include_router(trial_data_routes.router)
 app.include_router(regional_performance_routes.router)
+app.include_router(scalability_routes.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
