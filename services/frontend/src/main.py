@@ -98,6 +98,17 @@ async def advanced_variety_display_page(request: Request):
     else:
         return HTMLResponse("<h1>Advanced Variety Display - Coming Soon</h1>")
 
+@app.get("/variety-planning-tools", response_class=HTMLResponse)
+async def variety_planning_tools_page(request: Request):
+    """Comprehensive variety planning tools page"""
+    if templates:
+        return templates.TemplateResponse("variety_planning_tools.html", {
+            "request": request,
+            "title": "Variety Planning Tools"
+        })
+    else:
+        return HTMLResponse("<h1>Variety Planning Tools - Coming Soon</h1>")
+
 @app.get("/soil-fertility", response_class=HTMLResponse)
 async def soil_fertility_page(request: Request):
     """Soil fertility management page"""
