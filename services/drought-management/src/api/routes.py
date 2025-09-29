@@ -3849,3 +3849,7 @@ async def analyze_drought_scenarios(
     except Exception as e:
         logger.error(f"Error analyzing scenarios: {e}")
         raise HTTPException(status_code=500, detail=f"Scenario analysis failed: {str(e)}")
+
+# Include expert validation endpoints
+from .expert_validation_endpoints import router as expert_validation_router
+router.include_router(expert_validation_router)
