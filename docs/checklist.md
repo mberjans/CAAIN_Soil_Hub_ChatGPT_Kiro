@@ -1473,7 +1473,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Integration**: Connect with irrigation systems, weather monitoring, practice tracking
 
 ### TICKET-014_drought-management-10. Farm-Scale Equipment and Infrastructure Assessment
-- [ ] TICKET-014_drought-management-10.1 Build comprehensive farm size and equipment assessment system
+- [x] TICKET-014_drought-management-10.1 Build comprehensive farm size and equipment assessment system
   **Implementation**: Create `FarmInfrastructureAssessmentService` in `src/services/infrastructure_service.py`
   **Features**: Equipment inventory, capacity assessment, upgrade recommendations
   **Assessment Areas**: Tillage equipment, planting equipment, irrigation systems, storage facilities

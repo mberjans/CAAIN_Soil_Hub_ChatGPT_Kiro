@@ -3325,3 +3325,7 @@ router.include_router(diversification_router)
 # Include water usage monitoring routes
 from .water_usage_routes import water_usage_router
 router.include_router(water_usage_router)
+
+# Include farm infrastructure assessment routes
+from .infrastructure_routes import router as infrastructure_router
+router.include_router(infrastructure_router)
