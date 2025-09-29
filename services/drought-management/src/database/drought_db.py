@@ -5,14 +5,14 @@ SQLAlchemy models and database connection management for drought management serv
 """
 
 import logging
+import os
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 from decimal import Decimal
 
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, Boolean, Text, ForeignKey, JSON
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float, Boolean, Text, ForeignKey, JSON, text
+from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 from sqlalchemy.dialects.postgresql import UUID as PostgresUUID
 from sqlalchemy.types import DECIMAL
 
@@ -237,7 +237,7 @@ class DroughtServiceDatabase:
             
             # Test connection
             with self.get_session() as session:
-                session.execute("SELECT 1")
+                session.execute(text("SELECT 1"))
             return True
             
         except Exception as e:

@@ -1324,7 +1324,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Integration**: Connect with existing weather service, soil management, and crop recommendation services
   **Port**: Assign port 8007 following microservice pattern
   **Dependencies**: FastAPI, SQLAlchemy, aiohttp, numpy, pandas for drought calculations
-- [x!] TICKET-014_drought-management-1.2 Implement core drought management data models
+- [x] TICKET-014_drought-management-1.2 Implement core drought management data models
   **Implementation**: Create comprehensive data models in `src/models/drought_models.py`
   **Models**:
   ```python
