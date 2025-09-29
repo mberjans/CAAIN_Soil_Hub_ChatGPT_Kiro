@@ -15,6 +15,8 @@ from .smart_filter_routes import router as smart_filter_router
 from .personalization_routes import router as personalization_router
 from .comprehensive_explanation_routes import router as comprehensive_explanation_router
 from .timing_filter_routes import router as timing_filter_router
+from .economic_analysis_routes import router as economic_analysis_router
+from .pest_resistance_routes import router as pest_resistance_router
 
 __all__ = [
     "taxonomy_router",
@@ -26,5 +28,7 @@ __all__ = [
     "smart_filter_router",
     "personalization_router",
     "comprehensive_explanation_router",
-    "timing_filter_router"
+    "timing_filter_router",
+    "economic_analysis_router",
+    "pest_resistance_router"
 ]

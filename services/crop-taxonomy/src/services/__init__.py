@@ -66,6 +66,11 @@ except ImportError:  # pragma: no cover
     YieldPotentialCalculator = None
 
 try:
+    from .pest_resistance_service import PestResistanceAnalysisService
+except ImportError:  # pragma: no cover
+    PestResistanceAnalysisService = None
+
+try:
     from .variety_growing_season_service import VarietyGrowingSeasonService, variety_growing_season_service
 except ImportError:  # pragma: no cover
     VarietyGrowingSeasonService = None
