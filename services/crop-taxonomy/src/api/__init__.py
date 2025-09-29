@@ -18,6 +18,8 @@ from .timing_filter_routes import router as timing_filter_router
 from .economic_analysis_routes import router as economic_analysis_router
 from .pest_resistance_routes import router as pest_resistance_router
 from .resistance_explanation_routes import router as resistance_explanation_router
+from .trial_data_routes import router as trial_data_router
+from .regional_performance_routes import router as regional_performance_router
 
 __all__ = [
     "taxonomy_router",
@@ -32,5 +34,7 @@ __all__ = [
     "timing_filter_router",
     "economic_analysis_router",
     "pest_resistance_router",
-    "resistance_explanation_router"
+    "resistance_explanation_router",
+    "trial_data_router",
+    "regional_performance_router"
 ]

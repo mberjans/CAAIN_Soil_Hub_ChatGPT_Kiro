@@ -31,7 +31,9 @@ from .api import (
     market_intelligence_endpoints,
     disease_routes,
     pest_resistance_routes,
-    resistance_explanation_routes
+    resistance_explanation_routes,
+    trial_data_routes,
+    regional_performance_routes
 )
 
 # Add services to Python path for imports
@@ -210,6 +212,8 @@ app.include_router(market_intelligence_router)
 app.include_router(disease_router)
 app.include_router(pest_resistance_routes.router)
 app.include_router(resistance_explanation_routes.router)
+app.include_router(trial_data_routes.router)
+app.include_router(regional_performance_routes.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
