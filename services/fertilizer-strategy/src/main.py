@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 
 from .api.price_routes import router as price_router
 from .api.commodity_price_routes import router as commodity_router
+from .api.price_impact_routes import router as price_impact_router
+from .api.roi_routes import router as roi_router
 from .database.fertilizer_price_db import initialize_database, shutdown_database
 from .database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from .services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -76,6 +78,8 @@ app.add_middleware(
 # Include API routes
 app.include_router(price_router, prefix="/api/v1", tags=["fertilizer-prices"])
 app.include_router(commodity_router, prefix="/api/v1", tags=["commodity-prices"])
+app.include_router(price_impact_router, prefix="/api/v1", tags=["price-impact-analysis"])
+app.include_router(roi_router, prefix="/api/v1", tags=["roi-optimization"])
 
 @app.get("/health")
 async def health_check():
@@ -98,7 +102,23 @@ async def health_check():
             "commodity_price_tracking",
             "futures_market_integration",
             "basis_analysis",
-            "fertilizer_crop_price_ratios"
+            "fertilizer_crop_price_ratios",
+            "advanced_price_impact_analysis",
+            "sensitivity_analysis",
+            "scenario_modeling",
+            "risk_assessment",
+            "profitability_impact_analysis",
+            "timing_optimization",
+            "fertilizer_roi_optimization",
+            "multi_objective_optimization",
+            "break_even_analysis",
+            "marginal_return_analysis",
+            "yield_response_curves",
+            "constraint_handling",
+            "genetic_algorithm_optimization",
+            "linear_programming_optimization",
+            "quadratic_programming_optimization",
+            "gradient_descent_optimization"
         ]
     }
 
