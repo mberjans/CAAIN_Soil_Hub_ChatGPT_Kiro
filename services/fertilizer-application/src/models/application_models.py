@@ -47,6 +47,7 @@ class FieldConditions(BaseModel):
     field_size_acres: float = Field(..., ge=0.1, le=10000.0, description="Field size in acres")
     soil_type: str = Field(..., description="Primary soil type")
     drainage_class: Optional[str] = Field(None, description="Soil drainage classification")
+    drainage_assessment: Optional[Dict[str, Any]] = Field(None, description="Detailed drainage assessment")
     slope_percent: Optional[float] = Field(None, ge=0, le=100, description="Field slope percentage")
     irrigation_available: bool = Field(False, description="Whether irrigation is available")
     field_shape: Optional[str] = Field(None, description="Field shape (rectangular, irregular, etc.)")
@@ -58,8 +59,10 @@ class CropRequirements(BaseModel):
     crop_type: str = Field(..., description="Type of crop")
     growth_stage: str = Field(..., description="Current growth stage")
     target_yield: Optional[float] = Field(None, description="Target yield per acre")
+    yield_goal_bushels_per_acre: Optional[float] = Field(None, description="Yield goal in bushels per acre")
     nutrient_requirements: Dict[str, float] = Field(default_factory=dict, description="Nutrient requirements")
     application_timing_preferences: List[str] = Field(default_factory=list, description="Preferred application timings")
+    timing_requirements: Optional[Dict[str, Any]] = Field(None, description="Detailed timing requirements")
 
 
 class FertilizerSpecification(BaseModel):

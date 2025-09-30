@@ -2201,3 +2201,15 @@ class EquipmentAssessmentService:
             analysis["recommended_financing"] = "lease"
         
         return analysis
+    # Methods expected by tests
+    async def assess_equipment_compatibility(self, equipment: Equipment) -> Dict[str, Any]:
+        """Assess equipment compatibility for fertilizer application."""
+        return await self._generate_compatibility_assessments([equipment])
+    
+    async def calculate_application_efficiency(self, equipment: Equipment) -> Dict[str, Any]:
+        """Calculate application efficiency for equipment."""
+        return await self._generate_efficiency_assessments([equipment])
+    
+    async def estimate_operational_costs(self, equipment: Equipment, field_size_acres: float = 40.0) -> Dict[str, Any]:
+        """Estimate operational costs for equipment."""
+        return await self._perform_cost_benefit_analysis([equipment], field_size_acres)

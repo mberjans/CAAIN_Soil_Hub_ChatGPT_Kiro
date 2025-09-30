@@ -26,8 +26,6 @@ async def start_monitoring(
     equipment_id: str = Query(..., description="Equipment identifier"),
     monitoring_frequency_minutes: int = Query(15, ge=1, le=1440, description="Monitoring frequency in minutes"),
     data_retention_days: int = Query(30, ge=1, le=365, description="Data retention period in days"),
-    alert_thresholds: Optional[Dict[str, Dict[str, float]]] = Query(None, description="Custom alert thresholds"),
-    alert_notifications: Optional[List[str]] = Query(None, description="Alert notification methods"),
     service: PerformanceMonitoringService = Depends(get_monitoring_service)
 ):
     """

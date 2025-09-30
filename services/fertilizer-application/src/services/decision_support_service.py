@@ -22,7 +22,7 @@ import pandas as pd
 
 from src.models.application_models import (
     ApplicationMethod, ApplicationMethodType, FieldConditions, 
-    CropRequirements, FertilizerSpecification, EquipmentSpecification
+    CropRequirements, FertilizerSpecification, EquipmentSpecification, ApplicationRequest
 )
 from src.models.method_models import MethodComparison, ApplicationMethod as MethodModel
 from src.services.application_method_service import ApplicationMethodService
@@ -1101,3 +1101,16 @@ class DecisionSupportService:
         """Detect if recommendation changes across parameter variations."""
         values = list(impact_on_ranking.values())
         return max(values) - min(values) > 0.2
+
+    # Methods expected by tests
+    async def analyze_scenarios(self, request: ApplicationRequest) -> Dict[str, Any]:
+        """Analyze different scenarios for fertilizer application."""
+        return await self.provide_decision_support(request)
+    
+    async def generate_decision_tree(self, request: ApplicationRequest) -> Dict[str, Any]:
+        """Generate decision tree for fertilizer application."""
+        return await self._apply_decision_tree(request)
+    
+    async def perform_sensitivity_analysis(self, request: ApplicationRequest) -> Dict[str, Any]:
+        """Perform sensitivity analysis for fertilizer application."""
+        return await self._perform_sensitivity_analysis(request)

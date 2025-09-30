@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="20" skipped="0" tests="28" time="5.709" timestamp="2025-09-30T07:47:12.400462-06:00" hostname="Marks-MacBook-Pro-8.local"><testcase classname="test_basic.TestApplicationMethodServiceComprehensive" name="test_service_initialization" time="0.001" /><testcase classname="test_basic.TestApplicationMethodServiceComprehensive" name="test_field_conditions_analysis" time="0.002" /><testcase classname="test_basic.TestApplicationMethodServiceComprehensive" name="test_crop_requirements_analysis" time="0.001" /><testcase classname="test_basic.TestApplicationMethodServiceComprehensive" name="test_fertilizer_specification_analysis" time="0.001" /><testcase classname="test_basic.TestApplicationMethodServiceComprehensive" name="test_equipment_analysis" time="0.001" /><testcase classname="test_basic.TestApplicationMethodServiceComprehensive" name="test_method_scoring" time="0.001" /><testcase classname="test_basic.TestApplicationMethodServiceComprehensive" name="test_recommendation_generation" time="0.001" /><testcase classname="test_basic.TestEquipmentAssessmentServiceComprehensive" name="test_service_initialization" time="0.001"><failure message="AssertionError: assert False&#10; +  where False = hasattr(&lt;src.services.equipment_assessment_service.EquipmentAssessmentService object at 0x12e40f230&gt;, 'evaluate_precision_capabilities')">test_basic.py:231: in test_service_initialization
+    assert hasattr(service, 'evaluate_precision_capabilities')
+E   AssertionError: assert False
+E    +  where False = hasattr(&lt;src.services.equipment_assessment_service.EquipmentAssessmentService object at 0x12e40f230&gt;, 'evaluate_precision_capabilities')</failure></testcase><testcase classname="test_basic.TestEquipmentAssessmentServiceComprehensive" name="test_equipment_compatibility_assessment" time="0.001"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object EquipmentAssessmentService.assess_equipment_compatibility at 0x12e4c0040&gt;, dict)">test_basic.py:247: in test_equipment_compatibility_assessment
+    assert isinstance(compatibility, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object EquipmentAssessmentService.assess_equipment_compatibility at 0x12e4c0040&gt;, dict)</failure></testcase><testcase classname="test_basic.TestEquipmentAssessmentServiceComprehensive" name="test_application_efficiency_calculation" time="0.000"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object EquipmentAssessmentService.calculate_application_efficiency at 0x12e608e10&gt;, dict)">test_basic.py:266: in test_application_efficiency_calculation
+    assert isinstance(efficiency, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object EquipmentAssessmentService.calculate_application_efficiency at 0x12e608e10&gt;, dict)</failure></testcase><testcase classname="test_basic.TestEquipmentAssessmentServiceComprehensive" name="test_operational_cost_estimation" time="0.000"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object EquipmentAssessmentService.estimate_operational_costs at 0x12e4af3e0&gt;, dict)">test_basic.py:285: in test_operational_cost_estimation
+    assert isinstance(costs, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object EquipmentAssessmentService.estimate_operational_costs at 0x12e4af3e0&gt;, dict)</failure></testcase><testcase classname="test_basic.TestCostAnalysisServiceComprehensive" name="test_service_initialization" time="0.000"><failure message="AssertionError: assert False&#10; +  where False = hasattr(&lt;src.services.cost_analysis_service.CostAnalysisService object at 0x12e6102f0&gt;, 'calculate_fertilizer_costs')">test_basic.py:306: in test_service_initialization
+    assert hasattr(service, 'calculate_fertilizer_costs')
+E   AssertionError: assert False
+E    +  where False = hasattr(&lt;src.services.cost_analysis_service.CostAnalysisService object at 0x12e6102f0&gt;, 'calculate_fertilizer_costs')</failure></testcase><testcase classname="test_basic.TestCostAnalysisServiceComprehensive" name="test_total_cost_calculation" time="0.000"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object CostAnalysisService.calculate_total_cost at 0x12e4c0c70&gt;, dict)">test_basic.py:315: in test_total_cost_calculation
+    assert isinstance(total_cost, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object CostAnalysisService.calculate_total_cost at 0x12e4c0c70&gt;, dict)</failure></testcase><testcase classname="test_basic.TestCostAnalysisServiceComprehensive" name="test_cost_per_acre_calculation" time="0.000"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object CostAnalysisService.calculate_cost_per_acre at 0x12e3ff790&gt;, dict)">test_basic.py:329: in test_cost_per_acre_calculation
+    assert isinstance(cost_per_acre, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object CostAnalysisService.calculate_cost_per_acre at 0x12e3ff790&gt;, dict)</failure></testcase><testcase classname="test_basic.TestCostAnalysisServiceComprehensive" name="test_method_cost_comparison" time="0.000"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object CostAnalysisService.compare_method_costs at 0x12e609700&gt;, dict)">test_basic.py:340: in test_method_cost_comparison
+    assert isinstance(comparison, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object CostAnalysisService.compare_method_costs at 0x12e609700&gt;, dict)</failure></testcase><testcase classname="test_basic.TestDecisionSupportServiceComprehensive" name="test_service_initialization" time="0.001"><failure message="AssertionError: assert False&#10; +  where False = hasattr(&lt;src.services.decision_support_service.DecisionSupportService object at 0x12e40f380&gt;, 'evaluate_decision_criteria')">test_basic.py:365: in test_service_initialization
+    assert hasattr(service, 'evaluate_decision_criteria')
+E   AssertionError: assert False
+E    +  where False = hasattr(&lt;src.services.decision_support_service.DecisionSupportService object at 0x12e40f380&gt;, 'evaluate_decision_criteria')</failure></testcase><testcase classname="test_basic.TestDecisionSupportServiceComprehensive" name="test_scenario_analysis" time="0.001"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object DecisionSupportService.analyze_scenarios at 0x12e45b440&gt;, dict)">test_basic.py:374: in test_scenario_analysis
+    assert isinstance(scenarios, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object DecisionSupportService.analyze_scenarios at 0x12e45b440&gt;, dict)</failure></testcase><testcase classname="test_basic.TestDecisionSupportServiceComprehensive" name="test_decision_tree_generation" time="0.001"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object DecisionSupportService.generate_decision_tree at 0x12e6176b0&gt;, dict)">test_basic.py:385: in test_decision_tree_generation
+    assert isinstance(decision_tree, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object DecisionSupportService.generate_decision_tree at 0x12e6176b0&gt;, dict)</failure></testcase><testcase classname="test_basic.TestDecisionSupportServiceComprehensive" name="test_sensitivity_analysis" time="0.001"><failure message="assert False&#10; +  where False = isinstance(&lt;coroutine object DecisionSupportService.perform_sensitivity_analysis at 0x12e60b9f0&gt;, dict)">test_basic.py:396: in test_sensitivity_analysis
+    assert isinstance(sensitivity, dict)
+E   assert False
+E    +  where False = isinstance(&lt;coroutine object DecisionSupportService.perform_sensitivity_analysis at 0x12e60b9f0&gt;, dict)</failure></testcase><testcase classname="test_basic.TestAPIEndpointsComprehensive" name="test_health_endpoint" time="0.009" /><testcase classname="test_basic.TestAPIEndpointsComprehensive" name="test_application_methods_endpoint" time="0.002"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">test_basic.py:450: in test_application_methods_endpoint
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="test_basic.TestAPIEndpointsComprehensive" name="test_equipment_assessment_endpoint" time="0.002"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">test_basic.py:470: in test_equipment_assessment_endpoint
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="test_basic.TestAPIEndpointsComprehensive" name="test_cost_analysis_endpoint" time="0.002"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">test_basic.py:496: in test_cost_analysis_endpoint
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="test_basic.TestAPIEndpointsComprehensive" name="test_guidance_endpoint" time="0.002"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">test_basic.py:519: in test_guidance_endpoint
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="test_basic.TestPerformanceAndLoadComprehensive" name="test_concurrent_request_handling" time="0.014"><failure message="assert False&#10; +  where False = all([False, False, False, False, False, False, False, False, False, False])">test_basic.py:568: in test_concurrent_request_handling
+    assert all(results)
+E   assert False
+E    +  where False = all([False, False, False, False, False, False, False, False, False, False])</failure></testcase><testcase classname="test_basic.TestPerformanceAndLoadComprehensive" name="test_response_time_consistency" time="0.002"><failure message="assert 404 == 200&#10; +  where 404 = &lt;Response [404 Not Found]&gt;.status_code">test_basic.py:600: in test_response_time_consistency
+    assert response.status_code == 200
+E   assert 404 == 200
+E    +  where 404 = &lt;Response [404 Not Found]&gt;.status_code</failure></testcase><testcase classname="test_basic.TestAgriculturalValidationComprehensive" name="test_corn_belt_recommendations" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'recommended_methods'">test_basic.py:656: in test_corn_belt_recommendations
+    recommended_methods = [method.method_type for method in response.recommended_methods[:2]]
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'coroutine' object has no attribute 'recommended_methods'</failure></testcase><testcase classname="test_basic.TestAgriculturalValidationComprehensive" name="test_soybean_recommendations" time="0.001"><failure message="AttributeError: 'coroutine' object has no attribute 'recommended_methods'">test_basic.py:699: in test_soybean_recommendations
+    recommended_methods = [method.method_type for method in response.recommended_methods[:2]]
+                                                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'coroutine' object has no attribute 'recommended_methods'</failure></testcase></testsuite></testsuites>

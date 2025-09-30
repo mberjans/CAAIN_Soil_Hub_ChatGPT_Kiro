@@ -34,8 +34,8 @@ from src.models.application_models import (
     FieldConditions, CropRequirements, FertilizerSpecification,
     ApplicationMethodType, FertilizerForm, EquipmentType, EquipmentSpecification
 )
-from src.services.sophisticated_method_selection_service import (
-    SophisticatedMethodSelectionService, OptimizationObjective, OptimizationResult
+from src.services.sophisticated_method_selection_service_simple import (
+    SophisticatedMethodSelectionService, OptimizationMethod, OptimizationResult
 )
 
 logger = logging.getLogger(__name__)

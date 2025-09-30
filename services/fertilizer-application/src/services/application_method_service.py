@@ -839,3 +839,37 @@ class ApplicationMethodService:
         
         adjustment = efficiency_adjustments.get(method_type, 1.0)
         return base_rate * adjustment
+    # Methods expected by tests
+    async def analyze_field_conditions(self, field_conditions: FieldConditions) -> Dict[str, Any]:
+        """Analyze field conditions for method selection."""
+        return await self._analyze_field_conditions(field_conditions)
+    
+    async def analyze_crop_requirements(self, crop_requirements: CropRequirements) -> Dict[str, Any]:
+        """Analyze crop requirements for method selection."""
+        return await self._analyze_crop_requirements(crop_requirements)
+    
+    async def analyze_fertilizer_specification(self, fertilizer_spec: FertilizerSpecification) -> Dict[str, Any]:
+        """Analyze fertilizer specification for method selection."""
+        return await self._analyze_fertilizer_specification(fertilizer_spec)
+    
+    async def analyze_equipment(self, equipment_spec: EquipmentSpecification) -> Dict[str, Any]:
+        """Analyze equipment specification for method selection."""
+        return await self._analyze_available_equipment([equipment_spec])
+    
+    async def score_methods(self, request: ApplicationRequest) -> Dict[str, Any]:
+        """Score available methods for the given request."""
+        field_analysis = await self._analyze_field_conditions(request.field_conditions)
+        crop_analysis = await self._analyze_crop_requirements(request.crop_requirements)
+        fertilizer_analysis = await self._analyze_fertilizer_specification(request.fertilizer_specification)
+        equipment_analysis = await self._analyze_available_equipment(request.available_equipment)
+        
+        return {
+            "field_analysis": field_analysis,
+            "crop_analysis": crop_analysis,
+            "fertilizer_analysis": fertilizer_analysis,
+            "equipment_analysis": equipment_analysis
+        }
+    
+    async def generate_recommendations(self, request: ApplicationRequest) -> ApplicationResponse:
+        """Generate fertilizer application method recommendations."""
+        return await self.select_application_methods(request)

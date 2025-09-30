@@ -152,8 +152,6 @@ async def get_efficiency_metrics(
 @router.post("/optimize-timing")
 async def optimize_timing(
     equipment_id: str = Query(..., description="Equipment identifier"),
-    field_conditions: Dict[str, Any] = Query(..., description="Field conditions"),
-    weather_conditions: Optional[Dict[str, Any]] = Query(None, description="Weather conditions"),
     service: EquipmentEfficiencyService = Depends(get_efficiency_service)
 ):
     """
@@ -191,8 +189,7 @@ async def optimize_timing(
 
 @router.post("/optimize-route")
 async def optimize_route(
-    equipment_id: str = Query(..., description="Equipment identifier"),
-    field_conditions: Dict[str, Any] = Query(..., description="Field conditions"),
+    request: Dict[str, Any],
     service: EquipmentEfficiencyService = Depends(get_efficiency_service)
 ):
     """
@@ -207,6 +204,9 @@ async def optimize_route(
     Returns route optimization with distance, time, and fuel savings.
     """
     try:
+        equipment_id = request.get("equipment_id")
+        field_conditions = request.get("field_conditions", {})
+        
         equipment = await _get_equipment_data(equipment_id)
         
         route_optimization = await service._optimize_route(
@@ -230,8 +230,7 @@ async def optimize_route(
 
 @router.post("/optimize-maintenance")
 async def optimize_maintenance(
-    equipment_id: str = Query(..., description="Equipment identifier"),
-    efficiency_metrics: Optional[Dict[str, float]] = Query(None, description="Current efficiency metrics"),
+    request: Dict[str, Any],
     service: EquipmentEfficiencyService = Depends(get_efficiency_service)
 ):
     """
@@ -246,6 +245,9 @@ async def optimize_maintenance(
     Returns maintenance schedule with cost and downtime estimates.
     """
     try:
+        equipment_id = request.get("equipment_id")
+        efficiency_metrics = request.get("efficiency_metrics")
+        
         equipment = await _get_equipment_data(equipment_id)
         
         # If efficiency metrics not provided, calculate them
@@ -276,8 +278,7 @@ async def optimize_maintenance(
 
 @router.post("/optimize-fuel")
 async def optimize_fuel_usage(
-    equipment_id: str = Query(..., description="Equipment identifier"),
-    field_conditions: Dict[str, Any] = Query(..., description="Field conditions"),
+    request: Dict[str, Any],
     service: EquipmentEfficiencyService = Depends(get_efficiency_service)
 ):
     """
@@ -292,6 +293,9 @@ async def optimize_fuel_usage(
     Returns fuel optimization with usage estimates and cost savings.
     """
     try:
+        equipment_id = request.get("equipment_id")
+        field_conditions = request.get("field_conditions", {})
+        
         equipment = await _get_equipment_data(equipment_id)
         
         fuel_optimization = await service._optimize_fuel_usage(
@@ -314,8 +318,7 @@ async def optimize_fuel_usage(
 
 @router.post("/optimize-labor")
 async def optimize_labor_usage(
-    equipment_id: str = Query(..., description="Equipment identifier"),
-    field_conditions: Dict[str, Any] = Query(..., description="Field conditions"),
+    request: Dict[str, Any],
     service: EquipmentEfficiencyService = Depends(get_efficiency_service)
 ):
     """
@@ -330,6 +333,9 @@ async def optimize_labor_usage(
     Returns labor optimization with usage estimates and cost savings.
     """
     try:
+        equipment_id = request.get("equipment_id")
+        field_conditions = request.get("field_conditions", {})
+        
         equipment = await _get_equipment_data(equipment_id)
         
         labor_optimization = await service._optimize_labor_usage(

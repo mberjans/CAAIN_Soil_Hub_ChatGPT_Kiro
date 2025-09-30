@@ -480,3 +480,25 @@ class CertificationResponse(BaseModel):
     skills_verified: List[str] = Field(..., description="Verified skills")
     renewal_requirements: List[str] = Field(default_factory=list, description="Renewal requirements")
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+
+class CertificationStatus(str, Enum):
+    """Certification status levels."""
+    NOT_CERTIFIED = "not_certified"
+    IN_PROGRESS = "in_progress"
+    CERTIFIED = "certified"
+    EXPIRED = "expired"
+    RENEWAL_REQUIRED = "renewal_required"
+
+
+class UserProfile(BaseModel):
+    """User profile for educational system."""
+    user_id: str = Field(..., description="Unique user identifier")
+    experience_level: DifficultyLevel = Field(..., description="User's experience level")
+    learning_preferences: Dict[str, Any] = Field(default_factory=dict, description="Learning preferences")
+    completed_modules: List[str] = Field(default_factory=list, description="Completed training modules")
+    certifications: List[Certification] = Field(default_factory=list, description="User certifications")
+    learning_goals: List[str] = Field(default_factory=list, description="Learning goals")
+    preferred_content_types: List[ContentType] = Field(default_factory=list, description="Preferred content types")
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)

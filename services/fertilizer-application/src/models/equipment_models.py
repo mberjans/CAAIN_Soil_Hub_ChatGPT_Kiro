@@ -11,6 +11,7 @@ from decimal import Decimal
 class EquipmentCategory(str, Enum):
     """Equipment categories."""
     SPREADING = "spreading"
+    BROADCAST_SPREADER = "broadcast_spreader"
     SPRAYING = "spraying"
     INJECTION = "injection"
     IRRIGATION = "irrigation"

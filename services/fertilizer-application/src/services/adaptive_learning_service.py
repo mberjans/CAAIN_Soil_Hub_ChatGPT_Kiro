@@ -32,8 +32,8 @@ from src.models.application_models import (
     ApplicationMethodType, FertilizerForm, EquipmentType
 )
 from src.models.application_models import EquipmentSpecification
-from src.servicesgoal_based_recommendation_engine import GoalBasedRecommendationEngine, OptimizationGoal
-from srcdatabase.fertilizer_db import get_application_methods_by_type
+from src.services.goal_based_recommendation_engine import GoalBasedRecommendationEngine, OptimizationGoal
+from src.database.fertilizer_db import get_application_methods_by_type
 
 logger = logging.getLogger(__name__)
 

@@ -31,10 +31,7 @@ async def get_application_method_service() -> ApplicationMethodService:
 
 @router.post("/optimize-methods", response_model=List[Dict[str, Any]])
 async def optimize_application_methods(
-    crop_type: str = Query(..., description="Type of crop"),
-    available_methods: List[str] = Query(..., description="Available application methods"),
-    field_conditions: Dict[str, Any] = Query(..., description="Field and environmental conditions"),
-    crop_requirements: Dict[str, Any] = Query(..., description="Crop-specific requirements"),
+    request_data: Dict[str, Any],
     service: CropResponseService = Depends(get_crop_response_service)
 ):
     """
@@ -50,6 +47,12 @@ async def optimize_application_methods(
     - Environmental impact assessment
     """
     try:
+        # Extract data from request
+        crop_type = request_data.get("crop_type")
+        available_methods = request_data.get("available_methods", [])
+        field_conditions = request_data.get("field_conditions", {})
+        crop_requirements = request_data.get("crop_requirements", {})
+        
         # Convert string inputs to enums
         crop_enum = CropType(crop_type.lower())
         method_enums = [ApplicationMethodType(method.lower()) for method in available_methods]
