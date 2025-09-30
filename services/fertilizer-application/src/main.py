@@ -6,14 +6,16 @@ import logging
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
-from .api.application_routes import router as application_router
-from .api.method_routes import router as method_router
-from .api.guidance_routes import router as guidance_router
-from .api.equipment_routes import router as equipment_router
-from .api.efficiency_routes import router as efficiency_router
-from .api.monitoring_routes import router as monitoring_router
-from .api.crop_response_routes import router as crop_response_router
-from .database.fertilizer_db import initialize_database, shutdown_database
+from src.api.application_routes import router as application_router
+from src.api.method_routes import router as method_router
+from src.api.guidance_routes import router as guidance_router
+from src.api.equipment_routes import router as equipment_router
+from src.api.efficiency_routes import router as efficiency_router
+from src.api.monitoring_routes import router as monitoring_router
+from src.api.crop_response_routes import router as crop_response_router
+from src.api.decision_support_routes import router as decision_support_router
+from src.api.economic_optimization_routes import router as economic_optimization_router
+from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
 
@@ -72,6 +74,8 @@ app.include_router(equipment_router, prefix="/api/v1", tags=["equipment-assessme
 app.include_router(efficiency_router, prefix="/api/v1", tags=["equipment-efficiency"])
 app.include_router(monitoring_router, prefix="/api/v1", tags=["performance-monitoring"])
 app.include_router(crop_response_router, prefix="/api/v1", tags=["crop-response"])
+app.include_router(decision_support_router, prefix="/api/v1", tags=["decision-support"])
+app.include_router(economic_optimization_router, prefix="/api/v1", tags=["economic-optimization"])
 
 @app.get("/health")
 async def health_check():
@@ -96,7 +100,25 @@ async def health_check():
             "farm_size_assessment",
             "crop_response_optimization",
             "yield_impact_prediction",
-            "method_effectiveness_ranking"
+            "method_effectiveness_ranking",
+            "decision_support_system",
+            "decision_trees",
+            "expert_systems",
+            "scenario_analysis",
+            "sensitivity_analysis",
+            "interactive_decisions",
+            "what_if_analysis",
+            "economic_optimization",
+            "linear_programming",
+            "dynamic_programming",
+            "stochastic_optimization",
+            "genetic_algorithms",
+            "simulated_annealing",
+            "particle_swarm_optimization",
+            "scenario_modeling",
+            "investment_planning",
+            "risk_assessment",
+            "monte_carlo_simulation"
         ]
     }
 
