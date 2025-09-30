@@ -433,6 +433,180 @@ async def get_accuracy_levels():
     }
 
 
+@router.post("/verify-location", response_model=Dict[str, Any])
+async def verify_location_accuracy(
+    request: GPSBatchAssessmentRequest,
+    service: GPSAccuracyService = Depends(get_gps_accuracy_service)
+):
+    """
+    Advanced location verification with agricultural area validation.
+    
+    This endpoint provides comprehensive location verification including:
+    - Multi-reading consistency analysis
+    - Agricultural area validation with confidence scoring
+    - Location reasonableness checks
+    - Duplicate location detection
+    - Comprehensive recommendations and warnings
+    
+    Agricultural Use Cases:
+    - Farm location validation for new field setup
+    - GPS accuracy verification for precision agriculture equipment
+    - Location validation for soil sampling and field mapping
+    - Agricultural area suitability assessment
+    """
+    try:
+        # Convert requests to GPSReading objects
+        gps_readings = []
+        for reading_req in request.readings:
+            gps_reading = GPSReading(
+                latitude=reading_req.latitude,
+                longitude=reading_req.longitude,
+                accuracy=reading_req.accuracy,
+                altitude=reading_req.altitude,
+                timestamp=reading_req.timestamp or datetime.utcnow(),
+                satellite_count=reading_req.satellite_count,
+                signal_strength=reading_req.signal_strength,
+                hdop=reading_req.hdop,
+                vdop=reading_req.vdop
+            )
+            gps_readings.append(gps_reading)
+        
+        # Perform location verification
+        verification_result = await service.verify_location_accuracy(gps_readings)
+        
+        return verification_result
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in location verification: {e}")
+        raise HTTPException(status_code=500, detail="Location verification failed")
+
+
+@router.post("/assess-agricultural-suitability", response_model=Dict[str, Any])
+async def assess_agricultural_suitability(
+    reading: GPSReadingRequest,
+    service: GPSAccuracyService = Depends(get_gps_accuracy_service)
+):
+    """
+    Assess agricultural suitability of a location.
+    
+    This endpoint provides detailed agricultural suitability analysis including:
+    - Agricultural area classification
+    - Climate zone assessment
+    - Growing season estimation
+    - Precipitation analysis
+    - Latitude/longitude suitability scoring
+    
+    Agricultural Use Cases:
+    - New farm location evaluation
+    - Crop suitability assessment for specific locations
+    - Agricultural expansion planning
+    - Location comparison for farming operations
+    """
+    try:
+        # Convert request to GPSReading object
+        gps_reading = GPSReading(
+            latitude=reading.latitude,
+            longitude=reading.longitude,
+            accuracy=reading.accuracy,
+            altitude=reading.altitude,
+            timestamp=reading.timestamp or datetime.utcnow(),
+            satellite_count=reading.satellite_count,
+            signal_strength=reading.signal_strength,
+            hdop=reading.hdop,
+            vdop=reading.vdop
+        )
+        
+        # Perform agricultural area validation
+        agricultural_result = await service._validate_agricultural_area(gps_reading)
+        
+        # Get detailed agricultural factors analysis
+        agricultural_factors = service._analyze_agricultural_factors(reading.latitude, reading.longitude)
+        
+        # Compile comprehensive assessment
+        assessment = {
+            'location': {
+                'latitude': reading.latitude,
+                'longitude': reading.longitude,
+                'accuracy': reading.accuracy
+            },
+            'agricultural_validation': agricultural_result,
+            'agricultural_factors': agricultural_factors,
+            'overall_suitability': {
+                'score': agricultural_result['agricultural_score'],
+                'category': 'excellent' if agricultural_result['agricultural_score'] >= 0.8 else
+                          'good' if agricultural_result['agricultural_score'] >= 0.6 else
+                          'fair' if agricultural_result['agricultural_score'] >= 0.4 else
+                          'poor',
+                'recommendations': service._generate_agricultural_recommendations(agricultural_result, agricultural_factors)
+            },
+            'assessment_timestamp': datetime.utcnow()
+        }
+        
+        return assessment
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in agricultural suitability assessment: {e}")
+        raise HTTPException(status_code=500, detail="Agricultural suitability assessment failed")
+
+
+@router.post("/check-location-reasonableness", response_model=Dict[str, Any])
+async def check_location_reasonableness(
+    reading: GPSReadingRequest,
+    service: GPSAccuracyService = Depends(get_gps_accuracy_service)
+):
+    """
+    Check if location coordinates are reasonable for agricultural use.
+    
+    This endpoint validates coordinate reasonableness including:
+    - Coordinate range validation
+    - Ocean/water body detection
+    - Extreme latitude/longitude checks
+    - Agricultural latitude suitability
+    - Geographic categorization
+    
+    Agricultural Use Cases:
+    - GPS coordinate validation before field setup
+    - Location data quality assurance
+    - Coordinate system verification
+    - Agricultural location screening
+    """
+    try:
+        # Convert request to GPSReading object
+        gps_reading = GPSReading(
+            latitude=reading.latitude,
+            longitude=reading.longitude,
+            accuracy=reading.accuracy,
+            altitude=reading.altitude,
+            timestamp=reading.timestamp or datetime.utcnow(),
+            satellite_count=reading.satellite_count,
+            signal_strength=reading.signal_strength,
+            hdop=reading.hdop,
+            vdop=reading.vdop
+        )
+        
+        # Perform reasonableness checks
+        reasonableness_result = await service._check_location_reasonableness(gps_reading)
+        
+        return {
+            'location': {
+                'latitude': reading.latitude,
+                'longitude': reading.longitude
+            },
+            'reasonableness_check': reasonableness_result,
+            'check_timestamp': datetime.utcnow()
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in location reasonableness check: {e}")
+        raise HTTPException(status_code=500, detail="Location reasonableness check failed")
+
+
 @router.get("/health")
 async def health_check():
     """Health check endpoint for GPS accuracy service."""
@@ -444,6 +618,9 @@ async def health_check():
             "accuracy_assessment",
             "signal_quality_monitoring", 
             "accuracy_improvement",
-            "batch_processing"
+            "batch_processing",
+            "location_verification",
+            "agricultural_suitability_assessment",
+            "location_reasonableness_checking"
         ]
     }
