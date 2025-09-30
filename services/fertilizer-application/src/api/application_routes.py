@@ -5,7 +5,8 @@ API Routes for fertilizer application method selection and analysis.
 import asyncio
 import logging
 from typing import List, Dict, Any
-from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from uuid import uuid4
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Query
 from pydantic import BaseModel, Field
 
 from ..models.application_models import (
@@ -15,6 +16,7 @@ from ..models.application_models import (
 )
 from ..services.application_method_service import ApplicationMethodService
 from ..services.cost_analysis_service import CostAnalysisService
+from ..services.goal_based_recommendation_engine import GoalBasedRecommendationEngine
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,7 @@ router = APIRouter(prefix="/application", tags=["application"])
 # Global service instances
 application_service: ApplicationMethodService = None
 cost_service: CostAnalysisService = None
+goal_based_engine: GoalBasedRecommendationEngine = None
 
 
 async def get_application_service() -> ApplicationMethodService:
@@ -40,6 +43,14 @@ async def get_cost_service() -> CostAnalysisService:
     if cost_service is None:
         cost_service = CostAnalysisService()
     return cost_service
+
+
+async def get_goal_based_engine() -> GoalBasedRecommendationEngine:
+    """Dependency to get goal-based recommendation engine instance."""
+    global goal_based_engine
+    if goal_based_engine is None:
+        goal_based_engine = GoalBasedRecommendationEngine()
+    return goal_based_engine
 
 
 @router.post("/select-methods", response_model=ApplicationResponse)
@@ -521,15 +532,103 @@ async def analyze_application_timing(
         raise HTTPException(status_code=500, detail=f"Failed to analyze timing: {str(e)}")
 
 
+@router.post("/optimize-goals")
+async def optimize_with_goals(
+    request: ApplicationRequest,
+    yield_weight: float = Query(0.35, ge=0.0, le=1.0, description="Weight for yield maximization"),
+    cost_weight: float = Query(0.25, ge=0.0, le=1.0, description="Weight for cost minimization"),
+    environment_weight: float = Query(0.20, ge=0.0, le=1.0, description="Weight for environmental protection"),
+    labor_weight: float = Query(0.15, ge=0.0, le=1.0, description="Weight for labor efficiency"),
+    nutrient_weight: float = Query(0.05, ge=0.0, le=1.0, description="Weight for nutrient efficiency"),
+    optimization_method: str = Query("pareto_optimization", description="Optimization algorithm"),
+    engine: GoalBasedRecommendationEngine = Depends(get_goal_based_engine)
+):
+    """
+    Optimize fertilizer application methods using goal-based multi-objective optimization.
+    
+    This endpoint integrates the goal-based recommendation engine with the existing
+    application method service to provide optimized recommendations based on multiple
+    farmer goals and constraints.
+    
+    Agricultural Use Cases:
+    - Multi-objective fertilizer application planning
+    - Equipment and resource optimization
+    - Environmental compliance optimization
+    - Labor and cost efficiency analysis
+    """
+    try:
+        # Normalize weights
+        total_weight = yield_weight + cost_weight + environment_weight + labor_weight + nutrient_weight
+        if total_weight > 0:
+            yield_weight /= total_weight
+            cost_weight /= total_weight
+            environment_weight /= total_weight
+            labor_weight /= total_weight
+            nutrient_weight /= total_weight
+        
+        # Set up farmer goals
+        from ..services.goal_based_recommendation_engine import OptimizationGoal
+        farmer_goals = {
+            OptimizationGoal.YIELD_MAXIMIZATION: yield_weight,
+            OptimizationGoal.COST_MINIMIZATION: cost_weight,
+            OptimizationGoal.ENVIRONMENTAL_PROTECTION: environment_weight,
+            OptimizationGoal.LABOR_EFFICIENCY: labor_weight,
+            OptimizationGoal.NUTRIENT_EFFICIENCY: nutrient_weight
+        }
+        
+        # Perform optimization
+        result = await engine.optimize_application_methods(
+            request,
+            farmer_goals=farmer_goals,
+            optimization_method=optimization_method
+        )
+        
+        # Get base application response for comparison
+        base_response = await get_application_service().select_application_methods(request)
+        
+        return {
+            "request_id": str(uuid4()),
+            "optimization_results": {
+                "method_scores": result.method_scores,
+                "goal_achievements": {goal.value: achievement for goal, achievement in result.goal_achievements.items()},
+                "optimization_time_ms": result.optimization_time_ms,
+                "convergence_info": result.convergence_info
+            },
+            "base_recommendations": {
+                "primary_method": base_response.primary_recommendation.method_type if base_response.primary_recommendation else None,
+                "alternative_methods": [method.method_type for method in base_response.alternative_methods],
+                "cost_comparison": base_response.cost_comparison
+            },
+            "optimization_improvements": {
+                "goal_weights": farmer_goals,
+                "method": optimization_method,
+                "solutions_found": len(result.method_scores)
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in goal-based optimization: {e}")
+        raise HTTPException(status_code=500, detail=f"Goal-based optimization failed: {str(e)}")
+
+
 @router.get("/health")
 async def health_check():
     """Health check endpoint for application service."""
     return {
         "service": "fertilizer-application",
         "status": "healthy",
+        "features": [
+            "method_selection",
+            "cost_analysis",
+            "crop_integration",
+            "equipment_compatibility",
+            "environmental_assessment",
+            "goal_based_optimization"
+        ],
         "endpoints": [
             "select-methods",
             "analyze-costs",
+            "optimize-goals",
             "methods",
             "validate-request",
             "crops/supported",
