@@ -13,7 +13,9 @@ from ..models.equipment_models import (
     Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel,
     SpreaderEquipment, SprayerEquipment, InjectionEquipment, DripSystemEquipment,
     EquipmentInventory, EquipmentCompatibility, EquipmentEfficiency,
-    EquipmentUpgrade, EquipmentAssessment, EquipmentMaintenance, EquipmentPerformance
+    EquipmentUpgrade, IndividualEquipmentAssessment, EquipmentAssessment, EquipmentMaintenance, EquipmentPerformance,
+    FieldLayoutAnalysis, StorageFacilityAssessment, LaborAnalysis, 
+    EnvironmentalAssessment, ComprehensiveFarmAssessment
 )
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,40 @@ class EquipmentAssessmentService:
         self.equipment_database = {}
         self._initialize_equipment_database()
     
+    def _convert_equipment_specs_to_equipment(self, equipment_specs: List[Any]) -> List[Equipment]:
+        """Convert EquipmentSpecification objects to Equipment objects."""
+        equipment_objects = []
+        
+        for i, spec in enumerate(equipment_specs):
+            # Map EquipmentType to EquipmentCategory
+            category_mapping = {
+                "spreader": EquipmentCategory.SPREADING,
+                "sprayer": EquipmentCategory.SPRAYING,
+                "injector": EquipmentCategory.INJECTION,
+                "drip_system": EquipmentCategory.IRRIGATION,
+                "hand_spreader": EquipmentCategory.SPREADING,
+                "broadcaster": EquipmentCategory.SPREADING
+            }
+            
+            # Get equipment type from spec
+            equipment_type = getattr(spec, 'equipment_type', 'spreader')
+            if hasattr(equipment_type, 'value'):
+                equipment_type = equipment_type.value
+            
+            equipment = Equipment(
+                equipment_id=f"spec_{i}",
+                name=f"{equipment_type.title()} Equipment",
+                category=category_mapping.get(equipment_type, EquipmentCategory.SPREADING),
+                capacity=getattr(spec, 'capacity', None),
+                capacity_unit=getattr(spec, 'capacity_unit', 'units'),
+                status=EquipmentStatus.OPERATIONAL,
+                maintenance_level=MaintenanceLevel.BASIC,
+                current_value=getattr(spec, 'current_value', None)
+            )
+            equipment_objects.append(equipment)
+        
+        return equipment_objects
+
     def _initialize_equipment_database(self):
         """Initialize equipment database with specifications and benchmarks."""
         self.equipment_database = {
@@ -106,40 +142,48 @@ class EquipmentAssessmentService:
         try:
             logger.info(f"Processing equipment assessment request {request_id}")
             
+            # Convert equipment specifications to equipment objects
+            equipment_objects = self._convert_equipment_specs_to_equipment(request.current_equipment)
+            
             # Analyze farm characteristics
             farm_analysis = await self._analyze_farm_characteristics(request)
             
             # Assess current equipment inventory
-            equipment_inventory = await self._assess_equipment_inventory(request.current_equipment)
+            equipment_inventory = await self._assess_equipment_inventory(equipment_objects)
             
             # Perform individual equipment assessments
             equipment_assessments = await self._assess_individual_equipment(
-                request.current_equipment, farm_analysis
+                equipment_objects, farm_analysis
             )
             
             # Generate compatibility assessments
             compatibility_assessments = await self._generate_compatibility_assessments(
-                request.current_equipment, farm_analysis
+                equipment_objects, farm_analysis
             )
             
             # Generate efficiency assessments
             efficiency_assessments = await self._generate_efficiency_assessments(
-                request.current_equipment, farm_analysis
+                equipment_objects, farm_analysis
             )
             
             # Generate upgrade recommendations
             upgrade_recommendations = await self._generate_upgrade_recommendations(
-                request.current_equipment, farm_analysis, request.budget_constraints
+                equipment_objects, farm_analysis, request.budget_constraints
             )
             
             # Perform capacity analysis
             capacity_analysis = await self._perform_capacity_analysis(
-                request.current_equipment, farm_analysis
+                equipment_objects, farm_analysis
             )
             
             # Perform cost-benefit analysis
             cost_benefit_analysis = await self._perform_cost_benefit_analysis(
                 upgrade_recommendations, request.budget_constraints
+            )
+            
+            # Perform comprehensive farm assessment
+            comprehensive_assessment = await self._perform_comprehensive_farm_assessment(
+                request, equipment_objects, farm_analysis
             )
             
             # Calculate overall assessment score
@@ -156,7 +200,24 @@ class EquipmentAssessmentService:
                 upgrade_priorities=self._prioritize_upgrades(upgrade_recommendations),
                 capacity_analysis=capacity_analysis,
                 cost_benefit_analysis=cost_benefit_analysis,
-                processing_time_ms=processing_time_ms
+                processing_time_ms=processing_time_ms,
+                metadata={
+                    "assessment_date": str(time.time()),
+                    "compatibility_assessments": [c.dict() for c in compatibility_assessments],
+                    "efficiency_assessments": [e.dict() for e in efficiency_assessments],
+                    "overall_score": await self._calculate_overall_score(
+                        equipment_assessments, efficiency_assessments, compatibility_assessments
+                    )
+                },
+                # Enhanced comprehensive assessment fields
+                comprehensive_farm_assessment=comprehensive_assessment.get("farm_assessment"),
+                field_layout_analysis=comprehensive_assessment.get("field_layout_analysis"),
+                storage_facility_assessment=comprehensive_assessment.get("storage_facility_assessment"),
+                labor_analysis=comprehensive_assessment.get("labor_analysis"),
+                environmental_assessment=comprehensive_assessment.get("environmental_assessment"),
+                operational_efficiency_score=comprehensive_assessment.get("operational_efficiency_score"),
+                optimization_recommendations=comprehensive_assessment.get("optimization_recommendations"),
+                implementation_priorities=comprehensive_assessment.get("implementation_priorities")
             )
             
             logger.info(f"Equipment assessment completed in {processing_time_ms:.2f}ms")
@@ -198,12 +259,12 @@ class EquipmentAssessmentService:
         self, 
         equipment_list: List[Equipment], 
         farm_analysis: Dict[str, Any]
-    ) -> List[EquipmentAssessment]:
+    ) -> List[IndividualEquipmentAssessment]:
         """Assess individual equipment items."""
         assessments = []
         
         for equipment in equipment_list:
-            assessment = EquipmentAssessment(
+            assessment = IndividualEquipmentAssessment(
                 equipment_id=equipment.equipment_id,
                 equipment_type=equipment.category,
                 suitability_score=self._calculate_suitability_score(equipment, farm_analysis),
@@ -306,16 +367,373 @@ class EquipmentAssessmentService:
         upgrade_recommendations: List[EquipmentUpgrade],
         budget_constraints: Optional[float]
     ) -> Dict[str, Any]:
-        """Perform cost-benefit analysis for upgrades."""
+        """Perform comprehensive cost-benefit analysis for upgrades."""
         analysis = {
             "total_upgrade_cost": sum(upgrade.estimated_cost or 0 for upgrade in upgrade_recommendations),
             "budget_constraints": budget_constraints,
             "affordable_upgrades": self._filter_affordable_upgrades(upgrade_recommendations, budget_constraints),
             "roi_analysis": self._calculate_roi_analysis(upgrade_recommendations),
             "priority_ranking": self._rank_upgrades_by_priority(upgrade_recommendations),
-            "implementation_timeline": self._create_implementation_timeline(upgrade_recommendations)
+            "implementation_timeline": self._create_implementation_timeline(upgrade_recommendations),
+            # Enhanced cost analysis
+            "detailed_cost_breakdown": self._calculate_detailed_cost_breakdown(upgrade_recommendations),
+            "operational_cost_analysis": self._calculate_operational_cost_analysis(upgrade_recommendations),
+            "maintenance_cost_analysis": self._calculate_maintenance_cost_analysis(upgrade_recommendations),
+            "sensitivity_analysis": self._perform_sensitivity_analysis(upgrade_recommendations),
+            "break_even_analysis": self._calculate_break_even_analysis(upgrade_recommendations),
+            "financing_options": self._analyze_financing_options(upgrade_recommendations, budget_constraints)
         }
         return analysis
+    
+    def _compare_to_benchmarks(self, equipment: Equipment) -> Dict[str, Any]:
+        """Compare equipment performance to industry benchmarks."""
+        comparison = {
+            "fuel_efficiency": self._compare_fuel_efficiency_to_benchmark(equipment),
+            "environmental_performance": self._compare_environmental_to_benchmark(equipment),
+            "operational_efficiency": self._compare_operational_to_benchmark(equipment),
+            "cost_effectiveness": self._compare_cost_to_benchmark(equipment)
+        }
+        return comparison
+    
+    def _compare_fuel_efficiency_to_benchmark(self, equipment: Equipment) -> Dict[str, Any]:
+        """Compare fuel efficiency to industry benchmarks."""
+        current_efficiency = self._calculate_fuel_efficiency_rating(equipment)
+        
+        benchmarks = {
+            "excellent": 0.9,
+            "good": 0.8,
+            "acceptable": 0.7,
+            "needs_improvement": 0.6
+        }
+        
+        if current_efficiency >= benchmarks["excellent"]:
+            rating = "excellent"
+        elif current_efficiency >= benchmarks["good"]:
+            rating = "good"
+        elif current_efficiency >= benchmarks["acceptable"]:
+            rating = "acceptable"
+        else:
+            rating = "needs_improvement"
+        
+        return {
+            "current_score": current_efficiency,
+            "benchmark_rating": rating,
+            "benchmark_threshold": benchmarks[rating],
+            "performance_gap": benchmarks["excellent"] - current_efficiency,
+            "improvement_potential": max(0, benchmarks["excellent"] - current_efficiency)
+        }
+    
+    def _compare_environmental_to_benchmark(self, equipment: Equipment) -> Dict[str, Any]:
+        """Compare environmental performance to industry benchmarks."""
+        current_score = self._calculate_environmental_impact_score(equipment)
+        
+        benchmarks = {
+            "excellent": 0.9,
+            "good": 0.8,
+            "acceptable": 0.7,
+            "needs_improvement": 0.6
+        }
+        
+        if current_score >= benchmarks["excellent"]:
+            rating = "excellent"
+        elif current_score >= benchmarks["good"]:
+            rating = "good"
+        elif current_score >= benchmarks["acceptable"]:
+            rating = "acceptable"
+        else:
+            rating = "needs_improvement"
+        
+        return {
+            "current_score": current_score,
+            "benchmark_rating": rating,
+            "benchmark_threshold": benchmarks[rating],
+            "performance_gap": benchmarks["excellent"] - current_score,
+            "improvement_potential": max(0, benchmarks["excellent"] - current_score)
+        }
+    
+    def _compare_operational_to_benchmark(self, equipment: Equipment) -> Dict[str, Any]:
+        """Compare operational efficiency to industry benchmarks."""
+        current_efficiency = self._calculate_efficiency_rating(equipment)
+        
+        benchmarks = {
+            "excellent": 0.9,
+            "good": 0.8,
+            "acceptable": 0.7,
+            "needs_improvement": 0.6
+        }
+        
+        if current_efficiency >= benchmarks["excellent"]:
+            rating = "excellent"
+        elif current_efficiency >= benchmarks["good"]:
+            rating = "good"
+        elif current_efficiency >= benchmarks["acceptable"]:
+            rating = "acceptable"
+        else:
+            rating = "needs_improvement"
+        
+        return {
+            "current_score": current_efficiency,
+            "benchmark_rating": rating,
+            "benchmark_threshold": benchmarks[rating],
+            "performance_gap": benchmarks["excellent"] - current_efficiency,
+            "improvement_potential": max(0, benchmarks["excellent"] - current_efficiency)
+        }
+    
+    def _compare_cost_to_benchmark(self, equipment: Equipment) -> Dict[str, Any]:
+        """Compare cost effectiveness to industry benchmarks."""
+        current_cost_effectiveness = self._calculate_cost_effectiveness(equipment)
+        
+        benchmarks = {
+            "excellent": 0.9,
+            "good": 0.8,
+            "acceptable": 0.7,
+            "needs_improvement": 0.6
+        }
+        
+        if current_cost_effectiveness >= benchmarks["excellent"]:
+            rating = "excellent"
+        elif current_cost_effectiveness >= benchmarks["good"]:
+            rating = "good"
+        elif current_cost_effectiveness >= benchmarks["acceptable"]:
+            rating = "acceptable"
+        else:
+            rating = "needs_improvement"
+        
+        return {
+            "current_score": current_cost_effectiveness,
+            "benchmark_rating": rating,
+            "benchmark_threshold": benchmarks[rating],
+            "performance_gap": benchmarks["excellent"] - current_cost_effectiveness,
+            "improvement_potential": max(0, benchmarks["excellent"] - current_cost_effectiveness)
+        }
+    
+    def _calculate_industry_ranking(self, equipment: Equipment) -> Dict[str, Any]:
+        """Calculate industry ranking for equipment."""
+        # Calculate overall performance score
+        fuel_efficiency = self._calculate_fuel_efficiency_rating(equipment)
+        environmental_score = self._calculate_environmental_impact_score(equipment)
+        operational_efficiency = self._calculate_efficiency_rating(equipment)
+        cost_effectiveness = self._calculate_cost_effectiveness(equipment)
+        
+        overall_score = (fuel_efficiency * 0.25 + environmental_score * 0.25 + 
+                        operational_efficiency * 0.25 + cost_effectiveness * 0.25)
+        
+        # Determine percentile ranking
+        if overall_score >= 0.9:
+            percentile = 95
+            ranking = "top_5_percent"
+        elif overall_score >= 0.8:
+            percentile = 80
+            ranking = "top_20_percent"
+        elif overall_score >= 0.7:
+            percentile = 60
+            ranking = "above_average"
+        elif overall_score >= 0.6:
+            percentile = 40
+            ranking = "average"
+        else:
+            percentile = 20
+            ranking = "below_average"
+        
+        return {
+            "overall_score": overall_score,
+            "percentile_ranking": percentile,
+            "industry_ranking": ranking,
+            "performance_category": self._get_performance_category(overall_score)
+        }
+    
+    def _get_performance_category(self, score: float) -> str:
+        """Get performance category based on score."""
+        if score >= 0.9:
+            return "Industry Leader"
+        elif score >= 0.8:
+            return "High Performer"
+        elif score >= 0.7:
+            return "Good Performer"
+        elif score >= 0.6:
+            return "Average Performer"
+        else:
+            return "Needs Improvement"
+    
+    def _identify_performance_improvements(self, equipment: Equipment) -> List[Dict[str, Any]]:
+        """Identify specific performance improvement opportunities."""
+        improvements = []
+        
+        # Fuel efficiency improvements
+        fuel_efficiency = self._calculate_fuel_efficiency_rating(equipment)
+        if fuel_efficiency < 0.8:
+            improvements.append({
+                "category": "fuel_efficiency",
+                "current_score": fuel_efficiency,
+                "target_score": 0.8,
+                "improvement_potential": 0.8 - fuel_efficiency,
+                "recommendations": [
+                    "Regular engine maintenance",
+                    "Proper tire inflation",
+                    "Optimal operating speeds",
+                    "Consider equipment upgrade"
+                ]
+            })
+        
+        # Environmental improvements
+        environmental_score = self._calculate_environmental_impact_score(equipment)
+        if environmental_score < 0.8:
+            improvements.append({
+                "category": "environmental_performance",
+                "current_score": environmental_score,
+                "target_score": 0.8,
+                "improvement_potential": 0.8 - environmental_score,
+                "recommendations": [
+                    "Use cleaner fuels",
+                    "Regular emissions testing",
+                    "Noise reduction measures",
+                    "Consider Tier 4 equipment"
+                ]
+            })
+        
+        # Operational efficiency improvements
+        operational_efficiency = self._calculate_efficiency_rating(equipment)
+        if operational_efficiency < 0.8:
+            improvements.append({
+                "category": "operational_efficiency",
+                "current_score": operational_efficiency,
+                "target_score": 0.8,
+                "improvement_potential": 0.8 - operational_efficiency,
+                "recommendations": [
+                    "Regular calibration",
+                    "Operator training",
+                    "Preventive maintenance",
+                    "Process optimization"
+                ]
+            })
+        
+        return improvements
+    
+    def _calculate_overall_farm_performance(self, comparison_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Calculate overall farm performance from equipment comparisons."""
+        if not comparison_results:
+            return {"overall_score": 0.0, "ranking": "no_data"}
+        
+        # Calculate average scores across all equipment
+        total_fuel_efficiency = sum(result["performance_metrics"]["fuel_efficiency"] for result in comparison_results)
+        total_environmental = sum(result["performance_metrics"]["environmental_impact"] for result in comparison_results)
+        total_operational = sum(result["performance_metrics"]["operational_efficiency"] for result in comparison_results)
+        
+        count = len(comparison_results)
+        
+        overall_score = (total_fuel_efficiency + total_environmental + total_operational) / (count * 3)
+        
+        # Determine overall ranking
+        if overall_score >= 0.9:
+            ranking = "Industry Leader"
+        elif overall_score >= 0.8:
+            ranking = "High Performer"
+        elif overall_score >= 0.7:
+            ranking = "Good Performer"
+        elif overall_score >= 0.6:
+            ranking = "Average Performer"
+        else:
+            ranking = "Needs Improvement"
+        
+        return {
+            "overall_score": overall_score,
+            "ranking": ranking,
+            "equipment_count": count,
+            "average_scores": {
+                "fuel_efficiency": total_fuel_efficiency / count,
+                "environmental_performance": total_environmental / count,
+                "operational_efficiency": total_operational / count
+            }
+        }
+    
+    def _generate_benchmark_summary(self, comparison_results: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """Generate benchmark summary for all equipment."""
+        if not comparison_results:
+            return {"summary": "No equipment data available"}
+        
+        # Count equipment by performance level
+        performance_counts = {
+            "excellent": 0,
+            "good": 0,
+            "acceptable": 0,
+            "needs_improvement": 0
+        }
+        
+        for result in comparison_results:
+            fuel_rating = result["benchmark_comparison"]["fuel_efficiency"]["benchmark_rating"]
+            performance_counts[fuel_rating] += 1
+        
+        total_equipment = len(comparison_results)
+        
+        return {
+            "total_equipment_assessed": total_equipment,
+            "performance_distribution": performance_counts,
+            "performance_percentages": {
+                rating: (count / total_equipment) * 100 
+                for rating, count in performance_counts.items()
+            },
+            "key_insights": self._generate_key_insights(comparison_results),
+            "recommendations": self._generate_farm_recommendations(comparison_results)
+        }
+    
+    def _generate_key_insights(self, comparison_results: List[Dict[str, Any]]) -> List[str]:
+        """Generate key insights from benchmark comparison."""
+        insights = []
+        
+        # Analyze fuel efficiency
+        fuel_scores = [result["performance_metrics"]["fuel_efficiency"] for result in comparison_results]
+        avg_fuel_efficiency = sum(fuel_scores) / len(fuel_scores)
+        
+        if avg_fuel_efficiency < 0.7:
+            insights.append("Farm equipment fuel efficiency is below industry standards")
+        elif avg_fuel_efficiency > 0.8:
+            insights.append("Farm equipment fuel efficiency exceeds industry standards")
+        
+        # Analyze environmental performance
+        env_scores = [result["performance_metrics"]["environmental_impact"] for result in comparison_results]
+        avg_env_score = sum(env_scores) / len(env_scores)
+        
+        if avg_env_score < 0.7:
+            insights.append("Environmental performance needs improvement")
+        elif avg_env_score > 0.8:
+            insights.append("Excellent environmental performance")
+        
+        # Analyze operational efficiency
+        op_scores = [result["performance_metrics"]["operational_efficiency"] for result in comparison_results]
+        avg_op_score = sum(op_scores) / len(op_scores)
+        
+        if avg_op_score < 0.7:
+            insights.append("Operational efficiency could be improved")
+        elif avg_op_score > 0.8:
+            insights.append("High operational efficiency achieved")
+        
+        return insights
+    
+    def _generate_farm_recommendations(self, comparison_results: List[Dict[str, Any]]) -> List[str]:
+        """Generate farm-level recommendations based on benchmark analysis."""
+        recommendations = []
+        
+        # Analyze improvement opportunities
+        improvement_count = 0
+        for result in comparison_results:
+            improvement_count += len(result["improvement_opportunities"])
+        
+        if improvement_count > len(comparison_results):
+            recommendations.append("Multiple equipment improvement opportunities identified")
+        
+        # Analyze performance distribution
+        performance_counts = {}
+        for result in comparison_results:
+            fuel_rating = result["benchmark_comparison"]["fuel_efficiency"]["benchmark_rating"]
+            performance_counts[fuel_rating] = performance_counts.get(fuel_rating, 0) + 1
+        
+        if performance_counts.get("needs_improvement", 0) > 0:
+            recommendations.append("Priority equipment upgrades recommended")
+        
+        if performance_counts.get("excellent", 0) == len(comparison_results):
+            recommendations.append("Farm equipment performance is excellent")
+        
+        return recommendations
     
     def _categorize_farm_size(self, farm_size_acres: float) -> str:
         """Categorize farm size."""
@@ -482,15 +900,32 @@ class EquipmentAssessmentService:
         
         return recommendations
     
-    def _assess_maintenance_requirements(self, equipment: Equipment) -> Optional[str]:
+    def _assess_maintenance_requirements(self, equipment: Equipment) -> List[str]:
         """Assess maintenance requirements for equipment."""
+        maintenance_requirements = []
+        
+        # Base maintenance level requirements
         maintenance_levels = {
-            MaintenanceLevel.BASIC: "Basic maintenance required",
-            MaintenanceLevel.INTERMEDIATE: "Intermediate maintenance required",
-            MaintenanceLevel.ADVANCED: "Advanced maintenance required",
-            MaintenanceLevel.PROFESSIONAL: "Professional maintenance required"
+            MaintenanceLevel.BASIC: ["Basic cleaning", "Lubrication", "Visual inspection"],
+            MaintenanceLevel.INTERMEDIATE: ["Calibration", "Component inspection", "System testing"],
+            MaintenanceLevel.ADVANCED: ["Precision calibration", "Component replacement", "System overhaul"],
+            MaintenanceLevel.PROFESSIONAL: ["Professional calibration", "Major repairs", "Certification work"]
         }
-        return maintenance_levels.get(equipment.maintenance_level)
+        
+        base_requirements = maintenance_levels.get(equipment.maintenance_level, [])
+        maintenance_requirements.extend(base_requirements)
+        
+        # Add category-specific requirements
+        if equipment.category == EquipmentCategory.SPREADING:
+            maintenance_requirements.extend(["Check spread pattern", "Clean hopper", "Inspect chains"])
+        elif equipment.category == EquipmentCategory.SPRAYING:
+            maintenance_requirements.extend(["Clean tank", "Check nozzles", "Test pressure"])
+        elif equipment.category == EquipmentCategory.INJECTION:
+            maintenance_requirements.extend(["Clean injection points", "Check flow rates", "Test pressure"])
+        elif equipment.category == EquipmentCategory.IRRIGATION:
+            maintenance_requirements.extend(["Clean filters", "Check emitters", "Test pressure"])
+        
+        return maintenance_requirements
     
     def _assess_replacement_timeline(self, equipment: Equipment) -> Optional[str]:
         """Assess replacement timeline for equipment."""
@@ -969,3 +1404,800 @@ class EquipmentAssessmentService:
             total_weight += weight
         
         return total_score / total_weight if total_weight > 0 else 0.0
+    
+    async def _perform_comprehensive_farm_assessment(
+        self, 
+        request: EquipmentAssessmentRequest, 
+        equipment_objects: List[Equipment], 
+        farm_analysis: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Perform comprehensive farm assessment including all aspects."""
+        try:
+            # Perform field layout analysis
+            field_layout_analysis = await self._analyze_field_layouts(request)
+            
+            # Perform storage facility assessment
+            storage_facility_assessment = await self._assess_storage_facilities(request)
+            
+            # Perform labor analysis
+            labor_analysis = await self._analyze_labor_requirements(request, equipment_objects)
+            
+            # Perform environmental assessment
+            environmental_assessment = await self._assess_environmental_impact(equipment_objects)
+            
+            # Calculate operational efficiency score
+            operational_efficiency_score = await self._calculate_operational_efficiency_score(
+                farm_analysis, field_layout_analysis, storage_facility_assessment, 
+                labor_analysis, environmental_assessment
+            )
+            
+            # Generate optimization recommendations
+            optimization_recommendations = await self._generate_optimization_recommendations(
+                farm_analysis, field_layout_analysis, storage_facility_assessment, 
+                labor_analysis, environmental_assessment
+            )
+            
+            # Generate implementation priorities
+            implementation_priorities = await self._generate_implementation_priorities(
+                optimization_recommendations, request.budget_constraints
+            )
+            
+            return {
+                "farm_assessment": farm_analysis,
+                "field_layout_analysis": [layout.dict() for layout in field_layout_analysis],
+                "storage_facility_assessment": [storage.dict() for storage in storage_facility_assessment],
+                "labor_analysis": labor_analysis.dict(),
+                "environmental_assessment": [env.dict() for env in environmental_assessment],
+                "operational_efficiency_score": operational_efficiency_score,
+                "optimization_recommendations": optimization_recommendations,
+                "implementation_priorities": implementation_priorities
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in comprehensive farm assessment: {e}")
+            return {
+                "farm_assessment": farm_analysis,
+                "field_layout_analysis": [],
+                "storage_facility_assessment": [],
+                "labor_analysis": {},
+                "environmental_assessment": [],
+                "operational_efficiency_score": 0.5,
+                "optimization_recommendations": [],
+                "implementation_priorities": []
+            }
+    
+    async def _analyze_field_layouts(self, request: EquipmentAssessmentRequest) -> List[FieldLayoutAnalysis]:
+        """Analyze field layouts for operational efficiency."""
+        field_layouts = []
+        
+        if request.field_layouts:
+            for i, layout_data in enumerate(request.field_layouts):
+                field_layout = FieldLayoutAnalysis(
+                    field_id=f"field_{i}",
+                    field_shape=layout_data.get("shape", "rectangular"),
+                    field_size_acres=layout_data.get("size_acres", request.average_field_size),
+                    access_points=layout_data.get("access_points", 2),
+                    access_road_length=layout_data.get("access_road_length"),
+                    field_efficiency_score=self._calculate_field_efficiency_score(layout_data),
+                    turning_radius_requirements=layout_data.get("turning_radius"),
+                    operational_constraints=self._identify_field_constraints(layout_data),
+                    optimization_opportunities=self._identify_field_optimization_opportunities(layout_data)
+                )
+                field_layouts.append(field_layout)
+        else:
+            # Create default field layout analysis based on farm characteristics
+            for i in range(request.field_count):
+                field_layout = FieldLayoutAnalysis(
+                    field_id=f"field_{i}",
+                    field_shape="rectangular",
+                    field_size_acres=request.average_field_size,
+                    access_points=2,
+                    access_road_length=None,
+                    field_efficiency_score=0.7,  # Default efficiency score
+                    turning_radius_requirements=None,
+                    operational_constraints=[],
+                    optimization_opportunities=[]
+                )
+                field_layouts.append(field_layout)
+        
+        return field_layouts
+    
+    async def _assess_storage_facilities(self, request: EquipmentAssessmentRequest) -> List[StorageFacilityAssessment]:
+        """Assess storage facilities for farm operations."""
+        storage_assessments = []
+        
+        if request.storage_facilities:
+            for i, facility_data in enumerate(request.storage_facilities):
+                storage_assessment = StorageFacilityAssessment(
+                    facility_id=f"storage_{i}",
+                    facility_type=facility_data.get("type", "general"),
+                    capacity_tons=facility_data.get("capacity_tons"),
+                    location_efficiency=self._calculate_location_efficiency(facility_data),
+                    handling_equipment_compatibility=facility_data.get("compatible_equipment", []),
+                    access_quality=facility_data.get("access_quality", "good"),
+                    environmental_conditions=facility_data.get("environmental_conditions", {}),
+                    maintenance_requirements=self._identify_storage_maintenance_requirements(facility_data),
+                    upgrade_recommendations=self._generate_storage_upgrade_recommendations(facility_data)
+                )
+                storage_assessments.append(storage_assessment)
+        else:
+            # Create default storage assessment
+            storage_assessment = StorageFacilityAssessment(
+                facility_id="storage_default",
+                facility_type="general",
+                capacity_tons=100.0,  # Default capacity
+                location_efficiency=0.7,
+                handling_equipment_compatibility=[],
+                access_quality="good",
+                environmental_conditions={},
+                maintenance_requirements=[],
+                upgrade_recommendations=[]
+            )
+            storage_assessments.append(storage_assessment)
+        
+        return storage_assessments
+    
+    async def _analyze_labor_requirements(
+        self, 
+        request: EquipmentAssessmentRequest, 
+        equipment_objects: List[Equipment]
+    ) -> LaborAnalysis:
+        """Analyze labor requirements for farm operations."""
+        # Calculate total labor hours needed
+        total_labor_hours = self._calculate_total_labor_hours(equipment_objects, request.farm_size_acres)
+        
+        # Determine skill requirements
+        skill_requirements = self._determine_skill_requirements(equipment_objects)
+        
+        # Identify training needs
+        training_needs = self._identify_training_needs(equipment_objects, request.labor_availability)
+        
+        # Calculate labor efficiency score
+        labor_efficiency_score = self._calculate_labor_efficiency_score(
+            request.labor_availability, request.maintenance_capability
+        )
+        
+        labor_analysis = LaborAnalysis(
+            farm_id="current_farm",
+            total_labor_hours_available=total_labor_hours,
+            skilled_labor_percentage=self._estimate_skilled_labor_percentage(request.labor_availability),
+            labor_efficiency_score=labor_efficiency_score,
+            skill_requirements=skill_requirements,
+            training_needs=training_needs,
+            labor_cost_per_hour=request.labor_details.get("cost_per_hour") if request.labor_details else None,
+            seasonal_availability=request.labor_details.get("seasonal_availability", {}) if request.labor_details else {}
+        )
+        
+        return labor_analysis
+    
+    async def _assess_environmental_impact(self, equipment_objects: List[Equipment]) -> List[EnvironmentalAssessment]:
+        """Assess environmental impact of equipment and operations."""
+        environmental_assessments = []
+        
+        for equipment in equipment_objects:
+            environmental_assessment = EnvironmentalAssessment(
+                equipment_id=equipment.equipment_id,
+                fuel_efficiency_rating=self._calculate_fuel_efficiency_rating(equipment),
+                emissions_factor=self._calculate_emissions_factor(equipment),
+                noise_level=self._estimate_noise_level(equipment),
+                environmental_impact_score=self._calculate_environmental_impact_score(equipment),
+                sustainability_metrics=self._calculate_sustainability_metrics(equipment),
+                compliance_status=self._check_environmental_compliance(equipment),
+                improvement_recommendations=self._generate_environmental_improvements(equipment)
+            )
+            environmental_assessments.append(environmental_assessment)
+        
+        return environmental_assessments
+    
+    async def _calculate_operational_efficiency_score(
+        self, 
+        farm_analysis: Dict[str, Any], 
+        field_layouts: List[FieldLayoutAnalysis], 
+        storage_assessments: List[StorageFacilityAssessment], 
+        labor_analysis: LaborAnalysis, 
+        environmental_assessments: List[EnvironmentalAssessment]
+    ) -> float:
+        """Calculate overall operational efficiency score."""
+        # Weighted average of different efficiency components
+        field_efficiency = sum(layout.field_efficiency_score for layout in field_layouts) / len(field_layouts) if field_layouts else 0.7
+        storage_efficiency = sum(storage.location_efficiency for storage in storage_assessments) / len(storage_assessments) if storage_assessments else 0.7
+        labor_efficiency = labor_analysis.labor_efficiency_score
+        environmental_efficiency = sum(env.environmental_impact_score for env in environmental_assessments) / len(environmental_assessments) if environmental_assessments else 0.7
+        
+        # Weighted average
+        overall_efficiency = (
+            field_efficiency * 0.3 +
+            storage_efficiency * 0.2 +
+            labor_efficiency * 0.3 +
+            environmental_efficiency * 0.2
+        )
+        
+        return min(overall_efficiency, 1.0)
+    
+    async def _generate_optimization_recommendations(
+        self, 
+        farm_analysis: Dict[str, Any], 
+        field_layouts: List[FieldLayoutAnalysis], 
+        storage_assessments: List[StorageFacilityAssessment], 
+        labor_analysis: LaborAnalysis, 
+        environmental_assessments: List[EnvironmentalAssessment]
+    ) -> List[str]:
+        """Generate optimization recommendations based on comprehensive assessment."""
+        recommendations = []
+        
+        # Field layout optimization recommendations
+        for layout in field_layouts:
+            if layout.field_efficiency_score < 0.7:
+                recommendations.append(f"Optimize field {layout.field_id} layout for better operational efficiency")
+            if layout.access_points < 2:
+                recommendations.append(f"Add access points to field {layout.field_id} for better equipment access")
+        
+        # Storage facility optimization recommendations
+        for storage in storage_assessments:
+            if storage.location_efficiency < 0.7:
+                recommendations.append(f"Improve storage facility {storage.facility_id} location efficiency")
+            if storage.access_quality == "poor":
+                recommendations.append(f"Upgrade access roads to storage facility {storage.facility_id}")
+        
+        # Labor optimization recommendations
+        if labor_analysis.labor_efficiency_score < 0.7:
+            recommendations.append("Improve labor efficiency through training and better scheduling")
+        if labor_analysis.skilled_labor_percentage < 50:
+            recommendations.append("Increase skilled labor percentage through training programs")
+        
+        # Environmental optimization recommendations
+        for env in environmental_assessments:
+            if env.environmental_impact_score < 0.7:
+                recommendations.append(f"Improve environmental performance of equipment {env.equipment_id}")
+        
+        return recommendations
+    
+    async def _generate_implementation_priorities(
+        self, 
+        optimization_recommendations: List[str], 
+        budget_constraints: Optional[float]
+    ) -> List[str]:
+        """Generate implementation priorities based on recommendations and constraints."""
+        priorities = []
+        
+        # High priority items (safety, compliance, critical operations)
+        high_priority = [rec for rec in optimization_recommendations if "safety" in rec.lower() or "compliance" in rec.lower()]
+        priorities.extend(high_priority)
+        
+        # Medium priority items (efficiency improvements)
+        medium_priority = [rec for rec in optimization_recommendations if "efficiency" in rec.lower() or "optimize" in rec.lower()]
+        priorities.extend(medium_priority)
+        
+        # Low priority items (nice-to-have improvements)
+        low_priority = [rec for rec in optimization_recommendations if rec not in high_priority and rec not in medium_priority]
+        priorities.extend(low_priority)
+        
+        return priorities
+    
+    def _calculate_field_efficiency_score(self, layout_data: Dict[str, Any]) -> float:
+        """Calculate field efficiency score based on layout data."""
+        score = 0.5  # Base score
+        
+        # Shape factor
+        shape = layout_data.get("shape", "rectangular")
+        if shape == "rectangular":
+            score += 0.3
+        elif shape == "square":
+            score += 0.2
+        elif shape == "irregular":
+            score -= 0.1
+        
+        # Access points factor
+        access_points = layout_data.get("access_points", 2)
+        if access_points >= 3:
+            score += 0.2
+        elif access_points == 2:
+            score += 0.1
+        else:
+            score -= 0.1
+        
+        # Size factor (optimal size range)
+        size_acres = layout_data.get("size_acres", 50)
+        if 20 <= size_acres <= 100:
+            score += 0.2
+        elif 10 <= size_acres <= 200:
+            score += 0.1
+        
+        return max(0.0, min(1.0, score))
+    
+    def _identify_field_constraints(self, layout_data: Dict[str, Any]) -> List[str]:
+        """Identify operational constraints for field layout."""
+        constraints = []
+        
+        shape = layout_data.get("shape", "rectangular")
+        if shape == "irregular":
+            constraints.append("Irregular field shape limits equipment efficiency")
+        
+        access_points = layout_data.get("access_points", 2)
+        if access_points < 2:
+            constraints.append("Limited access points restrict equipment movement")
+        
+        size_acres = layout_data.get("size_acres", 50)
+        if size_acres < 10:
+            constraints.append("Small field size limits equipment efficiency")
+        elif size_acres > 200:
+            constraints.append("Large field size may require specialized equipment")
+        
+        return constraints
+    
+    def _identify_field_optimization_opportunities(self, layout_data: Dict[str, Any]) -> List[str]:
+        """Identify optimization opportunities for field layout."""
+        opportunities = []
+        
+        shape = layout_data.get("shape", "rectangular")
+        if shape == "irregular":
+            opportunities.append("Consider field consolidation or reshaping")
+        
+        access_points = layout_data.get("access_points", 2)
+        if access_points < 3:
+            opportunities.append("Add additional access points for better equipment access")
+        
+        return opportunities
+    
+    def _calculate_location_efficiency(self, facility_data: Dict[str, Any]) -> float:
+        """Calculate location efficiency for storage facility."""
+        score = 0.5  # Base score
+        
+        # Access quality factor
+        access_quality = facility_data.get("access_quality", "good")
+        access_scores = {"excellent": 0.3, "good": 0.2, "fair": 0.1, "poor": -0.1}
+        score += access_scores.get(access_quality, 0.1)
+        
+        # Capacity factor
+        capacity_tons = facility_data.get("capacity_tons", 100)
+        if capacity_tons >= 500:
+            score += 0.2
+        elif capacity_tons >= 100:
+            score += 0.1
+        
+        return max(0.0, min(1.0, score))
+    
+    def _identify_storage_maintenance_requirements(self, facility_data: Dict[str, Any]) -> List[str]:
+        """Identify maintenance requirements for storage facility."""
+        requirements = []
+        
+        facility_type = facility_data.get("type", "general")
+        if facility_type == "silo":
+            requirements.extend(["Inspect structural integrity", "Check ventilation systems", "Clean interior surfaces"])
+        elif facility_type == "bunker":
+            requirements.extend(["Check drainage systems", "Inspect walls", "Clean floor"])
+        else:
+            requirements.extend(["General inspection", "Clean surfaces", "Check access points"])
+        
+        return requirements
+    
+    def _generate_storage_upgrade_recommendations(self, facility_data: Dict[str, Any]) -> List[str]:
+        """Generate upgrade recommendations for storage facility."""
+        recommendations = []
+        
+        access_quality = facility_data.get("access_quality", "good")
+        if access_quality == "poor":
+            recommendations.append("Upgrade access roads and loading areas")
+        
+        capacity_tons = facility_data.get("capacity_tons", 100)
+        if capacity_tons < 100:
+            recommendations.append("Consider expanding storage capacity")
+        
+        return recommendations
+    
+    def _calculate_total_labor_hours(self, equipment_objects: List[Equipment], farm_size_acres: float) -> float:
+        """Calculate total labor hours needed for farm operations."""
+        # Base labor hours per acre
+        base_hours_per_acre = 2.0
+        
+        # Adjust for equipment complexity
+        complexity_factor = 1.0
+        for equipment in equipment_objects:
+            if equipment.maintenance_level == MaintenanceLevel.ADVANCED:
+                complexity_factor += 0.1
+            elif equipment.maintenance_level == MaintenanceLevel.PROFESSIONAL:
+                complexity_factor += 0.2
+        
+        total_hours = farm_size_acres * base_hours_per_acre * complexity_factor
+        return total_hours
+    
+    def _determine_skill_requirements(self, equipment_objects: List[Equipment]) -> Dict[str, str]:
+        """Determine skill requirements by equipment type."""
+        skill_requirements = {}
+        
+        for equipment in equipment_objects:
+            if equipment.maintenance_level == MaintenanceLevel.BASIC:
+                skill_requirements[equipment.equipment_id] = "basic"
+            elif equipment.maintenance_level == MaintenanceLevel.INTERMEDIATE:
+                skill_requirements[equipment.equipment_id] = "intermediate"
+            elif equipment.maintenance_level == MaintenanceLevel.ADVANCED:
+                skill_requirements[equipment.equipment_id] = "advanced"
+            else:
+                skill_requirements[equipment.equipment_id] = "professional"
+        
+        return skill_requirements
+    
+    def _identify_training_needs(self, equipment_objects: List[Equipment], labor_availability: Optional[str]) -> List[str]:
+        """Identify training needs based on equipment and labor availability."""
+        training_needs = []
+        
+        if labor_availability == "low":
+            training_needs.append("Basic equipment operation training")
+        
+        for equipment in equipment_objects:
+            if equipment.maintenance_level in [MaintenanceLevel.ADVANCED, MaintenanceLevel.PROFESSIONAL]:
+                training_needs.append(f"Advanced maintenance training for {equipment.name}")
+        
+        return list(set(training_needs))  # Remove duplicates
+    
+    def _calculate_labor_efficiency_score(self, labor_availability: Optional[str], maintenance_capability: Optional[str]) -> float:
+        """Calculate labor efficiency score."""
+        score = 0.5  # Base score
+        
+        # Labor availability factor
+        availability_scores = {"high": 0.3, "medium": 0.2, "low": 0.1}
+        score += availability_scores.get(labor_availability, 0.1)
+        
+        # Maintenance capability factor
+        capability_scores = {"advanced": 0.2, "intermediate": 0.1, "basic": 0.0}
+        score += capability_scores.get(maintenance_capability, 0.0)
+        
+        return max(0.0, min(1.0, score))
+    
+    def _estimate_skilled_labor_percentage(self, labor_availability: Optional[str]) -> float:
+        """Estimate skilled labor percentage based on labor availability."""
+        if labor_availability == "high":
+            return 70.0
+        elif labor_availability == "medium":
+            return 50.0
+        else:
+            return 30.0
+    
+    def _calculate_fuel_efficiency_rating(self, equipment: Equipment) -> float:
+        """Calculate fuel efficiency rating for equipment."""
+        # Base efficiency based on equipment age and type
+        base_efficiency = 0.7
+        
+        if equipment.year:
+            age = 2024 - equipment.year
+            if age < 5:
+                base_efficiency += 0.2
+            elif age < 10:
+                base_efficiency += 0.1
+            elif age > 15:
+                base_efficiency -= 0.2
+        
+        # Equipment type factor
+        type_factors = {
+            EquipmentCategory.SPREADING: 0.8,
+            EquipmentCategory.SPRAYING: 0.7,
+            EquipmentCategory.INJECTION: 0.6,
+            EquipmentCategory.IRRIGATION: 0.9
+        }
+        
+        type_factor = type_factors.get(equipment.category, 0.7)
+        return max(0.0, min(1.0, base_efficiency * type_factor))
+    
+    def _calculate_emissions_factor(self, equipment: Equipment) -> Optional[float]:
+        """Calculate emissions factor for equipment."""
+        # Simplified emissions calculation based on equipment age and type
+        if not equipment.year:
+            return None
+        
+        age = 2024 - equipment.year
+        base_emissions = 1.0
+        
+        # Newer equipment has lower emissions
+        if age < 5:
+            base_emissions *= 0.8
+        elif age < 10:
+            base_emissions *= 0.9
+        elif age > 15:
+            base_emissions *= 1.2
+        
+        return base_emissions
+    
+    def _estimate_noise_level(self, equipment: Equipment) -> Optional[float]:
+        """Estimate noise level for equipment."""
+        # Simplified noise estimation based on equipment type
+        noise_levels = {
+            EquipmentCategory.SPREADING: 85.0,
+            EquipmentCategory.SPRAYING: 80.0,
+            EquipmentCategory.INJECTION: 75.0,
+            EquipmentCategory.IRRIGATION: 70.0
+        }
+        
+        return noise_levels.get(equipment.category, 80.0)
+    
+    def _calculate_environmental_impact_score(self, equipment: Equipment) -> float:
+        """Calculate environmental impact score for equipment."""
+        fuel_efficiency = self._calculate_fuel_efficiency_rating(equipment)
+        emissions_factor = self._calculate_emissions_factor(equipment) or 1.0
+        
+        # Higher fuel efficiency and lower emissions = better environmental score
+        environmental_score = fuel_efficiency * (1.0 / emissions_factor)
+        
+        return max(0.0, min(1.0, environmental_score))
+    
+    def _calculate_sustainability_metrics(self, equipment: Equipment) -> Dict[str, Any]:
+        """Calculate sustainability metrics for equipment."""
+        return {
+            "fuel_efficiency": self._calculate_fuel_efficiency_rating(equipment),
+            "emissions_factor": self._calculate_emissions_factor(equipment),
+            "noise_level": self._estimate_noise_level(equipment),
+            "environmental_score": self._calculate_environmental_impact_score(equipment)
+        }
+    
+    def _check_environmental_compliance(self, equipment: Equipment) -> List[str]:
+        """Check environmental compliance status for equipment."""
+        compliance_status = []
+        
+        # Check emissions compliance
+        emissions_factor = self._calculate_emissions_factor(equipment)
+        if emissions_factor and emissions_factor <= 1.0:
+            compliance_status.append("Emissions compliant")
+        else:
+            compliance_status.append("Emissions non-compliant")
+        
+        # Check noise compliance
+        noise_level = self._estimate_noise_level(equipment)
+        if noise_level and noise_level <= 85.0:
+            compliance_status.append("Noise compliant")
+        else:
+            compliance_status.append("Noise non-compliant")
+        
+        return compliance_status
+    
+    def _generate_environmental_improvements(self, equipment: Equipment) -> List[str]:
+        """Generate environmental improvement recommendations for equipment."""
+        improvements = []
+        
+        fuel_efficiency = self._calculate_fuel_efficiency_rating(equipment)
+        if fuel_efficiency < 0.8:
+            improvements.append("Consider upgrading to more fuel-efficient equipment")
+        
+        emissions_factor = self._calculate_emissions_factor(equipment)
+        if emissions_factor and emissions_factor > 1.0:
+            improvements.append("Consider equipment with lower emissions")
+        
+        noise_level = self._estimate_noise_level(equipment)
+        if noise_level and noise_level > 85.0:
+            improvements.append("Consider noise reduction measures")
+        
+        return improvements
+    
+    def _calculate_detailed_cost_breakdown(self, upgrade_recommendations: List[EquipmentUpgrade]) -> Dict[str, Any]:
+        """Calculate detailed cost breakdown for upgrades."""
+        breakdown = {
+            "equipment_costs": {},
+            "installation_costs": {},
+            "training_costs": {},
+            "infrastructure_costs": {},
+            "total_costs": {}
+        }
+        
+        for upgrade in upgrade_recommendations:
+            equipment_id = upgrade.current_equipment_id
+            estimated_cost = upgrade.estimated_cost or 0
+            
+            # Equipment cost (70% of total)
+            equipment_cost = estimated_cost * 0.7
+            breakdown["equipment_costs"][equipment_id] = equipment_cost
+            
+            # Installation cost (15% of total)
+            installation_cost = estimated_cost * 0.15
+            breakdown["installation_costs"][equipment_id] = installation_cost
+            
+            # Training cost (5% of total)
+            training_cost = estimated_cost * 0.05
+            breakdown["training_costs"][equipment_id] = training_cost
+            
+            # Infrastructure cost (10% of total)
+            infrastructure_cost = estimated_cost * 0.10
+            breakdown["infrastructure_costs"][equipment_id] = infrastructure_cost
+            
+            # Total cost
+            breakdown["total_costs"][equipment_id] = estimated_cost
+        
+        return breakdown
+    
+    def _calculate_operational_cost_analysis(self, upgrade_recommendations: List[EquipmentUpgrade]) -> Dict[str, Any]:
+        """Calculate operational cost analysis for upgrades."""
+        analysis = {
+            "fuel_savings": {},
+            "labor_savings": {},
+            "maintenance_savings": {},
+            "downtime_reduction": {},
+            "total_annual_savings": {}
+        }
+        
+        for upgrade in upgrade_recommendations:
+            equipment_id = upgrade.current_equipment_id
+            estimated_cost = upgrade.estimated_cost or 0
+            
+            # Estimate annual savings (15% of equipment cost)
+            annual_savings = estimated_cost * 0.15
+            
+            # Break down savings by category
+            analysis["fuel_savings"][equipment_id] = annual_savings * 0.4  # 40% fuel savings
+            analysis["labor_savings"][equipment_id] = annual_savings * 0.3  # 30% labor savings
+            analysis["maintenance_savings"][equipment_id] = annual_savings * 0.2  # 20% maintenance savings
+            analysis["downtime_reduction"][equipment_id] = annual_savings * 0.1  # 10% downtime reduction
+            analysis["total_annual_savings"][equipment_id] = annual_savings
+        
+        return analysis
+    
+    def _calculate_maintenance_cost_analysis(self, upgrade_recommendations: List[EquipmentUpgrade]) -> Dict[str, Any]:
+        """Calculate maintenance cost analysis for upgrades."""
+        analysis = {
+            "preventive_maintenance": {},
+            "corrective_maintenance": {},
+            "parts_and_supplies": {},
+            "labor_costs": {},
+            "total_maintenance_costs": {}
+        }
+        
+        for upgrade in upgrade_recommendations:
+            equipment_id = upgrade.current_equipment_id
+            estimated_cost = upgrade.estimated_cost or 0
+            
+            # Annual maintenance cost (5% of equipment cost)
+            annual_maintenance = estimated_cost * 0.05
+            
+            # Break down maintenance costs
+            analysis["preventive_maintenance"][equipment_id] = annual_maintenance * 0.6  # 60% preventive
+            analysis["corrective_maintenance"][equipment_id] = annual_maintenance * 0.2  # 20% corrective
+            analysis["parts_and_supplies"][equipment_id] = annual_maintenance * 0.15  # 15% parts
+            analysis["labor_costs"][equipment_id] = annual_maintenance * 0.05  # 5% labor
+            analysis["total_maintenance_costs"][equipment_id] = annual_maintenance
+        
+        return analysis
+    
+    def _perform_sensitivity_analysis(self, upgrade_recommendations: List[EquipmentUpgrade]) -> Dict[str, Any]:
+        """Perform sensitivity analysis for upgrade recommendations."""
+        analysis = {
+            "cost_sensitivity": {},
+            "benefit_sensitivity": {},
+            "payback_sensitivity": {},
+            "risk_factors": {}
+        }
+        
+        for upgrade in upgrade_recommendations:
+            equipment_id = upgrade.current_equipment_id
+            estimated_cost = upgrade.estimated_cost or 0
+            
+            # Cost sensitivity (±20% variation)
+            analysis["cost_sensitivity"][equipment_id] = {
+                "base_cost": estimated_cost,
+                "high_cost": estimated_cost * 1.2,
+                "low_cost": estimated_cost * 0.8
+            }
+            
+            # Benefit sensitivity (±15% variation)
+            annual_benefit = estimated_cost * 0.15
+            analysis["benefit_sensitivity"][equipment_id] = {
+                "base_benefit": annual_benefit,
+                "high_benefit": annual_benefit * 1.15,
+                "low_benefit": annual_benefit * 0.85
+            }
+            
+            # Payback sensitivity
+            base_payback = estimated_cost / annual_benefit if annual_benefit > 0 else 0
+            analysis["payback_sensitivity"][equipment_id] = {
+                "base_payback": base_payback,
+                "high_payback": estimated_cost / (annual_benefit * 0.85) if annual_benefit > 0 else 0,
+                "low_payback": estimated_cost / (annual_benefit * 1.15) if annual_benefit > 0 else 0
+            }
+            
+            # Risk factors
+            analysis["risk_factors"][equipment_id] = [
+                "Market price volatility",
+                "Technology obsolescence",
+                "Regulatory changes",
+                "Maintenance cost increases"
+            ]
+        
+        return analysis
+    
+    def _calculate_break_even_analysis(self, upgrade_recommendations: List[EquipmentUpgrade]) -> Dict[str, Any]:
+        """Calculate break-even analysis for upgrades."""
+        analysis = {
+            "break_even_years": {},
+            "break_even_acres": {},
+            "break_even_usage_hours": {},
+            "break_even_scenarios": {}
+        }
+        
+        for upgrade in upgrade_recommendations:
+            equipment_id = upgrade.current_equipment_id
+            estimated_cost = upgrade.estimated_cost or 0
+            annual_benefit = estimated_cost * 0.15
+            
+            # Break-even years
+            break_even_years = estimated_cost / annual_benefit if annual_benefit > 0 else 0
+            analysis["break_even_years"][equipment_id] = break_even_years
+            
+            # Break-even acres (assuming $50/acre benefit)
+            benefit_per_acre = 50.0
+            break_even_acres = estimated_cost / benefit_per_acre if benefit_per_acre > 0 else 0
+            analysis["break_even_acres"][equipment_id] = break_even_acres
+            
+            # Break-even usage hours (assuming $25/hour benefit)
+            benefit_per_hour = 25.0
+            break_even_hours = estimated_cost / benefit_per_hour if benefit_per_hour > 0 else 0
+            analysis["break_even_usage_hours"][equipment_id] = break_even_hours
+            
+            # Break-even scenarios
+            analysis["break_even_scenarios"][equipment_id] = {
+                "conservative": break_even_years * 1.5,  # 50% longer
+                "optimistic": break_even_years * 0.7,   # 30% shorter
+                "realistic": break_even_years
+            }
+        
+        return analysis
+    
+    def _analyze_financing_options(self, upgrade_recommendations: List[EquipmentUpgrade], budget_constraints: Optional[float]) -> Dict[str, Any]:
+        """Analyze financing options for upgrades."""
+        total_cost = sum(upgrade.estimated_cost or 0 for upgrade in upgrade_recommendations)
+        
+        analysis = {
+            "total_upgrade_cost": total_cost,
+            "budget_constraints": budget_constraints,
+            "financing_options": {},
+            "recommended_financing": {}
+        }
+        
+        # Cash purchase
+        analysis["financing_options"]["cash"] = {
+            "total_cost": total_cost,
+            "down_payment": total_cost,
+            "monthly_payment": 0,
+            "total_interest": 0,
+            "total_cost_with_financing": total_cost,
+            "advantages": ["No interest", "Full ownership", "Simplified accounting"],
+            "disadvantages": ["Large upfront cost", "Opportunity cost", "Cash flow impact"]
+        }
+        
+        # Equipment loan (5% interest, 5 years)
+        loan_rate = 0.05
+        loan_years = 5
+        monthly_rate = loan_rate / 12
+        total_payments = loan_years * 12
+        
+        monthly_payment = total_cost * (monthly_rate * (1 + monthly_rate)**total_payments) / ((1 + monthly_rate)**total_payments - 1)
+        total_interest = (monthly_payment * total_payments) - total_cost
+        
+        analysis["financing_options"]["equipment_loan"] = {
+            "total_cost": total_cost,
+            "down_payment": total_cost * 0.1,  # 10% down
+            "monthly_payment": monthly_payment,
+            "total_interest": total_interest,
+            "total_cost_with_financing": total_cost + total_interest,
+            "advantages": ["Preserves cash flow", "Tax deductible interest", "Fixed payments"],
+            "disadvantages": ["Interest costs", "Longer payback", "Collateral required"]
+        }
+        
+        # Lease option (3% of equipment value per year)
+        lease_rate = 0.03
+        annual_lease = total_cost * lease_rate
+        monthly_lease = annual_lease / 12
+        
+        analysis["financing_options"]["lease"] = {
+            "total_cost": total_cost,
+            "down_payment": 0,
+            "monthly_payment": monthly_lease,
+            "total_interest": annual_lease * 3 - total_cost,  # 3-year lease
+            "total_cost_with_financing": annual_lease * 3,
+            "advantages": ["Lower monthly payments", "No maintenance responsibility", "Easy upgrade"],
+            "disadvantages": ["No ownership", "Higher total cost", "Limited customization"]
+        }
+        
+        # Recommended financing based on budget constraints
+        if budget_constraints and budget_constraints >= total_cost:
+            analysis["recommended_financing"] = "cash"
+        elif budget_constraints and budget_constraints >= total_cost * 0.1:
+            analysis["recommended_financing"] = "equipment_loan"
+        else:
+            analysis["recommended_financing"] = "lease"
+        
+        return analysis

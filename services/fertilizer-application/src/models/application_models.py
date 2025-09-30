@@ -8,6 +8,9 @@ from enum import Enum
 from pydantic import BaseModel, Field, validator
 from decimal import Decimal
 
+# Import equipment models for type hints
+from .equipment_models import IndividualEquipmentAssessment
+
 
 class ApplicationMethodType(str, Enum):
     """Types of fertilizer application methods."""
@@ -130,6 +133,12 @@ class EquipmentAssessmentRequest(BaseModel):
     budget_constraints: Optional[float] = Field(None, ge=0, description="Equipment budget")
     labor_availability: Optional[str] = Field(None, description="Labor availability level")
     maintenance_capability: Optional[str] = Field(None, description="Maintenance capability level")
+    # Enhanced farm assessment fields
+    field_layouts: Optional[List[Dict[str, Any]]] = Field(None, description="Field layout information")
+    storage_facilities: Optional[List[Dict[str, Any]]] = Field(None, description="Storage facility information")
+    access_roads: Optional[List[Dict[str, Any]]] = Field(None, description="Access road information")
+    labor_details: Optional[Dict[str, Any]] = Field(None, description="Detailed labor information")
+    environmental_goals: Optional[List[str]] = Field(None, description="Environmental goals and constraints")
 
 
 class EquipmentAssessment(BaseModel):
@@ -149,11 +158,21 @@ class EquipmentAssessmentResponse(BaseModel):
     """Response model for equipment assessment."""
     request_id: str = Field(..., description="Unique request identifier")
     farm_assessment: Dict[str, Any] = Field(..., description="Overall farm assessment")
-    equipment_assessments: List[EquipmentAssessment] = Field(..., description="Individual equipment assessments")
+    equipment_assessments: List[IndividualEquipmentAssessment] = Field(..., description="Individual equipment assessments")
     upgrade_priorities: List[str] = Field(default_factory=list, description="Upgrade priorities")
     capacity_analysis: Dict[str, Any] = Field(default_factory=dict, description="Capacity analysis")
     cost_benefit_analysis: Optional[Dict[str, Any]] = Field(None, description="Cost-benefit analysis")
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Additional assessment metadata")
+    # Enhanced comprehensive assessment fields
+    comprehensive_farm_assessment: Optional[Dict[str, Any]] = Field(None, description="Comprehensive farm assessment")
+    field_layout_analysis: Optional[List[Dict[str, Any]]] = Field(None, description="Field layout analysis")
+    storage_facility_assessment: Optional[List[Dict[str, Any]]] = Field(None, description="Storage facility assessment")
+    labor_analysis: Optional[Dict[str, Any]] = Field(None, description="Labor analysis")
+    environmental_assessment: Optional[List[Dict[str, Any]]] = Field(None, description="Environmental assessment")
+    operational_efficiency_score: Optional[float] = Field(None, ge=0, le=1, description="Overall operational efficiency score")
+    optimization_recommendations: Optional[List[str]] = Field(None, description="Optimization recommendations")
+    implementation_priorities: Optional[List[str]] = Field(None, description="Implementation priorities")
 
 
 class GuidanceRequest(BaseModel):

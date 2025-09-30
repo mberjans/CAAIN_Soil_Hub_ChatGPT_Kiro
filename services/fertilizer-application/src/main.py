@@ -6,10 +6,11 @@ import logging
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
-from api.application_routes import router as application_router
-from api.method_routes import router as method_router
-from api.guidance_routes import router as guidance_router
-from database.fertilizer_db import initialize_database, shutdown_database
+from .api.application_routes import router as application_router
+from .api.method_routes import router as method_router
+from .api.guidance_routes import router as guidance_router
+from .api.equipment_routes import router as equipment_router
+from .database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
 
@@ -64,6 +65,7 @@ app.add_middleware(
 app.include_router(application_router, prefix="/api/v1", tags=["application"])
 app.include_router(method_router, prefix="/api/v1", tags=["methods"])
 app.include_router(guidance_router, prefix="/api/v1", tags=["guidance"])
+app.include_router(equipment_router, prefix="/api/v1", tags=["equipment-assessment"])
 
 @app.get("/health")
 async def health_check():

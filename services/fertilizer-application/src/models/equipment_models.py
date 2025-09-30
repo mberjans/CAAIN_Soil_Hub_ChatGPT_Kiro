@@ -42,6 +42,8 @@ class Equipment(BaseModel):
     manufacturer: Optional[str] = Field(None, description="Manufacturer name")
     model: Optional[str] = Field(None, description="Model number")
     year: Optional[int] = Field(None, ge=1900, description="Manufacturing year")
+    capacity: Optional[float] = Field(None, ge=0, description="Equipment capacity")
+    capacity_unit: Optional[str] = Field(None, description="Capacity unit")
     status: EquipmentStatus = Field(EquipmentStatus.OPERATIONAL, description="Current status")
     purchase_date: Optional[str] = Field(None, description="Purchase date")
     purchase_price: Optional[float] = Field(None, ge=0, description="Purchase price")
@@ -143,6 +145,19 @@ class EquipmentUpgrade(BaseModel):
     justification: str = Field(..., description="Upgrade justification")
 
 
+class IndividualEquipmentAssessment(BaseModel):
+    """Individual equipment assessment."""
+    equipment_id: str = Field(..., description="Equipment identifier")
+    equipment_type: EquipmentCategory = Field(..., description="Equipment category")
+    suitability_score: float = Field(..., ge=0, le=1, description="Suitability score for farm operations")
+    capacity_adequacy: str = Field(..., description="Capacity adequacy (insufficient, adequate, excessive, unknown)")
+    efficiency_rating: float = Field(..., ge=0, le=1, description="Equipment efficiency rating")
+    cost_effectiveness: float = Field(..., ge=0, le=1, description="Cost effectiveness rating")
+    upgrade_recommendations: List[str] = Field(default_factory=list, description="Upgrade recommendations")
+    maintenance_requirements: List[str] = Field(default_factory=list, description="Maintenance requirements")
+    replacement_timeline: str = Field(..., description="Replacement timeline recommendation")
+
+
 class EquipmentAssessment(BaseModel):
     """Comprehensive equipment assessment."""
     farm_id: str = Field(..., description="Farm identifier")
@@ -181,3 +196,67 @@ class EquipmentPerformance(BaseModel):
     downtime_hours: Optional[float] = Field(None, ge=0, description="Downtime hours")
     maintenance_cost: Optional[float] = Field(None, ge=0, description="Maintenance cost")
     performance_score: float = Field(..., ge=0, le=1, description="Overall performance score")
+
+
+class FieldLayoutAnalysis(BaseModel):
+    """Field layout analysis for farm operations."""
+    field_id: str = Field(..., description="Field identifier")
+    field_shape: str = Field(..., description="Field shape (rectangular, irregular, etc.)")
+    field_size_acres: float = Field(..., ge=0.1, description="Field size in acres")
+    access_points: int = Field(..., ge=1, description="Number of access points")
+    access_road_length: Optional[float] = Field(None, ge=0, description="Total access road length in feet")
+    field_efficiency_score: float = Field(..., ge=0, le=1, description="Field operational efficiency score")
+    turning_radius_requirements: Optional[float] = Field(None, ge=0, description="Minimum turning radius required")
+    operational_constraints: List[str] = Field(default_factory=list, description="Operational constraints")
+    optimization_opportunities: List[str] = Field(default_factory=list, description="Optimization opportunities")
+
+
+class StorageFacilityAssessment(BaseModel):
+    """Storage facility assessment."""
+    facility_id: str = Field(..., description="Facility identifier")
+    facility_type: str = Field(..., description="Type of storage facility")
+    capacity_tons: Optional[float] = Field(None, ge=0, description="Storage capacity in tons")
+    location_efficiency: float = Field(..., ge=0, le=1, description="Location efficiency score")
+    handling_equipment_compatibility: List[str] = Field(default_factory=list, description="Compatible handling equipment")
+    access_quality: str = Field(..., description="Access quality (excellent, good, fair, poor)")
+    environmental_conditions: Dict[str, Any] = Field(default_factory=dict, description="Environmental conditions")
+    maintenance_requirements: List[str] = Field(default_factory=list, description="Maintenance requirements")
+    upgrade_recommendations: List[str] = Field(default_factory=list, description="Upgrade recommendations")
+
+
+class LaborAnalysis(BaseModel):
+    """Labor analysis for farm operations."""
+    farm_id: str = Field(..., description="Farm identifier")
+    total_labor_hours_available: float = Field(..., ge=0, description="Total labor hours available per season")
+    skilled_labor_percentage: float = Field(..., ge=0, le=100, description="Percentage of skilled labor")
+    labor_efficiency_score: float = Field(..., ge=0, le=1, description="Labor efficiency score")
+    skill_requirements: Dict[str, str] = Field(default_factory=dict, description="Skill requirements by equipment type")
+    training_needs: List[str] = Field(default_factory=list, description="Training needs identified")
+    labor_cost_per_hour: Optional[float] = Field(None, ge=0, description="Labor cost per hour")
+    seasonal_availability: Dict[str, float] = Field(default_factory=dict, description="Seasonal labor availability")
+
+
+class EnvironmentalAssessment(BaseModel):
+    """Environmental assessment for equipment and operations."""
+    equipment_id: str = Field(..., description="Equipment identifier")
+    fuel_efficiency_rating: float = Field(..., ge=0, le=1, description="Fuel efficiency rating")
+    emissions_factor: Optional[float] = Field(None, ge=0, description="Emissions factor")
+    noise_level: Optional[float] = Field(None, ge=0, description="Noise level in decibels")
+    environmental_impact_score: float = Field(..., ge=0, le=1, description="Environmental impact score")
+    sustainability_metrics: Dict[str, Any] = Field(default_factory=dict, description="Sustainability metrics")
+    compliance_status: List[str] = Field(default_factory=list, description="Environmental compliance status")
+    improvement_recommendations: List[str] = Field(default_factory=list, description="Environmental improvement recommendations")
+
+
+class ComprehensiveFarmAssessment(BaseModel):
+    """Comprehensive farm assessment including all aspects."""
+    farm_id: str = Field(..., description="Farm identifier")
+    assessment_date: str = Field(..., description="Assessment date")
+    farm_size_analysis: Dict[str, Any] = Field(..., description="Farm size analysis")
+    field_layout_analysis: List[FieldLayoutAnalysis] = Field(default_factory=list, description="Field layout analysis")
+    storage_facility_assessment: List[StorageFacilityAssessment] = Field(default_factory=list, description="Storage facility assessment")
+    labor_analysis: LaborAnalysis = Field(..., description="Labor analysis")
+    environmental_assessment: List[EnvironmentalAssessment] = Field(default_factory=list, description="Environmental assessment")
+    operational_efficiency_score: float = Field(..., ge=0, le=1, description="Overall operational efficiency score")
+    optimization_recommendations: List[str] = Field(default_factory=list, description="Optimization recommendations")
+    implementation_priorities: List[str] = Field(default_factory=list, description="Implementation priorities")
