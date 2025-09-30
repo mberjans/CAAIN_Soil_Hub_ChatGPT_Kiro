@@ -1789,7 +1789,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Functionality**: Click-to-select location, drag-to-move markers, zoom controls, layer switching
   **Field Management**: Draw field boundaries, calculate field areas, manage multiple fields
   **Integration**: Connect with location validation, field management, existing map services
-- [ ] TICKET-008_farm-location-input-8.2 Implement advanced mapping features and agricultural overlays
+- [x] TICKET-008_farm-location-input-8.2 Implement advanced mapping features and agricultural overlays
   **Implementation**: Add agricultural-specific mapping features and data overlays
   **Features**: Soil survey overlays, climate zone visualization, topographic information, watershed boundaries
   **Agricultural Overlays**: SSURGO soil data, NRCS conservation practices, flood zones, agricultural districts
