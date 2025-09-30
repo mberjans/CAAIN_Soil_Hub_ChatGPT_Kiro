@@ -5,7 +5,7 @@ This module contains Pydantic models for fertilizer ROI optimization,
 including request/response schemas and data validation.
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Dict, Any, Optional, Union
 from datetime import datetime, date
 from enum import Enum
@@ -57,15 +57,65 @@ class FieldData(BaseModel):
     crop_price: float = Field(..., gt=0, description="Expected crop price per unit")
 
 
+class BudgetConstraint(BaseModel):
+    """Detailed budget constraint configuration."""
+    total_budget_limit: Optional[float] = Field(None, description="Total budget limit across all fields")
+    per_field_budget_limit: Optional[float] = Field(None, description="Maximum budget per field")
+    per_acre_budget_limit: Optional[float] = Field(None, description="Maximum budget per acre")
+    nutrient_budget_allocation: Dict[str, float] = Field(default_factory=dict, description="Budget allocation by nutrient type")
+    product_budget_allocation: Dict[str, float] = Field(default_factory=dict, description="Budget allocation by product")
+    seasonal_budget_allocation: Dict[str, float] = Field(default_factory=dict, description="Budget allocation by season")
+    priority_field_budget_multiplier: Dict[str, float] = Field(default_factory=dict, description="Budget multiplier for priority fields")
+    budget_flexibility_percentage: float = Field(default=10.0, ge=0, le=50, description="Budget flexibility percentage for constraint relaxation")
+    allow_budget_reallocation: bool = Field(default=True, description="Allow budget reallocation between fields")
+    budget_utilization_target: float = Field(default=95.0, ge=80, le=100, description="Target budget utilization percentage")
+
+
+class TimingConstraint(BaseModel):
+    """Timing constraints for fertilizer application."""
+    application_windows: List[Dict[str, Any]] = Field(default_factory=list, description="Available application windows")
+    equipment_availability: Dict[str, List[str]] = Field(default_factory=dict, description="Equipment availability by date")
+    labor_availability: Dict[str, int] = Field(default_factory=dict, description="Labor availability by date")
+    weather_dependent_timing: bool = Field(default=True, description="Consider weather for timing")
+    minimum_application_interval_days: int = Field(default=7, ge=1, description="Minimum days between applications")
+
+
 class OptimizationConstraints(BaseModel):
-    """Constraints for optimization."""
+    """Comprehensive constraints for optimization."""
+    # Nutrient rate constraints
     max_nitrogen_rate: Optional[float] = Field(None, description="Maximum nitrogen rate per acre")
     max_phosphorus_rate: Optional[float] = Field(None, description="Maximum phosphorus rate per acre")
     max_potassium_rate: Optional[float] = Field(None, description="Maximum potassium rate per acre")
-    budget_limit: Optional[float] = Field(None, description="Total budget limit")
+    max_micronutrient_rate: Optional[float] = Field(None, description="Maximum micronutrient rate per acre")
+    
+    # Budget constraints (enhanced)
+    budget_constraint: Optional[BudgetConstraint] = Field(None, description="Detailed budget constraint configuration")
+    budget_limit: Optional[float] = Field(None, description="Total budget limit (legacy field)")
     max_per_acre_cost: Optional[float] = Field(None, description="Maximum cost per acre")
+    
+    # Timing constraints
+    timing_constraints: Optional[TimingConstraint] = Field(None, description="Timing constraints for application")
+    
+    # Environmental constraints
     environmental_limits: Dict[str, Any] = Field(default_factory=dict, description="Environmental constraints")
+    max_environmental_impact_score: Optional[float] = Field(None, description="Maximum environmental impact score")
+    
+    # Equipment constraints
     equipment_limitations: List[str] = Field(default_factory=list, description="Available equipment")
+    equipment_capacity_constraints: Dict[str, float] = Field(default_factory=dict, description="Equipment capacity constraints")
+    
+    # Labor constraints
+    labor_availability: Optional[int] = Field(None, description="Available labor hours")
+    max_labor_cost_per_hour: Optional[float] = Field(None, description="Maximum labor cost per hour")
+    
+    # Risk constraints
+    max_risk_score: Optional[float] = Field(None, description="Maximum acceptable risk score")
+    risk_tolerance_level: Optional[str] = Field(None, description="Risk tolerance level")
+    
+    # Multi-objective constraints
+    min_roi_threshold: Optional[float] = Field(None, description="Minimum ROI threshold")
+    min_yield_target: Optional[float] = Field(None, description="Minimum yield target")
+    max_cost_per_unit_yield: Optional[float] = Field(None, description="Maximum cost per unit yield")
 
 
 class OptimizationGoals(BaseModel):
@@ -80,22 +130,24 @@ class OptimizationGoals(BaseModel):
 class ROIOptimizationRequest(BaseModel):
     """Request model for ROI optimization."""
     farm_context: Dict[str, Any] = Field(..., description="Farm context data")
-    fields: List[FieldData] = Field(..., min_items=1, description="Field data for optimization")
-    fertilizer_products: List[FertilizerProduct] = Field(..., min_items=1, description="Available fertilizer products")
+    fields: List[FieldData] = Field(..., min_length=1, description="Field data for optimization")
+    fertilizer_products: List[FertilizerProduct] = Field(..., min_length=1, description="Available fertilizer products")
     constraints: OptimizationConstraints = Field(..., description="Optimization constraints")
     goals: OptimizationGoals = Field(..., description="Optimization goals")
     optimization_method: OptimizationMethod = Field(default=OptimizationMethod.LINEAR_PROGRAMMING, description="Optimization method")
     include_sensitivity_analysis: bool = Field(default=True, description="Include sensitivity analysis")
     include_risk_assessment: bool = Field(default=True, description="Include risk assessment")
 
-    @validator('fields')
+    @field_validator('fields')
+    @classmethod
     def validate_fields(cls, v):
         """Validate field data."""
         if not v:
             raise ValueError("At least one field is required")
         return v
 
-    @validator('fertilizer_products')
+    @field_validator('fertilizer_products')
+    @classmethod
     def validate_fertilizer_products(cls, v):
         """Validate fertilizer products."""
         if not v:
@@ -189,6 +241,54 @@ class BreakEvenAnalysis(BaseModel):
     risk_factors: List[str] = Field(..., description="Risk factors affecting break-even")
 
 
+class BudgetAllocationResult(BaseModel):
+    """Budget allocation optimization result."""
+    field_id: str = Field(..., description="Field identifier")
+    allocated_budget: float = Field(..., description="Allocated budget for this field")
+    budget_utilization_percentage: float = Field(..., description="Budget utilization percentage")
+    nutrient_allocation: Dict[str, float] = Field(..., description="Budget allocation by nutrient")
+    product_allocation: Dict[str, float] = Field(..., description="Budget allocation by product")
+    expected_roi: float = Field(..., description="Expected ROI for this allocation")
+    priority_score: float = Field(..., description="Field priority score")
+    constraint_violations: List[str] = Field(default_factory=list, description="Constraint violations")
+
+
+class ParetoFrontierPoint(BaseModel):
+    """Pareto frontier analysis point."""
+    scenario_id: str = Field(..., description="Scenario identifier")
+    total_cost: float = Field(..., description="Total cost")
+    total_revenue: float = Field(..., description="Total revenue")
+    roi_percentage: float = Field(..., description="ROI percentage")
+    environmental_score: float = Field(..., description="Environmental impact score")
+    risk_score: float = Field(..., description="Risk score")
+    yield_target_achievement: float = Field(..., description="Yield target achievement percentage")
+    budget_utilization: float = Field(..., description="Budget utilization percentage")
+    trade_off_description: str = Field(..., description="Description of trade-offs")
+
+
+class ConstraintRelaxationAnalysis(BaseModel):
+    """Constraint relaxation analysis results."""
+    constraint_type: str = Field(..., description="Type of constraint relaxed")
+    original_value: float = Field(..., description="Original constraint value")
+    relaxed_value: float = Field(..., description="Relaxed constraint value")
+    relaxation_impact: Dict[str, float] = Field(..., description="Impact of relaxation on objectives")
+    cost_of_relaxation: float = Field(..., description="Cost of relaxing this constraint")
+    benefit_of_relaxation: float = Field(..., description="Benefit of relaxing this constraint")
+    recommendation: str = Field(..., description="Recommendation for constraint relaxation")
+
+
+class MultiObjectiveOptimizationResult(BaseModel):
+    """Multi-objective optimization result."""
+    optimization_id: str = Field(..., description="Unique optimization identifier")
+    pareto_frontier: List[ParetoFrontierPoint] = Field(..., description="Pareto frontier points")
+    recommended_scenario: ParetoFrontierPoint = Field(..., description="Recommended scenario")
+    budget_allocations: List[BudgetAllocationResult] = Field(..., description="Budget allocation results")
+    constraint_relaxation_analysis: List[ConstraintRelaxationAnalysis] = Field(default_factory=list, description="Constraint relaxation analysis")
+    trade_off_analysis: Dict[str, Any] = Field(default_factory=dict, description="Trade-off analysis between objectives")
+    optimization_metadata: Dict[str, Any] = Field(default_factory=dict, description="Optimization metadata")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+
+
 class OptimizationSummary(BaseModel):
     """Summary of optimization results."""
     total_fields_optimized: int = Field(..., description="Number of fields optimized")
@@ -199,3 +299,6 @@ class OptimizationSummary(BaseModel):
     risk_level: str = Field(..., description="Overall risk level")
     optimization_method_used: str = Field(..., description="Optimization method used")
     processing_time_ms: float = Field(..., description="Total processing time")
+    budget_utilization_percentage: Optional[float] = Field(None, description="Budget utilization percentage")
+    constraint_violations_count: int = Field(default=0, description="Number of constraint violations")
+    pareto_frontier_size: Optional[int] = Field(None, description="Number of Pareto frontier points")
