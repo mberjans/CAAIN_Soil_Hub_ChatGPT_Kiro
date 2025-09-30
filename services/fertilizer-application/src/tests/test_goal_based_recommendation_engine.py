@@ -7,11 +7,11 @@ import asyncio
 from unittest.mock import AsyncMock, patch, MagicMock
 from typing import List, Dict, Any
 
-from ..services.goal_based_recommendation_engine import (
+from src.services.goal_based_recommendation_engine import (
     GoalBasedRecommendationEngine, OptimizationGoal, OptimizationConstraint,
     ConstraintType, GoalWeight, OptimizationResult
 )
-from ..models.application_models import (
+from src.models.application_models import (
     ApplicationRequest, ApplicationResponse, ApplicationMethod,
     FieldConditions, CropRequirements, FertilizerSpecification,
     ApplicationMethodType, FertilizerForm, EquipmentType, EquipmentSpecification

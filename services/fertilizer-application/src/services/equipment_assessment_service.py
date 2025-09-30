@@ -8,8 +8,8 @@ import time
 from typing import List, Dict, Any, Optional
 from uuid import uuid4
 
-from ..models.application_models import EquipmentAssessmentRequest, EquipmentAssessmentResponse
-from ..models.equipment_models import (
+from src.models.application_models import EquipmentAssessmentRequest, EquipmentAssessmentResponse
+from src.models.equipment_models import (
     Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel,
     SpreaderEquipment, SprayerEquipment, InjectionEquipment, DripSystemEquipment,
     EquipmentInventory, EquipmentCompatibility, EquipmentEfficiency,

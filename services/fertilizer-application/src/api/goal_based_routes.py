@@ -7,12 +7,12 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 
-from ..services.goal_based_recommendation_engine import (
+from src.services.goal_based_recommendation_engine import (
     GoalBasedRecommendationEngine, OptimizationGoal, OptimizationConstraint,
     ConstraintType, GoalWeight
 )
-from ..models.application_models import ApplicationRequest, ApplicationResponse
-from ..models.application_models import (
+from src.models.application_models import ApplicationRequest, ApplicationResponse
+from src.models.application_models import (
     FieldConditions, CropRequirements, FertilizerSpecification, EquipmentSpecification
 )
 

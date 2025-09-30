@@ -8,15 +8,16 @@ import time
 from typing import List, Dict, Any, Optional
 from uuid import uuid4
 
-from ..models.application_models import (
+from src.models.application_models import (
     ApplicationRequest, ApplicationResponse, ApplicationMethod,
     FieldConditions, CropRequirements, FertilizerSpecification,
     ApplicationMethodType, FertilizerForm, EquipmentType
 )
-from ..models.application_models import EquipmentSpecification
-from ..models.method_models import ApplicationMethod as MethodModel
-from ..database.fertilizer_db import get_application_methods_by_type
-from .crop_integration_service import CropIntegrationService, CropType, GrowthStage
+from src.models.application_models import EquipmentSpecification
+from src.models.method_models import ApplicationMethod as MethodModel
+from src.database.fertilizer_db import get_application_methods_by_type
+from src.services.crop_integration_service import CropIntegrationService, CropType, GrowthStage
+from src.services.crop_response_service import CropResponseService, MethodEffectivenessRanking, YieldImpactPrediction
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +28,7 @@ class ApplicationMethodService:
     def __init__(self):
         self.method_database = {}
         self.crop_integration_service = CropIntegrationService()
+        self.crop_response_service = CropResponseService()
         self._initialize_method_database()
     
     def _initialize_method_database(self):

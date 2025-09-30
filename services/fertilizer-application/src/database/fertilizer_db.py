@@ -12,7 +12,7 @@ from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
 
-from ..config import settings
+from src.config import settings
 
 logger = logging.getLogger(__name__)
 

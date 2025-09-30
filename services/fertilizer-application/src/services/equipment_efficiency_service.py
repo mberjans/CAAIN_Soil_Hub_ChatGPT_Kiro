@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from dataclasses import dataclass
 from enum import Enum
 
-from ..models.equipment_models import (
+from src.models.equipment_models import (
     Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel,
     EquipmentEfficiency, EquipmentPerformance, EquipmentMaintenance
 )

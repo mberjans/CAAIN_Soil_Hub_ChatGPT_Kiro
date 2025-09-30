@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
 from typing import List, Dict, Any, Optional
 import logging
 
-from ..services.performance_monitoring_service import (
+from src.services.performance_monitoring_service import (
     PerformanceMonitoringService, MonitoringConfiguration, PerformanceSnapshot,
     PerformanceAlert, PerformanceTrend, PerformanceMetric, AlertLevel
 )

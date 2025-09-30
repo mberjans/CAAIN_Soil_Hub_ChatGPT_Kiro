@@ -8,12 +8,13 @@ from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 
-from ..models.method_models import (
+from src.models.method_models import (
     ApplicationMethod as MethodModel, MethodComparison, MethodOptimization,
     OptimizationResult, MethodSelection, MethodRanking, MethodValidation,
     MethodPerformance, MethodLearning, MethodRecommendation
 )
-from ..models.application_models import ApplicationMethod
+from src.models.application_models import ApplicationMethod, FieldConditions, CropRequirements, FertilizerSpecification, EquipmentSpecification
+from src.services.comparison_service import MethodComparisonService
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +24,14 @@ router = APIRouter(prefix="/methods", tags=["methods"])
 
 class MethodComparisonRequest(BaseModel):
     """Request model for method comparison."""
-    method_a_id: str = Field(..., description="First method identifier")
-    method_b_id: str = Field(..., description="Second method identifier")
-    comparison_criteria: List[str] = Field(default_factory=list, description="Criteria for comparison")
-    weights: Optional[Dict[str, float]] = Field(None, description="Criteria weights")
+    method_a: ApplicationMethod = Field(..., description="First method to compare")
+    method_b: ApplicationMethod = Field(..., description="Second method to compare")
+    field_conditions: FieldConditions = Field(..., description="Field conditions for context")
+    crop_requirements: CropRequirements = Field(..., description="Crop requirements for context")
+    fertilizer_specification: FertilizerSpecification = Field(..., description="Fertilizer specification for context")
+    available_equipment: List[EquipmentSpecification] = Field(default_factory=list, description="Available equipment")
+    comparison_criteria: Optional[List[str]] = Field(None, description="Specific criteria to compare (if None, uses all)")
+    custom_weights: Optional[Dict[str, float]] = Field(None, description="Custom weights for criteria")
 
 
 class MethodOptimizationRequest(BaseModel):
@@ -186,60 +191,46 @@ async def compare_methods(request: MethodComparisonRequest):
     """
     Compare two application methods across specified criteria.
     
-    This endpoint provides detailed comparison between two application
-    methods, highlighting strengths and weaknesses of each approach.
+    This endpoint provides comprehensive comparison between two application
+    methods using advanced multi-criteria analysis, highlighting strengths 
+    and weaknesses of each approach.
     
     **Comparison Criteria:**
-    - Cost effectiveness
-    - Application efficiency
-    - Environmental impact
-    - Equipment requirements
-    - Labor intensity
-    - Skill requirements
-    - Field suitability
+    - Cost effectiveness (total cost per acre including equipment and labor)
+    - Application efficiency (nutrient use efficiency and precision)
+    - Environmental impact (runoff risk, soil health impact)
+    - Equipment requirements (compatibility and availability)
+    - Labor requirements (intensity and skill level)
+    - Field suitability (size, soil type, slope compatibility)
+    - Nutrient use efficiency (crop-specific efficiency)
+    - Timing flexibility (application window flexibility)
+    - Skill requirements (operator skill level needed)
+    - Weather dependency (weather sensitivity)
+    
+    **Features:**
+    - Multi-criteria analysis with weighted scoring
+    - Sensitivity analysis for weight variations
+    - Statistical comparison with confidence levels
+    - Economic analysis including total cost of ownership
+    - Environmental impact assessment
+    - Field-specific suitability analysis
     """
     try:
-        logger.info(f"Comparing methods: {request.method_a_id} vs {request.method_b_id}")
+        logger.info(f"Comparing methods: {request.method_a.method_type} vs {request.method_b.method_type}")
         
-        # This would typically perform actual comparison logic
-        # For now, return a sample comparison
-        comparison = MethodComparison(
-            method_a=MethodModel(
-                method_id=request.method_a_id,
-                method_name="Method A",
-                method_type="broadcast",
-                description="Sample method A",
-                application_timing=["pre_plant"],
-                precision_level="broadcast",
-                environmental_impact="moderate",
-                equipment_requirements=["spreader"],
-                labor_intensity="medium",
-                skill_requirements="semi_skilled",
-                cost_per_acre=15.0,
-                efficiency_rating=0.7,
-                suitability_factors={}
-            ),
-            method_b=MethodModel(
-                method_id=request.method_b_id,
-                method_name="Method B",
-                method_type="band",
-                description="Sample method B",
-                application_timing=["at_planting"],
-                precision_level="band",
-                environmental_impact="low",
-                equipment_requirements=["spreader"],
-                labor_intensity="medium",
-                skill_requirements="skilled",
-                cost_per_acre=20.0,
-                efficiency_rating=0.8,
-                suitability_factors={}
-            ),
-            comparison_criteria=["cost", "efficiency", "environmental_impact"],
-            method_a_scores={"cost": 0.8, "efficiency": 0.7, "environmental_impact": 0.6},
-            method_b_scores={"cost": 0.6, "efficiency": 0.8, "environmental_impact": 0.8},
-            winner_by_criteria={"cost": "method_a", "efficiency": "method_b", "environmental_impact": "method_b"},
-            overall_winner="method_b",
-            recommendation="Method B is recommended for better efficiency and environmental impact"
+        # Initialize comparison service
+        comparison_service = MethodComparisonService()
+        
+        # Perform comprehensive comparison
+        comparison = await comparison_service.compare_methods(
+            method_a=request.method_a,
+            method_b=request.method_b,
+            field_conditions=request.field_conditions,
+            crop_requirements=request.crop_requirements,
+            fertilizer_spec=request.fertilizer_specification,
+            available_equipment=request.available_equipment,
+            comparison_criteria=request.comparison_criteria,
+            custom_weights=request.custom_weights
         )
         
         logger.info("Method comparison completed successfully")

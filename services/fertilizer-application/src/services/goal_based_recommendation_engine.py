@@ -17,13 +17,13 @@ import numpy as np
 from scipy.optimize import minimize
 from scipy.spatial.distance import pdist, squareform
 
-from ..models.application_models import (
+from src.models.application_models import (
     ApplicationRequest, ApplicationResponse, ApplicationMethod,
     FieldConditions, CropRequirements, FertilizerSpecification,
     ApplicationMethodType, FertilizerForm, EquipmentType
 )
-from ..models.application_models import EquipmentSpecification
-from .application_method_service import ApplicationMethodService
+from src.models.application_models import EquipmentSpecification
+from src.services.application_method_service import ApplicationMethodService
 
 logger = logging.getLogger(__name__)
 

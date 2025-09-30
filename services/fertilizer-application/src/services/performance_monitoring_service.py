@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from enum import Enum
 import json
 
-from ..models.equipment_models import (
+from src.models.equipment_models import (
     Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel,
     EquipmentPerformance, EquipmentMaintenance
 )

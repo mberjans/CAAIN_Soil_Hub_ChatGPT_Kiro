@@ -26,14 +26,14 @@ import joblib
 import json
 import os
 
-from ..models.application_models import (
+from src.models.application_models import (
     ApplicationRequest, ApplicationResponse, ApplicationMethod,
     FieldConditions, CropRequirements, FertilizerSpecification,
     ApplicationMethodType, FertilizerForm, EquipmentType
 )
-from ..models.application_models import EquipmentSpecification
-from .goal_based_recommendation_engine import GoalBasedRecommendationEngine, OptimizationGoal
-from ..database.fertilizer_db import get_application_methods_by_type
+from src.models.application_models import EquipmentSpecification
+from src.servicesgoal_based_recommendation_engine import GoalBasedRecommendationEngine, OptimizationGoal
+from srcdatabase.fertilizer_db import get_application_methods_by_type
 
 logger = logging.getLogger(__name__)
 

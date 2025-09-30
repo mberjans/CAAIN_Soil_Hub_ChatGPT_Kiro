@@ -6,14 +6,14 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Dict, Any, Optional
 import logging
 
-from ..models.application_models import (
+from src.models.application_models import (
     ApplicationMethodType, CropRequirements, FieldConditions
 )
-from ..services.crop_integration_service import CropType, GrowthStage
-from ..services.crop_response_service import (
+from src.services.crop_integration_service import CropType, GrowthStage
+from src.services.crop_response_service import (
     CropResponseService, MethodEffectivenessRanking, YieldImpactPrediction
 )
-from ..services.application_method_service import ApplicationMethodService
+from src.services.application_method_service import ApplicationMethodService
 
 logger = logging.getLogger(__name__)
 

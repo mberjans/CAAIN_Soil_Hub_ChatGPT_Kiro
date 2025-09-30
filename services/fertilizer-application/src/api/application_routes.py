@@ -9,14 +9,14 @@ from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks, Query
 from pydantic import BaseModel, Field
 
-from ..models.application_models import (
+from src.models.application_models import (
     ApplicationRequest, ApplicationResponse, ApplicationMethod,
     FieldConditions, CropRequirements, FertilizerSpecification,
     EquipmentSpecification
 )
-from ..services.application_method_service import ApplicationMethodService
-from ..services.cost_analysis_service import CostAnalysisService
-from ..services.goal_based_recommendation_engine import GoalBasedRecommendationEngine
+from src.services.application_method_service import ApplicationMethodService
+from src.services.cost_analysis_service import CostAnalysisService
+from src.services.goal_based_recommendation_engine import GoalBasedRecommendationEngine
 
 logger = logging.getLogger(__name__)
 
@@ -567,7 +567,7 @@ async def optimize_with_goals(
             nutrient_weight /= total_weight
         
         # Set up farmer goals
-        from ..services.goal_based_recommendation_engine import OptimizationGoal
+        from src.services.goal_based_recommendation_engine import OptimizationGoal
         farmer_goals = {
             OptimizationGoal.YIELD_MAXIMIZATION: yield_weight,
             OptimizationGoal.COST_MINIMIZATION: cost_weight,
@@ -638,3 +638,8 @@ async def health_check():
             "crops/{crop_type}/timing-analysis"
         ]
     }
+# Import decision support routes
+from src.api.decision_support_routes import router as decision_support_router
+
+# Include decision support routes
+router.include_router(decision_support_router)

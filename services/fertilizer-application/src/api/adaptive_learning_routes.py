@@ -13,11 +13,11 @@ from typing import Dict, Any, Optional, List
 import logging
 from uuid import uuid4
 
-from ..services.adaptive_learning_service import (
+from src.services.adaptive_learning_service import (
     AdaptiveLearningService, FeedbackType, RecommendationOutcome,
     LearningMetrics, AdaptationProfile
 )
-from ..models.application_models import (
+from src.models.application_models import (
     ApplicationRequest, ApplicationResponse, ApplicationMethodType,
     FieldConditions, CropRequirements, FertilizerSpecification
 )

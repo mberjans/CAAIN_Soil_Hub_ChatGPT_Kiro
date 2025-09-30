@@ -13,8 +13,8 @@ from enum import Enum
 import asyncio
 from datetime import datetime
 
-from ..models.application_models import ApplicationMethodType, CropRequirements
-from .crop_integration_service import CropType, GrowthStage, CropIntegrationService
+from src.models.application_models import ApplicationMethodType, CropRequirements
+from src.services.crop_integration_service import CropType, GrowthStage, CropIntegrationService
 
 logger = logging.getLogger(__name__)
 

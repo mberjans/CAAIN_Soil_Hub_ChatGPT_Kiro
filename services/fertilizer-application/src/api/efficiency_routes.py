@@ -4,18 +4,30 @@ API routes for equipment efficiency and optimization analysis.
 
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Dict, Any, Optional
+from pydantic import BaseModel, Field
 import logging
 
-from ..services.equipment_efficiency_service import (
+from src.services.equipment_efficiency_service import (
     EquipmentEfficiencyService, EfficiencyAnalysisRequest, EfficiencyAnalysisResponse,
     OptimizationType, EfficiencyMetric
 )
-from ..models.equipment_models import Equipment
-from ..models.application_models import EquipmentAssessmentRequest
+from src.models.equipment_models import Equipment
+from src.models.application_models import EquipmentAssessmentRequest
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/efficiency", tags=["equipment-efficiency"])
+
+
+class EfficiencyAnalysisRequestModel(BaseModel):
+    """Request model for equipment efficiency analysis."""
+    equipment_id: str = Field(..., description="Equipment identifier")
+    farm_id: str = Field(..., description="Farm identifier")
+    field_conditions: Dict[str, Any] = Field(..., description="Field conditions")
+    weather_conditions: Optional[Dict[str, Any]] = Field(None, description="Weather conditions")
+    operational_parameters: Optional[Dict[str, Any]] = Field(None, description="Operational parameters")
+    analysis_types: Optional[List[OptimizationType]] = Field(None, description="Types of analysis to perform")
+    time_horizon_days: int = Field(30, ge=1, le=365, description="Analysis time horizon in days")
 
 
 # Dependency injection
@@ -25,13 +37,7 @@ async def get_efficiency_service() -> EquipmentEfficiencyService:
 
 @router.post("/analyze", response_model=EfficiencyAnalysisResponse)
 async def analyze_equipment_efficiency(
-    equipment_id: str = Query(..., description="Equipment identifier"),
-    farm_id: str = Query(..., description="Farm identifier"),
-    field_conditions: Dict[str, Any] = Query(..., description="Field conditions"),
-    weather_conditions: Optional[Dict[str, Any]] = Query(None, description="Weather conditions"),
-    operational_parameters: Optional[Dict[str, Any]] = Query(None, description="Operational parameters"),
-    analysis_types: Optional[List[OptimizationType]] = Query(None, description="Types of analysis to perform"),
-    time_horizon_days: int = Query(30, ge=1, le=365, description="Analysis time horizon in days"),
+    request: EfficiencyAnalysisRequestModel,
     service: EquipmentEfficiencyService = Depends(get_efficiency_service)
 ):
     """
@@ -84,24 +90,24 @@ async def analyze_equipment_efficiency(
     - Cost-benefit analysis for improvements
     """
     try:
-        logger.info(f"Starting equipment efficiency analysis for equipment {equipment_id}")
+        logger.info(f"Starting equipment efficiency analysis for equipment {request.equipment_id}")
         
         # Create analysis request
-        request = EfficiencyAnalysisRequest(
-            equipment_id=equipment_id,
-            farm_id=farm_id,
-            field_conditions=field_conditions,
-            weather_conditions=weather_conditions,
-            operational_parameters=operational_parameters,
-            analysis_types=analysis_types or [OptimizationType.APPLICATION_EFFICIENCY],
-            time_horizon_days=time_horizon_days
+        analysis_request = EfficiencyAnalysisRequest(
+            equipment_id=request.equipment_id,
+            farm_id=request.farm_id,
+            field_conditions=request.field_conditions,
+            weather_conditions=request.weather_conditions,
+            operational_parameters=request.operational_parameters,
+            analysis_types=request.analysis_types or [OptimizationType.APPLICATION_EFFICIENCY],
+            time_horizon_days=request.time_horizon_days
         )
         
         # Get equipment data (in real implementation, this would come from database)
-        equipment = await _get_equipment_data(equipment_id)
+        equipment = await _get_equipment_data(request.equipment_id)
         
         # Perform efficiency analysis
-        analysis_response = await service.analyze_equipment_efficiency(request, equipment)
+        analysis_response = await service.analyze_equipment_efficiency(analysis_request, equipment)
         
         logger.info(f"Equipment efficiency analysis completed successfully")
         return analysis_response
@@ -387,7 +393,7 @@ async def health_check():
 async def _get_equipment_data(equipment_id: str) -> Equipment:
     """Get equipment data by ID (placeholder implementation)."""
     # In real implementation, this would query the database
-    from ..models.equipment_models import Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel
+    from src.models.equipment_models import Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel
     
     return Equipment(
         equipment_id=equipment_id,

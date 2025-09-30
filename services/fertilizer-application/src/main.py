@@ -12,6 +12,8 @@ from src.api.guidance_routes import router as guidance_router
 from src.api.equipment_routes import router as equipment_router
 from src.api.efficiency_routes import router as efficiency_router
 from src.api.monitoring_routes import router as monitoring_router
+from src.api.real_time_monitoring_routes import router as real_time_monitoring_router
+from src.api.iot_sensor_routes import router as iot_sensor_router
 from src.api.crop_response_routes import router as crop_response_router
 from src.api.decision_support_routes import router as decision_support_router
 from src.api.economic_optimization_routes import router as economic_optimization_router
@@ -73,6 +75,8 @@ app.include_router(guidance_router, prefix="/api/v1", tags=["guidance"])
 app.include_router(equipment_router, prefix="/api/v1", tags=["equipment-assessment"])
 app.include_router(efficiency_router, prefix="/api/v1", tags=["equipment-efficiency"])
 app.include_router(monitoring_router, prefix="/api/v1", tags=["performance-monitoring"])
+app.include_router(real_time_monitoring_router, prefix="/api/v1", tags=["real-time-monitoring"])
+app.include_router(iot_sensor_router, prefix="/api/v1", tags=["iot-sensors"])
 app.include_router(crop_response_router, prefix="/api/v1", tags=["crop-response"])
 app.include_router(decision_support_router, prefix="/api/v1", tags=["decision-support"])
 app.include_router(economic_optimization_router, prefix="/api/v1", tags=["economic-optimization"])
@@ -89,7 +93,15 @@ async def health_check():
             "equipment_assessment",
             "equipment_efficiency_analysis",
             "performance_monitoring",
+            "real_time_monitoring",
+            "real_time_adjustments",
             "real_time_alerts",
+            "application_rate_monitoring",
+            "coverage_monitoring",
+            "weather_monitoring",
+            "quality_control",
+            "iot_sensor_integration",
+            "equipment_telemetry",
             "timing_optimization",
             "route_optimization",
             "maintenance_optimization",

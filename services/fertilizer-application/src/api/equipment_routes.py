@@ -7,19 +7,19 @@ from typing import List, Dict, Any, Optional
 import logging
 from uuid import uuid4
 
-from ..models.application_models import (
+from src.models.application_models import (
     EquipmentAssessmentRequest, 
     EquipmentAssessmentResponse,
     EquipmentSpecification,
     EquipmentType
 )
-from ..models.equipment_models import (
+from src.models.equipment_models import (
     Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel,
     EquipmentInventory, EquipmentCompatibility, EquipmentEfficiency,
     EquipmentUpgrade, EquipmentAssessment, EquipmentMaintenance
 )
-from ..services.equipment_assessment_service import EquipmentAssessmentService
-from ..database.fertilizer_db import get_db_session, EquipmentAssessmentRecord
+from src.services.equipment_assessment_service import EquipmentAssessmentService
+from src.database.fertilizer_db import get_db_session, EquipmentAssessmentRecord
 
 logger = logging.getLogger(__name__)
 
