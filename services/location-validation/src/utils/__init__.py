@@ -1,0 +1,1 @@
+# Utils package for location validation service

@@ -1,0 +1,665 @@
+/* Comprehensive User Guidance and Support System Styles */
+/* TICKET-008_farm-location-input-14.2: Add comprehensive user guidance and support */
+
+/* Interactive Tutorial Styles */
+.tutorial-container {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.tutorial-progress {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid #dee2e6;
+}
+
+.tutorial-content {
+    min-height: 300px;
+    padding: 1rem 0;
+}
+
+.tutorial-step {
+    display: none;
+    animation: fadeIn 0.3s ease-in;
+}
+
+.tutorial-step.active {
+    display: block;
+}
+
+.tutorial-step h5 {
+    color: #0d6efd;
+    margin-bottom: 1rem;
+}
+
+.tutorial-step .step-content {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    border-left: 4px solid #0d6efd;
+    margin-bottom: 1rem;
+}
+
+.tutorial-step .step-demo {
+    background: #fff;
+    border: 2px dashed #0d6efd;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    margin: 1rem 0;
+}
+
+.tutorial-step .step-tips {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+}
+
+.tutorial-step .step-tips h6 {
+    color: #0c5460;
+    margin-bottom: 0.5rem;
+}
+
+.tutorial-navigation {
+    border-top: 1px solid #dee2e6;
+    padding-top: 1rem;
+}
+
+/* Contextual Help Tooltip Styles */
+.contextual-help-tooltip {
+    position: fixed;
+    z-index: 9999;
+    max-width: 300px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease-out;
+}
+
+.tooltip-content {
+    padding: 0;
+}
+
+.tooltip-header {
+    background: #0d6efd;
+    color: white;
+    padding: 0.75rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+}
+
+.tooltip-body {
+    padding: 1rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+.tooltip-footer {
+    padding: 0.75rem;
+    border-top: 1px solid #dee2e6;
+    background: #f8f9fa;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+
+/* Troubleshooting Guide Styles */
+.troubleshooting-content {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.troubleshooting-sections {
+    margin-top: 1rem;
+}
+
+.troubleshooting-section {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.issue-header {
+    background: #f8f9fa;
+    padding: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+}
+
+.issue-header:hover {
+    background: #e9ecef;
+}
+
+.issue-header h6 {
+    margin: 0;
+    color: #495057;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.issue-content {
+    display: none;
+    padding: 1rem;
+    background: #fff;
+}
+
+.issue-content.active {
+    display: block;
+}
+
+.solution-item {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.solution-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.solution-item h6 {
+    color: #198754;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+}
+
+.solution-item ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+.solution-item li {
+    margin-bottom: 0.5rem;
+    color: #495057;
+}
+
+/* FAQ Styles */
+.faq-content {
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.faq-categories {
+    margin-top: 1rem;
+}
+
+.faq-category {
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+    overflow: hidden;
+}
+
+.category-title {
+    background: #f8f9fa;
+    padding: 1rem;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s ease;
+    color: #495057;
+}
+
+.category-title:hover {
+    background: #e9ecef;
+}
+
+.faq-items {
+    display: none;
+    background: #fff;
+}
+
+.faq-items.active {
+    display: block;
+}
+
+.faq-item {
+    border-bottom: 1px solid #f1f3f4;
+}
+
+.faq-item:last-child {
+    border-bottom: none;
+}
+
+.faq-question {
+    padding: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: background-color 0.2s ease;
+}
+
+.faq-question:hover {
+    background: #f8f9fa;
+}
+
+.faq-question h6 {
+    margin: 0;
+    color: #495057;
+    font-weight: 500;
+}
+
+.faq-answer {
+    display: none;
+    padding: 0 1rem 1rem 1rem;
+    background: #fff;
+    color: #6c757d;
+    line-height: 1.6;
+}
+
+.faq-answer.active {
+    display: block;
+}
+
+/* Support Ticket Styles */
+#supportTicketForm {
+    max-height: 50vh;
+    overflow-y: auto;
+}
+
+.form-check-label {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Live Chat Widget Styles */
+.live-chat-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    height: 500px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-header {
+    background: #0d6efd;
+    color: white;
+    padding: 0.75rem;
+    border-radius: 0.5rem 0.5rem 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.chat-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 0.5rem;
+}
+
+.status-indicator.online {
+    background: #28a745;
+    animation: pulse 2s infinite;
+}
+
+.chat-controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.chat-window {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 400px;
+}
+
+.chat-messages {
+    flex: 1;
+    padding: 1rem;
+    overflow-y: auto;
+    background: #f8f9fa;
+}
+
+.chat-message {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.bot-message .message-content {
+    background: #e9ecef;
+    padding: 0.75rem;
+    border-radius: 1rem 1rem 1rem 0.25rem;
+    max-width: 80%;
+}
+
+.user-message {
+    align-items: flex-end;
+}
+
+.user-message .message-content {
+    background: #0d6efd;
+    color: white;
+    padding: 0.75rem;
+    border-radius: 1rem 1rem 0.25rem 1rem;
+    max-width: 80%;
+}
+
+.message-time {
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.25rem;
+}
+
+.chat-input {
+    padding: 1rem;
+    border-top: 1px solid #dee2e6;
+    background: #fff;
+}
+
+/* Chat Toggle Button */
+.chat-toggle-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+
+.chat-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #dc3545;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .live-chat-widget {
+        width: calc(100vw - 40px);
+        height: calc(100vh - 100px);
+        bottom: 10px;
+        right: 10px;
+        left: 10px;
+    }
+    
+    .chat-toggle-btn {
+        bottom: 10px;
+        right: 10px;
+        width: 50px;
+        height: 50px;
+        font-size: 1rem;
+    }
+    
+    .contextual-help-tooltip {
+        max-width: calc(100vw - 40px);
+        left: 20px !important;
+        right: 20px !important;
+    }
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateX(10px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Help Button Styles */
+.help-button {
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0.25rem;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.help-button:hover {
+    color: #0d6efd;
+    background: #f8f9fa;
+}
+
+.help-button.active {
+    color: #0d6efd;
+    background: #e7f3ff;
+}
+
+/* Inline Help Styles */
+.inline-help {
+    position: relative;
+    display: inline-block;
+    margin-left: 0.5rem;
+}
+
+.inline-help .help-icon {
+    color: #6c757d;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: color 0.2s ease;
+}
+
+.inline-help .help-icon:hover {
+    color: #0d6efd;
+}
+
+.inline-help .help-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    margin-bottom: 0.5rem;
+}
+
+.inline-help .help-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #333;
+}
+
+.inline-help:hover .help-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Video Tutorial Styles */
+.video-tutorial-container {
+    position: relative;
+    width: 100%;
+    height: 0;
+    padding-bottom: 56.25%; /* 16:9 aspect ratio */
+    background: #000;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+
+.video-tutorial-container iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Progress Indicators */
+.progress-step {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.progress-step .step-number {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #dee2e6;
+    color: #6c757d;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active .step-number {
+    background: #0d6efd;
+    color: white;
+}
+
+.progress-step.completed .step-number {
+    background: #198754;
+    color: white;
+}
+
+.progress-step.completed .step-number::before {
+    content: '✓';
+}
+
+/* Search Highlighting */
+.search-highlight {
+    background: #fff3cd;
+    padding: 0.125rem 0.25rem;
+    border-radius: 0.25rem;
+    font-weight: bold;
+}
+
+/* Loading States */
+.loading-spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #0d6efd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Success/Error States */
+.success-message {
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    color: #0c5460;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+.error-message {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin: 1rem 0;
+}
+
+/* Accessibility Improvements */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Focus States */
+.btn:focus,
+.form-control:focus,
+.form-select:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .tutorial-step .step-content,
+    .troubleshooting-section,
+    .faq-category {
+        border-width: 2px;
+    }
+    
+    .contextual-help-tooltip {
+        border-width: 2px;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .tutorial-step,
+    .contextual-help-tooltip,
+    .chat-message {
+        animation: none;
+    }
+    
+    .status-indicator.online {
+        animation: none;
+    }
+}

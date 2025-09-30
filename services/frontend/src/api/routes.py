@@ -237,6 +237,42 @@ async def variety_detail(request: Request, variety_id: str):
     })
 
 
+@router.get("/location-input", response_class=HTMLResponse)
+async def location_input(request: Request):
+    """Serve the location input page."""
+    return templates.TemplateResponse("location_input.html", {
+        "request": request,
+        "title": "Farm Location Input"
+    })
+
+
+@router.get("/location-input-enhanced", response_class=HTMLResponse)
+async def location_input_enhanced(request: Request):
+    """Serve the enhanced location input page with interactive map system."""
+    return templates.TemplateResponse("location_input_enhanced.html", {
+        "request": request,
+        "title": "Enhanced Farm Location Input"
+    })
+
+
+@router.get("/mobile-location-input", response_class=HTMLResponse)
+async def mobile_location_input(request: Request):
+    """Serve the mobile-responsive location input page with touch-friendly controls."""
+    return templates.TemplateResponse("mobile_location_input.html", {
+        "request": request,
+        "title": "Mobile Farm Location Input"
+    })
+
+
+@router.get("/field-management", response_class=HTMLResponse)
+async def field_management(request: Request):
+    """Serve the field management page with comprehensive field management interface."""
+    return templates.TemplateResponse("field_management.html", {
+        "request": request,
+        "title": "Field Management"
+    })
+
+
 @router.get("/health")
 async def health_check():
     """Health check endpoint."""

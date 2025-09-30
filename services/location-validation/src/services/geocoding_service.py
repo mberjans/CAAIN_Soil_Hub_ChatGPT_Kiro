@@ -20,7 +20,12 @@ from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut, GeocoderServiceError
 from pydantic import BaseModel, Field, field_validator
 
-from .agricultural_autocomplete_service import AgriculturalAutocompleteService, AgriculturalAddressSuggestion
+try:
+    from .agricultural_autocomplete_service import AgriculturalAutocompleteService, AgriculturalAddressSuggestion
+except ImportError:
+    # Fallback for when running as standalone module
+    AgriculturalAutocompleteService = None
+    AgriculturalAddressSuggestion = None
 
 logger = logging.getLogger(__name__)
 
@@ -520,8 +525,11 @@ class GeocodingService:
         self.fallback_provider = None  # Can add MapBox or other providers later
         self.cache = GeocodingCache()
         self.agricultural_enhancement = AgriculturalEnhancementService()
-        self.agricultural_autocomplete = AgriculturalAutocompleteService()
-        self.agricultural_autocomplete.set_nominatim_provider(self.primary_provider)
+        if AgriculturalAutocompleteService is not None:
+            self.agricultural_autocomplete = AgriculturalAutocompleteService()
+            self.agricultural_autocomplete.set_nominatim_provider(self.primary_provider)
+        else:
+            self.agricultural_autocomplete = None
         logger.info("Geocoding service initialized with Nominatim provider, agricultural enhancement, and agricultural autocomplete")
     
     async def geocode_address(self, address: str, include_agricultural_context: bool = True) -> GeocodingResult:

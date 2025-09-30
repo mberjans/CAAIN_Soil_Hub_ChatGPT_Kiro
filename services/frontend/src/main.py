@@ -220,6 +220,17 @@ async def mobile_drought_management_page(request: Request):
     else:
         return HTMLResponse("<h1>Mobile Drought Management - Coming Soon</h1>")
 
+@app.get("/field-management", response_class=HTMLResponse)
+async def field_management_page(request: Request):
+    """Comprehensive field management interface page"""
+    if templates:
+        return templates.TemplateResponse("field_management.html", {
+            "request": request,
+            "title": "Field Management System"
+        })
+    else:
+        return HTMLResponse("<h1>Field Management - Coming Soon</h1>")
+
 @app.post("/api/ask-question")
 async def ask_question(
     question: str = Form(...),
@@ -1633,6 +1644,18 @@ async def health_check():
                 "/api/v1/recommendations/crop-varieties",
                 "/api/v1/recommendations/explain"
             ]
+        },
+        "field_management": {
+            "status": "integrated",
+            "endpoints": [
+                "/field-management",
+                "/api/v1/fields/",
+                "/api/v1/fields/{field_id}",
+                "/api/v1/fields/bulk-create",
+                "/api/v1/fields/validate",
+                "/api/v1/fields/search",
+                "/api/v1/fields/statistics"
+            ]
         }
     }
 
@@ -1717,6 +1740,56 @@ async def proxy_geocoding_service(path: str, request: Request):
             content={"error": "Service temporarily unavailable"},
             status_code=503
         )
+
+# Field Management API Proxy Routes
+@app.api_route("/api/v1/fields/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_field_management_api(path: str, request: Request):
+    """Proxy requests to the field management API"""
+    try:
+        method = request.method
+        
+        # Prepare headers
+        headers = {
+            "content-type": request.headers.get("content-type", "application/json")
+        }
+        
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+        
+        # Forward the request to the location validation service
+        async with httpx.AsyncClient() as client:
+            url = f"{LOCATION_VALIDATION_URL}/api/v1/fields/{path}"
+            
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+            
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+                
+    except httpx.RequestError as e:
+        logger.error(f"Field management API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Field management service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Field management API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 if __name__ == "__main__":

@@ -100,11 +100,32 @@ class VarietyRecommendationService:
         except ImportError:
             logger.warning("Market intelligence service not available")
             self.market_intelligence_service = None
+        
+        # Initialize monitoring integration service
+        try:
+            from .monitoring_integration_service import get_monitoring_integration_service
+            self.monitoring_service = None  # Will be initialized asynchronously
+            logger.info("Monitoring integration service available")
+        except ImportError:
+            logger.warning("Monitoring integration service not available")
+            self.monitoring_service = None
             
         self.regional_data = {}
         self.performance_models = {}
         self._initialize_recommendation_algorithms()
         self.ranking_engine = AdvancedVarietyRanking(self.scoring_weights)
+    
+    async def initialize_monitoring(self):
+        """Initialize monitoring service connection."""
+        try:
+            if self.monitoring_service is None:
+                from .monitoring_integration_service import get_monitoring_integration_service
+                self.monitoring_service = await get_monitoring_integration_service()
+                await self.monitoring_service.initialize()
+                logger.info("Monitoring service initialized for variety recommendations")
+        except Exception as e:
+            logger.warning(f"Failed to initialize monitoring service: {e}")
+            self.monitoring_service = None
         self.confidence_service = ConfidenceCalculationService()
         self.yield_calculator = YieldPotentialCalculator()
         self._variety_comparison_service = None
@@ -151,6 +172,32 @@ class VarietyRecommendationService:
             
         Returns:
             Ranked list of variety recommendations with scoring and rationale
+        """
+        # Initialize monitoring if not already done
+        if self.monitoring_service is None:
+            await self.initialize_monitoring()
+        
+        # Apply monitoring decorator if available
+        if self.monitoring_service:
+            monitor_decorator = self.monitoring_service.monitor_recommendation_operation(
+                "variety_recommendation",
+                crop_type=crop_data.name if hasattr(crop_data, 'name') else "unknown",
+                region=regional_context.get('region', 'unknown')
+            )
+            return await monitor_decorator(self._recommend_varieties_impl)(
+                crop_data, regional_context, farmer_preferences
+            )
+        else:
+            return await self._recommend_varieties_impl(crop_data, regional_context, farmer_preferences)
+    
+    async def _recommend_varieties_impl(
+        self, 
+        crop_data: ComprehensiveCropData,
+        regional_context: Dict[str, Any],
+        farmer_preferences: Optional[Dict[str, Any]] = None
+    ) -> List[VarietyRecommendation]:
+        """
+        Internal implementation of variety recommendations.
         """
         try:
             # Get available varieties for the crop

@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#28a745">
+    
+    <title>Mobile Farm Location Input - CAAIN Soil Hub</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    
+    <!-- Mobile Location Input CSS -->
+    <link href="/static/css/mobile-location-input.css" rel="stylesheet">
+    
+    <!-- Enhanced Mobile Features CSS -->
+    <link href="/static/css/mobile-location-input-enhanced.css" rel="stylesheet">
+    
+    <!-- User Guidance System CSS -->
+    <link href="/static/css/user-guidance-system.css" rel="stylesheet">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/static/manifest.json">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="/static/icons/icon-192x192.png">
+    
+    <!-- Mobile-specific meta tags for enhanced functionality -->
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Farm Location">
+    <meta name="msapplication-TileColor" content="#28a745">
+    <meta name="msapplication-tap-highlight" content="no">
+</head>
+<body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="container-fluid">
+            <div class="row align-items-center">
+                <div class="col-2">
+                    <button class="btn btn-link mobile-nav-btn" onclick="goBack()">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+                <div class="col-8 text-center">
+                    <h1 class="mobile-title">Farm Location</h1>
+                </div>
+                <div class="col-2 text-end">
+                    <div class="btn-group">
+                        <button class="btn btn-link mobile-nav-btn" onclick="showInteractiveTutorial()" title="Interactive Tutorial">
+                            <i class="fas fa-graduation-cap"></i>
+                        </button>
+                        <button class="btn btn-link mobile-nav-btn" onclick="showVideoTutorials()" title="Video Tutorials">
+                            <i class="fas fa-play-circle"></i>
+                        </button>
+                        <button class="btn btn-link mobile-nav-btn" onclick="showFAQ()" title="FAQ">
+                            <i class="fas fa-question-circle"></i>
+                        </button>
+                        <button class="btn btn-link mobile-nav-btn" onclick="showTroubleshooting()" title="Troubleshooting">
+                            <i class="fas fa-tools"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offlineIndicator">
+        <i class="fas fa-wifi-slash me-2"></i>
+        You're offline - location data will be saved locally
+    </div>
+
+    <!-- Main Content -->
+    <main class="mobile-main">
+        <div class="container-fluid">
+            
+            <!-- Location Input Methods -->
+            <div class="location-methods">
+                
+                <!-- GPS Location Method -->
+                <div class="method-card active" id="gps-method">
+                    <div class="method-header" onclick="toggleMethod('gps')">
+                        <div class="method-icon">
+                            <i class="fas fa-satellite"></i>
+                        </div>
+                        <div class="method-info">
+                            <h3>GPS Location</h3>
+                            <p>Use your device's GPS for precise location</p>
+                        </div>
+                        <div class="method-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="method-content">
+                        <div class="gps-status" id="gpsStatus">
+                            <div class="status-indicator">
+                                <i class="fas fa-circle-notch fa-spin"></i>
+                                <span>Getting location...</span>
+                            </div>
+                        </div>
+                        
+                        <div class="gps-controls">
+                            <button class="btn btn-primary btn-lg w-100 mb-3 gps-button-enhanced" onclick="getCurrentLocation()">
+                                <i class="fas fa-crosshairs me-2"></i>
+                                <span class="button-text">Get Current Location</span>
+                                <div class="button-loading" style="display: none;">
+                                    <i class="fas fa-spinner fa-spin me-2"></i>
+                                    <span>Getting Location...</span>
+                                </div>
+                            </button>
+                            
+                            <!-- Enhanced GPS Options -->
+                            <div class="gps-options-enhanced">
+                                <div class="option-row">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="highAccuracy" checked>
+                                        <label class="form-check-label" for="highAccuracy">
+                                            <i class="fas fa-bullseye me-2"></i>
+                                            High Accuracy Mode
+                                        </label>
+                                    </div>
+                                    <div class="option-info" data-info="highAccuracy">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                </div>
+                                <div class="option-row">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="batteryOptimization">
+                                        <label class="form-check-label" for="batteryOptimization">
+                                            <i class="fas fa-battery-half me-2"></i>
+                                            Battery Optimization
+                                        </label>
+                                    </div>
+                                    <div class="option-info" data-info="batteryOptimization">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                </div>
+                                <div class="option-row">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="continuousTracking">
+                                        <label class="form-check-label" for="continuousTracking">
+                                            <i class="fas fa-sync-alt me-2"></i>
+                                            Continuous Tracking
+                                        </label>
+                                    </div>
+                                    <div class="option-info" data-info="continuousTracking">
+                                        <i class="fas fa-info-circle"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- GPS Accuracy Indicator -->
+                            <div class="gps-accuracy-indicator" id="gpsAccuracyIndicator" style="display: none;">
+                                <div class="accuracy-bar">
+                                    <div class="accuracy-fill" id="accuracyFill"></div>
+                                </div>
+                                <div class="accuracy-text">
+                                    <span id="accuracyText">GPS Accuracy: Excellent</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="location-display" id="locationDisplay" style="display: none;">
+                            <div class="coordinates">
+                                <div class="coord-item">
+                                    <label>Latitude:</label>
+                                    <span id="displayLatitude"></span>
+                                </div>
+                                <div class="coord-item">
+                                    <label>Longitude:</label>
+                                    <span id="displayLongitude"></span>
+                                </div>
+                                <div class="coord-item">
+                                    <label>Accuracy:</label>
+                                    <span id="displayAccuracy"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Selection Method -->
+                <div class="method-card" id="map-method">
+                    <div class="method-header" onclick="toggleMethod('map')">
+                        <div class="method-icon">
+                            <i class="fas fa-map"></i>
+                        </div>
+                        <div class="method-info">
+                            <h3>Map Selection</h3>
+                            <p>Tap on the map to select location</p>
+                        </div>
+                        <div class="method-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="method-content">
+                        <div class="mobile-map-container">
+                            <div id="mobileMap" class="mobile-map"></div>
+                            
+                            <!-- Enhanced Map Controls -->
+                            <div class="map-controls-enhanced">
+                                <div class="control-group">
+                                    <button class="map-control-btn enhanced" onclick="centerOnCurrentLocation()" title="Current Location">
+                                        <i class="fas fa-crosshairs"></i>
+                                        <span class="control-label">GPS</span>
+                                    </button>
+                                    <button class="map-control-btn enhanced" onclick="toggleMapType()" title="Map Type">
+                                        <i class="fas fa-layer-group"></i>
+                                        <span class="control-label">Layers</span>
+                                    </button>
+                                    <button class="map-control-btn enhanced" onclick="clearMapSelection()" title="Clear">
+                                        <i class="fas fa-times"></i>
+                                        <span class="control-label">Clear</span>
+                                    </button>
+                                </div>
+                                
+                                <!-- Map Type Selector -->
+                                <div class="map-type-selector" id="mapTypeSelector" style="display: none;">
+                                    <button class="map-type-btn active" data-type="street" onclick="setMapType('street')">
+                                        <i class="fas fa-map"></i>
+                                        <span>Street</span>
+                                    </button>
+                                    <button class="map-type-btn" data-type="satellite" onclick="setMapType('satellite')">
+                                        <i class="fas fa-satellite"></i>
+                                        <span>Satellite</span>
+                                    </button>
+                                    <button class="map-type-btn" data-type="terrain" onclick="setMapType('terrain')">
+                                        <i class="fas fa-mountain"></i>
+                                        <span>Terrain</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Map Gesture Instructions -->
+                            <div class="map-gesture-instructions" id="mapGestureInstructions">
+                                <div class="gesture-item">
+                                    <i class="fas fa-hand-pointer"></i>
+                                    <span>Tap to select location</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <i class="fas fa-search-plus"></i>
+                                    <span>Pinch to zoom</span>
+                                </div>
+                                <div class="gesture-item">
+                                    <i class="fas fa-hand-rock"></i>
+                                    <span>Drag to pan</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="map-instructions">
+                            <p><i class="fas fa-hand-pointer me-2"></i>Tap anywhere on the map to select your farm location</p>
+                            <p><i class="fas fa-search-plus me-2"></i>Pinch to zoom in/out for precise selection</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Manual Input Method -->
+                <div class="method-card" id="manual-method">
+                    <div class="method-header" onclick="toggleMethod('manual')">
+                        <div class="method-icon">
+                            <i class="fas fa-keyboard"></i>
+                        </div>
+                        <div class="method-info">
+                            <h3>Manual Input</h3>
+                            <p>Enter coordinates or address manually</p>
+                        </div>
+                        <div class="method-toggle">
+                            <i class="fas fa-chevron-down"></i>
+                        </div>
+                    </div>
+                    <div class="method-content">
+                        
+                        <!-- Enhanced Address Input -->
+                        <div class="input-section">
+                            <label class="form-label">
+                                <i class="fas fa-map-marker-alt me-2"></i>
+                                Farm Address
+                            </label>
+                            <div class="input-group-enhanced">
+                                <input type="text" id="addressInput" class="form-control form-control-lg mobile-input" 
+                                       placeholder="Enter farm address or rural route"
+                                       autocomplete="off"
+                                       inputmode="text"
+                                       enterkeyhint="search"
+                                       data-help-trigger="true"
+                                       data-help-title="Farm Address"
+                                       data-help-content="Enter your farm address. Try rural route format (RR 1 Box 123) for rural addresses.">
+                                <button class="btn btn-outline-secondary input-action-btn" onclick="clearAddressInput()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="address-suggestions-enhanced" id="addressSuggestions"></div>
+                            
+                            <!-- Address Input Help -->
+                            <div class="input-help">
+                                <small class="text-muted">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Try: "Farm Road", "RR", "HC", or rural route numbers
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Coordinate Input -->
+                        <div class="input-section">
+                            <label class="form-label">
+                                <i class="fas fa-crosshairs me-2"></i>
+                                GPS Coordinates
+                            </label>
+                            <div class="coordinate-input-enhanced">
+                                <div class="coord-input-group">
+                                    <label class="coord-label">Latitude</label>
+                                    <input type="number" id="latitudeInput" class="form-control form-control-lg mobile-input" 
+                                           placeholder="40.7128" step="any" min="-90" max="90"
+                                           inputmode="decimal"
+                                           enterkeyhint="next"
+                                           data-help-trigger="true"
+                                           data-help-title="Latitude"
+                                           data-help-content="Enter latitude in decimal degrees (e.g., 40.7128). Must be between -90 and 90.">
+                                </div>
+                                <div class="coord-input-group">
+                                    <label class="coord-label">Longitude</label>
+                                    <input type="number" id="longitudeInput" class="form-control form-control-lg mobile-input" 
+                                           placeholder="-74.0060" step="any" min="-180" max="180"
+                                           inputmode="decimal"
+                                           enterkeyhint="done"
+                                           data-help-trigger="true"
+                                           data-help-title="Longitude"
+                                           data-help-content="Enter longitude in decimal degrees (e.g., -74.0060). Must be between -180 and 180.">
+                                </div>
+                            </div>
+                            
+                            <!-- Coordinate Validation -->
+                            <div class="coordinate-validation" id="coordinateValidation" style="display: none;">
+                                <div class="validation-status">
+                                    <i class="fas fa-check-circle text-success"></i>
+                                    <span>Valid coordinates</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Enhanced Coordinate Format Toggle -->
+                        <div class="input-section">
+                            <div class="format-toggle-enhanced">
+                                <div class="format-header">
+                                    <label class="form-label">
+                                        <i class="fas fa-calculator me-2"></i>
+                                        Coordinate Format
+                                    </label>
+                                </div>
+                                <div class="format-buttons">
+                                    <button class="format-btn-enhanced active" data-format="decimal" onclick="setCoordinateFormat('decimal')">
+                                        <i class="fas fa-hashtag"></i>
+                                        <span>Decimal</span>
+                                    </button>
+                                    <button class="format-btn-enhanced" data-format="dms" onclick="setCoordinateFormat('dms')">
+                                        <i class="fas fa-clock"></i>
+                                        <span>DMS</span>
+                                    </button>
+                                    <button class="format-btn-enhanced" data-format="utm" onclick="setCoordinateFormat('utm')">
+                                        <i class="fas fa-grid-3x3"></i>
+                                        <span>UTM</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="input-section">
+                            <div class="quick-actions">
+                                <button class="btn btn-outline-primary btn-sm" onclick="copyCoordinates()">
+                                    <i class="fas fa-copy me-1"></i>
+                                    Copy Coordinates
+                                </button>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="pasteCoordinates()">
+                                    <i class="fas fa-paste me-1"></i>
+                                    Paste Coordinates
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" onclick="shareLocation()">
+                                    <i class="fas fa-share me-1"></i>
+                                    Share Location
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Validation -->
+            <div class="validation-section" id="validationSection" style="display: none;">
+                <div class="validation-card">
+                    <div class="validation-header">
+                        <h4><i class="fas fa-check-circle me-2"></i>Location Validation</h4>
+                    </div>
+                    <div class="validation-content" id="validationContent">
+                        <!-- Validation results will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Action Buttons -->
+            <div class="action-buttons-enhanced">
+                <div class="action-row">
+                    <button class="btn btn-outline-secondary btn-lg action-btn" onclick="clearAllInputs()">
+                        <i class="fas fa-eraser me-2"></i>
+                        <span class="btn-text">Clear All</span>
+                    </button>
+                    <button class="btn btn-success btn-lg action-btn primary-action" onclick="saveLocation()" disabled id="saveButton">
+                        <i class="fas fa-save me-2"></i>
+                        <span class="btn-text">Save Location</span>
+                        <div class="btn-loading" style="display: none;">
+                            <i class="fas fa-spinner fa-spin me-2"></i>
+                            <span>Saving...</span>
+                        </div>
+                    </button>
+                </div>
+                
+                <!-- Secondary Actions -->
+                <div class="secondary-actions">
+                    <button class="btn btn-outline-primary btn-sm" onclick="validateCurrentLocation()">
+                        <i class="fas fa-check-circle me-1"></i>
+                        Validate
+                    </button>
+                    <button class="btn btn-outline-info btn-sm" onclick="showLocationDetails()">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Details
+                    </button>
+                    <button class="btn btn-outline-warning btn-sm" onclick="exportLocation()">
+                        <i class="fas fa-download me-1"></i>
+                        Export
+                    </button>
+                </div>
+            </div>
+
+            <!-- Location History -->
+            <div class="location-history" id="locationHistory" style="display: none;">
+                <div class="history-header">
+                    <h4><i class="fas fa-history me-2"></i>Recent Locations</h4>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="clearHistory()">
+                        Clear History
+                    </button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <!-- History items will be populated here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3">Processing location...</p>
+        </div>
+    </div>
+
+    <!-- Enhanced Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-question-circle me-2"></i>
+                        Location Input Help
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="help-sections">
+                        <div class="help-section">
+                            <div class="help-header">
+                                <i class="fas fa-satellite"></i>
+                                <h6>GPS Location</h6>
+                            </div>
+                            <p>Uses your device's GPS for the most accurate location. Works best outdoors with clear sky view.</p>
+                            <div class="help-tips">
+                                <strong>Tips:</strong>
+                                <ul>
+                                    <li>Enable high accuracy mode for better precision</li>
+                                    <li>Use battery optimization when battery is low</li>
+                                    <li>Continuous tracking updates location automatically</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="help-section">
+                            <div class="help-header">
+                                <i class="fas fa-map"></i>
+                                <h6>Map Selection</h6>
+                            </div>
+                            <p>Tap on the map to select your farm location. Use pinch gestures to zoom for precise selection.</p>
+                            <div class="help-tips">
+                                <strong>Gestures:</strong>
+                                <ul>
+                                    <li><i class="fas fa-hand-pointer"></i> Tap to select location</li>
+                                    <li><i class="fas fa-search-plus"></i> Pinch to zoom in/out</li>
+                                    <li><i class="fas fa-hand-rock"></i> Drag to pan around</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="help-section">
+                            <div class="help-header">
+                                <i class="fas fa-keyboard"></i>
+                                <h6>Manual Input</h6>
+                            </div>
+                            <p>Enter coordinates or address manually. Supports multiple coordinate formats.</p>
+                            <div class="help-tips">
+                                <strong>Formats:</strong>
+                                <ul>
+                                    <li>Decimal degrees (40.7128, -74.0060)</li>
+                                    <li>Degrees Minutes Seconds (40°42'46"N, 74°0'22"W)</li>
+                                    <li>UTM coordinates (Zone 18T, 583000E, 4507000N)</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="fas fa-check me-2"></i>
+                        Got it!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Location Details Modal -->
+    <div class="modal fade" id="locationDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-info-circle me-2"></i>
+                        Location Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="locationDetailsContent">
+                    <!-- Location details will be populated here -->
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="useLocationDetails()">Use This Location</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- GPS Options Info Modal -->
+    <div class="modal fade" id="gpsOptionsModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="gpsOptionsTitle">GPS Option</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="gpsOptionsContent">
+                    <!-- GPS option details will be populated here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Guidance System Components -->
+    <!-- Include the comprehensive user guidance and support system -->
+    <div id="userGuidanceSystemContainer">
+        <!-- Interactive Tutorial Modal -->
+        <div class="modal fade" id="interactiveTutorialModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down">
+                <div class="modal-content">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-graduation-cap me-2"></i>
+                            Interactive Tutorial: Location Input
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="tutorial-container">
+                            <!-- Tutorial Progress -->
+                            <div class="tutorial-progress mb-4">
+                                <div class="progress" style="height: 8px;">
+                                    <div class="progress-bar bg-success" id="tutorialProgress" style="width: 0%"></div>
+                                </div>
+                                <div class="d-flex justify-content-between mt-2">
+                                    <small class="text-muted">Step <span id="currentStep">1</span> of <span id="totalSteps">5</span></small>
+                                    <small class="text-muted" id="tutorialTitle">Getting Started</small>
+                                </div>
+                            </div>
+
+                            <!-- Tutorial Content -->
+                            <div class="tutorial-content" id="tutorialContent">
+                                <!-- Content will be dynamically loaded -->
+                            </div>
+
+                            <!-- Tutorial Navigation -->
+                            <div class="tutorial-navigation mt-4">
+                                <div class="d-flex justify-content-between">
+                                    <button type="button" class="btn btn-outline-secondary" id="prevStepBtn" onclick="previousTutorialStep()" disabled>
+                                        <i class="fas fa-chevron-left me-1"></i>
+                                        Previous
+                                    </button>
+                                    <button type="button" class="btn btn-primary" id="nextStepBtn" onclick="nextTutorialStep()">
+                                        Next
+                                        <i class="fas fa-chevron-right ms-1"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contextual Help Tooltip System -->
+        <div class="contextual-help-tooltip" id="contextualHelpTooltip" style="display: none;">
+            <div class="tooltip-content">
+                <div class="tooltip-header">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <span id="tooltipTitle">Help</span>
+                    <button type="button" class="btn-close btn-close-sm ms-auto" onclick="hideContextualHelp()"></button>
+                </div>
+                <div class="tooltip-body" id="tooltipBody">
+                    <!-- Tooltip content will be populated here -->
+                </div>
+                <div class="tooltip-footer">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="showFullHelp()">
+                        <i class="fas fa-question-circle me-1"></i>
+                        More Help
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Troubleshooting Guide Modal -->
+        <div class="modal fade" id="troubleshootingModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-warning text-dark">
+                        <h5 class="modal-title">
+                            <i class="fas fa-tools me-2"></i>
+                            Troubleshooting Guide
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="troubleshooting-content">
+                            <!-- Search Box -->
+                            <div class="mb-4">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="troubleshootingSearch" 
+                                           placeholder="Search for issues (e.g., GPS not working, coordinates invalid)">
+                                </div>
+                            </div>
+
+                            <!-- Common Issues -->
+                            <div class="troubleshooting-sections">
+                                <div class="troubleshooting-section" data-issue="gps">
+                                    <div class="issue-header" onclick="toggleTroubleshootingSection('gps')">
+                                        <h6>
+                                            <i class="fas fa-satellite me-2"></i>
+                                            GPS Location Issues
+                                            <i class="fas fa-chevron-down ms-auto"></i>
+                                        </h6>
+                                    </div>
+                                    <div class="issue-content">
+                                        <div class="issue-solutions">
+                                            <div class="solution-item">
+                                                <h6><i class="fas fa-check-circle text-success me-2"></i>GPS Not Working</h6>
+                                                <ul>
+                                                    <li>Check if location services are enabled in your device settings</li>
+                                                    <li>Ensure you're outdoors with a clear view of the sky</li>
+                                                    <li>Try enabling high accuracy mode in your device settings</li>
+                                                    <li>Restart your device if GPS has been stuck for a while</li>
+                                                </ul>
+                                            </div>
+                                            <div class="solution-item">
+                                                <h6><i class="fas fa-check-circle text-success me-2"></i>Inaccurate Location</h6>
+                                                <ul>
+                                                    <li>Wait a few moments for GPS to acquire satellites</li>
+                                                    <li>Move to an open area away from buildings and trees</li>
+                                                    <li>Check if your device has assisted GPS enabled</li>
+                                                    <li>Try using WiFi or cellular location as backup</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="troubleshooting-section" data-issue="coordinates">
+                                    <div class="issue-header" onclick="toggleTroubleshootingSection('coordinates')">
+                                        <h6>
+                                            <i class="fas fa-map-marker-alt me-2"></i>
+                                            Coordinate Input Issues
+                                            <i class="fas fa-chevron-down ms-auto"></i>
+                                        </h6>
+                                    </div>
+                                    <div class="issue-content">
+                                        <div class="issue-solutions">
+                                            <div class="solution-item">
+                                                <h6><i class="fas fa-check-circle text-success me-2"></i>Invalid Coordinates</h6>
+                                                <ul>
+                                                    <li>Ensure latitude is between -90 and 90 degrees</li>
+                                                    <li>Ensure longitude is between -180 and 180 degrees</li>
+                                                    <li>Check for typos in decimal places</li>
+                                                    <li>Use proper format: decimal degrees (e.g., 40.7128, -74.0060)</li>
+                                                </ul>
+                                            </div>
+                                            <div class="solution-item">
+                                                <h6><i class="fas fa-check-circle text-success me-2"></i>Wrong Location Detected</h6>
+                                                <ul>
+                                                    <li>Verify coordinates are for your actual farm location</li>
+                                                    <li>Check if coordinates are in the correct hemisphere</li>
+                                                    <li>Ensure you're using the correct coordinate system</li>
+                                                    <li>Try using address input as an alternative</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="troubleshooting-section" data-issue="address">
+                                    <div class="issue-header" onclick="toggleTroubleshootingSection('address')">
+                                        <h6>
+                                            <i class="fas fa-home me-2"></i>
+                                            Address Input Issues
+                                            <i class="fas fa-chevron-down ms-auto"></i>
+                                        </h6>
+                                    </div>
+                                    <div class="issue-content">
+                                        <div class="issue-solutions">
+                                            <div class="solution-item">
+                                                <h6><i class="fas fa-check-circle text-success me-2"></i>Address Not Found</h6>
+                                                <ul>
+                                                    <li>Try using rural route format: "RR 1 Box 123"</li>
+                                                    <li>Use highway contract format: "HC 1 Box 456"</li>
+                                                    <li>Include county and state information</li>
+                                                    <li>Try using nearby landmarks or intersections</li>
+                                                </ul>
+                                            </div>
+                                            <div class="solution-item">
+                                                <h6><i class="fas fa-check-circle text-success me-2"></i>Wrong Address Selected</h6>
+                                                <ul>
+                                                    <li>Check the suggested address carefully before selecting</li>
+                                                    <li>Look for the correct street number and name</li>
+                                                    <li>Verify the city and state match your location</li>
+                                                    <li>Use coordinates if address is ambiguous</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="troubleshooting-section" data-issue="network">
+                                    <div class="issue-header" onclick="toggleTroubleshootingSection('network')">
+                                        <h6>
+                                            <i class="fas fa-wifi me-2"></i>
+                                            Network & Connectivity Issues
+                                            <i class="fas fa-chevron-down ms-auto"></i>
+                                        </h6>
+                                    </div>
+                                    <div class="issue-content">
+                                        <div class="issue-solutions">
+                                            <div class="solution-item">
+                                                <h6><i class="fas fa-check-circle text-success me-2"></i>Slow Loading</h6>
+                                                <ul>
+                                                    <li>Check your internet connection strength</li>
+                                                    <li>Try switching between WiFi and cellular data</li>
+                                                    <li>Close other apps that might be using bandwidth</li>
+                                                    <li>Wait a moment for maps to load completely</li>
+                                                </ul>
+                                            </div>
+                                            <div class="solution-item">
+                                                <h6><i class="fas fa-check-circle text-success me-2"></i>Offline Mode</h6>
+                                                <ul>
+                                                    <li>Use GPS location when offline</li>
+                                                    <li>Enter coordinates manually if you know them</li>
+                                                    <li>Save your location for later when online</li>
+                                                    <li>Use cached map data if available</li>
+                                                </ul>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="contactSupport()">
+                            <i class="fas fa-headset me-2"></i>
+                            Contact Support
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ Modal -->
+        <div class="modal fade" id="faqModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-question-circle me-2"></i>
+                            Frequently Asked Questions
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="faq-content">
+                            <!-- Search Box -->
+                            <div class="mb-4">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="faqSearch" 
+                                           placeholder="Search FAQ (e.g., GPS accuracy, coordinate formats)">
+                                </div>
+                            </div>
+
+                            <!-- FAQ Categories -->
+                            <div class="faq-categories">
+                                <div class="faq-category">
+                                    <h6 class="category-title" onclick="toggleFaqCategory('general')">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        General Questions
+                                        <i class="fas fa-chevron-down ms-auto"></i>
+                                    </h6>
+                                    <div class="faq-items" id="faq-general">
+                                        <div class="faq-item">
+                                            <div class="faq-question" onclick="toggleFaqItem('faq-1')">
+                                                <h6>What is the most accurate way to input my farm location?</h6>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </div>
+                                            <div class="faq-answer" id="faq-1">
+                                                <p>GPS location is generally the most accurate method, especially when you're physically at your farm. It provides real-time coordinates with high precision. However, if GPS isn't available or accurate enough, manual coordinate entry or address input are good alternatives.</p>
+                                            </div>
+                                        </div>
+                                        <div class="faq-item">
+                                            <div class="faq-question" onclick="toggleFaqItem('faq-2')">
+                                                <h6>How accurate does my location need to be?</h6>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </div>
+                                            <div class="faq-answer" id="faq-2">
+                                                <p>For most agricultural recommendations, accuracy within 100 meters (about 330 feet) is sufficient. However, for precision agriculture applications, accuracy within 10-20 meters is preferred. The system will indicate the accuracy level of your input.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="faq-category">
+                                    <h6 class="category-title" onclick="toggleFaqCategory('gps')">
+                                        <i class="fas fa-satellite me-2"></i>
+                                        GPS & Location Services
+                                        <i class="fas fa-chevron-down ms-auto"></i>
+                                    </h6>
+                                    <div class="faq-items" id="faq-gps">
+                                        <div class="faq-item">
+                                            <div class="faq-question" onclick="toggleFaqItem('faq-3')">
+                                                <h6>Why is my GPS location inaccurate?</h6>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </div>
+                                            <div class="faq-answer" id="faq-3">
+                                                <p>GPS accuracy can be affected by several factors: weather conditions, tall buildings or trees blocking satellite signals, being indoors, or having location services disabled. Try moving to an open area and ensure high accuracy mode is enabled.</p>
+                                            </div>
+                                        </div>
+                                        <div class="faq-item">
+                                            <div class="faq-question" onclick="toggleFaqItem('faq-4')">
+                                                <h6>How long does it take to get an accurate GPS reading?</h6>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </div>
+                                            <div class="faq-answer" id="faq-4">
+                                                <p>Initial GPS acquisition typically takes 10-30 seconds in good conditions. For high accuracy readings, it may take 1-2 minutes. The system will show you the accuracy level as it improves.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="faq-category">
+                                    <h6 class="category-title" onclick="toggleFaqCategory('coordinates')">
+                                        <i class="fas fa-map-marker-alt me-2"></i>
+                                        Coordinate Formats
+                                        <i class="fas fa-chevron-down ms-auto"></i>
+                                    </h6>
+                                    <div class="faq-items" id="faq-coordinates">
+                                        <div class="faq-item">
+                                            <div class="faq-question" onclick="toggleFaqItem('faq-5')">
+                                                <h6>What coordinate formats are supported?</h6>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </div>
+                                            <div class="faq-answer" id="faq-5">
+                                                <p>The system supports multiple coordinate formats: decimal degrees (40.7128, -74.0060), degrees minutes seconds (40°42'46"N, 74°0'22"W), and UTM coordinates (Zone 18T, 583000E, 4507000N). Decimal degrees are the most common and easiest to use.</p>
+                                            </div>
+                                        </div>
+                                        <div class="faq-item">
+                                            <div class="faq-question" onclick="toggleFaqItem('faq-6')">
+                                                <h6>How do I convert between coordinate formats?</h6>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </div>
+                                            <div class="faq-answer" id="faq-6">
+                                                <p>The system automatically converts between formats when you input coordinates. You can also use online coordinate converters or GPS apps that show multiple formats. Most modern GPS devices can be set to display decimal degrees.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="faq-category">
+                                    <h6 class="category-title" onclick="toggleFaqCategory('agricultural')">
+                                        <i class="fas fa-tractor me-2"></i>
+                                        Agricultural Specific
+                                        <i class="fas fa-chevron-down ms-auto"></i>
+                                    </h6>
+                                    <div class="faq-items" id="faq-agricultural">
+                                        <div class="faq-item">
+                                            <div class="faq-question" onclick="toggleFaqItem('faq-7')">
+                                                <h6>Why does the system need my exact farm location?</h6>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </div>
+                                            <div class="faq-answer" id="faq-7">
+                                                <p>Your farm location is used to provide accurate weather data, soil information, climate zone data, and region-specific agricultural recommendations. This ensures the advice you receive is tailored to your specific growing conditions.</p>
+                                            </div>
+                                        </div>
+                                        <div class="faq-item">
+                                            <div class="faq-question" onclick="toggleFaqItem('faq-8')">
+                                                <h6>Can I add multiple farm locations?</h6>
+                                                <i class="fas fa-chevron-down"></i>
+                                            </div>
+                                            <div class="faq-answer" id="faq-8">
+                                                <p>Yes, you can add multiple farm locations and fields. This is useful if you farm in different areas or have multiple properties. Each location will have its own set of recommendations based on local conditions.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" onclick="showTroubleshooting()">
+                            <i class="fas fa-tools me-2"></i>
+                            Still Need Help?
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Ticket Modal -->
+        <div class="modal fade" id="supportTicketModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-success text-white">
+                        <h5 class="modal-title">
+                            <i class="fas fa-ticket-alt me-2"></i>
+                            Contact Support
+                        </h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="supportTicketForm">
+                            <div class="mb-3">
+                                <label for="supportCategory" class="form-label">Issue Category</label>
+                                <select class="form-select" id="supportCategory" required>
+                                    <option value="">Select a category</option>
+                                    <option value="gps">GPS Location Issues</option>
+                                    <option value="coordinates">Coordinate Input Problems</option>
+                                    <option value="address">Address Input Issues</option>
+                                    <option value="network">Network/Connectivity</option>
+                                    <option value="general">General Location Input</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="supportPriority" class="form-label">Priority</label>
+                                <select class="form-select" id="supportPriority" required>
+                                    <option value="low">Low - General question</option>
+                                    <option value="medium" selected>Medium - Need assistance</option>
+                                    <option value="high">High - Blocking my work</option>
+                                    <option value="urgent">Urgent - Critical issue</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="supportSubject" class="form-label">Subject</label>
+                                <input type="text" class="form-control" id="supportSubject" 
+                                       placeholder="Brief description of your issue" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="supportDescription" class="form-label">Description</label>
+                                <textarea class="form-control" id="supportDescription" rows="4" 
+                                          placeholder="Please describe your issue in detail. Include any error messages, steps you've tried, and what you expected to happen." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="supportContact" class="form-label">Contact Information</label>
+                                <input type="email" class="form-control" id="supportContact" 
+                                       placeholder="Your email address" required>
+                            </div>
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="supportAttachLogs">
+                                    <label class="form-check-label" for="supportAttachLogs">
+                                        Attach diagnostic information (recommended)
+                                    </label>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-success" onclick="submitSupportTicket()">
+                            <i class="fas fa-paper-plane me-2"></i>
+                            Submit Ticket
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Live Chat Integration -->
+        <div class="live-chat-widget" id="liveChatWidget" style="display: none;">
+            <div class="chat-header" onclick="toggleChatWindow()">
+                <div class="chat-status">
+                    <div class="status-indicator online"></div>
+                    <span>Support Chat</span>
+                </div>
+                <div class="chat-controls">
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="minimizeChat()">
+                        <i class="fas fa-minus"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-light" onclick="closeChat()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-window" id="chatWindow">
+                <div class="chat-messages" id="chatMessages">
+                    <div class="chat-message bot-message">
+                        <div class="message-content">
+                            <p>Hello! I'm here to help with your location input questions. How can I assist you today?</p>
+                        </div>
+                        <div class="message-time">Just now</div>
+                    </div>
+                </div>
+                <div class="chat-input">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="chatInput" 
+                               placeholder="Type your message..." onkeypress="handleChatKeyPress(event)">
+                        <button class="btn btn-primary" onclick="sendChatMessage()">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chat Toggle Button -->
+        <button class="btn btn-primary chat-toggle-btn" id="chatToggleBtn" onclick="showChatWidget()">
+            <i class="fas fa-comments"></i>
+            <span class="chat-badge" id="chatBadge" style="display: none;">1</span>
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="/static/js/mobile-location-input.js"></script>
+    <script src="/static/js/mobile-location-input-enhanced.js"></script>
+    <script src="/static/js/user-guidance-system.js"></script>
+    <script src="/static/js/video-tutorial-system.js"></script>
+    <script src="/static/js/user-feedback-system.js"></script>
+    <script src="/static/js/help-analytics-system.js"></script>
+    
+    <script>
+        // Initialize enhanced mobile location input
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMobileLocationInput();
+            initializeEnhancedMobileFeatures();
+            initializeUserGuidanceSystem();
+            initializeVideoTutorialSystem();
+            initializeUserFeedbackSystem();
+            initializeHelpAnalyticsSystem();
+        });
+    </script>
+</body>
+</html>

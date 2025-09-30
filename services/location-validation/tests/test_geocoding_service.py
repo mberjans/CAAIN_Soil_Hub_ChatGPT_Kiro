@@ -21,7 +21,9 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../src/services'))
 
 from geocoding_service import (
     GeocodingService, NominatimProvider, GeocodingCache,
-    GeocodingResult, AddressResult, AddressSuggestion, GeocodingError
+    GeocodingResult, AddressResult, AddressSuggestion, GeocodingError,
+    AgriculturalEnhancementService, AgriculturalContext,
+    BatchGeocodingRequest, BatchGeocodingResponse
 )
 
 
@@ -516,6 +518,289 @@ class TestGeocodingErrorHandling:
                 await self.service.geocode_address("Test Address")
             
             assert "Invalid response" in str(exc_info.value)
+
+
+class TestAgriculturalEnhancementService:
+    """Test the agricultural enhancement service functionality."""
+    
+    def setup_method(self):
+        """Set up test agricultural enhancement service."""
+        self.service = AgriculturalEnhancementService()
+    
+    @pytest.mark.asyncio
+    async def test_enhance_with_agricultural_context_success(self):
+        """Test successful agricultural context enhancement."""
+        # Mock the HTTP session and responses
+        mock_session = AsyncMock()
+        mock_response = AsyncMock()
+        mock_response.status = 200
+        mock_response.json = AsyncMock(return_value={
+            'primary_zone': {
+                'hardiness_zone': '5a',
+                'koppen_class': 'Dfa'
+            },
+            'metadata': {
+                'elevation': 300,
+                'growing_season_days': 180,
+                'frost_free_days': 160,
+                'agricultural_suitability': 'Good'
+            }
+        })
+        
+        mock_soil_response = AsyncMock()
+        mock_soil_response.status = 200
+        mock_soil_response.json = AsyncMock(return_value={
+            'soil_survey_area': 'Story County',
+            'soil_type': 'Clay Loam',
+            'drainage_class': 'Well Drained'
+        })
+        
+        mock_session.get.return_value.__aenter__.return_value = mock_response
+        mock_session.post.return_value.__aenter__.return_value = mock_soil_response
+        
+        with patch.object(self.service, '_get_session', return_value=mock_session):
+            components = {'county': 'Story', 'state': 'Iowa'}
+            result = await self.service.enhance_with_agricultural_context(42.0308, -93.6319, components)
+            
+            assert isinstance(result, AgriculturalContext)
+            assert result.usda_zone == '5a'
+            assert result.climate_zone == 'Dfa'
+            assert result.soil_survey_area == 'Story County'
+            assert result.agricultural_district == 'Corn Belt'
+            assert result.county == 'Story'
+            assert result.state == 'Iowa'
+            assert result.elevation_meters == 300
+            assert result.growing_season_days == 180
+            assert result.frost_free_days == 160
+            assert result.agricultural_suitability == 'Good'
+    
+    @pytest.mark.asyncio
+    async def test_enhance_with_agricultural_context_fallback(self):
+        """Test agricultural context enhancement with service failures."""
+        # Mock session that returns error responses
+        mock_session = AsyncMock()
+        mock_response = AsyncMock()
+        mock_response.status = 500
+        mock_session.get.return_value.__aenter__.return_value = mock_response
+        mock_session.post.return_value.__aenter__.return_value = mock_response
+        
+        with patch.object(self.service, '_get_session', return_value=mock_session):
+            components = {'county': 'Story', 'state': 'Iowa'}
+            result = await self.service.enhance_with_agricultural_context(42.0308, -93.6319, components)
+            
+            # Should return basic context from components
+            assert isinstance(result, AgriculturalContext)
+            assert result.county == 'Story'
+            assert result.state == 'Iowa'
+            assert result.usda_zone is None
+            assert result.climate_zone is None
+    
+    def test_extract_agricultural_district(self):
+        """Test agricultural district extraction."""
+        # Test Corn Belt states
+        components = {'state': 'Iowa', 'county': 'Story'}
+        district = self.service._extract_agricultural_district(components)
+        assert district == 'Corn Belt'
+        
+        # Test Wheat Belt states
+        components = {'state': 'Kansas', 'county': 'Sedgwick'}
+        district = self.service._extract_agricultural_district(components)
+        assert district == 'Wheat Belt'
+        
+        # Test unknown state
+        components = {'state': 'Unknown', 'county': 'Unknown'}
+        district = self.service._extract_agricultural_district(components)
+        assert district is None
+    
+    @pytest.mark.asyncio
+    async def test_close_session(self):
+        """Test session cleanup."""
+        mock_session = AsyncMock()
+        self.service.session = mock_session
+        
+        await self.service.close()
+        
+        mock_session.close.assert_called_once()
+
+
+class TestEnhancedGeocodingService:
+    """Test the enhanced geocoding service with agricultural context."""
+    
+    def setup_method(self):
+        """Set up test enhanced geocoding service."""
+        self.service = GeocodingService()
+    
+    def teardown_method(self):
+        """Clean up after tests."""
+        asyncio.create_task(self.service.close())
+    
+    @pytest.mark.asyncio
+    async def test_geocode_with_agricultural_context(self):
+        """Test geocoding with agricultural context enhancement."""
+        # Mock the provider and agricultural enhancement
+        mock_result = GeocodingResult(
+            latitude=42.0308,
+            longitude=-93.6319,
+            address="Ames, Iowa",
+            display_name="Ames, Story County, Iowa, USA",
+            confidence=0.9,
+            provider="nominatim",
+            components={'county': 'Story', 'state': 'Iowa'}
+        )
+        
+        mock_agricultural_context = AgriculturalContext(
+            usda_zone='5a',
+            climate_zone='Dfa',
+            soil_survey_area='Story County',
+            agricultural_district='Corn Belt',
+            county='Story',
+            state='Iowa',
+            elevation_meters=300,
+            growing_season_days=180,
+            frost_free_days=160,
+            agricultural_suitability='Good'
+        )
+        
+        with patch.object(self.service.primary_provider, 'geocode', return_value=mock_result):
+            with patch.object(self.service.agricultural_enhancement, 'enhance_with_agricultural_context', 
+                            return_value=mock_agricultural_context):
+                with patch.object(self.service.cache, 'get', return_value=None):
+                    with patch.object(self.service.cache, 'set', return_value=None):
+                        result = await self.service.geocode_address("Ames, Iowa", include_agricultural_context=True)
+                        
+                        assert result.agricultural_context is not None
+                        assert result.agricultural_context.usda_zone == '5a'
+                        assert result.agricultural_context.climate_zone == 'Dfa'
+                        assert result.agricultural_context.agricultural_district == 'Corn Belt'
+    
+    @pytest.mark.asyncio
+    async def test_geocode_without_agricultural_context(self):
+        """Test geocoding without agricultural context enhancement."""
+        mock_result = GeocodingResult(
+            latitude=42.0308,
+            longitude=-93.6319,
+            address="Ames, Iowa",
+            display_name="Ames, Story County, Iowa, USA",
+            confidence=0.9,
+            provider="nominatim",
+            components={'county': 'Story', 'state': 'Iowa'}
+        )
+        
+        with patch.object(self.service.primary_provider, 'geocode', return_value=mock_result):
+            with patch.object(self.service.cache, 'get', return_value=None):
+                with patch.object(self.service.cache, 'set', return_value=None):
+                    result = await self.service.geocode_address("Ames, Iowa", include_agricultural_context=False)
+                    
+                    assert result.agricultural_context is None
+    
+    @pytest.mark.asyncio
+    async def test_reverse_geocode_with_agricultural_context(self):
+        """Test reverse geocoding with agricultural context enhancement."""
+        mock_result = AddressResult(
+            address="Ames, Iowa",
+            display_name="Ames, Story County, Iowa, USA",
+            components={'county': 'Story', 'state': 'Iowa'},
+            confidence=0.9,
+            provider="nominatim"
+        )
+        
+        mock_agricultural_context = AgriculturalContext(
+            usda_zone='5a',
+            climate_zone='Dfa',
+            soil_survey_area='Story County',
+            agricultural_district='Corn Belt',
+            county='Story',
+            state='Iowa'
+        )
+        
+        with patch.object(self.service.primary_provider, 'reverse_geocode', return_value=mock_result):
+            with patch.object(self.service.agricultural_enhancement, 'enhance_with_agricultural_context', 
+                            return_value=mock_agricultural_context):
+                with patch.object(self.service.cache, 'get', return_value=None):
+                    with patch.object(self.service.cache, 'set', return_value=None):
+                        result = await self.service.reverse_geocode(42.0308, -93.6319, include_agricultural_context=True)
+                        
+                        assert result.agricultural_context is not None
+                        assert result.agricultural_context.usda_zone == '5a'
+                        assert result.agricultural_context.climate_zone == 'Dfa'
+    
+    @pytest.mark.asyncio
+    async def test_batch_geocode_success(self):
+        """Test successful batch geocoding."""
+        addresses = ["Ames, Iowa", "Des Moines, Iowa", "Cedar Rapids, Iowa"]
+        
+        mock_results = [
+            GeocodingResult(
+                latitude=42.0308, longitude=-93.6319, address="Ames, Iowa",
+                display_name="Ames, Story County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Story', 'state': 'Iowa'}
+            ),
+            GeocodingResult(
+                latitude=41.5868, longitude=-93.6250, address="Des Moines, Iowa",
+                display_name="Des Moines, Polk County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Polk', 'state': 'Iowa'}
+            ),
+            GeocodingResult(
+                latitude=41.9778, longitude=-91.6656, address="Cedar Rapids, Iowa",
+                display_name="Cedar Rapids, Linn County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Linn', 'state': 'Iowa'}
+            )
+        ]
+        
+        mock_agricultural_context = AgriculturalContext(
+            usda_zone='5a', climate_zone='Dfa', agricultural_district='Corn Belt'
+        )
+        
+        request = BatchGeocodingRequest(
+            addresses=addresses,
+            include_agricultural_context=True
+        )
+        
+        with patch.object(self.service, 'geocode_address', side_effect=mock_results):
+            with patch.object(self.service.agricultural_enhancement, 'enhance_with_agricultural_context', 
+                            return_value=mock_agricultural_context):
+                result = await self.service.batch_geocode(request)
+                
+                assert isinstance(result, BatchGeocodingResponse)
+                assert result.success_count == 3
+                assert result.failure_count == 0
+                assert len(result.results) == 3
+                assert len(result.failed_addresses) == 0
+                assert result.processing_time_ms > 0
+    
+    @pytest.mark.asyncio
+    async def test_batch_geocode_with_failures(self):
+        """Test batch geocoding with some failures."""
+        addresses = ["Ames, Iowa", "Invalid Address", "Des Moines, Iowa"]
+        
+        mock_results = [
+            GeocodingResult(
+                latitude=42.0308, longitude=-93.6319, address="Ames, Iowa",
+                display_name="Ames, Story County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Story', 'state': 'Iowa'}
+            ),
+            None,  # Simulate failure
+            GeocodingResult(
+                latitude=41.5868, longitude=-93.6250, address="Des Moines, Iowa",
+                display_name="Des Moines, Polk County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Polk', 'state': 'Iowa'}
+            )
+        ]
+        
+        request = BatchGeocodingRequest(
+            addresses=addresses,
+            include_agricultural_context=False
+        )
+        
+        with patch.object(self.service, 'geocode_address', side_effect=mock_results):
+            result = await self.service.batch_geocode(request)
+            
+            assert isinstance(result, BatchGeocodingResponse)
+            assert result.success_count == 2
+            assert result.failure_count == 1
+            assert len(result.results) == 2
+            assert len(result.failed_addresses) == 1
+            assert "Invalid Address" in result.failed_addresses
 
 
 if __name__ == "__main__":

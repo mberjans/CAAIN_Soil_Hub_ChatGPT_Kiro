@@ -1,0 +1,767 @@
+/* Mobile Location Input Styles */
+
+:root {
+    --primary-color: #28a745;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    --border-radius: 12px;
+    --transition: all 0.3s ease;
+    --shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    --shadow-hover: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Mobile Header */
+.mobile-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: var(--primary-color);
+    color: white;
+    padding: 0.75rem 0;
+    z-index: 1000;
+    box-shadow: var(--shadow);
+}
+
+.mobile-header .mobile-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.mobile-nav-btn {
+    color: white !important;
+    font-size: 1.25rem;
+    padding: 0.5rem;
+    min-width: 44px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.mobile-nav-btn:active {
+    transform: scale(0.95);
+}
+
+/* Main Content */
+.mobile-main {
+    margin-top: 80px;
+    padding: 1rem;
+    padding-bottom: 100px; /* Space for action buttons */
+}
+
+/* Offline Indicator */
+.offline-indicator {
+    position: fixed;
+    top: 80px;
+    left: 0;
+    right: 0;
+    background: var(--warning-color);
+    color: var(--dark-color);
+    text-align: center;
+    padding: 0.5rem;
+    z-index: 999;
+    display: none;
+    font-weight: 500;
+}
+
+.offline-indicator.show {
+    display: block;
+}
+
+/* Location Methods */
+.location-methods {
+    margin-bottom: 2rem;
+}
+
+.method-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    margin-bottom: 1rem;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.method-card.active {
+    border: 2px solid var(--primary-color);
+    box-shadow: var(--shadow-hover);
+}
+
+.method-header {
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.method-header:active {
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.method-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-right: 1rem;
+    flex-shrink: 0;
+}
+
+.method-info {
+    flex: 1;
+}
+
+.method-info h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: var(--dark-color);
+}
+
+.method-info p {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin: 0;
+}
+
+.method-toggle {
+    font-size: 1.25rem;
+    color: var(--secondary-color);
+    transition: var(--transition);
+}
+
+.method-card.active .method-toggle {
+    transform: rotate(180deg);
+}
+
+.method-content {
+    padding: 0 1rem 1rem 1rem;
+    display: none;
+}
+
+.method-card.active .method-content {
+    display: block;
+}
+
+/* GPS Status */
+.gps-status {
+    text-align: center;
+    padding: 1rem;
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    margin-bottom: 1rem;
+}
+
+.status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.status-indicator i {
+    color: var(--primary-color);
+}
+
+/* GPS Controls */
+.gps-controls .btn {
+    min-height: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: var(--border-radius);
+}
+
+.gps-options {
+    background: var(--light-color);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+}
+
+.gps-options .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.gps-options .form-check:last-child {
+    margin-bottom: 0;
+}
+
+/* Location Display */
+.location-display {
+    background: var(--light-color);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    margin-top: 1rem;
+}
+
+.coordinates {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.coord-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.coord-item:last-child {
+    border-bottom: none;
+}
+
+.coord-item label {
+    font-weight: 500;
+    color: var(--dark-color);
+    margin: 0;
+}
+
+.coord-item span {
+    font-family: 'Courier New', monospace;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* Mobile Map */
+.mobile-map-container {
+    position: relative;
+    height: 300px;
+    border-radius: var(--border-radius);
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+
+.mobile-map {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--border-radius);
+}
+
+.map-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.map-control-btn {
+    width: 44px;
+    height: 44px;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    transition: var(--transition);
+}
+
+.map-control-btn:active {
+    transform: scale(0.95);
+    background: var(--light-color);
+}
+
+.map-instructions {
+    background: var(--light-color);
+    padding: 1rem;
+    border-radius: var(--border-radius);
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.map-instructions p {
+    margin: 0 0 0.5rem 0;
+    display: flex;
+    align-items: center;
+}
+
+.map-instructions p:last-child {
+    margin-bottom: 0;
+}
+
+/* Input Sections */
+.input-section {
+    margin-bottom: 1.5rem;
+}
+
+.input-section:last-child {
+    margin-bottom: 0;
+}
+
+.input-section .form-label {
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.form-control-lg {
+    min-height: 50px;
+    font-size: 1rem;
+    border-radius: var(--border-radius);
+    border: 2px solid #e9ecef;
+    transition: var(--transition);
+}
+
+.form-control-lg:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+}
+
+/* Address Suggestions */
+.address-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-top: none;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--shadow);
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    display: none;
+}
+
+.suggestion-item {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item:active {
+    background: var(--light-color);
+}
+
+.suggestion-item .suggestion-text {
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+.suggestion-item .suggestion-details {
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+    margin-top: 0.25rem;
+}
+
+/* Format Toggle */
+.format-toggle {
+    display: flex;
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+    padding: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.format-btn {
+    flex: 1;
+    padding: 0.75rem;
+    border: none;
+    background: transparent;
+    color: var(--secondary-color);
+    font-weight: 500;
+    border-radius: calc(var(--border-radius) - 0.25rem);
+    transition: var(--transition);
+}
+
+.format-btn.active {
+    background: white;
+    color: var(--primary-color);
+    box-shadow: var(--shadow);
+}
+
+.format-btn:active {
+    transform: scale(0.98);
+}
+
+/* Validation Section */
+.validation-section {
+    margin-bottom: 2rem;
+}
+
+.validation-card {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+}
+
+.validation-header {
+    background: var(--primary-color);
+    color: white;
+    padding: 1rem;
+}
+
+.validation-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.validation-content {
+    padding: 1rem;
+}
+
+.validation-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.validation-item:last-child {
+    border-bottom: none;
+}
+
+.validation-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.validation-icon.success {
+    background: var(--success-color);
+    color: white;
+}
+
+.validation-icon.warning {
+    background: var(--warning-color);
+    color: var(--dark-color);
+}
+
+.validation-icon.error {
+    background: var(--danger-color);
+    color: white;
+}
+
+.validation-text {
+    flex: 1;
+    font-size: 0.9rem;
+    color: var(--dark-color);
+}
+
+/* Action Buttons */
+.action-buttons {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    display: flex;
+    gap: 1rem;
+    z-index: 1000;
+}
+
+.action-buttons .btn {
+    flex: 1;
+    min-height: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: var(--border-radius);
+}
+
+/* Location History */
+.location-history {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 1rem;
+    margin-bottom: 2rem;
+}
+
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.history-header h4 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    padding: 0.75rem;
+    border: 1px solid #e9ecef;
+    border-radius: var(--border-radius);
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.history-item:last-child {
+    margin-bottom: 0;
+}
+
+.history-item:active {
+    background: var(--light-color);
+    transform: scale(0.98);
+}
+
+.history-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--light-color);
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.history-info {
+    flex: 1;
+}
+
+.history-info .location-name {
+    font-weight: 500;
+    color: var(--dark-color);
+    margin: 0 0 0.25rem 0;
+}
+
+.history-info .location-coords {
+    font-size: 0.8rem;
+    color: var(--secondary-color);
+    font-family: 'Courier New', monospace;
+    margin: 0;
+}
+
+.history-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.history-action-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    color: var(--secondary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.history-action-btn:active {
+    background: var(--light-color);
+    transform: scale(0.95);
+}
+
+/* Loading Overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+}
+
+.loading-content {
+    background: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    text-align: center;
+    box-shadow: var(--shadow-hover);
+}
+
+.loading-content p {
+    margin: 0;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    .method-header:hover,
+    .history-item:hover,
+    .suggestion-item:hover {
+        background: transparent;
+    }
+    
+    .method-header:active,
+    .history-item:active,
+    .suggestion-item:active {
+        background: rgba(40, 167, 69, 0.1);
+    }
+    
+    .btn:active {
+        transform: scale(0.95);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .mobile-main {
+        padding: 0.75rem;
+    }
+    
+    .method-header {
+        padding: 0.75rem;
+    }
+    
+    .method-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 1rem;
+    }
+    
+    .method-info h3 {
+        font-size: 1rem;
+    }
+    
+    .method-info p {
+        font-size: 0.8rem;
+    }
+    
+    .mobile-map-container {
+        height: 250px;
+    }
+    
+    .action-buttons {
+        padding: 0.75rem;
+        gap: 0.75rem;
+    }
+    
+    .action-buttons .btn {
+        font-size: 1rem;
+        min-height: 45px;
+    }
+}
+
+@media (min-width: 768px) {
+    .mobile-main {
+        max-width: 600px;
+        margin: 80px auto 0;
+    }
+    
+    .action-buttons {
+        max-width: 600px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #000000;
+        --secondary-color: #000000;
+        --border-radius: 0;
+    }
+    
+    .method-card,
+    .validation-card,
+    .location-history {
+        border: 2px solid #000000;
+    }
+    
+    .form-control-lg {
+        border-width: 3px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light-color: #1a1a1a;
+        --dark-color: #ffffff;
+        --secondary-color: #cccccc;
+    }
+    
+    body {
+        background: #121212;
+        color: var(--dark-color);
+    }
+    
+    .method-card,
+    .validation-card,
+    .location-history {
+        background: #1e1e1e;
+        border-color: #333;
+    }
+    
+    .form-control-lg {
+        background: #1e1e1e;
+        border-color: #333;
+        color: var(--dark-color);
+    }
+    
+    .form-control-lg:focus {
+        background: #1e1e1e;
+        border-color: var(--primary-color);
+    }
+    
+    .address-suggestions {
+        background: #1e1e1e;
+        border-color: #333;
+    }
+    
+    .suggestion-item {
+        border-color: #333;
+    }
+    
+    .action-buttons {
+        background: #1e1e1e;
+        border-color: #333;
+    }
+}

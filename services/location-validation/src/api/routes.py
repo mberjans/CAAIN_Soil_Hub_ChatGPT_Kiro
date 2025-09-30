@@ -29,6 +29,9 @@ from geocoding_service import (
 )
 from coordinate_utils import CoordinateValidator, CoordinateConverter, CoordinateParser
 
+# Import address validation routes
+from .address_validation_routes import router as address_validation_router
+
 logger = logging.getLogger(__name__)
 
 # Create router
@@ -955,5 +958,8 @@ async def batch_geocode_addresses(request: BatchGeocodingRequest) -> BatchGeocod
 # Import location management routes
 from .location_routes import router as location_management_router
 
+# Include address validation routes
+router.include_router(address_validation_router)
+
 # Export routers
-__all__ = ['router', 'location_management_router']
+__all__ = ['router', 'location_management_router', 'address_validation_router']

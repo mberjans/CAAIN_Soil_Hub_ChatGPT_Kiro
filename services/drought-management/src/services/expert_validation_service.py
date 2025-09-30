@@ -24,7 +24,7 @@ import json
 
 from ..models.drought_models import (
     DroughtAssessmentRequest, DroughtAssessmentResponse,
-    ConservationRecommendation, WaterSavingsEstimate
+    ConservationPractice, WaterSavingsPotential
 )
 from ..database.drought_db import DroughtManagementDB
 
@@ -89,8 +89,8 @@ class ValidationRequest:
     farm_location: Dict[str, Any]
     field_conditions: Dict[str, Any]
     drought_assessment: DroughtAssessmentResponse
-    conservation_recommendations: List[ConservationRecommendation]
-    water_savings_estimates: List[WaterSavingsEstimate]
+    conservation_recommendations: List[ConservationPractice]
+    water_savings_estimates: List[WaterSavingsPotential]
     validation_criteria: List[ValidationCriteria]
     priority_level: str
     requested_expert_types: List[ExpertType]
@@ -275,8 +275,8 @@ class ExpertValidationService:
         farm_location: Dict[str, Any],
         field_conditions: Dict[str, Any],
         drought_assessment: DroughtAssessmentResponse,
-        conservation_recommendations: List[ConservationRecommendation],
-        water_savings_estimates: List[WaterSavingsEstimate],
+        conservation_recommendations: List[ConservationPractice],
+        water_savings_estimates: List[WaterSavingsPotential],
         priority_level: str = "normal"
     ) -> ValidationRequest:
         """
@@ -344,8 +344,8 @@ class ExpertValidationService:
     
     def _determine_validation_criteria(
         self,
-        conservation_recommendations: List[ConservationRecommendation],
-        water_savings_estimates: List[WaterSavingsEstimate]
+        conservation_recommendations: List[ConservationPractice],
+        water_savings_estimates: List[WaterSavingsPotential]
     ) -> List[ValidationCriteria]:
         """Determine validation criteria based on recommendation complexity."""
         criteria = [ValidationCriteria.AGRICULTURAL_SOUNDNESS, ValidationCriteria.SAFETY]
@@ -376,7 +376,7 @@ class ExpertValidationService:
         self,
         farm_location: Dict[str, Any],
         field_conditions: Dict[str, Any],
-        conservation_recommendations: List[ConservationRecommendation]
+        conservation_recommendations: List[ConservationPractice]
     ) -> List[ExpertType]:
         """Determine required expert types based on recommendations."""
         expert_types = [ExpertType.DROUGHT_SPECIALIST]

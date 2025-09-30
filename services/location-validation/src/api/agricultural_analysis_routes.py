@@ -10,7 +10,9 @@ API endpoints for comprehensive agricultural analysis including:
 - Watershed information and water management
 """
 
+import asyncio
 import logging
+from datetime import datetime
 from typing import Dict, Any
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel
@@ -408,6 +410,171 @@ async def get_watershed_information(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Internal server error during watershed information retrieval"
+        )
+
+
+@router.post("/{field_id}/comprehensive-analysis")
+async def perform_comprehensive_field_analysis(
+    field_id: str,
+    request_data: Dict[str, Any],
+    current_user: dict = Depends(get_current_user)
+) -> Dict[str, Any]:
+    """
+    Perform comprehensive field analysis combining all agricultural analysis capabilities.
+    
+    This endpoint provides a complete field assessment including:
+    - Slope analysis and topographic assessment
+    - Drainage evaluation and flood risk assessment
+    - Field accessibility evaluation
+    - Soil survey data integration (SSURGO)
+    - Watershed information and water management
+    - Field productivity analysis
+    - Field optimization recommendations
+    
+    Args:
+        field_id: Unique identifier for the field
+        request_data: Request data containing field characteristics
+        current_user: Current authenticated user
+        
+    Returns:
+        Dictionary with comprehensive field analysis results
+        
+    Raises:
+        HTTPException: If analysis fails or field not found
+    """
+    try:
+        logger.info(f"Performing comprehensive analysis for field {field_id}")
+        
+        # Import field productivity and optimization services
+        from ..services.field_productivity_service import field_productivity_service, FieldProductivityRequest, Coordinates
+        from ..services.field_optimization_service import field_optimization_service, FieldOptimizationRequest
+        
+        # Extract coordinates and boundary from request
+        coordinates = Coordinates(**request_data.get('coordinates', {}))
+        boundary = request_data.get('boundary', {})
+        area_acres = request_data.get('area_acres', 0.0)
+        
+        # Perform parallel analyses
+        slope_task = agricultural_analysis_service.perform_slope_analysis(
+            SlopeAnalysisRequest(
+                field_id=field_id,
+                coordinates=coordinates,
+                boundary=boundary
+            )
+        )
+        
+        drainage_task = agricultural_analysis_service.perform_drainage_assessment(
+            DrainageAssessmentRequest(
+                field_id=field_id,
+                coordinates=coordinates,
+                boundary=boundary,
+                area=area_acres
+            )
+        )
+        
+        accessibility_task = agricultural_analysis_service.evaluate_field_accessibility(
+            AccessibilityEvaluationRequest(
+                field_id=field_id,
+                coordinates=coordinates,
+                boundary=boundary,
+                area=area_acres
+            )
+        )
+        
+        soil_task = agricultural_analysis_service.get_soil_survey_data(
+            SoilSurveyRequest(
+                field_id=field_id,
+                coordinates=coordinates,
+                boundary=boundary
+            )
+        )
+        
+        watershed_task = agricultural_analysis_service.get_watershed_information(
+            WatershedInfoRequest(
+                field_id=field_id,
+                coordinates=coordinates,
+                boundary=boundary
+            )
+        )
+        
+        # Field productivity analysis
+        productivity_request = FieldProductivityRequest(
+            field_id=field_id,
+            field_name=request_data.get('field_name', 'Unknown Field'),
+            coordinates=coordinates,
+            boundary=boundary,
+            area_acres=area_acres,
+            soil_type=request_data.get('soil_type'),
+            drainage_class=request_data.get('drainage_class'),
+            slope_percent=request_data.get('slope_percent'),
+            organic_matter_percent=request_data.get('organic_matter_percent'),
+            irrigation_available=request_data.get('irrigation_available', False),
+            tile_drainage=request_data.get('tile_drainage', False),
+            accessibility=request_data.get('accessibility')
+        )
+        
+        productivity_task = field_productivity_service.analyze_field_productivity(productivity_request)
+        
+        # Field optimization analysis
+        optimization_request = FieldOptimizationRequest(
+            field_id=field_id,
+            field_name=request_data.get('field_name', 'Unknown Field'),
+            coordinates=coordinates,
+            boundary=boundary,
+            area_acres=area_acres,
+            soil_type=request_data.get('soil_type'),
+            drainage_class=request_data.get('drainage_class'),
+            slope_percent=request_data.get('slope_percent'),
+            organic_matter_percent=request_data.get('organic_matter_percent'),
+            irrigation_available=request_data.get('irrigation_available', False),
+            tile_drainage=request_data.get('tile_drainage', False),
+            accessibility=request_data.get('accessibility'),
+            current_equipment=request_data.get('current_equipment'),
+            budget_constraints=request_data.get('budget_constraints'),
+            optimization_goals=request_data.get('optimization_goals')
+        )
+        
+        optimization_task = field_optimization_service.optimize_field(optimization_request)
+        
+        # Wait for all analyses to complete
+        slope_result, drainage_result, accessibility_result, soil_result, watershed_result, productivity_result, optimization_result = await asyncio.gather(
+            slope_task, drainage_task, accessibility_task, soil_task, watershed_task, productivity_task, optimization_task
+        )
+        
+        # Compile comprehensive results
+        comprehensive_analysis = {
+            "field_id": field_id,
+            "analysis_timestamp": datetime.utcnow(),
+            "agricultural_analysis": {
+                "slope_analysis": slope_result.dict(),
+                "drainage_assessment": drainage_result.dict(),
+                "accessibility_evaluation": accessibility_result.dict(),
+                "soil_survey": soil_result.dict(),
+                "watershed_information": watershed_result.dict()
+            },
+            "productivity_analysis": productivity_result.dict(),
+            "optimization_analysis": optimization_result.dict(),
+            "summary": {
+                "overall_field_score": productivity_result.overall_productivity_score,
+                "optimization_potential": optimization_result.optimization_potential,
+                "key_recommendations": [
+                    f"Soil Health: {productivity_result.soil_analysis.soil_quality_score}/10",
+                    f"Climate Suitability: {productivity_result.climate_analysis.climate_score}/10",
+                    f"Accessibility: {productivity_result.accessibility_analysis.accessibility_score}/10",
+                    f"Optimization Score: {optimization_result.overall_optimization_score}/10"
+                ],
+                "priority_actions": optimization_result.implementation_plan[0].priority_recommendations if optimization_result.implementation_plan else []
+            }
+        }
+        
+        logger.info(f"Comprehensive analysis completed for field {field_id}")
+        return comprehensive_analysis
+        
+    except Exception as e:
+        logger.error(f"Error in comprehensive analysis for field {field_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error during comprehensive field analysis"
         )
 
 

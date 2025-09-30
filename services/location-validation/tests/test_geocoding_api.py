@@ -22,7 +22,10 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../../../databases/p
 
 from fastapi import FastAPI
 from api.routes import router
-from geocoding_service import GeocodingResult, AddressResult, AddressSuggestion, GeocodingError
+from geocoding_service import (
+    GeocodingResult, AddressResult, AddressSuggestion, GeocodingError,
+    AgriculturalContext, BatchGeocodingRequest, BatchGeocodingResponse
+)
 
 
 # Create test app
@@ -390,6 +393,269 @@ class TestGeocodingPerformance:
             
             assert response.status_code == 200
             assert response_time < 3.0  # Suggestions should be fast
+
+
+class TestEnhancedGeocodingEndpoints:
+    """Test enhanced geocoding API endpoints with agricultural context."""
+    
+    def test_geocode_with_agricultural_context(self):
+        """Test geocoding endpoint with agricultural context enhancement."""
+        mock_agricultural_context = AgriculturalContext(
+            usda_zone='5a',
+            climate_zone='Dfa',
+            soil_survey_area='Story County',
+            agricultural_district='Corn Belt',
+            county='Story',
+            state='Iowa',
+            elevation_meters=300,
+            growing_season_days=180,
+            frost_free_days=160,
+            agricultural_suitability='Good'
+        )
+        
+        mock_result = GeocodingResult(
+            latitude=42.0308,
+            longitude=-93.6319,
+            address="Ames, Iowa",
+            display_name="Ames, Story County, Iowa, USA",
+            confidence=0.9,
+            provider="nominatim",
+            agricultural_context=mock_agricultural_context
+        )
+        
+        with patch('api.routes.geocoding_service.geocode_address', return_value=mock_result):
+            response = client.post("/api/v1/validation/geocode?address=Ames, Iowa&include_agricultural_context=true")
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data['latitude'] == 42.0308
+            assert data['longitude'] == -93.6319
+            assert data['address'] == "Ames, Iowa"
+            assert data['confidence'] == 0.9
+            assert data['provider'] == "nominatim"
+            
+            # Check agricultural context
+            assert 'agricultural_context' in data
+            ag_context = data['agricultural_context']
+            assert ag_context['usda_zone'] == '5a'
+            assert ag_context['climate_zone'] == 'Dfa'
+            assert ag_context['soil_survey_area'] == 'Story County'
+            assert ag_context['agricultural_district'] == 'Corn Belt'
+            assert ag_context['county'] == 'Story'
+            assert ag_context['state'] == 'Iowa'
+            assert ag_context['elevation_meters'] == 300
+            assert ag_context['growing_season_days'] == 180
+            assert ag_context['frost_free_days'] == 160
+            assert ag_context['agricultural_suitability'] == 'Good'
+    
+    def test_geocode_without_agricultural_context(self):
+        """Test geocoding endpoint without agricultural context enhancement."""
+        mock_result = GeocodingResult(
+            latitude=42.0308,
+            longitude=-93.6319,
+            address="Ames, Iowa",
+            display_name="Ames, Story County, Iowa, USA",
+            confidence=0.9,
+            provider="nominatim",
+            agricultural_context=None
+        )
+        
+        with patch('api.routes.geocoding_service.geocode_address', return_value=mock_result):
+            response = client.post("/api/v1/validation/geocode?address=Ames, Iowa&include_agricultural_context=false")
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data['latitude'] == 42.0308
+            assert data['longitude'] == -93.6319
+            assert data['address'] == "Ames, Iowa"
+            assert data['confidence'] == 0.9
+            assert data['provider'] == "nominatim"
+            assert data['agricultural_context'] is None
+    
+    def test_reverse_geocode_with_agricultural_context(self):
+        """Test reverse geocoding endpoint with agricultural context enhancement."""
+        mock_agricultural_context = AgriculturalContext(
+            usda_zone='5a',
+            climate_zone='Dfa',
+            soil_survey_area='Story County',
+            agricultural_district='Corn Belt',
+            county='Story',
+            state='Iowa'
+        )
+        
+        mock_result = AddressResult(
+            address="Ames, Iowa",
+            display_name="Ames, Story County, Iowa, USA",
+            components={'county': 'Story', 'state': 'Iowa'},
+            confidence=0.9,
+            provider="nominatim",
+            agricultural_context=mock_agricultural_context
+        )
+        
+        with patch('api.routes.geocoding_service.reverse_geocode', return_value=mock_result):
+            response = client.post("/api/v1/validation/reverse-geocode?latitude=42.0308&longitude=-93.6319&include_agricultural_context=true")
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data['address'] == "Ames, Iowa"
+            assert data['display_name'] == "Ames, Story County, Iowa, USA"
+            assert data['confidence'] == 0.9
+            assert data['provider'] == "nominatim"
+            
+            # Check agricultural context
+            assert 'agricultural_context' in data
+            ag_context = data['agricultural_context']
+            assert ag_context['usda_zone'] == '5a'
+            assert ag_context['climate_zone'] == 'Dfa'
+            assert ag_context['soil_survey_area'] == 'Story County'
+            assert ag_context['agricultural_district'] == 'Corn Belt'
+    
+    def test_batch_geocode_success(self):
+        """Test successful batch geocoding endpoint."""
+        addresses = ["Ames, Iowa", "Des Moines, Iowa", "Cedar Rapids, Iowa"]
+        
+        mock_results = [
+            GeocodingResult(
+                latitude=42.0308, longitude=-93.6319, address="Ames, Iowa",
+                display_name="Ames, Story County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Story', 'state': 'Iowa'},
+                agricultural_context=AgriculturalContext(usda_zone='5a', agricultural_district='Corn Belt')
+            ),
+            GeocodingResult(
+                latitude=41.5868, longitude=-93.6250, address="Des Moines, Iowa",
+                display_name="Des Moines, Polk County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Polk', 'state': 'Iowa'},
+                agricultural_context=AgriculturalContext(usda_zone='5a', agricultural_district='Corn Belt')
+            ),
+            GeocodingResult(
+                latitude=41.9778, longitude=-91.6656, address="Cedar Rapids, Iowa",
+                display_name="Cedar Rapids, Linn County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Linn', 'state': 'Iowa'},
+                agricultural_context=AgriculturalContext(usda_zone='5a', agricultural_district='Corn Belt')
+            )
+        ]
+        
+        mock_batch_response = BatchGeocodingResponse(
+            results=mock_results,
+            failed_addresses=[],
+            processing_time_ms=1500.0,
+            success_count=3,
+            failure_count=0
+        )
+        
+        with patch('api.routes.geocoding_service.batch_geocode', return_value=mock_batch_response):
+            request_data = {
+                "addresses": addresses,
+                "include_agricultural_context": True
+            }
+            
+            response = client.post("/api/v1/validation/batch-geocode", json=request_data)
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data['success_count'] == 3
+            assert data['failure_count'] == 0
+            assert len(data['results']) == 3
+            assert len(data['failed_addresses']) == 0
+            assert data['processing_time_ms'] > 0
+            
+            # Check first result
+            first_result = data['results'][0]
+            assert first_result['latitude'] == 42.0308
+            assert first_result['longitude'] == -93.6319
+            assert first_result['address'] == "Ames, Iowa"
+            assert 'agricultural_context' in first_result
+            assert first_result['agricultural_context']['usda_zone'] == '5a'
+    
+    def test_batch_geocode_with_failures(self):
+        """Test batch geocoding endpoint with some failures."""
+        addresses = ["Ames, Iowa", "Invalid Address", "Des Moines, Iowa"]
+        
+        mock_results = [
+            GeocodingResult(
+                latitude=42.0308, longitude=-93.6319, address="Ames, Iowa",
+                display_name="Ames, Story County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Story', 'state': 'Iowa'}
+            ),
+            GeocodingResult(
+                latitude=41.5868, longitude=-93.6250, address="Des Moines, Iowa",
+                display_name="Des Moines, Polk County, Iowa, USA", confidence=0.9,
+                provider="nominatim", components={'county': 'Polk', 'state': 'Iowa'}
+            )
+        ]
+        
+        mock_batch_response = BatchGeocodingResponse(
+            results=mock_results,
+            failed_addresses=["Invalid Address"],
+            processing_time_ms=2000.0,
+            success_count=2,
+            failure_count=1
+        )
+        
+        with patch('api.routes.geocoding_service.batch_geocode', return_value=mock_batch_response):
+            request_data = {
+                "addresses": addresses,
+                "include_agricultural_context": False
+            }
+            
+            response = client.post("/api/v1/validation/batch-geocode", json=request_data)
+            
+            assert response.status_code == 200
+            data = response.json()
+            
+            assert data['success_count'] == 2
+            assert data['failure_count'] == 1
+            assert len(data['results']) == 2
+            assert len(data['failed_addresses']) == 1
+            assert "Invalid Address" in data['failed_addresses']
+    
+    def test_batch_geocode_validation_errors(self):
+        """Test batch geocoding endpoint validation errors."""
+        # Test empty address list
+        request_data = {
+            "addresses": [],
+            "include_agricultural_context": True
+        }
+        
+        response = client.post("/api/v1/validation/batch-geocode", json=request_data)
+        assert response.status_code == 422
+        data = response.json()
+        assert data['detail']['error']['error_code'] == 'EMPTY_ADDRESS_LIST'
+        
+        # Test too many addresses
+        request_data = {
+            "addresses": [f"Address {i}" for i in range(101)],  # 101 addresses
+            "include_agricultural_context": True
+        }
+        
+        response = client.post("/api/v1/validation/batch-geocode", json=request_data)
+        assert response.status_code == 422
+        data = response.json()
+        assert data['detail']['error']['error_code'] == 'TOO_MANY_ADDRESSES'
+    
+    def test_geocoding_performance_requirements(self):
+        """Test that geocoding endpoints meet performance requirements."""
+        mock_result = GeocodingResult(
+            latitude=42.0308,
+            longitude=-93.6319,
+            address="Ames, Iowa",
+            display_name="Ames, Story County, Iowa, USA",
+            confidence=0.9,
+            provider="nominatim"
+        )
+        
+        with patch('api.routes.geocoding_service.geocode_address', return_value=mock_result):
+            import time
+            start_time = time.time()
+            response = client.post("/api/v1/validation/geocode?address=Ames, Iowa")
+            response_time = time.time() - start_time
+            
+            assert response.status_code == 200
+            assert response_time < 1.0  # Should be under 1 second as per requirements
 
 
 if __name__ == "__main__":

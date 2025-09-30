@@ -18,14 +18,14 @@ from decimal import Decimal
 import numpy as np
 from dataclasses import dataclass
 
-from src.models.drought_models import (
+from ..models.drought_models import (
     DroughtRiskLevel,
     SoilMoistureLevel,
     WeatherImpact,
     DroughtAssessment,
     DroughtRiskAssessment
 )
-from src.models.soil_assessment_models import (
+from ..models.soil_assessment_models import (
     DrainageClass,
     TillageType,
     CoverCropSpecies,

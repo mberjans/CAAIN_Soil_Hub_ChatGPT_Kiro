@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Field Management - CAAIN Soil Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <link rel="stylesheet" href="/static/css/field-management.css">
+    <link rel="stylesheet" href="/static/css/agricultural-analysis.css">
+    <style>
+        .field-management-container {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+        }
+        
+        .field-management-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .field-header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px 20px 0 0;
+            text-align: center;
+        }
+        
+        .field-stats-card {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .field-list-item {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            border-left: 4px solid #4facfe;
+            transition: all 0.3s ease;
+        }
+        
+        .field-list-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        .field-map-container {
+            height: 500px;
+            border-radius: 15px;
+            border: 2px solid #e9ecef;
+            overflow: hidden;
+        }
+        
+        .field-form-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+        }
+        
+        .field-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-field-action {
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-field-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .field-comparison-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .field-template-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .field-template-card:hover {
+            border-color: #4facfe;
+            transform: translateY(-2px);
+        }
+        
+        .bulk-operations-panel {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            color: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .field-search-bar {
+            background: white;
+            border-radius: 25px;
+            padding: 10px 20px;
+            border: 2px solid #e9ecef;
+            margin-bottom: 20px;
+        }
+        
+        .field-search-bar:focus {
+            border-color: #4facfe;
+            box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+        }
+    </style>
+</head>
+<body>
+    <div class="field-management-container">
+        <div class="container-fluid">
+            <!-- Header Section -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="field-management-card">
+                        <div class="field-header">
+                            <h1 class="mb-3">
+                                <i class="fas fa-map-marked-alt me-3"></i>
+                                Field Management System
+                            </h1>
+                            <p class="lead mb-0">Comprehensive field management with visualization, analysis, and optimization tools</p>
+                        </div>
+                        
+                        <!-- Field Statistics -->
+                        <div class="row p-4">
+                            <div class="col-md-3">
+                                <div class="field-stats-card">
+                                    <h3 id="total-fields">0</h3>
+                                    <p class="mb-0">Total Fields</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="field-stats-card">
+                                    <h3 id="total-acres">0</h3>
+                                    <p class="mb-0">Total Acres</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="field-stats-card">
+                                    <h3 id="avg-field-size">0</h3>
+                                    <p class="mb-0">Avg Field Size</p>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="field-stats-card">
+                                    <h3 id="active-fields">0</h3>
+                                    <p class="mb-0">Active Fields</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="row">
+                <!-- Left Panel - Field List and Management -->
+                <div class="col-lg-4">
+                    <!-- Search and Filter -->
+                    <div class="field-management-card mb-4">
+                        <div class="p-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-search me-2"></i>
+                                Search & Filter Fields
+                            </h4>
+                            <div class="field-search-bar">
+                                <input type="text" id="field-search" class="form-control border-0" placeholder="Search fields by name, type, or characteristics...">
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <select id="field-type-filter" class="form-select">
+                                        <option value="">All Field Types</option>
+                                        <option value="cropland">Cropland</option>
+                                        <option value="pasture">Pasture</option>
+                                        <option value="orchard">Orchard</option>
+                                        <option value="vineyard">Vineyard</option>
+                                        <option value="greenhouse">Greenhouse</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <select id="soil-type-filter" class="form-select">
+                                        <option value="">All Soil Types</option>
+                                        <option value="clay">Clay</option>
+                                        <option value="clay_loam">Clay Loam</option>
+                                        <option value="loam">Loam</option>
+                                        <option value="sandy_loam">Sandy Loam</option>
+                                        <option value="sand">Sand</option>
+                                        <option value="silt_loam">Silt Loam</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field Actions -->
+                    <div class="field-management-card mb-4">
+                        <div class="p-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-tools me-2"></i>
+                                Field Operations
+                            </h4>
+                            <div class="field-actions">
+                                <button class="btn btn-primary btn-field-action" onclick="openFieldForm()">
+                                    <i class="fas fa-plus me-2"></i>Add Field
+                                </button>
+                                <button class="btn btn-success btn-field-action" onclick="importFields()">
+                                    <i class="fas fa-upload me-2"></i>Import
+                                </button>
+                                <button class="btn btn-info btn-field-action" onclick="exportFields()">
+                                    <i class="fas fa-download me-2"></i>Export
+                                </button>
+                                <button class="btn btn-warning btn-field-action" onclick="bulkEditFields()">
+                                    <i class="fas fa-edit me-2"></i>Bulk Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field Templates -->
+                    <div class="field-management-card mb-4">
+                        <div class="p-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-layer-group me-2"></i>
+                                Field Templates
+                            </h4>
+                            <div id="field-templates">
+                                <div class="field-template-card" onclick="applyFieldTemplate('corn_field')">
+                                    <h6 class="mb-1">Corn Field Template</h6>
+                                    <small class="text-muted">Standard corn field with optimal characteristics</small>
+                                </div>
+                                <div class="field-template-card" onclick="applyFieldTemplate('soybean_field')">
+                                    <h6 class="mb-1">Soybean Field Template</h6>
+                                    <small class="text-muted">Soybean field configuration</small>
+                                </div>
+                                <div class="field-template-card" onclick="applyFieldTemplate('mixed_crop')">
+                                    <h6 class="mb-1">Mixed Crop Template</h6>
+                                    <small class="text-muted">Multi-crop rotation field</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field List -->
+                    <div class="field-management-card">
+                        <div class="p-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-list me-2"></i>
+                                Field List
+                            </h4>
+                            <div id="field-list">
+                                <!-- Field items will be dynamically loaded here -->
+                                <div class="text-center text-muted py-4">
+                                    <i class="fas fa-map-marked-alt fa-3x mb-3"></i>
+                                    <p>No fields found. Create your first field to get started.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel - Map and Details -->
+                <div class="col-lg-8">
+                    <!-- Interactive Map -->
+                    <div class="field-management-card mb-4">
+                        <div class="p-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-map me-2"></i>
+                                Field Map & Visualization
+                            </h4>
+                            <div class="field-map-container" id="field-map"></div>
+                        </div>
+                    </div>
+
+                    <!-- Field Details Panel -->
+                    <div class="field-management-card mb-4" id="field-details-panel" style="display: none;">
+                        <div class="p-4">
+                            <h4 class="mb-3">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Field Details
+                            </h4>
+                            <div id="field-details-content">
+                                <!-- Field details will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field Comparison Panel -->
+                    <div class="field-comparison-panel" id="field-comparison-panel" style="display: none;">
+                        <h4 class="mb-3">
+                            <i class="fas fa-balance-scale me-2"></i>
+                            Field Comparison
+                        </h4>
+                        <div id="field-comparison-content">
+                            <!-- Comparison content will be loaded here -->
+                        </div>
+                    </div>
+
+                    <!-- Bulk Operations Panel -->
+                    <div class="bulk-operations-panel" id="bulk-operations-panel" style="display: none;">
+                        <h4 class="mb-3">
+                            <i class="fas fa-tasks me-2"></i>
+                            Bulk Operations
+                        </h4>
+                        <div id="bulk-operations-content">
+                            <!-- Bulk operations content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Field Form Modal -->
+    <div class="modal fade" id="fieldFormModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-plus me-2"></i>
+                        Add New Field
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="field-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="field-name" class="form-label">Field Name *</label>
+                                    <input type="text" class="form-control" id="field-name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="field-number" class="form-label">Field Number</label>
+                                    <input type="text" class="form-control" id="field-number">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="field-type" class="form-label">Field Type *</label>
+                                    <select class="form-select" id="field-type" required>
+                                        <option value="">Select field type</option>
+                                        <option value="cropland">Cropland</option>
+                                        <option value="pasture">Pasture</option>
+                                        <option value="orchard">Orchard</option>
+                                        <option value="vineyard">Vineyard</option>
+                                        <option value="greenhouse">Greenhouse</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="size-acres" class="form-label">Size (Acres) *</label>
+                                    <input type="number" class="form-control" id="size-acres" step="0.1" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="soil-type" class="form-label">Soil Type</label>
+                                    <select class="form-select" id="soil-type">
+                                        <option value="">Select soil type</option>
+                                        <option value="clay">Clay</option>
+                                        <option value="clay_loam">Clay Loam</option>
+                                        <option value="loam">Loam</option>
+                                        <option value="sandy_loam">Sandy Loam</option>
+                                        <option value="sand">Sand</option>
+                                        <option value="silt_loam">Silt Loam</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="drainage-class" class="form-label">Drainage Class</label>
+                                    <select class="form-select" id="drainage-class">
+                                        <option value="">Select drainage</option>
+                                        <option value="well_drained">Well Drained</option>
+                                        <option value="moderately_well_drained">Moderately Well Drained</option>
+                                        <option value="somewhat_poorly_drained">Somewhat Poorly Drained</option>
+                                        <option value="poorly_drained">Poorly Drained</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="slope-percent" class="form-label">Slope (%)</label>
+                                    <input type="number" class="form-control" id="slope-percent" step="0.1" min="0" max="100">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="organic-matter" class="form-label">Organic Matter (%)</label>
+                                    <input type="number" class="form-control" id="organic-matter" step="0.1" min="0" max="20">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Field Characteristics</label>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="irrigation-available">
+                                        <label class="form-check-label" for="irrigation-available">
+                                            Irrigation Available
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="tile-drainage">
+                                        <label class="form-check-label" for="tile-drainage">
+                                            Tile Drainage
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="good-accessibility">
+                                        <label class="form-check-label" for="good-accessibility">
+                                            Good Accessibility
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="field-notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="field-notes" rows="3"></textarea>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Field Boundary</label>
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle me-2"></i>
+                                Draw field boundary on the map or enter coordinates manually
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <label for="boundary-coordinates" class="form-label">Boundary Coordinates (JSON)</label>
+                                    <textarea class="form-control" id="boundary-coordinates" rows="4" placeholder='{"type": "Polygon", "coordinates": [[[lat1, lon1], [lat2, lon2], ...]]}'></textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="d-grid gap-2">
+                                        <button type="button" class="btn btn-outline-primary" onclick="drawFieldBoundary()">
+                                            <i class="fas fa-draw-polygon me-2"></i>Draw on Map
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="calculateAreaFromBoundary()">
+                                            <i class="fas fa-calculator me-2"></i>Calculate Area
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveField()">
+                        <i class="fas fa-save me-2"></i>Save Field
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="/static/js/field-management.js"></script>
+</body>
+</html>
