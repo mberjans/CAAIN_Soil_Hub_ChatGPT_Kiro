@@ -19,6 +19,7 @@ from .api.nutrient_optimization_routes import router as nutrient_optimization_ro
 from .api.timing_optimization_routes import router as timing_optimization_router
 from .api.application_method_optimization_routes import router as application_method_optimization_router
 from .api.price_adjustment_routes import router as price_adjustment_router
+from .api.price_scenario_routes import router as price_scenario_router
 from .database.fertilizer_price_db import initialize_database, shutdown_database
 from .database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from .services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -98,6 +99,7 @@ app.include_router(nutrient_optimization_router, prefix="/api/v1", tags=["nutrie
 app.include_router(timing_optimization_router, prefix="/api/v1", tags=["timing-optimization"])
 app.include_router(application_method_optimization_router, prefix="/api/v1", tags=["application-method-optimization"])
 app.include_router(price_adjustment_router, prefix="/api/v1", tags=["price-adjustment"])
+app.include_router(price_scenario_router, prefix="/api/v1", tags=["price-scenario-modeling"])
 
 @app.get("/health")
 async def health_check():
@@ -227,7 +229,23 @@ async def health_check():
             "trend_reversal_alerts",
             "conservative_adjustment_strategies",
             "aggressive_adjustment_strategies",
-            "balanced_adjustment_strategies"
+            "balanced_adjustment_strategies",
+            "comprehensive_price_scenario_modeling",
+            "monte_carlo_simulation",
+            "stochastic_modeling",
+            "sensitivity_analysis",
+            "decision_trees",
+            "risk_assessment",
+            "bull_market_scenarios",
+            "bear_market_scenarios",
+            "volatile_market_scenarios",
+            "seasonal_pattern_scenarios",
+            "supply_disruption_scenarios",
+            "custom_scenario_modeling",
+            "probability_distribution_modeling",
+            "geometric_brownian_motion",
+            "price_forecasting",
+            "scenario_planning"
         ]
     }
 
