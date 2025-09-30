@@ -54,6 +54,7 @@ USER_MANAGEMENT_URL = os.getenv("USER_MANAGEMENT_URL", "http://localhost:8005")
 DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003")
 CROP_TAXONOMY_URL = os.getenv("CROP_TAXONOMY_URL", "http://localhost:8003")  # This should point to the crop-taxonomy service
 LOCATION_VALIDATION_URL = os.getenv("LOCATION_VALIDATION_URL", "http://localhost:8006")
+FERTILIZER_APPLICATION_URL = os.getenv("FERTILIZER_APPLICATION_URL", "http://localhost:8007")
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
@@ -131,6 +132,28 @@ async def fertilizer_strategy_page(request: Request):
         })
     else:
         return HTMLResponse("<h1>Fertilizer Strategy - Coming Soon</h1>")
+
+@app.get("/fertilizer-application", response_class=HTMLResponse)
+async def fertilizer_application_page(request: Request):
+    """Fertilizer application method selection page"""
+    if templates:
+        return templates.TemplateResponse("fertilizer_application.html", {
+            "request": request,
+            "title": "Fertilizer Application Method Selector"
+        })
+    else:
+        return HTMLResponse("<h1>Fertilizer Application Method - Coming Soon</h1>")
+
+@app.get("/mobile-fertilizer-application", response_class=HTMLResponse)
+async def mobile_fertilizer_application_page(request: Request):
+    """Mobile-optimized fertilizer application management interface"""
+    if templates:
+        return templates.TemplateResponse("mobile_fertilizer_application.html", {
+            "request": request,
+            "title": "Mobile Fertilizer Application"
+        })
+    else:
+        return HTMLResponse("<h1>Mobile Fertilizer Application - Coming Soon</h1>")
 
 @app.get("/goal-prioritization", response_class=HTMLResponse)
 async def goal_prioritization_page(request: Request):
@@ -1789,6 +1812,56 @@ async def proxy_field_management_api(path: str, request: Request):
         raise HTTPException(status_code=503, detail="Field management service temporarily unavailable")
     except Exception as e:
         logger.error(f"Field management API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+# Fertilizer Application API Proxy Routes
+@app.api_route("/api/v1/fertilizer/application/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_fertilizer_application_api(path: str, request: Request):
+    """Proxy requests to the fertilizer application API"""
+    try:
+        method = request.method
+        
+        # Prepare headers
+        headers = {
+            "content-type": request.headers.get("content-type", "application/json")
+        }
+        
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+        
+        # Forward the request to the fertilizer application service
+        async with httpx.AsyncClient() as client:
+            url = f"{FERTILIZER_APPLICATION_URL}/api/v1/fertilizer/application/{path}"
+            
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+            
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+                
+    except httpx.RequestError as e:
+        logger.error(f"Fertilizer application API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Fertilizer application service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Fertilizer application API proxy error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

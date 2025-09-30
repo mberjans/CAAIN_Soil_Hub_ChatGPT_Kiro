@@ -1,61 +1,60 @@
 {
-  "name": "CAAIN Soil Hub - Drought Management",
-  "short_name": "Drought Manager",
-  "description": "Mobile drought management and water conservation for farmers",
-  "start_url": "/mobile-drought-management",
+  "name": "CAAIN Soil Hub - Fertilizer Application",
+  "short_name": "Soil Hub Fertilizer",
+  "description": "Mobile-optimized fertilizer application management for precision agriculture",
+  "start_url": "/mobile-fertilizer-application",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#28a745",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "dir": "ltr",
   "categories": ["agriculture", "productivity", "utilities"],
   "icons": [
     {
-      "src": "/static/images/app-icon-72.png",
+      "src": "/static/images/icon-72x72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/images/app-icon-96.png",
+      "src": "/static/images/icon-96x96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/images/app-icon-128.png",
+      "src": "/static/images/icon-128x128.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/images/app-icon-144.png",
+      "src": "/static/images/icon-144x144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/images/app-icon-152.png",
+      "src": "/static/images/icon-152x152.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/images/app-icon-192.png",
+      "src": "/static/images/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/images/app-icon-384.png",
+      "src": "/static/images/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/static/images/app-icon-512.png",
+      "src": "/static/images/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -67,56 +66,44 @@
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Drought Assessment Dashboard"
+      "label": "Field Information Step"
     },
     {
       "src": "/static/images/screenshot-mobile-2.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Field Assessment Wizard"
+      "label": "Method Selection Step"
     },
     {
       "src": "/static/images/screenshot-mobile-3.png",
       "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow",
-      "label": "Field Monitoring"
+      "label": "Application Monitoring"
     }
   ],
   "shortcuts": [
     {
-      "name": "Quick Assessment",
-      "short_name": "Quick Assess",
-      "description": "Start a quick drought assessment",
-      "url": "/mobile-drought-management?action=quick-assess",
+      "name": "Start New Application",
+      "short_name": "New App",
+      "description": "Start a new fertilizer application",
+      "url": "/mobile-fertilizer-application",
       "icons": [
         {
-          "src": "/static/images/shortcut-quick-assess.png",
+          "src": "/static/images/shortcut-new.png",
           "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "Field Monitoring",
-      "short_name": "Monitor",
-      "description": "View field monitoring data",
-      "url": "/mobile-drought-management?action=monitor",
+      "name": "View Field Map",
+      "short_name": "Field Map",
+      "description": "View field map and boundaries",
+      "url": "/mobile-fertilizer-application?step=5",
       "icons": [
         {
-          "src": "/static/images/shortcut-monitor.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Emergency Protocol",
-      "short_name": "Emergency",
-      "description": "Access emergency drought protocols",
-      "url": "/mobile-drought-management?action=emergency",
-      "icons": [
-        {
-          "src": "/static/images/shortcut-emergency.png",
+          "src": "/static/images/shortcut-map.png",
           "sizes": "96x96"
         }
       ]
@@ -133,19 +120,17 @@
     "preferred_width": 400
   },
   "launch_handler": {
-    "client_mode": "focus-existing"
+    "client_mode": "navigate-existing"
   },
-  "handle_links": "preferred",
-  "capture_links": "new-client",
   "protocol_handlers": [
     {
-      "protocol": "web+drought",
-      "url": "/mobile-drought-management?field=%s"
+      "protocol": "web+fertilizer",
+      "url": "/mobile-fertilizer-application?action=%s"
     }
   ],
   "file_handlers": [
     {
-      "action": "/mobile-drought-management?action=import-data",
+      "action": "/mobile-fertilizer-application",
       "accept": {
         "application/json": [".json"],
         "text/csv": [".csv"]
@@ -153,7 +138,7 @@
     }
   ],
   "share_target": {
-    "action": "/mobile-drought-management?action=share",
+    "action": "/mobile-fertilizer-application/share",
     "method": "POST",
     "enctype": "multipart/form-data",
     "params": {
@@ -162,20 +147,10 @@
       "url": "url",
       "files": [
         {
-          "name": "photos",
+          "name": "field_photo",
           "accept": ["image/*"]
         }
       ]
     }
-  },
-  "features": [
-    "Cross Platform",
-    "fast",
-    "simple"
-  ],
-  "suggested_display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
-  "edge_side_panel": {
-    "preferred_width": 400
   }
 }

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Mobile Fertilizer Application - CAAIN Soil Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="/static/css/mobile-fertilizer-application.css" rel="stylesheet">
+    <meta name="theme-color" content="#28a745">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Fertilizer Application">
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+<body>
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+        <div class="header-content">
+            <button class="btn btn-link text-white" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <h1 class="header-title">Fertilizer Application</h1>
+            <button class="btn btn-link text-white" onclick="showMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+        <div class="progress-container">
+            <div class="progress" style="height: 4px;">
+                <div class="progress-bar bg-success" id="progressBar" style="width: 20%"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <div class="mobile-container">
+        <!-- Step 1: Field Information -->
+        <div class="wizard-step active" id="step1">
+            <div class="step-header">
+                <h2><i class="fas fa-map-marker-alt"></i> Field Information</h2>
+                <p class="step-description">Set up your field for fertilizer application</p>
+            </div>
+
+            <div class="form-section">
+                <div class="input-group-mobile">
+                    <label for="fieldLocation">
+                        <i class="fas fa-crosshairs"></i> Field Location
+                    </label>
+                    <div class="location-input-group">
+                        <input type="text" class="form-control" id="fieldLocation" 
+                               placeholder="Enter field address or coordinates" 
+                               autocomplete="off">
+                        <button class="btn btn-outline-success" onclick="getCurrentLocation()">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                    </div>
+                    <div class="location-suggestions" id="locationSuggestions"></div>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="fieldSize">
+                        <i class="fas fa-expand-arrows-alt"></i> Field Size (acres)
+                    </label>
+                    <input type="number" class="form-control" id="fieldSize" 
+                           placeholder="Enter field size" min="0.1" max="10000" step="0.1">
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="soilType">
+                        <i class="fas fa-seedling"></i> Soil Type
+                    </label>
+                    <select class="form-select" id="soilType">
+                        <option value="">Select soil type</option>
+                        <option value="clay">Clay</option>
+                        <option value="clay_loam">Clay Loam</option>
+                        <option value="loam">Loam</option>
+                        <option value="sandy_loam">Sandy Loam</option>
+                        <option value="sandy">Sandy</option>
+                        <option value="silt_loam">Silt Loam</option>
+                    </select>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="cropType">
+                        <i class="fas fa-seedling"></i> Crop Type
+                    </label>
+                    <select class="form-select" id="cropType">
+                        <option value="">Select crop type</option>
+                        <option value="corn">Corn</option>
+                        <option value="soybean">Soybean</option>
+                        <option value="wheat">Wheat</option>
+                        <option value="cotton">Cotton</option>
+                        <option value="rice">Rice</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="growthStage">
+                        <i class="fas fa-leaf"></i> Growth Stage
+                    </label>
+                    <select class="form-select" id="growthStage">
+                        <option value="">Select growth stage</option>
+                        <option value="pre_plant">Pre-Plant</option>
+                        <option value="emergence">Emergence</option>
+                        <option value="vegetative">Vegetative</option>
+                        <option value="reproductive">Reproductive</option>
+                        <option value="maturity">Maturity</option>
+                    </select>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-primary btn-lg w-100" onclick="nextStep(2)">
+                        Continue <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Fertilizer Selection -->
+        <div class="wizard-step" id="step2">
+            <div class="step-header">
+                <h2><i class="fas fa-flask"></i> Fertilizer Selection</h2>
+                <p class="step-description">Choose your fertilizer type and specifications</p>
+            </div>
+
+            <div class="form-section">
+                <div class="input-group-mobile">
+                    <label for="fertilizerType">
+                        <i class="fas fa-tags"></i> Fertilizer Type
+                    </label>
+                    <select class="form-select" id="fertilizerType">
+                        <option value="">Select fertilizer type</option>
+                        <option value="nitrogen">Nitrogen (N)</option>
+                        <option value="phosphorus">Phosphorus (P)</option>
+                        <option value="potassium">Potassium (K)</option>
+                        <option value="npk_blend">NPK Blend</option>
+                        <option value="organic">Organic</option>
+                        <option value="micronutrients">Micronutrients</option>
+                    </select>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="fertilizerForm">
+                        <i class="fas fa-cube"></i> Fertilizer Form
+                    </label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn" data-value="granular" onclick="toggleFertilizerForm(this)">
+                            <i class="fas fa-circle"></i> Granular
+                        </button>
+                        <button class="toggle-btn active" data-value="liquid" onclick="toggleFertilizerForm(this)">
+                            <i class="fas fa-tint"></i> Liquid
+                        </button>
+                    </div>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="applicationRate">
+                        <i class="fas fa-weight"></i> Application Rate (lbs/acre)
+                    </label>
+                    <input type="number" class="form-control" id="applicationRate" 
+                           placeholder="Enter application rate" min="0" max="1000" step="0.1">
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="fertilizerCost">
+                        <i class="fas fa-dollar-sign"></i> Cost per Unit ($)
+                    </label>
+                    <input type="number" class="form-control" id="fertilizerCost" 
+                           placeholder="Enter cost per unit" min="0" max="1000" step="0.01">
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary" onclick="prevStep(1)">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn btn-primary" onclick="nextStep(3)">
+                        Continue <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 3: Application Method Selection -->
+        <div class="wizard-step" id="step3">
+            <div class="step-header">
+                <h2><i class="fas fa-tractor"></i> Application Method</h2>
+                <p class="step-description">Select the best application method for your field</p>
+            </div>
+
+            <div class="method-selection">
+                <div class="method-card" data-method="broadcast" onclick="selectMethod('broadcast')">
+                    <div class="method-icon">
+                        <i class="fas fa-broadcast-tower"></i>
+                    </div>
+                    <div class="method-info">
+                        <h4>Broadcast Application</h4>
+                        <p>Uniform distribution across entire field</p>
+                        <div class="method-stats">
+                            <span class="stat"><i class="fas fa-clock"></i> Fast</span>
+                            <span class="stat"><i class="fas fa-dollar-sign"></i> $35/ac</span>
+                            <span class="stat"><i class="fas fa-chart-line"></i> 78%</span>
+                        </div>
+                    </div>
+                    <div class="method-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="method-card" data-method="band" onclick="selectMethod('band')">
+                    <div class="method-icon">
+                        <i class="fas fa-stream"></i>
+                    </div>
+                    <div class="method-info">
+                        <h4>Band Application</h4>
+                        <p>Concentrated application in rows</p>
+                        <div class="method-stats">
+                            <span class="stat"><i class="fas fa-clock"></i> Medium</span>
+                            <span class="stat"><i class="fas fa-dollar-sign"></i> $45/ac</span>
+                            <span class="stat"><i class="fas fa-chart-line"></i> 85%</span>
+                        </div>
+                    </div>
+                    <div class="method-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="method-card" data-method="foliar" onclick="selectMethod('foliar')">
+                    <div class="method-icon">
+                        <i class="fas fa-spray-can"></i>
+                    </div>
+                    <div class="method-info">
+                        <h4>Foliar Application</h4>
+                        <p>Direct application to plant leaves</p>
+                        <div class="method-stats">
+                            <span class="stat"><i class="fas fa-clock"></i> Fast</span>
+                            <span class="stat"><i class="fas fa-dollar-sign"></i> $55/ac</span>
+                            <span class="stat"><i class="fas fa-chart-line"></i> 90%</span>
+                        </div>
+                    </div>
+                    <div class="method-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+
+                <div class="method-card" data-method="injection" onclick="selectMethod('injection')">
+                    <div class="method-icon">
+                        <i class="fas fa-syringe"></i>
+                    </div>
+                    <div class="method-info">
+                        <h4>Soil Injection</h4>
+                        <p>Direct injection into soil profile</p>
+                        <div class="method-stats">
+                            <span class="stat"><i class="fas fa-clock"></i> Slow</span>
+                            <span class="stat"><i class="fas fa-dollar-sign"></i> $65/ac</span>
+                            <span class="stat"><i class="fas fa-chart-line"></i> 95%</span>
+                        </div>
+                    </div>
+                    <div class="method-check">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="prevStep(2)">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-primary" onclick="nextStep(4)" id="step3Next" disabled>
+                    Continue <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 4: Equipment & Timing -->
+        <div class="wizard-step" id="step4">
+            <div class="step-header">
+                <h2><i class="fas fa-tools"></i> Equipment & Timing</h2>
+                <p class="step-description">Configure equipment and application timing</p>
+            </div>
+
+            <div class="form-section">
+                <div class="input-group-mobile">
+                    <label for="equipmentType">
+                        <i class="fas fa-tractor"></i> Equipment Type
+                    </label>
+                    <select class="form-select" id="equipmentType">
+                        <option value="">Select equipment</option>
+                        <option value="broadcast_spreader">Broadcast Spreader</option>
+                        <option value="liquid_sprayer">Liquid Sprayer</option>
+                        <option value="planter_attached">Planter Attached</option>
+                        <option value="injection_system">Injection System</option>
+                        <option value="aerial_application">Aerial Application</option>
+                    </select>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="applicationDate">
+                        <i class="fas fa-calendar"></i> Application Date
+                    </label>
+                    <input type="date" class="form-control" id="applicationDate">
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="weatherConditions">
+                        <i class="fas fa-cloud-sun"></i> Weather Conditions
+                    </label>
+                    <div class="weather-display" id="weatherDisplay">
+                        <div class="weather-item">
+                            <i class="fas fa-thermometer-half"></i>
+                            <span>Temperature: <span id="temperature">--</span>°F</span>
+                        </div>
+                        <div class="weather-item">
+                            <i class="fas fa-wind"></i>
+                            <span>Wind: <span id="windSpeed">--</span> mph</span>
+                        </div>
+                        <div class="weather-item">
+                            <i class="fas fa-cloud-rain"></i>
+                            <span>Rain: <span id="rainChance">--</span>%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group-mobile">
+                    <label for="fieldConditions">
+                        <i class="fas fa-camera"></i> Field Conditions
+                    </label>
+                    <div class="field-conditions">
+                        <button class="btn btn-outline-primary" onclick="takeFieldPhoto()">
+                            <i class="fas fa-camera"></i> Take Photo
+                        </button>
+                        <button class="btn btn-outline-success" onclick="recordVoiceNote()">
+                            <i class="fas fa-microphone"></i> Voice Note
+                        </button>
+                    </div>
+                    <div class="field-notes" id="fieldNotes">
+                        <!-- Field notes will be displayed here -->
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <button class="btn btn-secondary" onclick="prevStep(3)">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </button>
+                    <button class="btn btn-primary" onclick="nextStep(5)">
+                        Continue <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5: Application Plan & Monitoring -->
+        <div class="wizard-step" id="step5">
+            <div class="step-header">
+                <h2><i class="fas fa-clipboard-check"></i> Application Plan</h2>
+                <p class="step-description">Review and execute your fertilizer application plan</p>
+            </div>
+
+            <div class="plan-summary">
+                <div class="summary-card">
+                    <h4><i class="fas fa-info-circle"></i> Application Summary</h4>
+                    <div class="summary-details" id="applicationSummary">
+                        <!-- Summary will be populated here -->
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <h4><i class="fas fa-calculator"></i> Cost Analysis</h4>
+                    <div class="cost-breakdown" id="costBreakdown">
+                        <!-- Cost breakdown will be populated here -->
+                    </div>
+                </div>
+
+                <div class="summary-card">
+                    <h4><i class="fas fa-map"></i> Field Map</h4>
+                    <div class="field-map" id="fieldMap">
+                        <button class="btn btn-outline-primary w-100" onclick="showFieldMap()">
+                            <i class="fas fa-map"></i> View Field Map
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="monitoring-section">
+                <h4><i class="fas fa-chart-line"></i> Real-time Monitoring</h4>
+                <div class="monitoring-controls">
+                    <button class="btn btn-success" onclick="startApplication()" id="startBtn">
+                        <i class="fas fa-play"></i> Start Application
+                    </button>
+                    <button class="btn btn-warning" onclick="pauseApplication()" id="pauseBtn" disabled>
+                        <i class="fas fa-pause"></i> Pause
+                    </button>
+                    <button class="btn btn-danger" onclick="stopApplication()" id="stopBtn" disabled>
+                        <i class="fas fa-stop"></i> Stop
+                    </button>
+                </div>
+
+                <div class="monitoring-stats" id="monitoringStats">
+                    <!-- Real-time stats will be displayed here -->
+                </div>
+            </div>
+
+            <div class="step-actions">
+                <button class="btn btn-secondary" onclick="prevStep(4)">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button class="btn btn-success" onclick="saveApplicationPlan()">
+                    <i class="fas fa-save"></i> Save Plan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item" onclick="showStep(1)">
+            <i class="fas fa-map-marker-alt"></i>
+            <span>Field</span>
+        </button>
+        <button class="nav-item" onclick="showStep(2)">
+            <i class="fas fa-flask"></i>
+            <span>Fertilizer</span>
+        </button>
+        <button class="nav-item" onclick="showStep(3)">
+            <i class="fas fa-tractor"></i>
+            <span>Method</span>
+        </button>
+        <button class="nav-item" onclick="showStep(4)">
+            <i class="fas fa-tools"></i>
+            <span>Equipment</span>
+        </button>
+        <button class="nav-item" onclick="showStep(5)">
+            <i class="fas fa-clipboard-check"></i>
+            <span>Plan</span>
+        </button>
+    </nav>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border text-success" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="loading-text">Processing...</p>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="toast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <i class="fas fa-info-circle text-primary me-2"></i>
+                <strong class="me-auto">Notification</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+            </div>
+            <div class="toast-body" id="toastBody">
+                <!-- Toast message will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offlineIndicator">
+        <i class="fas fa-wifi"></i>
+        <span>You are offline. Data will sync when connection is restored.</span>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/mobile-fertilizer-application.js"></script>
+</body>
+</html>
