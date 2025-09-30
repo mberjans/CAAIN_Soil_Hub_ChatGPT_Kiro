@@ -25,7 +25,8 @@ from location_models import (
 from location_validation_service import LocationValidationService
 from geocoding_service import (
     GeocodingResult, AddressResult, AddressSuggestion, 
-    GeocodingError, get_geocoding_service
+    GeocodingError, get_geocoding_service,
+    BatchGeocodingRequest, BatchGeocodingResponse
 )
 from location_sqlalchemy_models import FarmLocation, FarmField, GeocodingCache
 
@@ -750,6 +751,197 @@ async def health_check() -> Dict[str, Any]:
             "timestamp": datetime.utcnow().isoformat(),
             "error": str(e)
         }
+
+
+# Geocoding endpoints
+
+@router.post("/geocode", response_model=GeocodingResult)
+async def geocode_address(
+    address: str,
+    include_agricultural_context: bool = Query(True, description="Include agricultural context data")
+) -> GeocodingResult:
+    """
+    Convert street address to GPS coordinates with agricultural context enhancement.
+    
+    This endpoint geocodes a street address to GPS coordinates using
+    OpenStreetMap Nominatim service with caching for performance and
+    enhances results with agricultural context data including USDA zones,
+    climate zones, soil survey areas, and agricultural districts.
+    
+    Args:
+        address: Street address to geocode (e.g., "123 Main St, Ames, IA")
+        include_agricultural_context: Include agricultural context data (USDA zones, climate zones, etc.)
+        
+    Returns:
+        GeocodingResult with coordinates, formatted address, confidence score, and agricultural context
+        
+    Raises:
+        HTTPException: If geocoding fails or address is invalid
+    """
+    try:
+        logger.info(f"Geocoding address: {address} (agricultural context: {include_agricultural_context})")
+        
+        result = await geocoding_service.geocode_address(address, include_agricultural_context)
+        
+        logger.info(f"Geocoding successful: {result.latitude}, {result.longitude} (confidence: {result.confidence})")
+        
+        return result
+        
+    except GeocodingError as e:
+        logger.error(f"Geocoding failed for address '{address}': {e.message}")
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": {
+                    "error_code": "GEOCODING_FAILED",
+                    "error_message": f"Unable to geocode address: {e.message}",
+                    "agricultural_context": "Address geocoding helps ensure recommendations match your local conditions",
+                    "suggested_actions": [
+                        "Try a more specific address (include street number)",
+                        "Use GPS coordinates instead",
+                        "Select location using the interactive map"
+                    ]
+                },
+                "provider": e.provider
+            }
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error during geocoding: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "error_code": "GEOCODING_SERVICE_ERROR",
+                    "error_message": "Internal geocoding service error",
+                    "agricultural_context": "Unable to convert address to coordinates for location-based recommendations",
+                    "suggested_actions": [
+                        "Try again in a few moments",
+                        "Use GPS coordinates directly",
+                        "Contact support if the problem persists"
+                    ]
+                }
+            }
+        )
+
+
+@router.post("/reverse-geocode", response_model=AddressResult)
+async def reverse_geocode_coordinates(
+    latitude: float, 
+    longitude: float,
+    include_agricultural_context: bool = Query(True, description="Include agricultural context data")
+) -> AddressResult:
+    """
+    Convert GPS coordinates to street address with agricultural context enhancement.
+    
+    This endpoint performs reverse geocoding to convert GPS coordinates
+    back to a human-readable street address and enhances results with
+    agricultural context data including USDA zones, climate zones, soil
+    survey areas, and agricultural districts.
+    
+    Args:
+        latitude: Latitude in decimal degrees (-90 to 90)
+        longitude: Longitude in decimal degrees (-180 to 180)
+        include_agricultural_context: Include agricultural context data (USDA zones, climate zones, etc.)
+        
+    Returns:
+        AddressResult with formatted address, components, and agricultural context
+        
+    Raises:
+        HTTPException: If reverse geocoding fails or coordinates are invalid
+    """
+    try:
+        logger.info(f"Reverse geocoding coordinates: {latitude}, {longitude} (agricultural context: {include_agricultural_context})")
+        
+        result = await geocoding_service.reverse_geocode(latitude, longitude, include_agricultural_context)
+        
+        logger.info(f"Reverse geocoding successful: {result.address}")
+        
+        return result
+        
+    except GeocodingError as e:
+        logger.error(f"Reverse geocoding failed for coordinates {latitude}, {longitude}: {e.message}")
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": {
+                    "error_code": "REVERSE_GEOCODING_FAILED",
+                    "error_message": f"Unable to reverse geocode coordinates: {e.message}",
+                    "agricultural_context": "Reverse geocoding helps confirm location accuracy for agricultural recommendations",
+                    "suggested_actions": [
+                        "Verify coordinates are correct",
+                        "Try slightly different coordinates",
+                        "Use manual address entry instead"
+                    ]
+                },
+                "coordinates": {"latitude": latitude, "longitude": longitude}
+            }
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error during reverse geocoding: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "error_code": "REVERSE_GEOCODING_SERVICE_ERROR",
+                    "error_message": "Internal reverse geocoding service error",
+                    "agricultural_context": "Unable to convert coordinates to address",
+                    "suggested_actions": [
+                        "Try again in a few moments",
+                        "Enter address manually",
+                        "Contact support if the problem persists"
+                    ]
+                }
+            }
+        )
+
+
+@router.post("/batch-geocode", response_model=BatchGeocodingResponse)
+async def batch_geocode_addresses(
+    request: BatchGeocodingRequest
+) -> BatchGeocodingResponse:
+    """
+    Convert multiple street addresses to GPS coordinates with agricultural context enhancement.
+    
+    This endpoint performs batch geocoding of multiple addresses to GPS coordinates using
+    OpenStreetMap Nominatim service with caching for performance and enhances results with
+    agricultural context data including USDA zones, climate zones, soil survey areas, and
+    agricultural districts.
+    
+    Args:
+        request: BatchGeocodingRequest containing list of addresses and options
+        
+    Returns:
+        BatchGeocodingResponse with geocoding results, failed addresses, and statistics
+        
+    Raises:
+        HTTPException: If batch geocoding fails or request is invalid
+    """
+    try:
+        logger.info(f"Batch geocoding {len(request.addresses)} addresses (agricultural context: {request.include_agricultural_context})")
+        
+        result = await geocoding_service.batch_geocode(request)
+        
+        logger.info(f"Batch geocoding completed: {result.success_count} successful, {result.failure_count} failed")
+        
+        return result
+        
+    except Exception as e:
+        logger.error(f"Unexpected error during batch geocoding: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "error_code": "BATCH_GEOCODING_SERVICE_ERROR",
+                    "error_message": "Internal batch geocoding service error",
+                    "agricultural_context": "Unable to process batch geocoding for agricultural planning",
+                    "suggested_actions": [
+                        "Try again in a few moments",
+                        "Process addresses individually",
+                        "Contact support if the problem persists"
+                    ]
+                }
+            }
+        )
 
 
 # Export router
