@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field, validator
 from decimal import Decimal
 
 # Import equipment models for type hints
-from .equipment_models import IndividualEquipmentAssessment
+from src.models.equipment_models import IndividualEquipmentAssessment
 
 
 class ApplicationMethodType(str, Enum):
@@ -201,10 +201,18 @@ class ApplicationGuidance(BaseModel):
 
 
 class GuidanceResponse(BaseModel):
-    """Response model for application guidance."""
+    """Response model for comprehensive application guidance."""
     request_id: str = Field(..., description="Unique request identifier")
     guidance: ApplicationGuidance = Field(..., description="Application guidance")
     weather_advisories: Optional[List[str]] = Field(None, description="Weather-related advisories")
     equipment_preparation: Optional[List[str]] = Field(None, description="Equipment preparation steps")
     quality_control_measures: Optional[List[str]] = Field(None, description="Quality control measures")
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+    
+    # Enhanced comprehensive guidance features
+    video_tutorials: Optional[List[Dict[str, Any]]] = Field(None, description="Relevant video tutorials")
+    expert_recommendations: Optional[List[Dict[str, Any]]] = Field(None, description="Expert consultation recommendations")
+    compliance_check: Optional[Dict[str, Any]] = Field(None, description="Regulatory compliance status")
+    educational_content: Optional[Dict[str, Any]] = Field(None, description="Educational content and best practices")
+    interactive_guides: Optional[List[Dict[str, Any]]] = Field(None, description="Interactive guides and tools")
+    maintenance_schedule: Optional[Dict[str, List[str]]] = Field(None, description="Equipment maintenance schedule")

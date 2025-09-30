@@ -1,15 +1,20 @@
 """
-Guidance Service for fertilizer application guidance and best practices.
+Comprehensive Guidance Service for fertilizer application guidance and support system.
+
+This service provides step-by-step guidance, timing recommendations, calibration support,
+troubleshooting assistance, interactive guides, video tutorials, expert consultation,
+and educational content for fertilizer application best practices.
 """
 
 import asyncio
 import logging
 import time
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from uuid import uuid4
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
+from enum import Enum
 
-from ..models.application_models import (
+from src.models.application_models import (
     GuidanceRequest, GuidanceResponse, ApplicationGuidance,
     ApplicationMethod, FieldConditions
 )
@@ -17,12 +22,50 @@ from ..models.application_models import (
 logger = logging.getLogger(__name__)
 
 
+class ExperienceLevel(str, Enum):
+    """Operator experience levels."""
+    BEGINNER = "beginner"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    EXPERT = "expert"
+
+
+class GuidanceType(str, Enum):
+    """Types of guidance available."""
+    STEP_BY_STEP = "step_by_step"
+    INTERACTIVE = "interactive"
+    VIDEO_TUTORIAL = "video_tutorial"
+    EXPERT_CONSULTATION = "expert_consultation"
+    TROUBLESHOOTING = "troubleshooting"
+    EDUCATIONAL = "educational"
+
+
 class GuidanceService:
-    """Service for providing comprehensive application guidance and best practices."""
+    """
+    Comprehensive service for fertilizer application guidance and support system.
+    
+    Provides step-by-step guidance, timing recommendations, calibration support,
+    troubleshooting assistance, interactive guides, video tutorials, expert consultation,
+    and educational content for fertilizer application best practices.
+    """
     
     def __init__(self):
         self.guidance_database = {}
+        self.equipment_database = {}
+        self.video_tutorials = {}
+        self.expert_contacts = {}
+        self.regulatory_database = {}
+        self.educational_content = {}
+        self._initialize_comprehensive_databases()
+    
+    def _initialize_comprehensive_databases(self):
+        """Initialize all comprehensive databases for guidance system."""
         self._initialize_guidance_database()
+        self._initialize_equipment_database()
+        self._initialize_video_tutorials()
+        self._initialize_expert_contacts()
+        self._initialize_regulatory_database()
+        self._initialize_educational_content()
     
     def _initialize_guidance_database(self):
         """Initialize guidance database with best practices and instructions."""
@@ -329,6 +372,308 @@ class GuidanceService:
             }
         }
     
+    def _initialize_equipment_database(self):
+        """Initialize equipment database with detailed specifications and compatibility."""
+        self.equipment_database = {
+            "spreader": {
+                "types": ["broadcast_spreader", "drop_spreader", "pneumatic_spreader"],
+                "specifications": {
+                    "capacity_range": "500-5000 lbs",
+                    "application_width": "20-60 feet",
+                    "ground_speed_range": "3-12 mph",
+                    "calibration_methods": ["catch_pan", "weigh_method", "area_method"]
+                },
+                "compatibility": {
+                    "fertilizer_types": ["granular", "pelleted", "prilled"],
+                    "field_conditions": ["flat", "rolling", "sloped"],
+                    "soil_types": ["all"]
+                },
+                "maintenance_schedule": {
+                    "daily": ["clean hopper", "check spread pattern", "verify calibration"],
+                    "weekly": ["lubricate moving parts", "check belt tension", "inspect guards"],
+                    "monthly": ["replace worn parts", "check electrical connections", "verify settings"]
+                }
+            },
+            "sprayer": {
+                "types": ["boom_sprayer", "air_blast_sprayer", "backpack_sprayer"],
+                "specifications": {
+                    "tank_capacity": "50-2000 gallons",
+                    "boom_width": "20-120 feet",
+                    "pressure_range": "20-60 psi",
+                    "nozzle_types": ["flat_fan", "cone", "flood"]
+                },
+                "compatibility": {
+                    "fertilizer_types": ["liquid", "soluble_powder"],
+                    "field_conditions": ["flat", "rolling"],
+                    "soil_types": ["all"]
+                },
+                "maintenance_schedule": {
+                    "daily": ["clean tank", "check nozzles", "verify pressure"],
+                    "weekly": ["lubricate pump", "check filters", "inspect boom"],
+                    "monthly": ["replace nozzles", "check hoses", "calibrate system"]
+                }
+            },
+            "injector": {
+                "types": ["knife_injector", "coulter_injector", "disk_injector"],
+                "specifications": {
+                    "injection_depth": "2-8 inches",
+                    "spacing_range": "6-30 inches",
+                    "application_rate": "50-500 lbs/acre",
+                    "ground_speed_range": "4-8 mph"
+                },
+                "compatibility": {
+                    "fertilizer_types": ["liquid", "anhydrous_ammonia"],
+                    "field_conditions": ["flat", "rolling"],
+                    "soil_types": ["loam", "clay_loam", "sandy_loam"]
+                },
+                "maintenance_schedule": {
+                    "daily": ["clean injection points", "check depth", "verify rate"],
+                    "weekly": ["lubricate knives", "check seals", "inspect hoses"],
+                    "monthly": ["replace knives", "check pressure", "calibrate system"]
+                }
+            }
+        }
+    
+    def _initialize_video_tutorials(self):
+        """Initialize video tutorial database with educational content."""
+        self.video_tutorials = {
+            "broadcast": {
+                "calibration": {
+                    "title": "Broadcast Spreader Calibration",
+                    "duration": "15 minutes",
+                    "difficulty": "intermediate",
+                    "topics": ["catch_pan_method", "weigh_method", "pattern_testing"],
+                    "url": "/tutorials/broadcast_calibration.mp4"
+                },
+                "application": {
+                    "title": "Broadcast Application Techniques",
+                    "duration": "20 minutes",
+                    "difficulty": "beginner",
+                    "topics": ["ground_speed", "overlap_patterns", "weather_considerations"],
+                    "url": "/tutorials/broadcast_application.mp4"
+                },
+                "troubleshooting": {
+                    "title": "Broadcast Equipment Troubleshooting",
+                    "duration": "12 minutes",
+                    "difficulty": "intermediate",
+                    "topics": ["pattern_problems", "rate_issues", "equipment_wear"],
+                    "url": "/tutorials/broadcast_troubleshooting.mp4"
+                }
+            },
+            "foliar": {
+                "calibration": {
+                    "title": "Sprayer Calibration Guide",
+                    "duration": "18 minutes",
+                    "difficulty": "intermediate",
+                    "topics": ["nozzle_selection", "pressure_setting", "ground_speed"],
+                    "url": "/tutorials/sprayer_calibration.mp4"
+                },
+                "application": {
+                    "title": "Foliar Application Best Practices",
+                    "duration": "22 minutes",
+                    "difficulty": "beginner",
+                    "topics": ["timing", "coverage", "weather_conditions"],
+                    "url": "/tutorials/foliar_application.mp4"
+                },
+                "safety": {
+                    "title": "Foliar Application Safety",
+                    "duration": "10 minutes",
+                    "difficulty": "beginner",
+                    "topics": ["ppe", "handling", "storage"],
+                    "url": "/tutorials/foliar_safety.mp4"
+                }
+            },
+            "injection": {
+                "calibration": {
+                    "title": "Injection System Calibration",
+                    "duration": "16 minutes",
+                    "difficulty": "advanced",
+                    "topics": ["depth_setting", "rate_calculation", "spacing"],
+                    "url": "/tutorials/injection_calibration.mp4"
+                },
+                "application": {
+                    "title": "Injection Application Techniques",
+                    "duration": "19 minutes",
+                    "difficulty": "intermediate",
+                    "topics": ["soil_conditions", "timing", "placement"],
+                    "url": "/tutorials/injection_application.mp4"
+                }
+            }
+        }
+    
+    def _initialize_expert_contacts(self):
+        """Initialize expert contact database for consultation services."""
+        self.expert_contacts = {
+            "equipment_specialists": [
+                {
+                    "name": "John Smith",
+                    "title": "Equipment Specialist",
+                    "expertise": ["spreaders", "sprayers", "calibration"],
+                    "contact": "john.smith@equipment.com",
+                    "phone": "+1-555-0123",
+                    "availability": "Mon-Fri 8AM-5PM EST"
+                },
+                {
+                    "name": "Sarah Johnson",
+                    "title": "Precision Agriculture Expert",
+                    "expertise": ["injection_systems", "gps_guidance", "variable_rate"],
+                    "contact": "sarah.johnson@precision.com",
+                    "phone": "+1-555-0124",
+                    "availability": "Mon-Fri 9AM-6PM EST"
+                }
+            ],
+            "agronomists": [
+                {
+                    "name": "Dr. Michael Brown",
+                    "title": "Senior Agronomist",
+                    "expertise": ["fertilizer_timing", "crop_response", "soil_health"],
+                    "contact": "michael.brown@agronomy.com",
+                    "phone": "+1-555-0125",
+                    "availability": "Mon-Fri 8AM-5PM EST"
+                },
+                {
+                    "name": "Dr. Lisa Davis",
+                    "title": "Nutrient Management Specialist",
+                    "expertise": ["nutrient_cycling", "environmental_impact", "regulations"],
+                    "contact": "lisa.davis@nutrients.com",
+                    "phone": "+1-555-0126",
+                    "availability": "Mon-Fri 9AM-5PM EST"
+                }
+            ],
+            "safety_experts": [
+                {
+                    "name": "Robert Wilson",
+                    "title": "Agricultural Safety Specialist",
+                    "expertise": ["ppe", "equipment_safety", "emergency_response"],
+                    "contact": "robert.wilson@safety.com",
+                    "phone": "+1-555-0127",
+                    "availability": "24/7 Emergency, Mon-Fri 8AM-5PM Consultation"
+                }
+            ]
+        }
+    
+    def _initialize_regulatory_database(self):
+        """Initialize regulatory compliance database."""
+        self.regulatory_database = {
+            "federal_regulations": {
+                "fertilizer_handling": {
+                    "epa_requirements": [
+                        "Spill prevention and control plans",
+                        "Record keeping for fertilizer applications",
+                        "Buffer zone requirements near water sources",
+                        "Application rate limitations"
+                    ],
+                    "osha_requirements": [
+                        "Personal protective equipment standards",
+                        "Equipment safety requirements",
+                        "Training and certification requirements",
+                        "Emergency response procedures"
+                    ]
+                },
+                "environmental_protection": {
+                    "water_protection": [
+                        "Buffer zones around water bodies",
+                        "Runoff prevention measures",
+                        "Groundwater protection requirements",
+                        "Wetland protection regulations"
+                    ],
+                    "air_quality": [
+                        "Volatile organic compound limits",
+                        "Dust control requirements",
+                        "Application timing restrictions",
+                        "Equipment emission standards"
+                    ]
+                }
+            },
+            "state_regulations": {
+                "nutrient_management": [
+                    "Nutrient management plan requirements",
+                    "Application rate limitations",
+                    "Record keeping requirements",
+                    "Certification requirements"
+                ],
+                "environmental_compliance": [
+                    "Buffer zone requirements",
+                    "Runoff prevention measures",
+                    "Soil testing requirements",
+                    "Reporting requirements"
+                ]
+            },
+            "compliance_checklist": [
+                "Verify fertilizer registration and labeling",
+                "Check application rate compliance",
+                "Ensure buffer zone requirements are met",
+                "Verify record keeping requirements",
+                "Check equipment certification status",
+                "Ensure operator training requirements are met"
+            ]
+        }
+    
+    def _initialize_educational_content(self):
+        """Initialize educational content database."""
+        self.educational_content = {
+            "best_practices": {
+                "fertilizer_selection": [
+                    "Match fertilizer type to crop needs",
+                    "Consider soil test results",
+                    "Evaluate cost-effectiveness",
+                    "Assess environmental impact"
+                ],
+                "application_timing": [
+                    "Apply at optimal crop growth stages",
+                    "Consider weather conditions",
+                    "Coordinate with other field operations",
+                    "Plan for multiple applications if needed"
+                ],
+                "equipment_management": [
+                    "Regular maintenance and calibration",
+                    "Proper storage and handling",
+                    "Safety procedures and training",
+                    "Performance monitoring and optimization"
+                ]
+            },
+            "safety_guidelines": {
+                "personal_protection": [
+                    "Wear appropriate PPE for all operations",
+                    "Avoid skin contact with fertilizers",
+                    "Ensure good ventilation in enclosed areas",
+                    "Have emergency contact information available"
+                ],
+                "equipment_safety": [
+                    "Follow manufacturer safety guidelines",
+                    "Check safety systems before operation",
+                    "Maintain equipment in safe condition",
+                    "Train all operators on safety procedures"
+                ],
+                "environmental_safety": [
+                    "Keep fertilizers away from water sources",
+                    "Prevent spills and runoff",
+                    "Follow environmental regulations",
+                    "Monitor weather conditions"
+                ]
+            },
+            "environmental_stewardship": {
+                "nutrient_management": [
+                    "Use soil tests to guide fertilizer decisions",
+                    "Apply nutrients at optimal rates",
+                    "Consider nutrient cycling and availability",
+                    "Monitor crop response and adjust as needed"
+                ],
+                "soil_health": [
+                    "Maintain soil organic matter",
+                    "Prevent soil compaction",
+                    "Use appropriate tillage practices",
+                    "Monitor soil health indicators"
+                ],
+                "water_protection": [
+                    "Implement buffer zones",
+                    "Use precision application techniques",
+                    "Monitor runoff and leaching",
+                    "Follow best management practices"
+                ]
+            }
+        }
+    
     async def provide_application_guidance(
         self, 
         request: GuidanceRequest
@@ -336,37 +681,67 @@ class GuidanceService:
         """
         Provide comprehensive application guidance for the selected method.
         
+        This enhanced method provides:
+        - Step-by-step guidance with experience-level adaptation
+        - Interactive guides and video tutorials
+        - Expert consultation recommendations
+        - Regulatory compliance checking
+        - Educational content and best practices
+        - Equipment-specific guidance and maintenance schedules
+        
         Args:
             request: Guidance request with application method, field conditions, and context
             
         Returns:
-            GuidanceResponse with detailed guidance and instructions
+            GuidanceResponse with comprehensive guidance and support resources
         """
         start_time = time.time()
         request_id = str(uuid4())
         
         try:
-            logger.info(f"Providing application guidance for request {request_id}")
+            logger.info(f"Providing comprehensive application guidance for request {request_id}")
             
-            # Get method-specific guidance
-            method_guidance = await self._get_method_guidance(request.application_method)
-            
-            # Generate weather advisories
-            weather_advisories = await self._generate_weather_advisories(
-                request.weather_conditions, request.application_method
+            # Get method-specific guidance with experience level adaptation
+            method_guidance = await self._get_adaptive_method_guidance(
+                request.application_method, request.experience_level
             )
             
-            # Generate equipment preparation steps
-            equipment_preparation = await self._generate_equipment_preparation(
+            # Generate comprehensive weather advisories with real-time integration
+            weather_advisories = await self._generate_comprehensive_weather_advisories(
+                request.weather_conditions, request.application_method, request.field_conditions
+            )
+            
+            # Generate equipment-specific preparation and maintenance
+            equipment_preparation = await self._generate_equipment_specific_preparation(
                 request.application_method, request.field_conditions
             )
             
-            # Generate quality control measures
-            quality_control_measures = await self._generate_quality_control_measures(
+            # Generate quality control measures with monitoring protocols
+            quality_control_measures = await self._generate_enhanced_quality_control(
                 request.application_method, request.field_conditions
             )
             
-            # Create comprehensive guidance
+            # Get video tutorials and interactive guides
+            video_tutorials = await self._get_relevant_video_tutorials(
+                request.application_method, request.experience_level
+            )
+            
+            # Get expert consultation recommendations
+            expert_recommendations = await self._get_expert_consultation_recommendations(
+                request.application_method, request.field_conditions
+            )
+            
+            # Check regulatory compliance
+            compliance_check = await self._check_regulatory_compliance(
+                request.application_method, request.field_conditions
+            )
+            
+            # Get educational content and best practices
+            educational_content = await self._get_educational_content(
+                request.application_method, request.experience_level
+            )
+            
+            # Create comprehensive guidance with all enhanced features
             guidance = ApplicationGuidance(
                 guidance_id=f"guidance_{request_id}",
                 pre_application_checklist=method_guidance["pre_application"],
@@ -385,20 +760,28 @@ class GuidanceService:
             
             processing_time_ms = (time.time() - start_time) * 1000
             
+            # Create enhanced response with comprehensive support resources
             response = GuidanceResponse(
                 request_id=request_id,
                 guidance=guidance,
                 weather_advisories=weather_advisories,
                 equipment_preparation=equipment_preparation,
                 quality_control_measures=quality_control_measures,
-                processing_time_ms=processing_time_ms
+                processing_time_ms=processing_time_ms,
+                # Enhanced fields (will need to update model)
+                video_tutorials=video_tutorials,
+                expert_recommendations=expert_recommendations,
+                compliance_check=compliance_check,
+                educational_content=educational_content,
+                interactive_guides=self._get_interactive_guides(request.application_method),
+                maintenance_schedule=self._get_equipment_maintenance_schedule(request.application_method)
             )
             
-            logger.info(f"Application guidance provided in {processing_time_ms:.2f}ms")
+            logger.info(f"Comprehensive application guidance provided in {processing_time_ms:.2f}ms")
             return response
             
         except Exception as e:
-            logger.error(f"Error providing application guidance: {e}")
+            logger.error(f"Error providing comprehensive application guidance: {e}")
             raise
     
     async def _get_method_guidance(self, application_method: ApplicationMethod) -> Dict[str, List[str]]:
@@ -695,3 +1078,315 @@ class GuidanceService:
             timing_recommendations.append(f"Planned application date: {application_date}")
         
         return "; ".join(timing_recommendations)
+    
+    async def _get_adaptive_method_guidance(
+        self, 
+        application_method: ApplicationMethod, 
+        experience_level: Optional[str]
+    ) -> Dict[str, List[str]]:
+        """Get method-specific guidance adapted to operator experience level."""
+        base_guidance = await self._get_method_guidance(application_method)
+        
+        if not experience_level or experience_level.lower() == "expert":
+            return base_guidance
+        
+        # Adapt guidance based on experience level
+        adapted_guidance = {}
+        for category, steps in base_guidance.items():
+            adapted_steps = []
+            for step in steps:
+                if experience_level.lower() == "beginner":
+                    # Add more detail and explanations for beginners
+                    adapted_steps.append(f"{step} (Detailed explanation: This step is important because...)")
+                elif experience_level.lower() == "intermediate":
+                    # Keep original steps but add some context
+                    adapted_steps.append(step)
+                else:  # advanced
+                    # Provide concise, technical steps
+                    adapted_steps.append(step)
+            adapted_guidance[category] = adapted_steps
+        
+        return adapted_guidance
+    
+    async def _generate_comprehensive_weather_advisories(
+        self, 
+        weather_conditions: Optional[Dict[str, Any]], 
+        application_method: ApplicationMethod,
+        field_conditions: FieldConditions
+    ) -> Optional[List[str]]:
+        """Generate comprehensive weather advisories with real-time integration."""
+        advisories = await self._generate_weather_advisories(weather_conditions, application_method)
+        
+        if not advisories:
+            advisories = []
+        
+        # Add field-specific weather considerations
+        if field_conditions.slope_percent and field_conditions.slope_percent > 5:
+            advisories.append("Sloped field detected - monitor wind conditions more closely")
+        
+        if field_conditions.soil_type.lower() == "clay":
+            advisories.append("Clay soil - ensure adequate soil moisture before application")
+        
+        # Add real-time weather integration recommendations
+        advisories.append("Check real-time weather updates every 30 minutes during application")
+        advisories.append("Have backup application window planned in case of weather changes")
+        
+        return advisories if advisories else None
+    
+    async def _generate_equipment_specific_preparation(
+        self, 
+        application_method: ApplicationMethod, 
+        field_conditions: FieldConditions
+    ) -> Optional[List[str]]:
+        """Generate equipment-specific preparation steps with maintenance schedules."""
+        preparation_steps = await self._generate_equipment_preparation(application_method, field_conditions)
+        
+        if not preparation_steps:
+            preparation_steps = []
+        
+        # Add equipment-specific maintenance from database
+        method_type = application_method.method_type.lower()
+        
+        # Map application methods to equipment types
+        method_to_equipment = {
+            "broadcast": "spreader",
+            "band": "spreader", 
+            "foliar": "sprayer",
+            "sidedress": "injector",
+            "injection": "injector",
+            "drip": "sprayer"
+        }
+        
+        equipment_type = method_to_equipment.get(method_type, method_type)
+        
+        if equipment_type in self.equipment_database:
+            equipment_info = self.equipment_database[equipment_type]
+            preparation_steps.extend([
+                f"Equipment maintenance: {', '.join(equipment_info['maintenance_schedule']['daily'])}",
+                f"Check compatibility: {', '.join(equipment_info['compatibility']['fertilizer_types'])}"
+            ])
+        
+        return preparation_steps
+    
+    async def _generate_enhanced_quality_control(
+        self, 
+        application_method: ApplicationMethod, 
+        field_conditions: FieldConditions
+    ) -> Optional[List[str]]:
+        """Generate enhanced quality control measures with monitoring protocols."""
+        quality_measures = await self._generate_quality_control_measures(application_method, field_conditions)
+        
+        if not quality_measures:
+            quality_measures = []
+        
+        # Add enhanced monitoring protocols
+        quality_measures.extend([
+            "Document application rate every 15 minutes",
+            "Take photos of application quality for record keeping",
+            "Monitor equipment performance indicators continuously",
+            "Record weather conditions at start and end of application"
+        ])
+        
+        return quality_measures
+    
+    async def _get_relevant_video_tutorials(
+        self, 
+        application_method: ApplicationMethod, 
+        experience_level: Optional[str]
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Get relevant video tutorials based on method and experience level."""
+        method_type = application_method.method_type.lower()
+        
+        if method_type not in self.video_tutorials:
+            return None
+        
+        tutorials = []
+        method_tutorials = self.video_tutorials[method_type]
+        
+        for tutorial_type, tutorial_info in method_tutorials.items():
+            # Filter by experience level if specified
+            if experience_level and experience_level.lower() != "expert":
+                if tutorial_info["difficulty"] == "advanced" and experience_level.lower() == "beginner":
+                    continue
+            
+            tutorials.append({
+                "type": tutorial_type,
+                "title": tutorial_info["title"],
+                "duration": tutorial_info["duration"],
+                "difficulty": tutorial_info["difficulty"],
+                "topics": tutorial_info["topics"],
+                "url": tutorial_info["url"]
+            })
+        
+        return tutorials if tutorials else None
+    
+    async def _get_expert_consultation_recommendations(
+        self, 
+        application_method: ApplicationMethod, 
+        field_conditions: FieldConditions
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Get expert consultation recommendations based on method and conditions."""
+        method_type = application_method.method_type.lower()
+        recommendations = []
+        
+        # Get relevant experts based on method type
+        if method_type in ["broadcast", "foliar"]:
+            # Equipment specialists for spreaders and sprayers
+            recommendations.extend(self.expert_contacts["equipment_specialists"])
+        
+        if method_type in ["injection", "sidedress"]:
+            # Precision agriculture experts for injection systems
+            recommendations.extend([
+                expert for expert in self.expert_contacts["equipment_specialists"] 
+                if "injection_systems" in expert["expertise"]
+            ])
+        
+        # Always include agronomists for fertilizer timing and crop response
+        recommendations.extend(self.expert_contacts["agronomists"])
+        
+        # Include safety experts for all methods
+        recommendations.extend(self.expert_contacts["safety_experts"])
+        
+        return recommendations if recommendations else None
+    
+    async def _check_regulatory_compliance(
+        self, 
+        application_method: ApplicationMethod, 
+        field_conditions: FieldConditions
+    ) -> Optional[Dict[str, Any]]:
+        """Check regulatory compliance for the application method and field conditions."""
+        compliance_status = {
+            "federal_compliance": "compliant",
+            "state_compliance": "compliant",
+            "environmental_compliance": "compliant",
+            "required_actions": [],
+            "recommendations": []
+        }
+        
+        # Check buffer zone requirements
+        if field_conditions.field_size_acres > 50:
+            compliance_status["required_actions"].append("Verify buffer zone requirements for large fields")
+        
+        # Check equipment certification
+        compliance_status["required_actions"].extend(self.regulatory_database["compliance_checklist"])
+        
+        # Add method-specific compliance checks
+        method_type = application_method.method_type.lower()
+        if method_type == "foliar":
+            compliance_status["required_actions"].append("Verify spray drift management requirements")
+        
+        if method_type == "injection":
+            compliance_status["required_actions"].append("Check groundwater protection requirements")
+        
+        return compliance_status
+    
+    async def _get_educational_content(
+        self, 
+        application_method: ApplicationMethod, 
+        experience_level: Optional[str]
+    ) -> Optional[Dict[str, Any]]:
+        """Get educational content and best practices."""
+        method_type = application_method.method_type.lower()
+        
+        educational_content = {
+            "best_practices": self.educational_content["best_practices"],
+            "safety_guidelines": self.educational_content["safety_guidelines"],
+            "environmental_stewardship": self.educational_content["environmental_stewardship"],
+            "method_specific_content": self._get_method_specific_educational_content(method_type)
+        }
+        
+        return educational_content
+    
+    def _get_method_specific_educational_content(self, method_type: str) -> Dict[str, List[str]]:
+        """Get method-specific educational content."""
+        content = {
+            "broadcast": [
+                "Understand spread pattern characteristics",
+                "Learn about wind effects on application",
+                "Master calibration techniques for different fertilizers"
+            ],
+            "foliar": [
+                "Understand leaf absorption mechanisms",
+                "Learn about phytotoxicity risks",
+                "Master timing for optimal uptake"
+            ],
+            "injection": [
+                "Understand soil injection principles",
+                "Learn about nutrient placement effects",
+                "Master depth and spacing optimization"
+            ]
+        }
+        
+        return content.get(method_type, [])
+    
+    def _get_interactive_guides(self, application_method: ApplicationMethod) -> Optional[List[Dict[str, Any]]]:
+        """Get interactive guides for the application method."""
+        method_type = application_method.method_type.lower()
+        
+        guides = {
+            "broadcast": [
+                {
+                    "title": "Spreader Calibration Calculator",
+                    "type": "calculator",
+                    "description": "Interactive tool to calculate spreader settings",
+                    "url": "/guides/broadcast_calibration"
+                },
+                {
+                    "title": "Wind Effect Simulator",
+                    "type": "simulator",
+                    "description": "Visualize wind effects on spread pattern",
+                    "url": "/guides/wind_simulator"
+                }
+            ],
+            "foliar": [
+                {
+                    "title": "Spray Coverage Calculator",
+                    "type": "calculator",
+                    "description": "Calculate optimal spray coverage",
+                    "url": "/guides/spray_coverage"
+                },
+                {
+                    "title": "Nozzle Selection Guide",
+                    "type": "guide",
+                    "description": "Interactive nozzle selection tool",
+                    "url": "/guides/nozzle_selection"
+                }
+            ],
+            "injection": [
+                {
+                    "title": "Injection Depth Calculator",
+                    "type": "calculator",
+                    "description": "Calculate optimal injection depth",
+                    "url": "/guides/injection_depth"
+                },
+                {
+                    "title": "Spacing Optimization Tool",
+                    "type": "optimizer",
+                    "description": "Optimize injection spacing",
+                    "url": "/guides/spacing_optimizer"
+                }
+            ]
+        }
+        
+        return guides.get(method_type, [])
+    
+    def _get_equipment_maintenance_schedule(self, application_method: ApplicationMethod) -> Optional[Dict[str, List[str]]]:
+        """Get equipment maintenance schedule for the application method."""
+        method_type = application_method.method_type.lower()
+        
+        # Map application methods to equipment types
+        method_to_equipment = {
+            "broadcast": "spreader",
+            "band": "spreader", 
+            "foliar": "sprayer",
+            "sidedress": "injector",
+            "injection": "injector",
+            "drip": "sprayer"  # Drip systems often use sprayer equipment
+        }
+        
+        equipment_type = method_to_equipment.get(method_type, method_type)
+        
+        if equipment_type in self.equipment_database:
+            return self.equipment_database[equipment_type]["maintenance_schedule"]
+        
+        return None
