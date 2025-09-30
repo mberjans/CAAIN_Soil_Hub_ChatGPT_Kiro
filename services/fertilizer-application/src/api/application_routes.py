@@ -254,6 +254,273 @@ async def validate_application_request(request: ApplicationRequest):
         raise HTTPException(status_code=500, detail=f"Request validation failed: {str(e)}")
 
 
+@router.get("/crops/supported")
+async def get_supported_crops(
+    service: ApplicationMethodService = Depends(get_application_service)
+):
+    """
+    Get list of supported crop types with detailed information.
+    
+    Returns comprehensive crop database including:
+    - Crop names and scientific names
+    - Growth stages and timing windows
+    - Nutrient requirements and sensitivities
+    - Application method preferences
+    """
+    try:
+        crop_integration_service = service.crop_integration_service
+        supported_crops = crop_integration_service.get_supported_crops()
+        
+        crop_info = {}
+        for crop_type in supported_crops:
+            crop_data = crop_integration_service.get_crop_info(crop_type)
+            preferences = crop_integration_service.get_application_preferences(crop_type)
+            growth_stages = crop_integration_service.get_supported_growth_stages(crop_type)
+            
+            crop_info[crop_type.value] = {
+                "name": crop_data.get("name", crop_type.value.title()),
+                "scientific_name": crop_data.get("scientific_name", ""),
+                "category": crop_data.get("category", ""),
+                "family": crop_data.get("family", ""),
+                "growing_season": crop_data.get("growing_season", ""),
+                "root_system": crop_data.get("root_system", ""),
+                "nutrient_requirements": crop_data.get("nutrient_requirements", {}),
+                "application_sensitivity": crop_data.get("application_sensitivity", {}),
+                "critical_application_windows": crop_data.get("critical_application_windows", {}),
+                "preferred_methods": preferences.preferred_methods if preferences else [],
+                "avoided_methods": preferences.avoided_methods if preferences else [],
+                "supported_growth_stages": [stage.value for stage in growth_stages]
+            }
+        
+        return {
+            "supported_crops": crop_info,
+            "total_crops": len(supported_crops),
+            "categories": list(set(crop_data.get("category", "") for crop_data in crop_info.values()))
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting supported crops: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get supported crops: {str(e)}")
+
+
+@router.get("/crops/{crop_type}/growth-stages")
+async def get_crop_growth_stages(
+    crop_type: str,
+    service: ApplicationMethodService = Depends(get_application_service)
+):
+    """
+    Get detailed growth stage information for a specific crop.
+    
+    Args:
+        crop_type: Type of crop (e.g., 'corn', 'soybean', 'wheat')
+    
+    Returns:
+        Detailed growth stage information including:
+        - Stage names and codes
+        - Timing windows
+        - Nutrient demand levels
+        - Recommended and avoided application methods
+    """
+    try:
+        crop_integration_service = service.crop_integration_service
+        parsed_crop_type = service._parse_crop_type(crop_type)
+        growth_stages = crop_integration_service.get_supported_growth_stages(parsed_crop_type)
+        
+        stage_info = {}
+        for stage in growth_stages:
+            stage_data = crop_integration_service.get_growth_stage_info(parsed_crop_type, stage)
+            if stage_data:
+                stage_info[stage.value] = {
+                    "stage_name": stage_data.stage_name,
+                    "stage_code": stage_data.stage_code,
+                    "description": stage_data.description,
+                    "days_from_planting": {
+                        "min": stage_data.days_from_planting[0],
+                        "max": stage_data.days_from_planting[1]
+                    },
+                    "nutrient_demand_level": stage_data.nutrient_demand_level,
+                    "application_sensitivity": stage_data.application_sensitivity,
+                    "recommended_methods": stage_data.recommended_methods,
+                    "avoided_methods": stage_data.avoided_methods,
+                    "timing_preferences": stage_data.timing_preferences
+                }
+        
+        return {
+            "crop_type": crop_type,
+            "growth_stages": stage_info,
+            "total_stages": len(stage_info)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting growth stages for {crop_type}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get growth stages: {str(e)}")
+
+
+@router.get("/crops/{crop_type}/nutrient-uptake")
+async def get_crop_nutrient_uptake(
+    crop_type: str,
+    nutrient: str = "nitrogen",
+    service: ApplicationMethodService = Depends(get_application_service)
+):
+    """
+    Get nutrient uptake curve for a specific crop and nutrient.
+    
+    Args:
+        crop_type: Type of crop (e.g., 'corn', 'soybean')
+        nutrient: Type of nutrient (e.g., 'nitrogen', 'phosphorus', 'potassium')
+    
+    Returns:
+        Nutrient uptake curve showing uptake percentage over growth stages
+    """
+    try:
+        crop_integration_service = service.crop_integration_service
+        parsed_crop_type = service._parse_crop_type(crop_type)
+        
+        uptake_curve = crop_integration_service.get_nutrient_uptake_curve(parsed_crop_type, nutrient)
+        
+        return {
+            "crop_type": crop_type,
+            "nutrient": nutrient,
+            "uptake_curve": uptake_curve,
+            "growth_stages": [f"Stage_{i+1}" for i in range(len(uptake_curve))],
+            "peak_uptake": max(uptake_curve),
+            "peak_stage": uptake_curve.index(max(uptake_curve)) + 1
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting nutrient uptake for {crop_type}/{nutrient}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to get nutrient uptake: {str(e)}")
+
+
+@router.post("/crops/{crop_type}/method-compatibility")
+async def assess_method_compatibility(
+    crop_type: str,
+    method_types: List[str],
+    service: ApplicationMethodService = Depends(get_application_service)
+):
+    """
+    Assess compatibility between crop type and application methods.
+    
+    Args:
+        crop_type: Type of crop (e.g., 'corn', 'soybean')
+        method_types: List of application method types to assess
+    
+    Returns:
+        Compatibility assessment for each method including:
+        - Compatibility scores
+        - Compatibility factors
+        - Recommendations
+    """
+    try:
+        crop_integration_service = service.crop_integration_service
+        parsed_crop_type = service._parse_crop_type(crop_type)
+        
+        compatibility_results = {}
+        for method_type in method_types:
+            compatibility = crop_integration_service.assess_crop_method_compatibility(
+                parsed_crop_type, method_type
+            )
+            compatibility_results[method_type] = {
+                "compatibility_score": compatibility["compatibility_score"],
+                "compatibility_factors": compatibility["factors"],
+                "recommendation": "Recommended" if compatibility["compatibility_score"] > 0.7 
+                                else "Neutral" if compatibility["compatibility_score"] > 0.4 
+                                else "Not Recommended"
+            }
+        
+        return {
+            "crop_type": crop_type,
+            "method_compatibility": compatibility_results,
+            "overall_assessment": {
+                "best_method": max(compatibility_results.keys(), 
+                                 key=lambda k: compatibility_results[k]["compatibility_score"]),
+                "worst_method": min(compatibility_results.keys(), 
+                                  key=lambda k: compatibility_results[k]["compatibility_score"])
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error assessing method compatibility for {crop_type}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to assess compatibility: {str(e)}")
+
+
+@router.post("/crops/{crop_type}/timing-analysis")
+async def analyze_application_timing(
+    crop_type: str,
+    growth_stage: str,
+    method_type: str,
+    days_from_planting: int,
+    service: ApplicationMethodService = Depends(get_application_service)
+):
+    """
+    Analyze optimal application timing for specific crop, growth stage, and method.
+    
+    Args:
+        crop_type: Type of crop (e.g., 'corn', 'soybean')
+        growth_stage: Growth stage (e.g., 'v6', 'vt', 'r1')
+        method_type: Application method type (e.g., 'sidedress', 'foliar')
+        days_from_planting: Days since planting
+    
+    Returns:
+        Timing analysis including:
+        - Timing score
+        - Optimal timing window
+        - Recommendations
+    """
+    try:
+        crop_integration_service = service.crop_integration_service
+        parsed_crop_type = service._parse_crop_type(crop_type)
+        parsed_growth_stage = service._parse_growth_stage(growth_stage)
+        
+        # Get timing score
+        timing_score = crop_integration_service.calculate_application_timing_score(
+            parsed_crop_type, parsed_growth_stage, method_type, days_from_planting
+        )
+        
+        # Get growth stage info
+        stage_info = crop_integration_service.get_growth_stage_info(parsed_crop_type, parsed_growth_stage)
+        
+        # Get critical application windows
+        critical_windows = crop_integration_service.get_critical_application_windows(parsed_crop_type)
+        
+        return {
+            "crop_type": crop_type,
+            "growth_stage": growth_stage,
+            "method_type": method_type,
+            "days_from_planting": days_from_planting,
+            "timing_score": timing_score,
+            "timing_assessment": {
+                "optimal": timing_score > 0.8,
+                "good": 0.6 <= timing_score <= 0.8,
+                "acceptable": 0.4 <= timing_score < 0.6,
+                "poor": timing_score < 0.4
+            },
+            "growth_stage_info": {
+                "stage_name": stage_info.stage_name if stage_info else "Unknown",
+                "nutrient_demand": stage_info.nutrient_demand_level if stage_info else "Unknown",
+                "optimal_window": {
+                    "min_days": stage_info.days_from_planting[0] if stage_info else 0,
+                    "max_days": stage_info.days_from_planting[1] if stage_info else 0
+                }
+            },
+            "critical_windows": critical_windows,
+            "recommendations": {
+                "timing": "Apply now" if timing_score > 0.8 
+                         else "Consider timing" if timing_score > 0.6
+                         else "Delay application" if timing_score < 0.4
+                         else "Proceed with caution",
+                "method_suitability": "Highly suitable" if timing_score > 0.8
+                                     else "Suitable" if timing_score > 0.6
+                                     else "Marginally suitable" if timing_score > 0.4
+                                     else "Not recommended"
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error analyzing timing for {crop_type}/{growth_stage}/{method_type}: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to analyze timing: {str(e)}")
+
+
 @router.get("/health")
 async def health_check():
     """Health check endpoint for application service."""
@@ -264,6 +531,11 @@ async def health_check():
             "select-methods",
             "analyze-costs",
             "methods",
-            "validate-request"
+            "validate-request",
+            "crops/supported",
+            "crops/{crop_type}/growth-stages",
+            "crops/{crop_type}/nutrient-uptake",
+            "crops/{crop_type}/method-compatibility",
+            "crops/{crop_type}/timing-analysis"
         ]
     }

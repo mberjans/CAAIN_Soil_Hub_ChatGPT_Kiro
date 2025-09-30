@@ -16,6 +16,7 @@ from ..models.application_models import (
 from ..models.application_models import EquipmentSpecification
 from ..models.method_models import ApplicationMethod as MethodModel
 from ..database.fertilizer_db import get_application_methods_by_type
+from .crop_integration_service import CropIntegrationService, CropType, GrowthStage
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +26,7 @@ class ApplicationMethodService:
     
     def __init__(self):
         self.method_database = {}
+        self.crop_integration_service = CropIntegrationService()
         self._initialize_method_database()
     
     def _initialize_method_database(self):
@@ -354,8 +356,12 @@ class ApplicationMethodService:
         fertilizer_spec: FertilizerSpecification,
         available_equipment: List[EquipmentSpecification]
     ) -> List[ApplicationMethod]:
-        """Generate application method recommendations."""
+        """Generate application method recommendations with advanced crop integration."""
         recommendations = []
+        
+        # Get crop type and growth stage for advanced analysis
+        crop_type = self._parse_crop_type(crop_requirements.crop_type)
+        growth_stage = self._parse_growth_stage(crop_requirements.growth_stage)
         
         # Sort methods by score
         sorted_methods = sorted(method_scores.items(), key=lambda x: x[1], reverse=True)
@@ -364,31 +370,64 @@ class ApplicationMethodService:
             if score > 0.3:  # Minimum threshold for recommendation
                 method_data = self.method_database[method_type]
                 
-                # Find compatible equipment
-                compatible_equipment = self._find_compatible_equipment(
-                    method_data["equipment_types"], available_equipment
+                # Enhanced crop-specific scoring
+                crop_compatibility = self.crop_integration_service.assess_crop_method_compatibility(
+                    crop_type, method_type
                 )
                 
-                if compatible_equipment:
-                    recommendation = ApplicationMethod(
-                        method_id=f"{method_type}_{uuid4().hex[:8]}",
-                        method_type=method_type,
-                        recommended_equipment=compatible_equipment,
-                        application_rate=self._calculate_application_rate(
-                            fertilizer_spec, crop_requirements, method_type
-                        ),
-                        rate_unit=fertilizer_spec.unit or "lbs/acre",
-                        application_timing=self._determine_application_timing(
-                            crop_requirements.growth_stage, method_type
-                        ),
-                        efficiency_score=method_data["efficiency_score"],
-                        cost_per_acre=method_data["cost_per_acre"],
-                        labor_requirements=method_data["labor_intensity"],
-                        environmental_impact=method_data["environmental_impact"],
-                        pros=method_data["pros"],
-                        cons=method_data["cons"]
+                # Check if method is recommended for this crop and growth stage
+                recommended_methods = self.crop_integration_service.get_recommended_methods_for_stage(
+                    crop_type, growth_stage
+                )
+                avoided_methods = self.crop_integration_service.get_avoided_methods_for_stage(
+                    crop_type, growth_stage
+                )
+                
+                # Adjust score based on crop compatibility
+                adjusted_score = score * crop_compatibility["compatibility_score"]
+                
+                # Apply penalties for avoided methods
+                if method_type in avoided_methods:
+                    adjusted_score *= 0.3
+                
+                # Apply bonuses for recommended methods
+                if method_type in recommended_methods:
+                    adjusted_score *= 1.2
+                
+                if adjusted_score > 0.3:  # Re-check threshold with adjusted score
+                    # Find compatible equipment
+                    compatible_equipment = self._find_compatible_equipment(
+                        method_data["equipment_types"], available_equipment
                     )
-                    recommendations.append(recommendation)
+                    
+                    if compatible_equipment:
+                        # Get enhanced application timing
+                        application_timing = self._get_enhanced_application_timing(
+                            crop_type, growth_stage, method_type, crop_requirements.growth_stage
+                        )
+                        
+                        # Get crop-specific application rate
+                        application_rate = self._calculate_enhanced_application_rate(
+                            fertilizer_spec, crop_requirements, method_type, crop_type, growth_stage
+                        )
+                        
+                        recommendation = ApplicationMethod(
+                            method_id=f"{method_type}_{uuid4().hex[:8]}",
+                            method_type=method_type,
+                            recommended_equipment=compatible_equipment,
+                            application_rate=application_rate,
+                            rate_unit=fertilizer_spec.unit or "lbs/acre",
+                            application_timing=application_timing,
+                            efficiency_score=method_data["efficiency_score"],
+                            cost_per_acre=method_data["cost_per_acre"],
+                            labor_requirements=method_data["labor_intensity"],
+                            environmental_impact=method_data["environmental_impact"],
+                            pros=method_data["pros"],
+                            cons=method_data["cons"],
+                            crop_compatibility_score=crop_compatibility["compatibility_score"],
+                            crop_compatibility_factors=crop_compatibility["factors"]
+                        )
+                        recommendations.append(recommendation)
         
         return recommendations
     
@@ -631,3 +670,170 @@ class ApplicationMethodService:
                 eq.equipment_type == equipment_type for eq in available_equipment
             )
         return compatibility
+    
+    def _parse_crop_type(self, crop_type_str: str) -> CropType:
+        """Parse crop type string to CropType enum."""
+        crop_mapping = {
+            "corn": CropType.CORN,
+            "maize": CropType.CORN,
+            "soybean": CropType.SOYBEAN,
+            "soy": CropType.SOYBEAN,
+            "wheat": CropType.WHEAT,
+            "tomato": CropType.TOMATO,
+            "potato": CropType.POTATO,
+            "rice": CropType.RICE,
+            "barley": CropType.BARLEY,
+            "oats": CropType.OATS,
+            "sorghum": CropType.SORGHUM,
+            "millet": CropType.MILLET,
+            "pepper": CropType.PEPPER,
+            "lettuce": CropType.LETTUCE,
+            "carrot": CropType.CARROT,
+            "onion": CropType.ONION,
+            "sweet_potato": CropType.SWEET_POTATO,
+            "cabbage": CropType.CABBAGE,
+            "broccoli": CropType.BROCCOLI,
+            "cauliflower": CropType.CAULIFLOWER,
+            "apple": CropType.APPLE,
+            "pear": CropType.PEAR,
+            "peach": CropType.PEACH,
+            "cherry": CropType.CHERRY,
+            "grape": CropType.GRAPE,
+            "strawberry": CropType.STRAWBERRY,
+            "blueberry": CropType.BLUEBERRY,
+            "bean": CropType.BEAN,
+            "peas": CropType.PEAS,
+            "lentil": CropType.LENTIL,
+            "chickpea": CropType.CHICKPEA,
+            "sunflower": CropType.SUNFLOWER,
+            "canola": CropType.CANOLA,
+            "cotton": CropType.COTTON,
+            "alfalfa": CropType.ALFALFA,
+            "clover": CropType.CLOVER,
+            "grass_hay": CropType.GRASS_HAY,
+            "sugar_beet": CropType.SUGAR_BEET,
+            "sugar_cane": CropType.SUGAR_CANE,
+            "tobacco": CropType.TOBACCO
+        }
+        return crop_mapping.get(crop_type_str.lower(), CropType.CORN)
+    
+    def _parse_growth_stage(self, growth_stage_str: str) -> GrowthStage:
+        """Parse growth stage string to GrowthStage enum."""
+        stage_mapping = {
+            # General stages
+            "germination": GrowthStage.GERMINATION,
+            "emergence": GrowthStage.EMERGENCE,
+            "seedling": GrowthStage.SEEDLING,
+            "vegetative": GrowthStage.VEGETATIVE_2,
+            "vegetative_1": GrowthStage.VEGETATIVE_1,
+            "vegetative_2": GrowthStage.VEGETATIVE_2,
+            "vegetative_3": GrowthStage.VEGETATIVE_3,
+            "flowering": GrowthStage.FLOWERING,
+            "pollination": GrowthStage.POLLINATION,
+            "fruit_set": GrowthStage.FRUIT_SET,
+            "maturity": GrowthStage.MATURITY,
+            "harvest": GrowthStage.HARVEST,
+            
+            # Corn stages
+            "v1": GrowthStage.V1,
+            "v2": GrowthStage.V2,
+            "v3": GrowthStage.V3,
+            "v4": GrowthStage.V4,
+            "v5": GrowthStage.V5,
+            "v6": GrowthStage.V6,
+            "vt": GrowthStage.VT,
+            "r1": GrowthStage.R1,
+            "r2": GrowthStage.R2,
+            "r3": GrowthStage.R3,
+            "r4": GrowthStage.R4,
+            "r5": GrowthStage.R5,
+            "r6": GrowthStage.R6,
+            
+            # Soybean stages
+            "ve": GrowthStage.VE,
+            "vc": GrowthStage.VC,
+            "v1_soy": GrowthStage.V1_SOY,
+            "v2_soy": GrowthStage.V2_SOY,
+            "v3_soy": GrowthStage.V3_SOY,
+            "v4_soy": GrowthStage.V4_SOY,
+            "v5_soy": GrowthStage.V5_SOY,
+            "v6_soy": GrowthStage.V6_SOY,
+            "r1_soy": GrowthStage.R1_SOY,
+            "r2_soy": GrowthStage.R2_SOY,
+            "r3_soy": GrowthStage.R3_SOY,
+            "r4_soy": GrowthStage.R4_SOY,
+            "r5_soy": GrowthStage.R5_SOY,
+            "r6_soy": GrowthStage.R6_SOY,
+            "r7_soy": GrowthStage.R7_SOY,
+            "r8_soy": GrowthStage.R8_SOY,
+            
+            # Wheat stages
+            "tillering": GrowthStage.TILLERING,
+            "jointing": GrowthStage.JOINTING
+        }
+        return stage_mapping.get(growth_stage_str.lower(), GrowthStage.VEGETATIVE_2)
+    
+    def _get_enhanced_application_timing(self, crop_type: CropType, growth_stage: GrowthStage, 
+                                        method_type: str, growth_stage_str: str) -> str:
+        """Get enhanced application timing based on crop and growth stage."""
+        # Get crop-specific timing information
+        stage_info = self.crop_integration_service.get_growth_stage_info(crop_type, growth_stage)
+        
+        if stage_info:
+            # Use crop-specific timing preferences
+            if stage_info.timing_preferences:
+                base_timing = stage_info.timing_preferences[0]
+            else:
+                base_timing = "Flexible timing"
+        else:
+            # Fallback to original logic
+            base_timing = self._determine_application_timing(growth_stage_str, method_type)
+        
+        # Add method-specific enhancements
+        method_enhancements = {
+            "foliar": " (foliar application - avoid during flowering)",
+            "sidedress": " (sidedress application - avoid root damage)",
+            "broadcast": " (broadcast application - weather dependent)",
+            "band": " (band application - precise placement)",
+            "injection": " (injection application - soil moisture dependent)"
+        }
+        
+        enhancement = method_enhancements.get(method_type, "")
+        return f"{base_timing}{enhancement}"
+    
+    def _calculate_enhanced_application_rate(self, fertilizer_spec: FertilizerSpecification, 
+                                           crop_requirements: CropRequirements, method_type: str,
+                                           crop_type: CropType, growth_stage: GrowthStage) -> float:
+        """Calculate enhanced application rate based on crop and growth stage."""
+        # Base rate from crop requirements
+        base_rate = crop_requirements.nutrient_requirements.get("nitrogen", 100)
+        
+        # Get crop-specific nutrient uptake pattern
+        nutrient_uptake = self.crop_integration_service.get_nutrient_uptake_curve(
+            crop_type, "nitrogen"
+        )
+        
+        # Adjust based on growth stage nutrient demand
+        stage_info = self.crop_integration_service.get_growth_stage_info(crop_type, growth_stage)
+        if stage_info:
+            demand_adjustments = {
+                "low": 0.8,
+                "medium": 1.0,
+                "high": 1.2,
+                "critical": 1.3
+            }
+            demand_multiplier = demand_adjustments.get(stage_info.nutrient_demand_level, 1.0)
+            base_rate *= demand_multiplier
+        
+        # Adjust based on method efficiency
+        efficiency_adjustments = {
+            "broadcast": 1.0,
+            "band": 0.8,
+            "sidedress": 0.7,
+            "foliar": 0.3,
+            "injection": 0.8,
+            "drip": 0.6
+        }
+        
+        adjustment = efficiency_adjustments.get(method_type, 1.0)
+        return base_rate * adjustment

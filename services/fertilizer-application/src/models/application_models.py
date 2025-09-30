@@ -109,6 +109,9 @@ class ApplicationMethod(BaseModel):
     environmental_impact: Optional[str] = Field(None, description="Environmental impact assessment")
     pros: List[str] = Field(default_factory=list, description="Advantages of this method")
     cons: List[str] = Field(default_factory=list, description="Disadvantages of this method")
+    # Enhanced crop integration fields
+    crop_compatibility_score: Optional[float] = Field(None, ge=0, le=1, description="Crop compatibility score")
+    crop_compatibility_factors: Optional[List[str]] = Field(None, description="Crop compatibility factors")
 
 
 class ApplicationResponse(BaseModel):
