@@ -20,6 +20,7 @@ from .api.timing_optimization_routes import router as timing_optimization_router
 from .api.application_method_optimization_routes import router as application_method_optimization_router
 from .api.price_adjustment_routes import router as price_adjustment_router
 from .api.price_scenario_routes import router as price_scenario_router
+from .api.price_optimization_alert_routes import router as price_optimization_alert_router
 from .database.fertilizer_price_db import initialize_database, shutdown_database
 from .database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from .services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -100,6 +101,7 @@ app.include_router(timing_optimization_router, prefix="/api/v1", tags=["timing-o
 app.include_router(application_method_optimization_router, prefix="/api/v1", tags=["application-method-optimization"])
 app.include_router(price_adjustment_router, prefix="/api/v1", tags=["price-adjustment"])
 app.include_router(price_scenario_router, prefix="/api/v1", tags=["price-scenario-modeling"])
+app.include_router(price_optimization_alert_router, prefix="/api/v1", tags=["price-optimization-alerts"])
 
 @app.get("/health")
 async def health_check():
@@ -245,7 +247,21 @@ async def health_check():
             "probability_distribution_modeling",
             "geometric_brownian_motion",
             "price_forecasting",
-            "scenario_planning"
+            "scenario_planning",
+            "intelligent_price_optimization_alerts",
+            "ml_based_alert_optimization",
+            "personalized_alert_thresholds",
+            "predictive_price_alerts",
+            "multi_channel_alert_delivery",
+            "false_positive_reduction",
+            "alert_performance_optimization",
+            "pattern_recognition_alerts",
+            "opportunity_detection_alerts",
+            "risk_assessment_alerts",
+            "timing_optimization_alerts",
+            "volatility_monitoring_alerts",
+            "trend_reversal_alerts",
+            "market_shock_detection_alerts"
         ]
     }
 
