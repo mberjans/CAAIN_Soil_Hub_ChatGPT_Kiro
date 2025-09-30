@@ -493,5 +493,8 @@ async def get_climate_analysis(request: LocationValidationRequest) -> Dict[str, 
         )
 
 
-# Export router
-__all__ = ['router']
+# Import location management routes
+from .location_routes import router as location_management_router
+
+# Export routers
+__all__ = ['router', 'location_management_router']
