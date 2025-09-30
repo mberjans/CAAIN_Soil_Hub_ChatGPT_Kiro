@@ -216,3 +216,129 @@ class GuidanceResponse(BaseModel):
     educational_content: Optional[Dict[str, Any]] = Field(None, description="Educational content and best practices")
     interactive_guides: Optional[List[Dict[str, Any]]] = Field(None, description="Interactive guides and tools")
     maintenance_schedule: Optional[Dict[str, List[str]]] = Field(None, description="Equipment maintenance schedule")
+
+
+# Advanced Application Management Models for TICKET-023_fertilizer-application-method-10.2
+
+class ApplicationPlanRequest(BaseModel):
+    """Request model for application planning."""
+    user_id: str = Field(..., description="User identifier")
+    farm_id: str = Field(..., description="Farm identifier")
+    fields: List[Dict[str, Any]] = Field(..., description="List of fields to plan applications for")
+    season: str = Field(..., description="Growing season (spring, summer, fall, winter)")
+    planning_horizon_days: int = Field(default=90, ge=1, le=365, description="Planning horizon in days")
+    objectives: List[str] = Field(default=["yield_optimization"], description="Planning objectives")
+    constraints: Optional[Dict[str, Any]] = Field(None, description="Planning constraints")
+    preferences: Optional[Dict[str, Any]] = Field(None, description="User preferences")
+
+
+class ApplicationPlan(BaseModel):
+    """Individual application plan for a field."""
+    field_id: str = Field(..., description="Field identifier")
+    field_name: str = Field(..., description="Field name")
+    crop_type: str = Field(..., description="Crop type")
+    growth_stage: str = Field(..., description="Current growth stage")
+    planned_date: date = Field(..., description="Planned application date")
+    application_method: ApplicationMethodType = Field(..., description="Application method")
+    fertilizer_type: str = Field(..., description="Fertilizer type")
+    application_rate: float = Field(..., description="Application rate per acre")
+    total_amount: float = Field(..., description="Total fertilizer amount needed")
+    equipment_required: List[str] = Field(..., description="Required equipment")
+    labor_hours: float = Field(..., description="Estimated labor hours")
+    cost_estimate: float = Field(..., description="Estimated cost")
+    weather_window: Optional[Dict[str, Any]] = Field(None, description="Optimal weather window")
+    notes: Optional[str] = Field(None, description="Additional notes")
+
+
+class ApplicationPlanResponse(BaseModel):
+    """Response model for application planning."""
+    request_id: str = Field(..., description="Unique request identifier")
+    plan_id: str = Field(..., description="Plan identifier")
+    farm_name: str = Field(..., description="Farm name")
+    season: str = Field(..., description="Season")
+    planning_horizon_days: int = Field(..., description="Planning horizon")
+    total_fields: int = Field(..., description="Total number of fields planned")
+    application_plans: List[ApplicationPlan] = Field(..., description="Individual field plans")
+    resource_summary: Dict[str, Any] = Field(..., description="Resource requirements summary")
+    cost_summary: Dict[str, Any] = Field(..., description="Cost summary")
+    timeline: List[Dict[str, Any]] = Field(..., description="Application timeline")
+    optimization_recommendations: Optional[List[str]] = Field(None, description="Optimization recommendations")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+
+
+class ApplicationMonitorRequest(BaseModel):
+    """Request model for application monitoring."""
+    user_id: str = Field(..., description="User identifier")
+    farm_id: str = Field(..., description="Farm identifier")
+    field_ids: Optional[List[str]] = Field(None, description="Specific field IDs to monitor")
+    include_historical: bool = Field(default=True, description="Include historical data")
+    time_range_days: int = Field(default=30, ge=1, le=365, description="Time range for data")
+
+
+class ApplicationStatus(BaseModel):
+    """Current application status for a field."""
+    field_id: str = Field(..., description="Field identifier")
+    field_name: str = Field(..., description="Field name")
+    crop_type: str = Field(..., description="Crop type")
+    current_status: str = Field(..., description="Current application status")
+    last_application_date: Optional[date] = Field(None, description="Last application date")
+    next_scheduled_date: Optional[date] = Field(None, description="Next scheduled application")
+    progress_percentage: float = Field(..., ge=0, le=100, description="Application progress percentage")
+    quality_metrics: Optional[Dict[str, Any]] = Field(None, description="Application quality metrics")
+    equipment_status: Optional[Dict[str, Any]] = Field(None, description="Equipment status")
+    weather_conditions: Optional[Dict[str, Any]] = Field(None, description="Current weather conditions")
+    alerts: Optional[List[str]] = Field(None, description="Active alerts")
+
+
+class ApplicationMonitorResponse(BaseModel):
+    """Response model for application monitoring."""
+    request_id: str = Field(..., description="Unique request identifier")
+    farm_name: str = Field(..., description="Farm name")
+    monitoring_timestamp: datetime = Field(..., description="Monitoring timestamp")
+    total_fields: int = Field(..., description="Total fields being monitored")
+    active_applications: int = Field(..., description="Number of active applications")
+    completed_applications: int = Field(..., description="Number of completed applications")
+    field_statuses: List[ApplicationStatus] = Field(..., description="Field application statuses")
+    farm_summary: Dict[str, Any] = Field(..., description="Farm-wide summary")
+    alerts_summary: Dict[str, Any] = Field(..., description="Summary of alerts")
+    recommendations: Optional[List[str]] = Field(None, description="Recommendations")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+
+
+class OptimizationRequest(BaseModel):
+    """Request model for real-time optimization."""
+    user_id: str = Field(..., description="User identifier")
+    farm_id: str = Field(..., description="Farm identifier")
+    field_id: str = Field(..., description="Field identifier")
+    current_conditions: Dict[str, Any] = Field(..., description="Current field conditions")
+    weather_update: Optional[Dict[str, Any]] = Field(None, description="Latest weather data")
+    equipment_status: Optional[Dict[str, Any]] = Field(None, description="Current equipment status")
+    optimization_goals: List[str] = Field(default=["efficiency"], description="Optimization goals")
+    constraints: Optional[Dict[str, Any]] = Field(None, description="Optimization constraints")
+
+
+class OptimizationRecommendation(BaseModel):
+    """Individual optimization recommendation."""
+    recommendation_type: str = Field(..., description="Type of recommendation")
+    priority: str = Field(..., description="Priority level (high, medium, low)")
+    description: str = Field(..., description="Recommendation description")
+    expected_benefit: str = Field(..., description="Expected benefit")
+    implementation_effort: str = Field(..., description="Implementation effort required")
+    cost_impact: Optional[float] = Field(None, description="Cost impact")
+    timeline: Optional[str] = Field(None, description="Implementation timeline")
+    supporting_data: Optional[Dict[str, Any]] = Field(None, description="Supporting data")
+
+
+class OptimizationResponse(BaseModel):
+    """Response model for real-time optimization."""
+    request_id: str = Field(..., description="Unique request identifier")
+    field_id: str = Field(..., description="Field identifier")
+    field_name: str = Field(..., description="Field name")
+    optimization_timestamp: datetime = Field(..., description="Optimization timestamp")
+    current_conditions_summary: Dict[str, Any] = Field(..., description="Current conditions summary")
+    optimization_score: float = Field(..., ge=0, le=100, description="Overall optimization score")
+    recommendations: List[OptimizationRecommendation] = Field(..., description="Optimization recommendations")
+    performance_predictions: Optional[Dict[str, Any]] = Field(None, description="Performance predictions")
+    risk_assessment: Optional[Dict[str, Any]] = Field(None, description="Risk assessment")
+    next_optimization_due: Optional[datetime] = Field(None, description="Next optimization due")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
