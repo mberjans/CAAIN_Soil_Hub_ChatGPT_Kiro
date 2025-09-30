@@ -12,6 +12,7 @@ from .api.guidance_routes import router as guidance_router
 from .api.equipment_routes import router as equipment_router
 from .api.efficiency_routes import router as efficiency_router
 from .api.monitoring_routes import router as monitoring_router
+from .api.crop_response_routes import router as crop_response_router
 from .database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -70,6 +71,7 @@ app.include_router(guidance_router, prefix="/api/v1", tags=["guidance"])
 app.include_router(equipment_router, prefix="/api/v1", tags=["equipment-assessment"])
 app.include_router(efficiency_router, prefix="/api/v1", tags=["equipment-efficiency"])
 app.include_router(monitoring_router, prefix="/api/v1", tags=["performance-monitoring"])
+app.include_router(crop_response_router, prefix="/api/v1", tags=["crop-response"])
 
 @app.get("/health")
 async def health_check():
@@ -91,7 +93,10 @@ async def health_check():
             "application_guidance",
             "method_optimization",
             "equipment_compatibility",
-            "farm_size_assessment"
+            "farm_size_assessment",
+            "crop_response_optimization",
+            "yield_impact_prediction",
+            "method_effectiveness_ranking"
         ]
     }
 
