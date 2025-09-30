@@ -67,6 +67,10 @@ async def log_requests(request: Request, call_next):
 app.include_router(router)  # Location validation routes
 app.include_router(location_management_router)  # Location management routes
 
+# Import and include field management routes
+from api.field_routes import router as field_management_router
+app.include_router(field_management_router)  # Field management routes
+
 # Root endpoint
 @app.get("/")
 async def root():
