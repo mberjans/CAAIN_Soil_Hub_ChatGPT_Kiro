@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - AFAS</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .agricultural-card {
+            border-left: 4px solid #28a745;
+            transition: transform 0.2s;
+        }
+        .agricultural-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .method-card {
+            border: 2px solid #e9ecef;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .method-card:hover {
+            border-color: #28a745;
+            box-shadow: 0 4px 12px rgba(40, 167, 69, 0.15);
+        }
+        .method-card.selected {
+            border-color: #28a745;
+            background-color: #d4edda;
+        }
+        .method-card.recommended {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        .method-card.recommended::before {
+            content: "RECOMMENDED";
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            background: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+        .comparison-table {
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .comparison-table th {
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+        .cost-breakdown {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .timing-calendar {
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .timing-event {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border-radius: 4px;
+        }
+        .equipment-icon {
+            font-size: 2rem;
+            color: #6c757d;
+            margin-bottom: 0.5rem;
+        }
+        .efficiency-bar {
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 0.5rem 0;
+        }
+        .efficiency-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc3545, #ffc107, #28a745);
+            transition: width 0.5s ease;
+        }
+        .wizard-step {
+            display: none;
+        }
+        .wizard-step.active {
+            display: block;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 2rem;
+        }
+        .step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e9ecef;
+            color: #6c757d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.5rem;
+            font-weight: bold;
+        }
+        .step.active {
+            background: #28a745;
+            color: white;
+        }
+        .step.completed {
+            background: #007bff;
+            color: white;
+        }
+        .guidance-panel {
+            background: #f8f9fa;
+            border-left: 4px solid #17a2b8;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .cost-chart-container {
+            position: relative;
+            height: 300px;
+            margin: 1rem 0;
+        }
+        .application-map {
+            height: 400px;
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+        }
+        .method-comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+        .comparison-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            background: white;
+            transition: all 0.3s ease;
+        }
+        .comparison-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .method-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #28a745;
+        }
+        .method-score.low {
+            color: #dc3545;
+        }
+        .method-score.medium {
+            color: #ffc107;
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .progress-ring-circle {
+            stroke-dasharray: 251.2;
+            stroke-dashoffset: 251.2;
+            transition: stroke-dashoffset 0.5s ease-in-out;
+        }
+        .timing-window {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .cost-breakdown-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        .cost-breakdown-item:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            background: #f8f9fa;
+            margin: 0.5rem -1rem -1rem -1rem;
+            padding: 1rem;
+            border-radius: 0 0 8px 8px;
+        }
+        .equipment-compatibility {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0;
+        }
+        .equipment-tag {
+            background: #e9ecef;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+        }
+        .equipment-tag.compatible {
+            background: #d4edda;
+            color: #155724;
+        }
+        .equipment-tag.incompatible {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .environmental-impact {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .impact-indicator {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .impact-indicator.low {
+            background: #28a745;
+        }
+        .impact-indicator.medium {
+            background: #ffc107;
+        }
+        .impact-indicator.high {
+            background: #dc3545;
+        }
+        .mobile-optimized {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-optimized {
+                display: block;
+            }
+            .desktop-only {
+                display: none;
+            }
+            .method-comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            .step-indicator {
+                flex-wrap: wrap;
+            }
+            .step {
+                margin: 0.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i> AFAS
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/crop-selection">Crop Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/soil-fertility">Soil Fertility</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/fertilizer-strategy">Fertilizer Strategy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/fertilizer-application">Application Method</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Main Content -->
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-tractor"></i> Fertilizer Application Method Selector</h1>
+                <p class="lead">Choose the optimal fertilizer application method for your field conditions and equipment</p>
+            </div>
+        </div>
+        
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">1</div>
+            <div class="step" id="step2">2</div>
+            <div class="step" id="step3">3</div>
+            <div class="step" id="step4">4</div>
+        </div>
+        
+        <!-- Wizard Steps -->
+        <div class="wizard-step active" id="wizard-step-1">
+            <!-- Step 1: Field and Crop Information -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card agricultural-card">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="fas fa-seedling"></i> Field Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="fieldInfoForm">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Field Size (acres)</label>
+                                        <input type="number" class="form-control" name="field_size" 
+                                            placeholder="250" min="1" max="10000" required>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Soil Type</label>
+                                        <select class="form-control" name="soil_type" required>
+                                            <option value="">Select soil type</option>
+                                            <option value="clay">Clay</option>
+                                            <option value="clay_loam">Clay Loam</option>
+                                            <option value="loam">Loam</option>
+                                            <option value="sandy_loam">Sandy Loam</option>
+                                            <option value="sand">Sand</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Field Slope (%)</label>
+                                        <input type="number" class="form-control" name="slope" 
+                                            placeholder="2" min="0" max="30" step="0.1">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Drainage</label>
+                                        <select class="form-control" name="drainage">
+                                            <option value="excellent">Excellent</option>
+                                            <option value="good">Good</option>
+                                            <option value="moderate">Moderate</option>
+                                            <option value="poor">Poor</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Field Shape</label>
+                                    <select class="form-control" name="field_shape">
+                                        <option value="regular">Regular (Rectangular/Square)</option>
+                                        <option value="irregular">Irregular</option>
+                                        <option value="narrow">Narrow/Long</option>
+                                        <option value="small">Small/Compact</option>
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="card agricultural-card">
+                        <div class="card-header bg-info text-white">
+                            <h5><i class="fas fa-leaf"></i> Crop Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Crop Type</label>
+                                    <select class="form-control" name="crop_type" required>
+                                        <option value="">Select crop</option>
+                                        <option value="corn">Corn</option>
+                                        <option value="soybean">Soybean</option>
+                                        <option value="wheat">Wheat</option>
+                                        <option value="cotton">Cotton</option>
+                                        <option value="rice">Rice</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Growth Stage</label>
+                                    <select class="form-control" name="growth_stage">
+                                        <option value="pre_plant">Pre-Plant</option>
+                                        <option value="planting">Planting</option>
+                                        <option value="early_vegetative">Early Vegetative</option>
+                                        <option value="mid_vegetative">Mid Vegetative</option>
+                                        <option value="late_vegetative">Late Vegetative</option>
+                                        <option value="reproductive">Reproductive</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Planting Date</label>
+                                    <input type="date" class="form-control" name="planting_date">
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Row Spacing (inches)</label>
+                                    <input type="number" class="form-control" name="row_spacing" 
+                                        placeholder="30" min="15" max="60">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Fertilizer Type</label>
+                                <select class="form-control" name="fertilizer_type">
+                                    <option value="nitrogen">Nitrogen (N)</option>
+                                    <option value="phosphorus">Phosphorus (P)</option>
+                                    <option value="potassium">Potassium (K)</option>
+                                    <option value="npk_blend">NPK Blend</option>
+                                    <option value="micronutrients">Micronutrients</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-success btn-lg" onclick="nextStep()">
+                    Next: Equipment Assessment <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="wizard-step" id="wizard-step-2">
+            <!-- Step 2: Equipment Assessment -->
+            <div class="row">
+                <div class="col-lg-6">
+                    <div class="card agricultural-card">
+                        <div class="card-header bg-warning text-dark">
+                            <h5><i class="fas fa-tractor"></i> Available Equipment</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Tractor HP</label>
+                                <select class="form-control" name="tractor_hp">
+                                    <option value="small">< 100 HP</option>
+                                    <option value="medium">100-200 HP</option>
+                                    <option value="large">> 200 HP</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Application Equipment</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="equipment" value="broadcast_spreader" id="broadcast">
+                                    <label class="form-check-label" for="broadcast">
+                                        <i class="fas fa-circle equipment-icon"></i> Broadcast Spreader
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="equipment" value="planter_attachments" id="planter">
+                                    <label class="form-check-label" for="planter">
+                                        <i class="fas fa-seedling equipment-icon"></i> Planter Attachments
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="equipment" value="sprayer" id="sprayer">
+                                    <label class="form-check-label" for="sprayer">
+                                        <i class="fas fa-spray-can equipment-icon"></i> Sprayer
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="equipment" value="injection_system" id="injection">
+                                    <label class="form-check-label" for="injection">
+                                        <i class="fas fa-syringe equipment-icon"></i> Injection System
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="equipment" value="air_seeder" id="air_seeder">
+                                    <label class="form-check-label" for="air_seeder">
+                                        <i class="fas fa-wind equipment-icon"></i> Air Seeder
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Equipment Width (feet)</label>
+                                <input type="number" class="form-control" name="equipment_width" 
+                                    placeholder="30" min="10" max="120">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-6">
+                    <div class="card agricultural-card">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="fas fa-target"></i> Application Goals</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Primary Goal</label>
+                                <select class="form-control" name="primary_goal">
+                                    <option value="cost_efficiency">Cost Efficiency</option>
+                                    <option value="time_efficiency">Time Efficiency</option>
+                                    <option value="precision">Precision Application</option>
+                                    <option value="environmental">Environmental Protection</option>
+                                    <option value="yield_maximization">Yield Maximization</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Labor Availability</label>
+                                <select class="form-control" name="labor_availability">
+                                    <option value="limited">Limited (1-2 people)</option>
+                                    <option value="moderate">Moderate (3-4 people)</option>
+                                    <option value="abundant">Abundant (5+ people)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Application Window</label>
+                                <select class="form-control" name="application_window">
+                                    <option value="flexible">Flexible (Multiple days)</option>
+                                    <option value="limited">Limited (1-2 days)</option>
+                                    <option value="urgent">Urgent (Same day)</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Budget Range</label>
+                                <select class="form-control" name="budget_range">
+                                    <option value="low">< $50/acre</option>
+                                    <option value="medium">$50-100/acre</option>
+                                    <option value="high">> $100/acre</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-secondary" onclick="prevStep()">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button class="btn btn-success btn-lg" onclick="nextStep()">
+                    Next: Method Selection <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="wizard-step" id="wizard-step-3">
+            <!-- Step 3: Method Selection -->
+            <div class="row">
+                <div class="col-12">
+                    <h3><i class="fas fa-balance-scale"></i> Application Method Comparison</h3>
+                    <p class="text-muted">Compare different application methods and select the optimal option for your field conditions</p>
+                </div>
+            </div>
+            
+            <!-- Comparison Controls -->
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-filter"></i> Comparison Criteria</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="criteria-cost" checked>
+                                <label class="form-check-label" for="criteria-cost">Cost Effectiveness</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="criteria-efficiency" checked>
+                                <label class="form-check-label" for="criteria-efficiency">Application Efficiency</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="criteria-environment" checked>
+                                <label class="form-check-label" for="criteria-environment">Environmental Impact</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="criteria-labor" checked>
+                                <label class="form-check-label" for="criteria-labor">Labor Requirements</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6><i class="fas fa-sliders-h"></i> Priority Weights</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-2">
+                                <label class="form-label">Cost Priority</label>
+                                <input type="range" class="form-range" id="weight-cost" min="0" max="100" value="30">
+                                <small class="text-muted">30%</small>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Efficiency Priority</label>
+                                <input type="range" class="form-range" id="weight-efficiency" min="0" max="100" value="25">
+                                <small class="text-muted">25%</small>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Environmental Priority</label>
+                                <input type="range" class="form-range" id="weight-environment" min="0" max="100" value="20">
+                                <small class="text-muted">20%</small>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Labor Priority</label>
+                                <input type="range" class="form-range" id="weight-labor" min="0" max="100" value="25">
+                                <small class="text-muted">25%</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Method Comparison Grid -->
+            <div class="method-comparison-grid" id="methodComparisonGrid">
+                <!-- Dynamic method comparison cards will be inserted here -->
+            </div>
+            
+            <!-- Detailed Comparison Table -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h6><i class="fas fa-table"></i> Detailed Method Comparison</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped" id="comparisonTable">
+                            <thead>
+                                <tr>
+                                    <th>Method</th>
+                                    <th>Cost/Acre</th>
+                                    <th>Efficiency</th>
+                                    <th>Labor Hours</th>
+                                    <th>Environmental Impact</th>
+                                    <th>Equipment Required</th>
+                                    <th>Best For</th>
+                                </tr>
+                            </thead>
+                            <tbody id="comparisonTableBody">
+                                <!-- Dynamic comparison rows will be inserted here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-secondary" onclick="prevStep()">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button class="btn btn-info" onclick="updateComparison()">
+                    <i class="fas fa-sync"></i> Update Comparison
+                </button>
+                <button class="btn btn-success btn-lg" onclick="nextStep()" id="continueBtn" disabled>
+                    Next: Analysis & Planning <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+        
+        <div class="wizard-step" id="wizard-step-4">
+            <!-- Step 4: Analysis & Planning -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <!-- Detailed Analysis -->
+                    <div class="card agricultural-card">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="fas fa-chart-line"></i> Application Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="analysisResults">
+                                <!-- Dynamic analysis content will be inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Comprehensive Cost Analysis -->
+                    <div class="card agricultural-card mt-3">
+                        <div class="card-header bg-info text-white">
+                            <h5><i class="fas fa-dollar-sign"></i> Comprehensive Cost Analysis</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="cost-breakdown">
+                                        <h6>Cost Breakdown</h6>
+                                        <div id="costBreakdownItems">
+                                            <!-- Dynamic cost breakdown items will be inserted here -->
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="cost-chart-container">
+                                        <canvas id="costChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- ROI Analysis -->
+                            <div class="mt-3">
+                                <h6>Return on Investment Analysis</h6>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="method-score" id="roiScore">--</div>
+                                            <small class="text-muted">Expected ROI</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="method-score" id="paybackPeriod">--</div>
+                                            <small class="text-muted">Payback Period (years)</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="text-center">
+                                            <div class="method-score" id="yieldIncrease">--</div>
+                                            <small class="text-muted">Expected Yield Increase (%)</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Application Map with Planning Tools -->
+                    <div class="card agricultural-card mt-3">
+                        <div class="card-header bg-warning text-dark">
+                            <h5><i class="fas fa-map"></i> Application Planning Map</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="application-map" id="applicationMap">
+                                        <div class="text-center">
+                                            <i class="fas fa-map-marked-alt fa-3x mb-3"></i>
+                                            <p>Interactive application planning map</p>
+                                            <small class="text-muted">Field boundaries, application zones, and equipment paths</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h6><i class="fas fa-tools"></i> Planning Tools</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="drawFieldBoundary()">
+                                                <i class="fas fa-draw-polygon"></i> Draw Field Boundary
+                                            </button>
+                                            <button class="btn btn-outline-success btn-sm mb-2 w-100" onclick="planApplicationPath()">
+                                                <i class="fas fa-route"></i> Plan Application Path
+                                            </button>
+                                            <button class="btn btn-outline-info btn-sm mb-2 w-100" onclick="calculateCoverage()">
+                                                <i class="fas fa-calculator"></i> Calculate Coverage
+                                            </button>
+                                            <button class="btn btn-outline-warning btn-sm mb-2 w-100" onclick="optimizePattern()">
+                                                <i class="fas fa-magic"></i> Optimize Pattern
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="card mt-2">
+                                        <div class="card-header">
+                                            <h6><i class="fas fa-info-circle"></i> Field Statistics</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="d-flex justify-content-between">
+                                                <span>Total Area:</span>
+                                                <strong id="totalArea">-- acres</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Application Rate:</span>
+                                                <strong id="applicationRate">-- lbs/acre</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Total Fertilizer:</span>
+                                                <strong id="totalFertilizer">-- lbs</strong>
+                                            </div>
+                                            <div class="d-flex justify-content-between">
+                                                <span>Estimated Time:</span>
+                                                <strong id="estimatedTime">-- hours</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-lg-4">
+                    <!-- Application Timing Calendar -->
+                    <div class="card agricultural-card">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="fas fa-calendar-alt"></i> Application Timing</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="timing-calendar" id="timingCalendar">
+                                <!-- Dynamic timing events will be inserted here -->
+                            </div>
+                            
+                            <!-- Weather Integration -->
+                            <div class="mt-3">
+                                <h6><i class="fas fa-cloud-sun"></i> Weather Conditions</h6>
+                                <div class="timing-window">
+                                    <div class="d-flex justify-content-between">
+                                        <span>Temperature:</span>
+                                        <strong id="weatherTemp">--°F</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Humidity:</span>
+                                        <strong id="weatherHumidity">--%</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Wind Speed:</span>
+                                        <strong id="weatherWind">-- mph</strong>
+                                    </div>
+                                    <div class="d-flex justify-content-between">
+                                        <span>Rain Forecast:</span>
+                                        <strong id="weatherRain">--</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Comprehensive Guidance Panel -->
+                    <div class="guidance-panel">
+                        <h6><i class="fas fa-lightbulb"></i> Best Practices & Guidance</h6>
+                        <div id="guidanceContent">
+                            <!-- Dynamic guidance content will be inserted here -->
+                        </div>
+                        
+                        <!-- Safety Guidelines -->
+                        <div class="mt-3">
+                            <h6><i class="fas fa-shield-alt"></i> Safety Guidelines</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Wear appropriate PPE</li>
+                                <li><i class="fas fa-check text-success"></i> Check equipment calibration</li>
+                                <li><i class="fas fa-check text-success"></i> Monitor weather conditions</li>
+                                <li><i class="fas fa-check text-success"></i> Follow manufacturer guidelines</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Quality Control -->
+                        <div class="mt-3">
+                            <h6><i class="fas fa-clipboard-check"></i> Quality Control</h6>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success"></i> Verify application rate</li>
+                                <li><i class="fas fa-check text-success"></i> Check coverage uniformity</li>
+                                <li><i class="fas fa-check text-success"></i> Document application details</li>
+                                <li><i class="fas fa-check text-success"></i> Monitor for missed areas</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <!-- Equipment Recommendations -->
+                    <div class="card agricultural-card mt-3">
+                        <div class="card-header bg-secondary text-white">
+                            <h5><i class="fas fa-tools"></i> Equipment Recommendations</h5>
+                        </div>
+                        <div class="card-body" id="equipmentRecommendations">
+                            <!-- Dynamic equipment recommendations will be inserted here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Environmental Impact Assessment -->
+                    <div class="card agricultural-card mt-3">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="fas fa-leaf"></i> Environmental Impact</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="environmental-impact">
+                                <span>Overall Impact:</span>
+                                <div class="impact-indicator low" id="environmentalImpact"></div>
+                                <strong id="environmentalImpactText">Low</strong>
+                            </div>
+                            
+                            <div class="mt-2">
+                                <small class="text-muted">Factors considered:</small>
+                                <ul class="list-unstyled mt-1">
+                                    <li><i class="fas fa-check text-success"></i> Runoff potential</li>
+                                    <li><i class="fas fa-check text-success"></i> Volatilization risk</li>
+                                    <li><i class="fas fa-check text-success"></i> Soil health impact</li>
+                                    <li><i class="fas fa-check text-success"></i> Water quality</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mobile Optimization -->
+                    <div class="mobile-optimized">
+                        <div class="card agricultural-card mt-3">
+                            <div class="card-header bg-info text-white">
+                                <h5><i class="fas fa-mobile-alt"></i> Mobile Field Access</h5>
+                            </div>
+                            <div class="card-body">
+                                <p class="text-muted">Access your application plan in the field with mobile-optimized features:</p>
+                                <button class="btn btn-outline-primary btn-sm mb-2 w-100" onclick="enableGPS()">
+                                    <i class="fas fa-map-marker-alt"></i> Enable GPS Tracking
+                                </button>
+                                <button class="btn btn-outline-success btn-sm mb-2 w-100" onclick="offlineMode()">
+                                    <i class="fas fa-download"></i> Download Offline Data
+                                </button>
+                                <button class="btn btn-outline-info btn-sm mb-2 w-100" onclick="fieldNotes()">
+                                    <i class="fas fa-sticky-note"></i> Field Notes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-4">
+                <button class="btn btn-secondary" onclick="prevStep()">
+                    <i class="fas fa-arrow-left"></i> Previous
+                </button>
+                <button class="btn btn-success btn-lg" onclick="generateReport()">
+                    <i class="fas fa-file-pdf"></i> Generate Report
+                </button>
+            </div>
+        </div>
+        
+        <!-- Educational Content -->
+        <div class="row mt-5">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-flask fa-3x text-success mb-3"></i>
+                        <h5>Liquid vs Granular</h5>
+                        <p class="text-muted">Understand the differences between liquid and granular fertilizer applications, including efficiency, cost, and equipment requirements.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-cogs fa-3x text-info mb-3"></i>
+                        <h5>Equipment Compatibility</h5>
+                        <p class="text-muted">Learn about equipment requirements and compatibility for different application methods and field conditions.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <i class="fas fa-leaf fa-3x text-warning mb-3"></i>
+                        <h5>Environmental Impact</h5>
+                        <p class="text-muted">Consider environmental factors and best management practices for sustainable fertilizer application.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentStep = 1;
+        let selectedMethod = null;
+        let analysisData = null;
+        
+        // Sample application methods data
+        const applicationMethods = [
+            {
+                id: 'liquid_broadcast',
+                name: 'Liquid Broadcast',
+                type: 'liquid',
+                icon: 'fas fa-spray-can',
+                efficiency: 0.85,
+                cost_per_acre: 45,
+                labor_hours: 2.5,
+                equipment_required: ['sprayer'],
+                pros: ['Fast application', 'Uniform coverage', 'Flexible timing'],
+                cons: ['Higher equipment cost', 'Weather dependent'],
+                recommended: true,
+                description: 'Best for large fields with good drainage'
+            },
+            {
+                id: 'granular_broadcast',
+                name: 'Granular Broadcast',
+                type: 'granular',
+                icon: 'fas fa-circle',
+                efficiency: 0.78,
+                cost_per_acre: 35,
+                labor_hours: 3.0,
+                equipment_required: ['broadcast_spreader'],
+                pros: ['Lower equipment cost', 'Weather independent', 'Easy storage'],
+                cons: ['Less uniform', 'Slower application'],
+                recommended: false,
+                description: 'Cost-effective for medium to large fields'
+            },
+            {
+                id: 'planter_attached',
+                name: 'Planter Attached',
+                type: 'granular',
+                icon: 'fas fa-seedling',
+                efficiency: 0.92,
+                cost_per_acre: 25,
+                labor_hours: 1.5,
+                equipment_required: ['planter_attachments'],
+                pros: ['Precise placement', 'Time efficient', 'Lower cost'],
+                cons: ['Limited to planting time', 'Equipment complexity'],
+                recommended: false,
+                description: 'Ideal for precision application at planting'
+            },
+            {
+                id: 'injection_system',
+                name: 'Injection System',
+                type: 'liquid',
+                icon: 'fas fa-syringe',
+                efficiency: 0.88,
+                cost_per_acre: 55,
+                labor_hours: 2.0,
+                equipment_required: ['injection_system'],
+                pros: ['Precise placement', 'Reduced volatilization', 'Flexible timing'],
+                cons: ['Higher cost', 'Equipment complexity'],
+                recommended: false,
+                description: 'Best for precision liquid application'
+            }
+        ];
+        
+        function nextStep() {
+            if (currentStep < 4) {
+                document.getElementById(`wizard-step-${currentStep}`).classList.remove('active');
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                document.getElementById(`step${currentStep}`).classList.add('completed');
+                
+                currentStep++;
+                
+                document.getElementById(`wizard-step-${currentStep}`).classList.add('active');
+                document.getElementById(`step${currentStep}`).classList.add('active');
+                
+                if (currentStep === 3) {
+                    loadMethodSelection();
+                } else if (currentStep === 4) {
+                    performAnalysis();
+                }
+            }
+        }
+        
+        function prevStep() {
+            if (currentStep > 1) {
+                document.getElementById(`wizard-step-${currentStep}`).classList.remove('active');
+                document.getElementById(`step${currentStep}`).classList.remove('active');
+                
+                currentStep--;
+                
+                document.getElementById(`wizard-step-${currentStep}`).classList.add('active');
+                document.getElementById(`step${currentStep}`).classList.add('active');
+            }
+        }
+        
+        function loadMethodSelection() {
+            // Load comparison grid
+            loadMethodComparisonGrid();
+            // Load comparison table
+            loadComparisonTable();
+        }
+        
+        function loadMethodComparisonGrid() {
+            const container = document.getElementById('methodComparisonGrid');
+            const methodsHtml = applicationMethods.map(method => `
+                <div class="comparison-card" onclick="selectMethod('${method.id}')" data-method-id="${method.id}">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h6>${method.name}</h6>
+                        <div class="method-score ${getScoreClass(method.efficiency)}">${Math.round(method.efficiency * 100)}</div>
+                    </div>
+                    
+                    <div class="text-center mb-3">
+                        <i class="${method.icon} fa-2x text-success"></i>
+                    </div>
+                    
+                    <div class="row text-center mb-3">
+                        <div class="col-6">
+                            <strong>$${method.cost_per_acre}</strong><br>
+                            <small class="text-muted">per acre</small>
+                        </div>
+                        <div class="col-6">
+                            <strong>${method.labor_hours}h</strong><br>
+                            <small class="text-muted">labor</small>
+                        </div>
+                    </div>
+                    
+                    <div class="equipment-compatibility">
+                        ${method.equipment_required.map(eq => 
+                            `<span class="equipment-tag compatible">${eq.replace('_', ' ')}</span>`
+                        ).join('')}
+                    </div>
+                    
+                    <div class="environmental-impact mt-2">
+                        <span>Environmental:</span>
+                        <div class="impact-indicator ${getEnvironmentalClass(method.efficiency)}"></div>
+                        <strong>${getEnvironmentalText(method.efficiency)}</strong>
+                    </div>
+                    
+                    <div class="mt-2">
+                        <small class="text-success">
+                            <i class="fas fa-plus"></i> ${method.pros.slice(0, 2).join(', ')}
+                        </small><br>
+                        <small class="text-danger">
+                            <i class="fas fa-minus"></i> ${method.cons.slice(0, 2).join(', ')}
+                        </small>
+                    </div>
+                </div>
+            `).join('');
+            
+            container.innerHTML = methodsHtml;
+        }
+        
+        function loadComparisonTable() {
+            const tbody = document.getElementById('comparisonTableBody');
+            const rowsHtml = applicationMethods.map(method => `
+                <tr>
+                    <td>
+                        <strong>${method.name}</strong><br>
+                        <small class="text-muted">${method.type}</small>
+                    </td>
+                    <td>$${method.cost_per_acre}/acre</td>
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="efficiency-bar me-2" style="width: 60px;">
+                                <div class="efficiency-fill" style="width: ${method.efficiency * 100}%"></div>
+                            </div>
+                            ${Math.round(method.efficiency * 100)}%
+                        </div>
+                    </td>
+                    <td>${method.labor_hours} hours</td>
+                    <td>
+                        <div class="environmental-impact">
+                            <div class="impact-indicator ${getEnvironmentalClass(method.efficiency)}"></div>
+                            <span>${getEnvironmentalText(method.efficiency)}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="equipment-compatibility">
+                            ${method.equipment_required.map(eq => 
+                                `<span class="equipment-tag compatible">${eq.replace('_', ' ')}</span>`
+                            ).join('')}
+                        </div>
+                    </td>
+                    <td>
+                        <small class="text-muted">${method.description}</small>
+                    </td>
+                </tr>
+            `).join('');
+            
+            tbody.innerHTML = rowsHtml;
+        }
+        
+        function getScoreClass(score) {
+            if (score >= 0.8) return '';
+            if (score >= 0.6) return 'medium';
+            return 'low';
+        }
+        
+        function getEnvironmentalClass(efficiency) {
+            if (efficiency >= 0.8) return 'low';
+            if (efficiency >= 0.6) return 'medium';
+            return 'high';
+        }
+        
+        function getEnvironmentalText(efficiency) {
+            if (efficiency >= 0.8) return 'Low';
+            if (efficiency >= 0.6) return 'Medium';
+            return 'High';
+        }
+        
+        function updateComparison() {
+            // Get selected criteria
+            const criteria = {
+                cost: document.getElementById('criteria-cost').checked,
+                efficiency: document.getElementById('criteria-efficiency').checked,
+                environment: document.getElementById('criteria-environment').checked,
+                labor: document.getElementById('criteria-labor').checked
+            };
+            
+            // Get weights
+            const weights = {
+                cost: parseInt(document.getElementById('weight-cost').value) / 100,
+                efficiency: parseInt(document.getElementById('weight-efficiency').value) / 100,
+                environment: parseInt(document.getElementById('weight-environment').value) / 100,
+                labor: parseInt(document.getElementById('weight-labor').value) / 100
+            };
+            
+            // Recalculate scores and update display
+            recalculateMethodScores(criteria, weights);
+            loadMethodComparisonGrid();
+            loadComparisonTable();
+        }
+        
+        function recalculateMethodScores(criteria, weights) {
+            applicationMethods.forEach(method => {
+                let score = 0;
+                let totalWeight = 0;
+                
+                if (criteria.cost) {
+                    score += (1 - method.cost_per_acre / 100) * weights.cost;
+                    totalWeight += weights.cost;
+                }
+                
+                if (criteria.efficiency) {
+                    score += method.efficiency * weights.efficiency;
+                    totalWeight += weights.efficiency;
+                }
+                
+                if (criteria.environment) {
+                    score += (1 - method.efficiency) * weights.environment; // Lower efficiency = higher environmental impact
+                    totalWeight += weights.environment;
+                }
+                
+                if (criteria.labor) {
+                    score += (1 - method.labor_hours / 10) * weights.labor; // Normalize labor hours
+                    totalWeight += weights.labor;
+                }
+                
+                method.calculated_score = totalWeight > 0 ? score / totalWeight : method.efficiency;
+            });
+            
+            // Sort methods by calculated score
+            applicationMethods.sort((a, b) => (b.calculated_score || b.efficiency) - (a.calculated_score || a.efficiency));
+        }
+        
+        function selectMethod(methodId) {
+            // Remove previous selection
+            document.querySelectorAll('.method-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selection to clicked card
+            document.querySelector(`[data-method-id="${methodId}"]`).classList.add('selected');
+            
+            selectedMethod = applicationMethods.find(m => m.id === methodId);
+            document.getElementById('continueBtn').disabled = false;
+        }
+        
+        async function performAnalysis() {
+            if (!selectedMethod) return;
+            
+            try {
+                // Show loading indicator
+                document.getElementById('analysisResults').innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin"></i> Analyzing application method...</div>';
+                
+                // Prepare request data
+                const requestData = {
+                    field_conditions: getFieldConditions(),
+                    crop_requirements: getCropRequirements(),
+                    equipment_specification: getEquipmentSpecification(),
+                    fertilizer_specification: getFertilizerSpecification(),
+                    application_goals: getApplicationGoals()
+                };
+                
+                // Call the fertilizer application API
+                const response = await fetch('/api/v1/fertilizer/application/select-methods', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API call failed: ${response.status}`);
+                }
+                
+                const apiResponse = await response.json();
+                
+                // Generate analysis data with API response
+                analysisData = {
+                    method: selectedMethod,
+                    fieldData: getFieldData(),
+                    apiResponse: apiResponse,
+                    recommendations: generateRecommendations(apiResponse),
+                    costBreakdown: generateCostBreakdown(apiResponse),
+                    timing: generateTimingRecommendations(apiResponse)
+                };
+                
+                displayAnalysis();
+                displayCostChart();
+                displayTimingCalendar();
+                displayGuidance();
+                displayEquipmentRecommendations();
+                
+            } catch (error) {
+                console.error('Error calling fertilizer application API:', error);
+                // Fallback to local analysis if API fails
+                analysisData = {
+                    method: selectedMethod,
+                    fieldData: getFieldData(),
+                    recommendations: generateRecommendations(),
+                    costBreakdown: generateCostBreakdown(),
+                    timing: generateTimingRecommendations()
+                };
+                
+                displayAnalysis();
+                displayCostChart();
+                displayTimingCalendar();
+                displayGuidance();
+                displayEquipmentRecommendations();
+                
+                // Show error message
+                const errorAlert = document.createElement('div');
+                errorAlert.className = 'alert alert-warning';
+                errorAlert.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Using offline analysis. API integration will be available soon.';
+                document.getElementById('analysisResults').prepend(errorAlert);
+            }
+        }
+        
+        function getFieldData() {
+            const form = document.getElementById('fieldInfoForm');
+            const formData = new FormData(form);
+            return Object.fromEntries(formData);
+        }
+        
+        function getFieldConditions() {
+            const fieldData = getFieldData();
+            return {
+                field_size_acres: parseFloat(fieldData.field_size) || 250,
+                soil_type: fieldData.soil_type || 'loam',
+                slope_percent: parseFloat(fieldData.slope) || 2,
+                drainage: fieldData.drainage || 'good',
+                field_shape: fieldData.field_shape || 'regular'
+            };
+        }
+        
+        function getCropRequirements() {
+            const fieldData = getFieldData();
+            return {
+                crop_type: fieldData.crop_type || 'corn',
+                growth_stage: fieldData.growth_stage || 'pre_plant',
+                planting_date: fieldData.planting_date || new Date().toISOString().split('T')[0],
+                row_spacing_inches: parseInt(fieldData.row_spacing) || 30
+            };
+        }
+        
+        function getEquipmentSpecification() {
+            const equipmentCheckboxes = document.querySelectorAll('input[name="equipment"]:checked');
+            const equipment = Array.from(equipmentCheckboxes).map(cb => cb.value);
+            
+            return {
+                available_equipment: equipment,
+                tractor_hp: document.querySelector('select[name="tractor_hp"]').value || 'medium',
+                equipment_width_feet: parseInt(document.querySelector('input[name="equipment_width"]').value) || 30
+            };
+        }
+        
+        function getFertilizerSpecification() {
+            const fieldData = getFieldData();
+            return {
+                fertilizer_type: fieldData.fertilizer_type || 'nitrogen',
+                application_rate: 150, // Default rate, would be calculated based on crop needs
+                unit: 'lbs/acre'
+            };
+        }
+        
+        function getApplicationGoals() {
+            return {
+                primary_goal: document.querySelector('select[name="primary_goal"]').value || 'cost_efficiency',
+                labor_availability: document.querySelector('select[name="labor_availability"]').value || 'moderate',
+                application_window: document.querySelector('select[name="application_window"]').value || 'flexible',
+                budget_range: document.querySelector('select[name="budget_range"]').value || 'medium'
+            };
+        }
+        
+        function generateRecommendations() {
+            return {
+                efficiency_score: selectedMethod.efficiency,
+                environmental_impact: 'Low',
+                application_rate: '150 lbs N/acre',
+                timing_recommendation: 'Early morning application recommended',
+                weather_considerations: 'Avoid application if rain expected within 24 hours'
+            };
+        }
+        
+        function generateCostBreakdown() {
+            const fieldSize = parseInt(document.querySelector('input[name="field_size"]').value) || 250;
+            return {
+                fertilizer_cost: selectedMethod.cost_per_acre * fieldSize,
+                labor_cost: selectedMethod.labor_hours * 25 * fieldSize / 100, // $25/hour
+                equipment_cost: selectedMethod.cost_per_acre * fieldSize * 0.3,
+                total_cost: selectedMethod.cost_per_acre * fieldSize * 1.3
+            };
+        }
+        
+        function generateTimingRecommendations() {
+            return [
+                { date: '2024-03-15', event: 'Soil Preparation', type: 'preparation' },
+                { date: '2024-03-20', event: 'Fertilizer Application', type: 'application' },
+                { date: '2024-03-25', event: 'Planting', type: 'planting' },
+                { date: '2024-04-15', event: 'Side-dress Application', type: 'side_dress' }
+            ];
+        }
+        
+        function displayAnalysis() {
+            const container = document.getElementById('analysisResults');
+            const recommendations = analysisData.recommendations;
+            
+            container.innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-line text-success"></i> Efficiency Analysis</h6>
+                        <div class="cost-breakdown">
+                            <div class="d-flex justify-content-between">
+                                <span>Application Efficiency:</span>
+                                <strong>${Math.round(recommendations.efficiency_score * 100)}%</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Environmental Impact:</span>
+                                <strong class="text-success">${recommendations.environmental_impact}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Recommended Rate:</span>
+                                <strong>${recommendations.application_rate}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-clock text-info"></i> Timing Recommendations</h6>
+                        <div class="cost-breakdown">
+                            <div class="d-flex justify-content-between">
+                                <span>Best Timing:</span>
+                                <strong>${recommendations.timing_recommendation}</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Weather:</span>
+                                <strong>${recommendations.weather_considerations}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6><i class="fas fa-lightbulb text-warning"></i> Key Benefits</h6>
+                        <div class="alert alert-success">
+                            <ul class="mb-0">
+                                ${selectedMethod.pros.map(pro => `<li>${pro}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function displayCostChart() {
+            const ctx = document.getElementById('costChart').getContext('2d');
+            const costBreakdown = analysisData.costBreakdown;
+            const fieldSize = parseInt(document.querySelector('input[name="field_size"]').value) || 250;
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Fertilizer Cost', 'Labor Cost', 'Equipment Cost'],
+                    datasets: [{
+                        data: [
+                            costBreakdown.fertilizer_cost,
+                            costBreakdown.labor_cost,
+                            costBreakdown.equipment_cost
+                        ],
+                        backgroundColor: ['#28a745', '#17a2b8', '#ffc107'],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        title: {
+                            display: true,
+                            text: `Total Cost: $${costBreakdown.total_cost.toLocaleString()} for ${fieldSize} acres`
+                        }
+                    }
+                }
+            });
+            
+            // Display detailed cost breakdown
+            displayCostBreakdown(costBreakdown);
+            
+            // Calculate and display ROI metrics
+            calculateROIMetrics(costBreakdown, fieldSize);
+        }
+        
+        function displayCostBreakdown(costBreakdown) {
+            const container = document.getElementById('costBreakdownItems');
+            const fieldSize = parseInt(document.querySelector('input[name="field_size"]').value) || 250;
+            
+            const breakdownHtml = `
+                <div class="cost-breakdown-item">
+                    <span>Fertilizer Cost:</span>
+                    <strong>$${costBreakdown.fertilizer_cost.toLocaleString()}</strong>
+                </div>
+                <div class="cost-breakdown-item">
+                    <span>Labor Cost:</span>
+                    <strong>$${costBreakdown.labor_cost.toLocaleString()}</strong>
+                </div>
+                <div class="cost-breakdown-item">
+                    <span>Equipment Cost:</span>
+                    <strong>$${costBreakdown.equipment_cost.toLocaleString()}</strong>
+                </div>
+                <div class="cost-breakdown-item">
+                    <span>Total Cost:</span>
+                    <strong>$${costBreakdown.total_cost.toLocaleString()}</strong>
+                </div>
+                <div class="cost-breakdown-item">
+                    <span>Cost per Acre:</span>
+                    <strong>$${(costBreakdown.total_cost / fieldSize).toFixed(2)}</strong>
+                </div>
+            `;
+            
+            container.innerHTML = breakdownHtml;
+        }
+        
+        function calculateROIMetrics(costBreakdown, fieldSize) {
+            // Calculate ROI based on expected yield increase
+            const expectedYieldIncrease = selectedMethod.efficiency * 15; // 15% max yield increase
+            const averageYield = 150; // bushels per acre
+            const cropPrice = 5.50; // dollars per bushel
+            
+            const additionalYield = (averageYield * expectedYieldIncrease / 100) * fieldSize;
+            const additionalRevenue = additionalYield * cropPrice;
+            const roi = ((additionalRevenue - costBreakdown.total_cost) / costBreakdown.total_cost) * 100;
+            const paybackPeriod = costBreakdown.total_cost / (additionalRevenue / 12); // months
+            
+            document.getElementById('roiScore').textContent = `${roi.toFixed(1)}%`;
+            document.getElementById('roiScore').className = `method-score ${roi > 0 ? '' : 'low'}`;
+            
+            document.getElementById('paybackPeriod').textContent = `${(paybackPeriod / 12).toFixed(1)}`;
+            document.getElementById('paybackPeriod').className = `method-score ${paybackPeriod < 12 ? '' : 'medium'}`;
+            
+            document.getElementById('yieldIncrease').textContent = `${expectedYieldIncrease.toFixed(1)}%`;
+            document.getElementById('yieldIncrease').className = `method-score ${expectedYieldIncrease > 10 ? '' : 'medium'}`;
+        }
+        
+        function displayTimingCalendar() {
+            const container = document.getElementById('timingCalendar');
+            const timing = analysisData.timing;
+            
+            const timingHtml = timing.map(event => `
+                <div class="timing-event">
+                    <div class="d-flex justify-content-between">
+                        <strong>${event.event}</strong>
+                        <span class="badge bg-primary">${event.date}</span>
+                    </div>
+                    <small class="text-muted">${event.type.replace('_', ' ').toUpperCase()}</small>
+                </div>
+            `).join('');
+            
+            container.innerHTML = timingHtml;
+        }
+        
+        function displayGuidance() {
+            displayEnhancedGuidance();
+        }
+        
+        function displayEquipmentRecommendations() {
+            const container = document.getElementById('equipmentRecommendations');
+            const equipment = selectedMethod.equipment_required;
+            
+            const equipmentHtml = equipment.map(eq => `
+                <div class="d-flex align-items-center mb-2">
+                    <i class="fas fa-tools text-primary me-2"></i>
+                    <span>${eq.replace('_', ' ').toUpperCase()}</span>
+                </div>
+            `).join('');
+            
+            container.innerHTML = equipmentHtml;
+        }
+        
+        function generateReport() {
+            // Simulate report generation
+            alert('Report generation feature will be implemented in the next phase. This would generate a comprehensive PDF report with all analysis results.');
+        }
+        
+        // Mobile optimization functions
+        function enableGPS() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    alert(`GPS enabled! Current location: ${position.coords.latitude}, ${position.coords.longitude}`);
+                    updateFieldStatistics();
+                });
+            } else {
+                alert('GPS not available on this device');
+            }
+        }
+        
+        function offlineMode() {
+            // Simulate offline data download
+            alert('Downloading offline data for field access...');
+            // In a real implementation, this would cache the application plan locally
+        }
+        
+        function fieldNotes() {
+            const notes = prompt('Add field notes:', '');
+            if (notes) {
+                alert(`Field notes saved: ${notes}`);
+            }
+        }
+        
+        // Planning tools functions
+        function drawFieldBoundary() {
+            alert('Field boundary drawing tool will be implemented with interactive map integration');
+        }
+        
+        function planApplicationPath() {
+            alert('Application path planning tool will optimize equipment routes for maximum efficiency');
+        }
+        
+        function calculateCoverage() {
+            const fieldSize = parseInt(document.querySelector('input[name="field_size"]').value) || 250;
+            const equipmentWidth = parseInt(document.querySelector('input[name="equipment_width"]').value) || 30;
+            
+            const coverage = (equipmentWidth / 43560) * fieldSize; // Convert to acres
+            alert(`Coverage calculation: ${coverage.toFixed(2)} acres per pass`);
+        }
+        
+        function optimizePattern() {
+            alert('Pattern optimization will analyze field shape and recommend optimal application patterns');
+        }
+        
+        function updateFieldStatistics() {
+            const fieldSize = parseInt(document.querySelector('input[name="field_size"]').value) || 250;
+            const applicationRate = 150; // lbs/acre
+            
+            document.getElementById('totalArea').textContent = `${fieldSize} acres`;
+            document.getElementById('applicationRate').textContent = `${applicationRate} lbs/acre`;
+            document.getElementById('totalFertilizer').textContent = `${(fieldSize * applicationRate).toLocaleString()} lbs`;
+            
+            if (selectedMethod) {
+                const estimatedTime = (fieldSize / 100) * selectedMethod.labor_hours; // Assume 100 acres per hour base
+                document.getElementById('estimatedTime').textContent = `${estimatedTime.toFixed(1)} hours`;
+            }
+        }
+        
+        // Weather integration functions
+        function loadWeatherData() {
+            // Simulate weather data loading
+            document.getElementById('weatherTemp').textContent = '72°F';
+            document.getElementById('weatherHumidity').textContent = '65%';
+            document.getElementById('weatherWind').textContent = '8 mph';
+            document.getElementById('weatherRain').textContent = 'No rain expected';
+        }
+        
+        // Enhanced guidance functions
+        function displayEnhancedGuidance() {
+            const container = document.getElementById('guidanceContent');
+            
+            const guidanceHtml = `
+                <div class="alert alert-info">
+                    <h6><i class="fas fa-info-circle"></i> Method-Specific Guidance</h6>
+                    <ul class="mb-0">
+                        <li>Calibrate equipment before application</li>
+                        <li>Check weather conditions for optimal timing</li>
+                        <li>Maintain consistent application speed</li>
+                        <li>Monitor soil moisture conditions</li>
+                        <li>Record application details for future reference</li>
+                    </ul>
+                </div>
+                
+                <div class="alert alert-warning">
+                    <h6><i class="fas fa-exclamation-triangle"></i> Important Considerations</h6>
+                    <ul class="mb-0">
+                        <li>Avoid application if rain expected within 24 hours</li>
+                        <li>Check for wind conditions that may affect coverage</li>
+                        <li>Ensure proper equipment maintenance</li>
+                        <li>Follow all safety protocols</li>
+                    </ul>
+                </div>
+            `;
+            
+            container.innerHTML = guidanceHtml;
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Fertilizer Application Method Selector initialized');
+            
+            // Load initial weather data
+            loadWeatherData();
+            
+            // Update field statistics
+            updateFieldStatistics();
+            
+            // Add event listeners for weight sliders
+            document.querySelectorAll('input[type="range"]').forEach(slider => {
+                slider.addEventListener('input', function() {
+                    const value = this.value;
+                    const label = this.parentElement.querySelector('small');
+                    if (label) {
+                        label.textContent = `${value}%`;
+                    }
+                });
+            });
+            
+            // Add responsive behavior
+            window.addEventListener('resize', function() {
+                if (window.innerWidth <= 768) {
+                    document.querySelectorAll('.desktop-only').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                    document.querySelectorAll('.mobile-optimized').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                } else {
+                    document.querySelectorAll('.desktop-only').forEach(el => {
+                        el.style.display = 'block';
+                    });
+                    document.querySelectorAll('.mobile-optimized').forEach(el => {
+                        el.style.display = 'none';
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
