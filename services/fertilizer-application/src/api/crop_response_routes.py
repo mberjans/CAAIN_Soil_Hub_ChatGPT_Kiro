@@ -97,13 +97,17 @@ async def optimize_application_methods(
         raise HTTPException(status_code=500, detail="Failed to optimize application methods")
 
 
+class YieldImpactRequest(BaseModel):
+    """Request model for yield impact prediction."""
+    crop_type: str = Field(..., description="Type of crop")
+    method_type: str = Field(..., description="Application method type")
+    baseline_yield: float = Field(..., description="Baseline yield without fertilizer")
+    application_rate: float = Field(..., description="Application rate")
+    field_conditions: Dict[str, Any] = Field(..., description="Field and environmental conditions")
+
 @router.post("/predict-yield-impact", response_model=Dict[str, Any])
 async def predict_yield_impact(
-    crop_type: str = Query(..., description="Type of crop"),
-    method_type: str = Query(..., description="Application method type"),
-    baseline_yield: float = Query(..., description="Baseline yield without fertilizer"),
-    application_rate: float = Query(..., description="Application rate"),
-    field_conditions: Dict[str, Any] = Query(..., description="Field and environmental conditions"),
+    request: YieldImpactRequest,
     service: CropResponseService = Depends(get_crop_response_service)
 ):
     """
@@ -120,12 +124,12 @@ async def predict_yield_impact(
     """
     try:
         # Convert string inputs to enums
-        crop_enum = CropType(crop_type.lower())
-        method_enum = ApplicationMethodType(method_type.lower())
+        crop_enum = CropType(request.crop_type.lower())
+        method_enum = ApplicationMethodType(request.method_type.lower())
         
         # Get yield impact prediction
         prediction = await service.predict_yield_impact(
-            crop_enum, method_enum, baseline_yield, application_rate, field_conditions
+            crop_enum, method_enum, request.baseline_yield, request.application_rate, request.field_conditions
         )
         
         # Convert to response format

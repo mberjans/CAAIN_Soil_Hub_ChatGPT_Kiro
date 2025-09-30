@@ -108,7 +108,7 @@ class EducationDatabase:
                 "content_id": "fertilizer_safety_guide",
                 "title": "Fertilizer Application Safety Manual",
                 "content_type": ContentType.SAFETY_TRAINING.value,
-                "category": ContentCategory.SAFETY.value,
+                "category": ContentCategory.SAFETY_PROTOCOLS.value,
                 "difficulty_level": DifficultyLevel.BEGINNER.value,
                 "description": "Comprehensive safety guide for fertilizer application",
                 "duration_minutes": 60,

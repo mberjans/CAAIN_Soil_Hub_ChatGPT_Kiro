@@ -415,7 +415,8 @@ class TestEquipmentAssessmentService:
         assert service is not None
     
     @pytest.mark.integration
-    def test_equipment_compatibility_assessment(self, service):
+    @pytest.mark.asyncio
+    async def test_equipment_compatibility_assessment(self, service):
         """Test equipment compatibility assessment."""
         equipment_spec = TestDataFactory.create_equipment_specification()
         field_conditions = TestDataFactory.create_field_conditions()
@@ -429,7 +430,7 @@ class TestEquipmentAssessmentService:
                     "limitations": ["Limited capacity for large fields"]
                 }
                 
-                result = service.assess_equipment_compatibility(equipment_spec, field_conditions)
+                result = await service.assess_equipment_compatibility(equipment_spec, field_conditions)
                 assert result is not None
                 assert "compatibility_score" in result
         else:
@@ -452,7 +453,8 @@ class TestCostAnalysisService:
         assert service is not None
     
     @pytest.mark.integration
-    def test_cost_calculation(self, service):
+    @pytest.mark.asyncio
+    async def test_cost_calculation(self, service):
         """Test cost calculation functionality."""
         request_data = TestDataFactory.create_application_request()
         
@@ -468,7 +470,7 @@ class TestCostAnalysisService:
                     "cost_per_acre": 25.0
                 }
                 
-                result = service.calculate_total_cost(request_data)
+                result = await service.calculate_total_cost(request_data)
                 assert result is not None
                 assert "total_cost" in result
                 assert result["total_cost"] > 0

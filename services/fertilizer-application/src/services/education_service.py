@@ -18,7 +18,7 @@ from src.models.educational_models import (
     EducationalResponse, ContentType, ContentCategory, DifficultyLevel,
     LearningObjective, ExpertInsight, CaseStudy, InteractiveSimulation,
     VirtualRealityTraining, LearningProgress, AssessmentQuestion,
-    Certification, UserProfile, ContentRecommendation
+    Certification, UserProfile
 )
 from src.models.application_models import ApplicationMethodType, EquipmentType
 from src.services.guidance_service import GuidanceService

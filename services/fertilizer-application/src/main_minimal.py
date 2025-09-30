@@ -11,6 +11,7 @@ from src.api.fertilizer_routes import router as fertilizer_router
 from src.api.equipment_routes import router as equipment_router
 from src.api.guidance_routes import router as guidance_router
 from src.api.economic_optimization_routes import router as economic_router
+from src.api.expert_validation_routes import router as expert_validation_router
 
 load_dotenv()
 
@@ -60,6 +61,7 @@ app.include_router(fertilizer_router, prefix="/api/v1", tags=["fertilizer-applic
 app.include_router(equipment_router, prefix="/api/v1/equipment", tags=["equipment-assessment"])
 app.include_router(guidance_router, prefix="/api/v1", tags=["guidance"])
 app.include_router(economic_router, prefix="/api/v1/cost-analysis", tags=["cost-analysis"])
+app.include_router(expert_validation_router, prefix="/api/v1", tags=["expert-validation"])
 
 @app.get("/health")
 async def health_check():
@@ -72,7 +74,9 @@ async def health_check():
             "fertilizer_application_method_recommendations",
             "method_comparison",
             "application_guidance",
-            "timing_optimization"
+            "timing_optimization",
+            "expert_validation",
+            "field_testing"
         ]
     }
 
