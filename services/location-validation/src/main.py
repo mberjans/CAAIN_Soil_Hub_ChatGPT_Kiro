@@ -21,6 +21,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'services'))
 
 from api.routes import router, location_management_router
 from api.agricultural_analysis_routes import router as agricultural_analysis_router
+from api.agricultural_intelligence_routes import router as agricultural_intelligence_router
 
 # Configure logging
 logging.basicConfig(
@@ -90,6 +91,9 @@ app.include_router(mobile_location_router)  # Mobile location features routes
 from api.security_routes import router as security_router
 app.include_router(security_router)  # Location security and privacy routes
 
+# Include agricultural intelligence routes
+app.include_router(agricultural_intelligence_router)  # Agricultural intelligence routes
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -106,6 +110,7 @@ async def root():
             "agricultural_analysis": "/api/v1/fields/{field_id}/analysis-summary",
             "mobile_location": "/api/v1/mobile/",
             "location_security": "/api/v1/security/",
+            "agricultural_intelligence": "/api/v1/agricultural-intelligence/",
             "documentation": "/docs"
         },
         "agricultural_features": [
@@ -134,7 +139,14 @@ async def root():
             "Access control and audit logging for location data",
             "Location data anonymization and privacy protection",
             "GDPR compliance for location data management",
-            "Security monitoring and breach detection"
+            "Security monitoring and breach detection",
+            "Location-based agricultural intelligence and insights",
+            "Regional best practices and recommendations",
+            "Local expert recommendations and insights",
+            "Peer farmer insights and experiences",
+            "Market insights and opportunities",
+            "Success patterns and regional adaptations",
+            "Location-specific personalization and optimization"
         ]
     }
 
