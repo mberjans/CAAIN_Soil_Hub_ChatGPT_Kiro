@@ -21,6 +21,7 @@ from .api.application_method_optimization_routes import router as application_me
 from .api.price_adjustment_routes import router as price_adjustment_router
 from .api.price_scenario_routes import router as price_scenario_router
 from .api.price_optimization_alert_routes import router as price_optimization_alert_router
+from .api.environmental_routes import router as environmental_router
 from .database.fertilizer_price_db import initialize_database, shutdown_database
 from .database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from .services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -102,6 +103,7 @@ app.include_router(application_method_optimization_router, prefix="/api/v1", tag
 app.include_router(price_adjustment_router, prefix="/api/v1", tags=["price-adjustment"])
 app.include_router(price_scenario_router, prefix="/api/v1", tags=["price-scenario-modeling"])
 app.include_router(price_optimization_alert_router, prefix="/api/v1", tags=["price-optimization-alerts"])
+app.include_router(environmental_router, prefix="/api/v1", tags=["regulatory-compliance"])
 
 @app.get("/health")
 async def health_check():
@@ -261,7 +263,18 @@ async def health_check():
             "timing_optimization_alerts",
             "volatility_monitoring_alerts",
             "trend_reversal_alerts",
-            "market_shock_detection_alerts"
+            "market_shock_detection_alerts",
+            "regulatory_compliance_assessment",
+            "environmental_impact_analysis",
+            "sustainability_metrics_calculation",
+            "automated_violation_detection",
+            "compliance_reporting",
+            "regulatory_rule_management",
+            "violation_tracking",
+            "risk_assessment",
+            "recommendation_generation",
+            "historical_compliance_analysis",
+            "statistical_reporting"
         ]
     }
 
