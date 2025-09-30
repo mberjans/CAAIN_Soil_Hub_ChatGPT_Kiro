@@ -1,0 +1,378 @@
+name: Location Input Comprehensive Testing Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'services/location-validation/**'
+      - 'services/frontend/**'
+      - 'databases/**'
+      - 'tests/**'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'services/location-validation/**'
+      - 'services/frontend/**'
+      - 'databases/**'
+      - 'tests/**'
+  schedule:
+    # Run comprehensive tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  PYTHON_VERSION: '3.11'
+  TESTING: 'true'
+  LOG_LEVEL: 'INFO'
+
+jobs:
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-cov pytest-xdist
+        pip install -r requirements.txt
+    
+    - name: Run unit tests
+      run: |
+        pytest tests/ -k "unit" -v --cov=services/location-validation --cov-report=xml --cov-report=html --junitxml=unit-test-results.xml
+    
+    - name: Upload unit test coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unit-tests
+        name: unit-test-coverage
+    
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: unit-test-results
+        path: |
+          unit-test-results.xml
+          htmlcov/
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-cov pytest-xdist
+        pip install -r requirements.txt
+    
+    - name: Set up test database
+      run: |
+        # Set up test database
+        export TEST_DATABASE_URL="sqlite:///test.db"
+        export TEST_REDIS_URL="redis://localhost:6379/1"
+        export TEST_GEOCODING_API_KEY="test_key"
+        export TEST_MAPS_API_KEY="test_key"
+    
+    - name: Run integration tests
+      run: |
+        pytest tests/test_location_input_integration.py -v --cov=services/location-validation --cov-report=xml --junitxml=integration-test-results.xml
+    
+    - name: Upload integration test coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: integration-tests
+        name: integration-test-coverage
+    
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: |
+          integration-test-results.xml
+          htmlcov/
+
+  performance-tests:
+    name: Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-cov pytest-xdist psutil
+        pip install -r requirements.txt
+    
+    - name: Run performance tests
+      run: |
+        pytest tests/test_location_input_performance.py -v --junitxml=performance-test-results.xml
+    
+    - name: Upload performance test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-test-results
+        path: performance-test-results.xml
+
+  geographic-accuracy-tests:
+    name: Geographic Accuracy Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-cov pytest-xdist
+        pip install -r requirements.txt
+    
+    - name: Run geographic accuracy tests
+      run: |
+        pytest tests/test_location_input_geographic_accuracy.py -v --junitxml=geographic-test-results.xml
+    
+    - name: Upload geographic test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: geographic-test-results
+        path: geographic-test-results.xml
+
+  comprehensive-tests:
+    name: Comprehensive Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    needs: [unit-tests, integration-tests]
+    
+    services:
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-cov pytest-xdist psutil
+        pip install -r requirements.txt
+    
+    - name: Set up test environment
+      run: |
+        export TEST_DATABASE_URL="sqlite:///test.db"
+        export TEST_REDIS_URL="redis://localhost:6379/1"
+        export TEST_GEOCODING_API_KEY="test_key"
+        export TEST_MAPS_API_KEY="test_key"
+    
+    - name: Run comprehensive test suite
+      run: |
+        pytest tests/comprehensive_location_input_test_suite.py -v --cov=services/location-validation --cov-report=xml --cov-report=html --junitxml=comprehensive-test-results.xml
+    
+    - name: Upload comprehensive test coverage
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: comprehensive-tests
+        name: comprehensive-test-coverage
+    
+    - name: Upload comprehensive test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: comprehensive-test-results
+        path: |
+          comprehensive-test-results.xml
+          htmlcov/
+
+  regression-tests:
+    name: Regression Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    if: github.event_name == 'schedule' || github.event_name == 'push'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-cov pytest-xdist
+        pip install -r requirements.txt
+    
+    - name: Run regression tests
+      run: |
+        pytest tests/ -k "regression" -v --junitxml=regression-test-results.xml
+    
+    - name: Upload regression test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: regression-test-results
+        path: regression-test-results.xml
+
+  mobile-tests:
+    name: Mobile Performance Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-asyncio pytest-cov pytest-xdist
+        pip install -r requirements.txt
+    
+    - name: Run mobile tests
+      run: |
+        pytest tests/ -k "mobile" -v --junitxml=mobile-test-results.xml
+    
+    - name: Upload mobile test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: mobile-test-results
+        path: mobile-test-results.xml
+
+  test-report:
+    name: Generate Test Report
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, performance-tests, geographic-accuracy-tests, comprehensive-tests]
+    if: always()
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Download all test results
+      uses: actions/download-artifact@v3
+    
+    - name: Generate comprehensive test report
+      run: |
+        # Create test report directory
+        mkdir -p test-reports
+        
+        # Combine test results
+        echo "# Location Input Test Suite Report" > test-reports/README.md
+        echo "Generated: $(date)" >> test-reports/README.md
+        echo "" >> test-reports/README.md
+        
+        echo "## Test Results Summary" >> test-reports/README.md
+        echo "- Unit Tests: ${{ needs.unit-tests.result }}" >> test-reports/README.md
+        echo "- Integration Tests: ${{ needs.integration-tests.result }}" >> test-reports/README.md
+        echo "- Performance Tests: ${{ needs.performance-tests.result }}" >> test-reports/README.md
+        echo "- Geographic Accuracy Tests: ${{ needs.geographic-accuracy-tests.result }}" >> test-reports/README.md
+        echo "- Comprehensive Tests: ${{ needs.comprehensive-tests.result }}" >> test-reports/README.md
+        
+        # Copy coverage reports
+        find . -name "htmlcov" -type d -exec cp -r {} test-reports/ \;
+    
+    - name: Upload test report
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-report
+        path: test-reports/
+
+  notify-results:
+    name: Notify Test Results
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests, performance-tests, geographic-accuracy-tests, comprehensive-tests]
+    if: always()
+    
+    steps:
+    - name: Notify test results
+      run: |
+        # Determine overall test status
+        if [[ "${{ needs.unit-tests.result }}" == "success" && 
+              "${{ needs.integration-tests.result }}" == "success" && 
+              "${{ needs.performance-tests.result }}" == "success" && 
+              "${{ needs.geographic-accuracy-tests.result }}" == "success" && 
+              "${{ needs.comprehensive-tests.result }}" == "success" ]]; then
+          echo "✅ All tests passed!"
+          echo "::notice title=Test Results::All location input tests passed successfully"
+        else
+          echo "❌ Some tests failed!"
+          echo "::error title=Test Results::Some location input tests failed"
+        fi
