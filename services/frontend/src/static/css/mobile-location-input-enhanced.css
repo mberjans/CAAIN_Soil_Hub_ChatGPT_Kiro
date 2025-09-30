@@ -1,0 +1,1236 @@
+/* Enhanced Mobile Location Input Styles */
+/* TICKET-008_farm-location-input-11.1 - Comprehensive Mobile-Responsive Location Interface */
+
+:root {
+    /* Enhanced color palette for mobile */
+    --primary-color: #28a745;
+    --primary-hover: #218838;
+    --primary-light: rgba(40, 167, 69, 0.1);
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #17a2b8;
+    --light-color: #f8f9fa;
+    --dark-color: #343a40;
+    
+    /* Enhanced spacing and sizing */
+    --border-radius: 16px;
+    --border-radius-sm: 12px;
+    --border-radius-lg: 20px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-fast: all 0.15s ease;
+    --shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.12);
+    --shadow-active: 0 2px 10px rgba(0, 0, 0, 0.15);
+    
+    /* Touch-friendly sizing */
+    --touch-target: 44px;
+    --touch-target-lg: 56px;
+    --touch-spacing: 16px;
+    --mobile-padding: 20px;
+    
+    /* Mobile-specific enhancements */
+    --safe-area-inset-top: env(safe-area-inset-top);
+    --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    --safe-area-inset-left: env(safe-area-inset-left);
+    --safe-area-inset-right: env(safe-area-inset-right);
+}
+
+/* Enhanced Mobile Header with Safe Area Support */
+.mobile-header {
+    padding-top: calc(0.75rem + var(--safe-area-inset-top));
+    padding-left: calc(1rem + var(--safe-area-inset-left));
+    padding-right: calc(1rem + var(--safe-area-inset-right));
+}
+
+/* Enhanced Touch Targets */
+.touch-target {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.touch-target-lg {
+    min-height: var(--touch-target-lg);
+    min-width: var(--touch-target-lg);
+}
+
+/* Enhanced Gesture Support */
+.gesture-area {
+    position: relative;
+    overflow: hidden;
+    touch-action: manipulation;
+}
+
+.gesture-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    z-index: 1;
+}
+
+/* Swipe Gesture Indicators */
+.swipe-indicator {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.swipe-indicator.left {
+    left: 20px;
+}
+
+.swipe-indicator.right {
+    right: 20px;
+}
+
+.swipe-indicator.active {
+    opacity: 1;
+}
+
+/* Enhanced Mobile Input Fields */
+.mobile-input-enhanced {
+    font-size: 16px; /* Prevents zoom on iOS */
+    border-radius: var(--border-radius-sm);
+    border: 2px solid #e9ecef;
+    padding: 12px 16px;
+    transition: var(--transition);
+    background: white;
+    min-height: var(--touch-target);
+}
+
+.mobile-input-enhanced:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    outline: none;
+}
+
+.mobile-input-enhanced:invalid {
+    border-color: var(--danger-color);
+}
+
+/* Enhanced Mobile Buttons */
+.mobile-btn-enhanced {
+    border-radius: var(--border-radius);
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 16px;
+    min-height: var(--touch-target);
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    touch-action: manipulation;
+}
+
+.mobile-btn-enhanced:active {
+    transform: scale(0.98);
+}
+
+.mobile-btn-enhanced::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.mobile-btn-enhanced:active::before {
+    left: 100%;
+}
+
+/* Enhanced Mobile Cards */
+.mobile-card-enhanced {
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow);
+    margin-bottom: var(--touch-spacing);
+    overflow: hidden;
+    transition: var(--transition);
+    background: white;
+}
+
+.mobile-card-enhanced:active {
+    transform: scale(0.98);
+    box-shadow: var(--shadow-active);
+}
+
+.mobile-card-enhanced.active {
+    border: 2px solid var(--primary-color);
+    box-shadow: var(--shadow-hover);
+}
+
+/* Enhanced Mobile Map Controls */
+.map-control-enhanced {
+    background: white;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    padding: 8px;
+    margin: 4px;
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    touch-action: manipulation;
+}
+
+.map-control-enhanced:active {
+    transform: scale(0.95);
+    box-shadow: var(--shadow-active);
+}
+
+.map-control-enhanced.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* Enhanced Mobile Loading States */
+.loading-enhanced {
+    position: relative;
+    overflow: hidden;
+}
+
+.loading-enhanced::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading-shimmer 1.5s infinite;
+}
+
+@keyframes loading-shimmer {
+    0% { left: -100%; }
+    100% { left: 100%; }
+}
+
+/* Enhanced Mobile Accessibility */
+.sr-only-mobile {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Enhanced Mobile Focus Management */
+.focus-trap {
+    position: relative;
+}
+
+.focus-trap:focus-within {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Enhanced Mobile Error States */
+.error-state-enhanced {
+    border-color: var(--danger-color) !important;
+    background-color: rgba(220, 53, 69, 0.05);
+}
+
+.error-state-enhanced::after {
+    content: attr(data-error);
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    right: 0;
+    color: var(--danger-color);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Enhanced Mobile Success States */
+.success-state-enhanced {
+    border-color: var(--success-color) !important;
+    background-color: rgba(40, 167, 69, 0.05);
+}
+
+.success-state-enhanced::after {
+    content: attr(data-success);
+    position: absolute;
+    bottom: -20px;
+    left: 0;
+    right: 0;
+    color: var(--success-color);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Enhanced Mobile Animations */
+@keyframes slide-in-from-bottom {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slide-out-to-bottom {
+    from {
+        transform: translateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+}
+
+.slide-in-bottom {
+    animation: slide-in-from-bottom 0.3s ease-out;
+}
+
+.slide-out-bottom {
+    animation: slide-out-to-bottom 0.3s ease-in;
+}
+
+/* Enhanced Mobile Responsive Breakpoints */
+@media (max-width: 480px) {
+    :root {
+        --mobile-padding: 16px;
+        --touch-spacing: 12px;
+    }
+    
+    .mobile-header .mobile-title {
+        font-size: 1.1rem;
+    }
+    
+    .mobile-btn-enhanced {
+        padding: 10px 20px;
+        font-size: 15px;
+    }
+}
+
+@media (max-width: 360px) {
+    :root {
+        --mobile-padding: 12px;
+        --touch-spacing: 8px;
+    }
+    
+    .mobile-input-enhanced {
+        font-size: 16px; /* Keep at 16px to prevent zoom */
+        padding: 10px 12px;
+    }
+}
+
+/* Enhanced Mobile Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light-color: #1a1a1a;
+        --dark-color: #ffffff;
+    }
+    
+    .mobile-card-enhanced {
+        background: #2d2d2d;
+        color: white;
+    }
+    
+    .mobile-input-enhanced {
+        background: #2d2d2d;
+        color: white;
+        border-color: #404040;
+    }
+    
+    .mobile-input-enhanced:focus {
+        border-color: var(--primary-color);
+        background: #3d3d3d;
+    }
+}
+
+/* Enhanced Mobile High Contrast Support */
+@media (prefers-contrast: high) {
+    :root {
+        --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+    
+    .mobile-card-enhanced {
+        border: 2px solid #000;
+    }
+    
+    .mobile-input-enhanced {
+        border-width: 3px;
+    }
+}
+
+/* Enhanced GPS Button */
+.gps-button-enhanced {
+    position: relative;
+    overflow: hidden;
+    min-height: var(--touch-target-lg);
+    border-radius: var(--border-radius-lg);
+    font-weight: 600;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.gps-button-enhanced:active {
+    transform: scale(0.98);
+    box-shadow: var(--shadow-active);
+}
+
+.gps-button-enhanced .button-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: inherit;
+    border-radius: inherit;
+}
+
+.gps-button-enhanced.loading .button-text {
+    opacity: 0;
+}
+
+.gps-button-enhanced.loading .button-loading {
+    display: flex !important;
+}
+
+/* Enhanced GPS Options */
+.gps-options-enhanced {
+    background: var(--light-color);
+    padding: var(--mobile-padding);
+    border-radius: var(--border-radius);
+    margin-top: var(--touch-spacing);
+}
+
+.option-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.option-row:last-child {
+    border-bottom: none;
+}
+
+.option-row .form-check {
+    flex: 1;
+    margin: 0;
+}
+
+.option-row .form-check-label {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    color: var(--dark-color);
+    cursor: pointer;
+}
+
+.option-info {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--info-color);
+    cursor: pointer;
+    border-radius: 50%;
+    transition: var(--transition-fast);
+}
+
+.option-info:hover {
+    background: var(--primary-light);
+    color: var(--primary-color);
+}
+
+/* GPS Accuracy Indicator */
+.gps-accuracy-indicator {
+    background: white;
+    padding: var(--mobile-padding);
+    border-radius: var(--border-radius);
+    margin-top: var(--touch-spacing);
+    box-shadow: var(--shadow);
+}
+
+.accuracy-bar {
+    width: 100%;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.accuracy-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--danger-color), var(--warning-color), var(--success-color));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.accuracy-text {
+    text-align: center;
+    font-weight: 500;
+    color: var(--dark-color);
+}
+
+/* Enhanced Map Controls */
+.map-controls-enhanced {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.map-control-btn.enhanced {
+    width: var(--touch-target);
+    height: var(--touch-target);
+    background: white;
+    border: 2px solid rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: var(--shadow);
+    transition: var(--transition-fast);
+    position: relative;
+}
+
+.map-control-btn.enhanced:active {
+    transform: scale(0.95);
+    background: var(--light-color);
+}
+
+.map-control-btn.enhanced i {
+    font-size: 16px;
+    color: var(--primary-color);
+}
+
+.control-label {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-top: 2px;
+}
+
+/* Map Type Selector */
+.map-type-selector {
+    background: white;
+    border-radius: var(--border-radius-sm);
+    padding: 8px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 4px;
+}
+
+.map-type-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: none;
+    background: transparent;
+    border-radius: var(--border-radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--secondary-color);
+    transition: var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.map-type-btn.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.map-type-btn:active {
+    transform: scale(0.95);
+}
+
+.map-type-btn i {
+    font-size: 16px;
+}
+
+/* Map Gesture Instructions */
+.map-gesture-instructions {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    right: 10px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    justify-content: space-around;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.map-gesture-instructions.show {
+    opacity: 1;
+}
+
+.gesture-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.gesture-item i {
+    font-size: 16px;
+}
+
+/* Enhanced Input Groups */
+.input-group-enhanced {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.input-group-enhanced .mobile-input {
+    padding-right: 50px;
+}
+
+.input-action-btn {
+    position: absolute;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: var(--light-color);
+    color: var(--secondary-color);
+    transition: var(--transition-fast);
+}
+
+.input-action-btn:active {
+    transform: scale(0.95);
+    background: var(--danger-color);
+    color: white;
+}
+
+/* Enhanced Address Suggestions */
+.address-suggestions-enhanced {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-top: none;
+    border-radius: 0 0 var(--border-radius) var(--border-radius);
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+}
+
+.suggestion-item-enhanced {
+    padding: 16px;
+    border-bottom: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.suggestion-item-enhanced:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item-enhanced:active {
+    background: var(--primary-light);
+    transform: scale(0.98);
+}
+
+.suggestion-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-light);
+    color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.suggestion-content {
+    flex: 1;
+}
+
+.suggestion-text {
+    font-weight: 500;
+    color: var(--dark-color);
+    margin-bottom: 4px;
+}
+
+.suggestion-details {
+    font-size: 12px;
+    color: var(--secondary-color);
+}
+
+/* Enhanced Coordinate Input */
+.coordinate-input-enhanced {
+    display: flex;
+    gap: 12px;
+}
+
+.coord-input-group {
+    flex: 1;
+}
+
+.coord-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--dark-color);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mobile-input {
+    min-height: var(--touch-target);
+    font-size: 16px; /* Prevents zoom on iOS */
+    border-radius: var(--border-radius-sm);
+    border: 2px solid #e9ecef;
+    transition: var(--transition);
+    padding: 12px 16px;
+}
+
+.mobile-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px var(--primary-light);
+    outline: none;
+}
+
+/* Coordinate Validation */
+.coordinate-validation {
+    background: var(--light-color);
+    padding: 12px;
+    border-radius: var(--border-radius-sm);
+    margin-top: 12px;
+}
+
+.validation-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+/* Enhanced Format Toggle */
+.format-toggle-enhanced {
+    background: var(--light-color);
+    padding: var(--mobile-padding);
+    border-radius: var(--border-radius);
+}
+
+.format-header {
+    margin-bottom: 12px;
+}
+
+.format-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.format-btn-enhanced {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    background: white;
+    color: var(--secondary-color);
+    font-weight: 500;
+    border-radius: var(--border-radius-sm);
+    transition: var(--transition-fast);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    box-shadow: var(--shadow);
+}
+
+.format-btn-enhanced.active {
+    background: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow-hover);
+}
+
+.format-btn-enhanced:active {
+    transform: scale(0.98);
+}
+
+.format-btn-enhanced i {
+    font-size: 18px;
+}
+
+.format-btn-enhanced span {
+    font-size: 12px;
+    font-weight: 600;
+}
+
+/* Quick Actions */
+.quick-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.quick-actions .btn {
+    flex: 1;
+    min-width: 0;
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: var(--border-radius-sm);
+}
+
+/* Enhanced Action Buttons */
+.action-buttons-enhanced {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: var(--mobile-padding);
+    border-top: 1px solid #e9ecef;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+}
+
+.action-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.action-btn {
+    flex: 1;
+    min-height: var(--touch-target-lg);
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: var(--border-radius-lg);
+    position: relative;
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.action-btn.primary-action {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow);
+}
+
+.action-btn.primary-action:active {
+    transform: scale(0.98);
+    box-shadow: var(--shadow-active);
+}
+
+.action-btn .btn-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: inherit;
+    border-radius: inherit;
+}
+
+.action-btn.loading .btn-text {
+    opacity: 0;
+}
+
+.action-btn.loading .btn-loading {
+    display: flex !important;
+}
+
+.secondary-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.secondary-actions .btn {
+    flex: 1;
+    font-size: 12px;
+    padding: 8px 12px;
+    border-radius: var(--border-radius-sm);
+}
+
+/* Enhanced Modals */
+.modal-fullscreen-sm-down {
+    margin: 0;
+}
+
+@media (max-width: 575.98px) {
+    .modal-fullscreen-sm-down {
+        max-width: none;
+        height: 100vh;
+    }
+}
+
+.help-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.help-section {
+    padding: 20px;
+    background: var(--light-color);
+    border-radius: var(--border-radius);
+}
+
+.help-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.help-header i {
+    width: 32px;
+    height: 32px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.help-header h6 {
+    margin: 0;
+    font-weight: 600;
+    color: var(--dark-color);
+}
+
+.help-tips {
+    margin-top: 12px;
+    padding: 12px;
+    background: white;
+    border-radius: var(--border-radius-sm);
+}
+
+.help-tips ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+}
+
+.help-tips li {
+    margin-bottom: 4px;
+    font-size: 14px;
+}
+
+/* Touch-friendly improvements */
+@media (hover: none) and (pointer: coarse) {
+    .btn:hover,
+    .method-header:hover,
+    .history-item:hover,
+    .suggestion-item:hover {
+        background: inherit;
+        transform: none;
+    }
+    
+    .btn:active,
+    .method-header:active,
+    .history-item:active,
+    .suggestion-item:active {
+        transform: scale(0.95);
+    }
+    
+    /* Enhanced touch feedback */
+    .touch-feedback {
+        transition: var(--transition-fast);
+    }
+    
+    .touch-feedback:active {
+        transform: scale(0.95);
+        background: var(--primary-light);
+    }
+}
+
+/* Responsive Design Enhancements */
+@media (max-width: 480px) {
+    :root {
+        --mobile-padding: 16px;
+        --touch-spacing: 12px;
+    }
+    
+    .mobile-main {
+        padding: 12px;
+    }
+    
+    .method-header {
+        padding: 16px;
+    }
+    
+    .method-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+    }
+    
+    .mobile-map-container {
+        height: 250px;
+    }
+    
+    .coordinate-input-enhanced {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .format-buttons {
+        flex-direction: column;
+    }
+    
+    .quick-actions {
+        flex-direction: column;
+    }
+    
+    .secondary-actions {
+        flex-direction: column;
+    }
+}
+
+@media (min-width: 768px) {
+    .mobile-main {
+        max-width: 600px;
+        margin: 80px auto 0;
+    }
+    
+    .action-buttons-enhanced {
+        max-width: 600px;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .coordinate-input-enhanced {
+        flex-direction: row;
+    }
+}
+
+/* Accessibility Enhancements */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #000000;
+        --secondary-color: #000000;
+        --border-radius: 0;
+    }
+    
+    .method-card,
+    .validation-card,
+    .location-history {
+        border: 3px solid #000000;
+    }
+    
+    .mobile-input {
+        border-width: 3px;
+    }
+    
+    .btn {
+        border-width: 2px;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --light-color: #1a1a1a;
+        --dark-color: #ffffff;
+        --secondary-color: #cccccc;
+    }
+    
+    body {
+        background: #121212;
+        color: var(--dark-color);
+    }
+    
+    .method-card,
+    .validation-card,
+    .location-history,
+    .gps-options-enhanced,
+    .format-toggle-enhanced {
+        background: #1e1e1e;
+        border-color: #333;
+    }
+    
+    .mobile-input {
+        background: #1e1e1e;
+        border-color: #333;
+        color: var(--dark-color);
+    }
+    
+    .mobile-input:focus {
+        background: #1e1e1e;
+        border-color: var(--primary-color);
+    }
+    
+    .address-suggestions-enhanced {
+        background: #1e1e1e;
+        border-color: #333;
+    }
+    
+    .suggestion-item-enhanced {
+        border-color: #333;
+    }
+    
+    .action-buttons-enhanced {
+        background: #1e1e1e;
+        border-color: #333;
+    }
+    
+    .map-control-btn.enhanced {
+        background: #1e1e1e;
+        border-color: #333;
+        color: var(--dark-color);
+    }
+    
+    .map-type-selector {
+        background: #1e1e1e;
+    }
+    
+    .map-gesture-instructions {
+        background: rgba(0, 0, 0, 0.9);
+    }
+}
+
+/* Performance optimizations */
+.gps-button-enhanced,
+.action-btn,
+.map-control-btn.enhanced {
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Loading states */
+.loading-overlay {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.loading-content {
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    background: rgba(255, 255, 255, 0.95);
+}
+
+@media (prefers-color-scheme: dark) {
+    .loading-content {
+        background: rgba(30, 30, 30, 0.95);
+    }
+}
+
+/* Enhanced animations */
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.pulse-animation {
+    animation: pulse 2s infinite;
+}
+
+@keyframes slideInUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.slide-in-up {
+    animation: slideInUp 0.3s ease-out;
+}
+
+/* Focus management for accessibility */
+.focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Enhanced error states */
+.error-state {
+    border-color: var(--danger-color) !important;
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.25) !important;
+}
+
+.error-message {
+    color: var(--danger-color);
+    font-size: 12px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* Success states */
+.success-state {
+    border-color: var(--success-color) !important;
+    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.25) !important;
+}
+
+.success-message {
+    color: var(--success-color);
+    font-size: 12px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
