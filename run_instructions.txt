@@ -5,7 +5,7 @@ If task has already been completed previously or have existinal codeg functional
 For unchecked tasks on the checklists, write the program one task of one ticket at a time. Once task is finshed, check it on the docs/checklist.md, add all changed files to the git using a separate git add command, commit changes with commit message that you generate yourself using individual git commit command, push changes to the git repository with indvidual git push command, and switch to the next task. Once you complete tasks on one ticket, add all changed files to the git using a separate git add command, commit changes with commit message that you generate yourself using individual git commit command, push changes to the git repository with indvidual git push command, switch to the next ticket. After the push, update the momety bank if it exists. Never chain multiple shell command together with & sign. Never use list comprehension in python. Avoid using regular expression for pattern matching. Instead create special pattern matching function to pattern matching. Work until all bugs are fixed. Please do not ask me for conformation whether I want you to proceedto the next ticket. Just keep working until completing the last ticket.
 
 CURRENT TASK TO COMPLETE:
-TICKET-008_farm-location-input-14.2 Add comprehensive user guidance and support
+TICKET-008_farm-location-input-15.2 Implement production monitoring and optimization
 
 CONTEXT:
 - Project directory: /Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro
@@ -13,22 +13,22 @@ CONTEXT:
 - Focus on completing the current task above
 - IMPORTANT: After completing the task, update docs/checklist.md to mark the task as complete by changing [ ] to [x]
 
-REMAINING UNCHECKED TASKS (340 total):
-→ CURRENT TICKET-008_farm-location-input-14.2 Add comprehensive user guidance and support
-  2. TICKET-008_farm-location-input-15.1 Build comprehensive location input testing suite
-  3. TICKET-008_farm-location-input-15.2 Implement production monitoring and optimization
-  4. TICKET-023_fertilizer-application-method-1.1 Create fertilizer application method microservice structure
-  5. TICKET-023_fertilizer-application-method-2.1 Create comprehensive equipment and farm size assessment system
-  6. TICKET-023_fertilizer-application-method-2.2 Implement equipment efficiency and optimization analysis
-  7. TICKET-023_fertilizer-application-method-3.1 Develop advanced crop type and growth stage integration system
-  8. TICKET-023_fertilizer-application-method-3.2 Implement crop response and application method optimization
-  9. TICKET-023_fertilizer-application-method-4.1 Build comprehensive goal-based recommendation system
-  10. TICKET-023_fertilizer-application-method-4.2 Implement adaptive recommendation learning system
-  ... and 330 more tasks
+REMAINING UNCHECKED TASKS (338 total):
+→ CURRENT TICKET-008_farm-location-input-15.2 Implement production monitoring and optimization
+  2. TICKET-023_fertilizer-application-method-1.1 Create fertilizer application method microservice structure
+  3. TICKET-023_fertilizer-application-method-2.1 Create comprehensive equipment and farm size assessment system
+  4. TICKET-023_fertilizer-application-method-2.2 Implement equipment efficiency and optimization analysis
+  5. TICKET-023_fertilizer-application-method-3.1 Develop advanced crop type and growth stage integration system
+  6. TICKET-023_fertilizer-application-method-3.2 Implement crop response and application method optimization
+  7. TICKET-023_fertilizer-application-method-4.1 Build comprehensive goal-based recommendation system
+  8. TICKET-023_fertilizer-application-method-4.2 Implement adaptive recommendation learning system
+  9. TICKET-023_fertilizer-application-method-5.1 Create comprehensive application method comparison engine
+  10. TICKET-023_fertilizer-application-method-5.2 Implement method selection decision support system
+  ... and 328 more tasks
 
 CRITICAL INSTRUCTIONS:
 1. Read docs/checklist.md, docs/plan.md, and docs/tickets.md for context
-2. Focus ONLY on completing the current task: TICKET-008_farm-location-input-14.2 Add comprehensive user guidance and support
+2. Focus ONLY on completing the current task: TICKET-008_farm-location-input-15.2 Implement production monitoring and optimization
 4. Create to-do list of smaller subtasks
 5. Assign task to software-engeneer subagent. Give subagent only information it needs for the task. You can also give subagent ticket-specific information extracted from docs/tickets.md as well as task specific information extracted from docs/checklist.md 
 6. Ask software-engeneer subagent to design unit tests for the subtask if appropriate
@@ -48,5 +48,3 @@ CRITICAL INSTRUCTIONS:
 16b. IMPORTANT: If all subtasks have failed, update docs/checklist.md to append "FAILED" to the current task description.
 17. Provide a summary of what you accomplished
 18. IMPORTANT: Avoid using regular expressions for pattern matching - create special pattern matching functions instead
-
-IMPORTANT: Think hard about this task and consider alternative approaches.

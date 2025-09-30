@@ -94,6 +94,10 @@ app.include_router(security_router)  # Location security and privacy routes
 # Include agricultural intelligence routes
 app.include_router(agricultural_intelligence_router)  # Agricultural intelligence routes
 
+# Import and include production monitoring routes
+from api.production_monitoring_routes import router as production_monitoring_router
+app.include_router(production_monitoring_router)  # Production monitoring and analytics routes
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -111,6 +115,7 @@ async def root():
             "mobile_location": "/api/v1/mobile/",
             "location_security": "/api/v1/security/",
             "agricultural_intelligence": "/api/v1/agricultural-intelligence/",
+            "production_monitoring": "/api/v1/monitoring/",
             "documentation": "/docs"
         },
         "agricultural_features": [
@@ -146,7 +151,16 @@ async def root():
             "Peer farmer insights and experiences",
             "Market insights and opportunities",
             "Success patterns and regional adaptations",
-            "Location-specific personalization and optimization"
+            "Location-specific personalization and optimization",
+            "Production monitoring and optimization",
+            "Location accuracy monitoring and validation",
+            "Service performance tracking and optimization",
+            "User experience analytics and improvement",
+            "Automated optimization recommendations",
+            "Real-time monitoring dashboards and alerts",
+            "Comprehensive analytics and reporting",
+            "Prometheus metrics integration",
+            "Business intelligence and KPI tracking"
         ]
     }
 
