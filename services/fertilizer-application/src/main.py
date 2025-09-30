@@ -17,6 +17,7 @@ from src.api.iot_sensor_routes import router as iot_sensor_router
 from src.api.crop_response_routes import router as crop_response_router
 from src.api.decision_support_routes import router as decision_support_router
 from src.api.economic_optimization_routes import router as economic_optimization_router
+from src.api.validation_routes import router as validation_router
 from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -80,6 +81,7 @@ app.include_router(iot_sensor_router, prefix="/api/v1", tags=["iot-sensors"])
 app.include_router(crop_response_router, prefix="/api/v1", tags=["crop-response"])
 app.include_router(decision_support_router, prefix="/api/v1", tags=["decision-support"])
 app.include_router(economic_optimization_router, prefix="/api/v1", tags=["economic-optimization"])
+app.include_router(validation_router, prefix="/api/v1", tags=["algorithm-validation"])
 
 @app.get("/health")
 async def health_check():
@@ -130,7 +132,16 @@ async def health_check():
             "scenario_modeling",
             "investment_planning",
             "risk_assessment",
-            "monte_carlo_simulation"
+            "monte_carlo_simulation",
+            "algorithm_validation",
+            "cross_validation",
+            "field_validation",
+            "expert_validation",
+            "outcome_validation",
+            "performance_tracking",
+            "continuous_improvement",
+            "model_training",
+            "performance_optimization"
         ]
     }
 
