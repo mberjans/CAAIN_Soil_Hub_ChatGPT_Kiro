@@ -10,6 +10,8 @@ from .api.application_routes import router as application_router
 from .api.method_routes import router as method_router
 from .api.guidance_routes import router as guidance_router
 from .api.equipment_routes import router as equipment_router
+from .api.efficiency_routes import router as efficiency_router
+from .api.monitoring_routes import router as monitoring_router
 from .database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -66,6 +68,8 @@ app.include_router(application_router, prefix="/api/v1", tags=["application"])
 app.include_router(method_router, prefix="/api/v1", tags=["methods"])
 app.include_router(guidance_router, prefix="/api/v1", tags=["guidance"])
 app.include_router(equipment_router, prefix="/api/v1", tags=["equipment-assessment"])
+app.include_router(efficiency_router, prefix="/api/v1", tags=["equipment-efficiency"])
+app.include_router(monitoring_router, prefix="/api/v1", tags=["performance-monitoring"])
 
 @app.get("/health")
 async def health_check():
@@ -77,6 +81,12 @@ async def health_check():
         "features": [
             "application_method_selection",
             "equipment_assessment",
+            "equipment_efficiency_analysis",
+            "performance_monitoring",
+            "real_time_alerts",
+            "timing_optimization",
+            "route_optimization",
+            "maintenance_optimization",
             "cost_analysis",
             "application_guidance",
             "method_optimization",
