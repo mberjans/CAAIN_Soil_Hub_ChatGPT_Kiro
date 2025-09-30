@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Current Location Detection - CAAIN Soil Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .location-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .location-source {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .source-gps { background-color: #28a745; color: white; }
+        .source-ip { background-color: #17a2b8; color: white; }
+        .source-manual { background-color: #6c757d; color: white; }
+        .source-saved { background-color: #ffc107; color: black; }
+        
+        .accuracy-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .accuracy-high { background-color: #28a745; }
+        .accuracy-medium { background-color: #ffc107; }
+        .accuracy-low { background-color: #dc3545; }
+        
+        .battery-indicator {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+        
+        .battery-high { background-color: #dc3545; color: white; }
+        .battery-medium { background-color: #ffc107; color: black; }
+        .battery-low { background-color: #28a745; color: white; }
+        .battery-minimal { background-color: #6c757d; color: white; }
+        
+        .status-granted { color: #28a745; font-weight: bold; }
+        .status-available { color: #ffc107; font-weight: bold; }
+        .status-unavailable { color: #dc3545; font-weight: bold; }
+        
+        .validation-valid { color: #28a745; font-weight: bold; }
+        .validation-warning { color: #ffc107; font-weight: bold; }
+        .validation-error { color: #dc3545; font-weight: bold; }
+        
+        .message-success { color: #28a745; font-weight: bold; }
+        .message-error { color: #dc3545; font-weight: bold; }
+        .message-warning { color: #ffc107; font-weight: bold; }
+        
+        .location-history-item {
+            border-left: 4px solid #dee2e6;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            background: #f8f9fa;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .location-history-item.favorite {
+            border-left-color: #ffc107;
+            background: #fff3cd;
+        }
+        
+        .btn-location-source {
+            margin: 5px;
+            min-width: 120px;
+        }
+        
+        .permissions-panel {
+            background: #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .battery-panel {
+            background: #d1ecf1;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .accuracy-panel {
+            background: #d4edda;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="#">
+                            <i class="fas fa-map-marker-alt"></i> CAAIN Soil Hub - Current Location Detection
+                        </a>
+                    </div>
+                </nav>
+            </div>
+        </div>
+        
+        <div class="container mt-4">
+            <!-- Header -->
+            <div class="row">
+                <div class="col-12">
+                    <h1 class="mb-4">
+                        <i class="fas fa-crosshairs"></i> Current Location Detection System
+                    </h1>
+                    <p class="lead">
+                        Comprehensive location detection with multiple fallback methods for agricultural applications.
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Permissions Status Panel -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="permissions-panel">
+                        <h5><i class="fas fa-shield-alt"></i> Location Permissions Status</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>GPS Status:</strong> <span id="gps-status">Checking...</span></p>
+                                <p><strong>Location Services:</strong> <span id="location-services-status">Checking...</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Privacy Mode:</strong> <span id="privacy-mode-status">Checking...</span></p>
+                                <p><strong>Battery Optimization:</strong> <span id="battery-optimization-status">Checking...</span></p>
+                            </div>
+                        </div>
+                        <button id="request-permission-btn" class="btn btn-primary">
+                            <i class="fas fa-key"></i> Request Location Permission
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Battery Status Panel -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="battery-panel">
+                        <h5><i class="fas fa-battery-half"></i> Battery Status & Optimization</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Battery Level:</strong> <span id="battery-level">Checking...</span></p>
+                                <p><strong>Optimization Active:</strong> <span id="battery-optimization-active">Checking...</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Low Battery Threshold:</strong> 20%</p>
+                                <p><strong>Battery-Friendly Sources:</strong> IP Geolocation, Saved Locations, Manual Entry</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location Detection Controls -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="location-card">
+                        <h5><i class="fas fa-search-location"></i> Detect Current Location</h5>
+                        <p>Choose your preferred location detection method:</p>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <button id="gps-location-btn" class="btn btn-success btn-location-source">
+                                    <i class="fas fa-satellite"></i> GPS Location
+                                    <br><small>High Accuracy</small>
+                                </button>
+                                
+                                <button id="ip-location-btn" class="btn btn-info btn-location-source">
+                                    <i class="fas fa-globe"></i> IP Geolocation
+                                    <br><small>Low Battery Impact</small>
+                                </button>
+                                
+                                <button id="saved-location-btn" class="btn btn-warning btn-location-source">
+                                    <i class="fas fa-bookmark"></i> Saved Location
+                                    <br><small>Quick Access</small>
+                                </button>
+                                
+                                <button id="manual-location-btn" class="btn btn-secondary btn-location-source">
+                                    <i class="fas fa-edit"></i> Manual Entry
+                                    <br><small>User Input</small>
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <button id="auto-detect-btn" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-magic"></i> Auto Detect (All Methods)
+                                </button>
+                                <br><br>
+                                <button id="save-favorite-btn" class="btn btn-outline-warning">
+                                    <i class="fas fa-star"></i> Save as Favorite
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="location-message" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detected Location Display -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="location-card">
+                        <h5><i class="fas fa-map-marker-alt"></i> Detected Location</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Latitude:</strong> <span id="detected-latitude">Not detected</span></p>
+                                <p><strong>Longitude:</strong> <span id="detected-longitude">Not detected</span></p>
+                                <p><strong>Accuracy:</strong> <span id="detected-accuracy">Not available</span></p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Source:</strong> <span id="detected-source">None</span></p>
+                                <p><strong>Confidence:</strong> <span id="detected-confidence">0%</span></p>
+                                <p><strong>Validation:</strong> <span id="validation-status">Not validated</span></p>
+                            </div>
+                        </div>
+                        
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <div class="alert alert-info">
+                                    <h6><i class="fas fa-info-circle"></i> Agricultural Context</h6>
+                                    <p id="agricultural-context">Location validation will provide agricultural suitability assessment.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location Sources Information -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="location-card">
+                        <h5><i class="fas fa-info-circle"></i> Available Location Sources</h5>
+                        <div id="location-sources-info">
+                            <p>Loading available location sources...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Accuracy Levels Information -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="accuracy-panel">
+                        <h5><i class="fas fa-bullseye"></i> Location Accuracy Levels</h5>
+                        <div id="accuracy-levels-info">
+                            <p>Loading accuracy level information...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Location History -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="location-card">
+                        <h5><i class="fas fa-history"></i> Location History</h5>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <button id="refresh-history-btn" class="btn btn-outline-primary">
+                                    <i class="fas fa-sync"></i> Refresh History
+                                </button>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="show-favorites-only">
+                                    <label class="form-check-label" for="show-favorites-only">
+                                        Show Favorites Only
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="location-history-list">
+                            <p>No location history available.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Favorite Locations -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="location-card">
+                        <h5><i class="fas fa-star"></i> Favorite Locations</h5>
+                        <div id="favorite-locations-list">
+                            <p>No favorite locations saved.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Agricultural Use Cases -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="location-card">
+                        <h5><i class="fas fa-seedling"></i> Agricultural Use Cases</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>High Accuracy GPS (< 10m)</h6>
+                                <ul>
+                                    <li>Field boundary mapping</li>
+                                    <li>Precision planting</li>
+                                    <li>Variable rate application</li>
+                                    <li>Yield mapping</li>
+                                    <li>Soil sampling</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Medium Accuracy (10-100m)</h6>
+                                <ul>
+                                    <li>Field identification</li>
+                                    <li>General farm mapping</li>
+                                    <li>Equipment tracking</li>
+                                    <li>Weather station placement</li>
+                                    <li>Farm building location</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6>Low Accuracy (100-1000m)</h6>
+                                <ul>
+                                    <li>General farm location</li>
+                                    <li>Regional climate assessment</li>
+                                    <li>County-level analysis</li>
+                                    <li>General recommendations</li>
+                                </ul>
+                            </div>
+                            <div class="col-md-6">
+                                <h6>Very Low Accuracy (> 1000m)</h6>
+                                <ul>
+                                    <li>State-level analysis</li>
+                                    <li>General climate zone identification</li>
+                                    <li>Broad regional recommendations</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/static/js/current-location-detection.js"></script>
+    
+    <script>
+        // Additional UI event handlers
+        document.addEventListener('DOMContentLoaded', () => {
+            // Auto detect button
+            const autoDetectBtn = document.getElementById('auto-detect-btn');
+            if (autoDetectBtn) {
+                autoDetectBtn.addEventListener('click', () => {
+                    window.currentLocationSystem.detectCurrentLocation();
+                });
+            }
+            
+            // Saved location button
+            const savedLocationBtn = document.getElementById('saved-location-btn');
+            if (savedLocationBtn) {
+                savedLocationBtn.addEventListener('click', () => {
+                    window.currentLocationSystem.detectCurrentLocation({ 
+                        preferredSources: ['saved_location'] 
+                    });
+                });
+            }
+            
+            // Manual location button
+            const manualLocationBtn = document.getElementById('manual-location-btn');
+            if (manualLocationBtn) {
+                manualLocationBtn.addEventListener('click', () => {
+                    // This would open a modal for manual entry
+                    alert('Manual location entry would open a coordinate input form or address geocoding interface.');
+                });
+            }
+            
+            // Refresh history button
+            const refreshHistoryBtn = document.getElementById('refresh-history-btn');
+            if (refreshHistoryBtn) {
+                refreshHistoryBtn.addEventListener('click', () => {
+                    loadLocationHistory();
+                });
+            }
+            
+            // Show favorites only checkbox
+            const showFavoritesOnly = document.getElementById('show-favorites-only');
+            if (showFavoritesOnly) {
+                showFavoritesOnly.addEventListener('change', () => {
+                    loadLocationHistory();
+                });
+            }
+            
+            // Load initial data
+            loadLocationSources();
+            loadAccuracyLevels();
+            loadLocationHistory();
+            loadFavoriteLocations();
+        });
+        
+        async function loadLocationSources() {
+            try {
+                const sources = await window.currentLocationSystem.getAvailableLocationSources();
+                const sourcesInfo = document.getElementById('location-sources-info');
+                
+                if (sources.length > 0) {
+                    let html = '<div class="row">';
+                    sources.forEach(source => {
+                        html += `
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">${source.name}</h6>
+                                        <p class="card-text">${source.description}</p>
+                                        <p><strong>Accuracy:</strong> ${source.accuracy}</p>
+                                        <p><strong>Battery Impact:</strong> 
+                                            <span class="battery-indicator battery-${source.battery_impact}">${source.battery_impact}</span>
+                                        </p>
+                                        <p><strong>Agricultural Suitability:</strong> ${source.agricultural_suitability}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    sourcesInfo.innerHTML = html;
+                } else {
+                    sourcesInfo.innerHTML = '<p>No location sources available.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading location sources:', error);
+            }
+        }
+        
+        async function loadAccuracyLevels() {
+            try {
+                const levels = await window.currentLocationSystem.getLocationAccuracyLevels();
+                const levelsInfo = document.getElementById('accuracy-levels-info');
+                
+                if (levels.length > 0) {
+                    let html = '<div class="row">';
+                    levels.forEach(level => {
+                        html += `
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">${level.name}</h6>
+                                        <p class="card-text">${level.description}</p>
+                                        <p><strong>Range:</strong> ${level.range}</p>
+                                        <p><strong>Agricultural Uses:</strong></p>
+                                        <ul>
+                                            ${level.agricultural_uses.map(use => `<li>${use}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    html += '</div>';
+                    levelsInfo.innerHTML = html;
+                } else {
+                    levelsInfo.innerHTML = '<p>No accuracy level information available.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading accuracy levels:', error);
+            }
+        }
+        
+        async function loadLocationHistory() {
+            try {
+                const showFavoritesOnly = document.getElementById('show-favorites-only').checked;
+                const history = await window.currentLocationSystem.getLocationHistory(
+                    null, 10, showFavoritesOnly
+                );
+                const historyList = document.getElementById('location-history-list');
+                
+                if (history.length > 0) {
+                    let html = '';
+                    history.forEach(entry => {
+                        const location = entry.location;
+                        const sourceClass = `source-${location.source}`;
+                        const accuracyClass = location.accuracy_meters < 10 ? 'accuracy-high' : 
+                                            location.accuracy_meters < 100 ? 'accuracy-medium' : 'accuracy-low';
+                        
+                        html += `
+                            <div class="location-history-item ${entry.is_favorite ? 'favorite' : ''}">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Location:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
+                                        <p><strong>Source:</strong> <span class="location-source ${sourceClass}">${location.source}</span></p>
+                                        <p><strong>Accuracy:</strong> 
+                                            <span class="accuracy-indicator ${accuracyClass}"></span>
+                                            ${location.accuracy_meters ? Math.round(location.accuracy_meters) + 'm' : 'Unknown'}
+                                        </p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Date:</strong> ${new Date(entry.created_at).toLocaleString()}</p>
+                                        <p><strong>Confidence:</strong> ${Math.round(location.confidence_score * 100)}%</p>
+                                        ${entry.notes ? `<p><strong>Notes:</strong> ${entry.notes}</p>` : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    historyList.innerHTML = html;
+                } else {
+                    historyList.innerHTML = '<p>No location history available.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading location history:', error);
+            }
+        }
+        
+        async function loadFavoriteLocations() {
+            try {
+                const favorites = await window.currentLocationSystem.getFavoriteLocations();
+                const favoritesList = document.getElementById('favorite-locations-list');
+                
+                if (favorites.length > 0) {
+                    let html = '';
+                    favorites.forEach(entry => {
+                        const location = entry.location;
+                        html += `
+                            <div class="location-history-item favorite">
+                                <div class="row">
+                                    <div class="col-md-8">
+                                        <p><strong>Location:</strong> ${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)}</p>
+                                        <p><strong>Source:</strong> <span class="location-source source-saved">${location.source}</span></p>
+                                        <p><strong>Saved:</strong> ${new Date(entry.created_at).toLocaleString()}</p>
+                                        ${entry.notes ? `<p><strong>Notes:</strong> ${entry.notes}</p>` : ''}
+                                    </div>
+                                    <div class="col-md-4">
+                                        <button class="btn btn-sm btn-primary" onclick="useFavoriteLocation('${entry.id}')">
+                                            <i class="fas fa-map-marker-alt"></i> Use This Location
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    favoritesList.innerHTML = html;
+                } else {
+                    favoritesList.innerHTML = '<p>No favorite locations saved.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading favorite locations:', error);
+            }
+        }
+        
+        function useFavoriteLocation(entryId) {
+            // Find the favorite location and use it
+            const favorites = window.currentLocationSystem.favoriteLocations;
+            const favorite = favorites.find(fav => fav.id === entryId);
+            
+            if (favorite) {
+                const result = {
+                    success: true,
+                    location: favorite.location,
+                    confidence_score: 0.9,
+                    fallback_used: 'saved_location'
+                };
+                
+                // Update UI
+                updateLocationDisplay(favorite.location, null);
+                showLocationSuccessMessage(result);
+                
+                // Update current location
+                window.currentLocationSystem.currentLocation = favorite.location;
+            }
+        }
+    </script>
+</body>
+</html>
