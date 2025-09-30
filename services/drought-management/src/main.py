@@ -19,6 +19,8 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent))
 
 from api.routes import router
+from api.integration_routes import router as integration_router
+from api.production_monitoring_routes import router as production_monitoring_router
 from services.drought_assessment_service import DroughtAssessmentService
 
 load_dotenv()
@@ -51,11 +53,18 @@ water_usage_reporting_service = None
 farm_infrastructure_service = None
 equipment_optimization_service = None
 expert_validation_service = None
+caain_integration_service = None
+
+# Production monitoring services
+production_monitoring_service = None
+production_analytics_service = None
+production_alerting_service = None
+production_reporting_service = None
 
 @app.on_event("startup")
 async def startup_event():
     """Initialize services on startup."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service, farm_infrastructure_service, equipment_optimization_service, expert_validation_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service, farm_infrastructure_service, equipment_optimization_service, expert_validation_service, caain_integration_service, production_monitoring_service, production_analytics_service, production_alerting_service, production_reporting_service
     try:
         logger.info("Initializing Drought Management Service...")
         
@@ -115,6 +124,29 @@ async def startup_event():
         expert_validation_service = ExpertValidationService()
         await expert_validation_service.initialize()
         
+        # Initialize CAAIN integration service
+        from .services.caain_integration_service import CAAINDroughtIntegrationService
+        caain_integration_service = CAAINDroughtIntegrationService()
+        await caain_integration_service.initialize()
+        
+        # Initialize production monitoring services
+        from .services.production_monitoring_service import ProductionMonitoringService
+        from .services.production_analytics_service import ProductionAnalyticsService
+        from .services.production_alerting_service import ProductionAlertingService
+        from .services.production_reporting_service import ProductionReportingService
+        
+        production_monitoring_service = ProductionMonitoringService()
+        await production_monitoring_service.initialize()
+        
+        production_analytics_service = ProductionAnalyticsService()
+        await production_analytics_service.initialize()
+        
+        production_alerting_service = ProductionAlertingService()
+        await production_alerting_service.initialize()
+        
+        production_reporting_service = ProductionReportingService()
+        await production_reporting_service.initialize()
+        
         logger.info("Drought Management Service initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize Drought Management Service: {str(e)}")
@@ -124,7 +156,7 @@ async def startup_event():
 @app.on_event("shutdown")
 async def shutdown_event():
     """Clean up resources on shutdown."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service, farm_infrastructure_service, equipment_optimization_service, expert_validation_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, soil_weather_integration_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, water_usage_monitoring_service, water_usage_reporting_service, farm_infrastructure_service, equipment_optimization_service, expert_validation_service, caain_integration_service, production_monitoring_service, production_analytics_service, production_alerting_service, production_reporting_service
     try:
         if drought_assessment_service:
             await drought_assessment_service.cleanup()
@@ -151,6 +183,19 @@ async def shutdown_event():
         if expert_validation_service:
             # Expert validation service cleanup if needed
             pass
+        if caain_integration_service:
+            await caain_integration_service.cleanup()
+        
+        # Cleanup production monitoring services
+        if production_monitoring_service:
+            await production_monitoring_service.cleanup()
+        if production_analytics_service:
+            await production_analytics_service.cleanup()
+        if production_alerting_service:
+            await production_alerting_service.cleanup()
+        if production_reporting_service:
+            await production_reporting_service.cleanup()
+        
         logger.info("Drought Management Service shutdown completed")
     except Exception as e:
         logger.error(f"Error during shutdown: {str(e)}")
@@ -166,11 +211,13 @@ app.add_middleware(
 
 # Include API routes
 app.include_router(router)
+app.include_router(integration_router)
+app.include_router(production_monitoring_router)
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint for service monitoring."""
-    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, farm_infrastructure_service, equipment_optimization_service
+    global drought_assessment_service, moisture_conservation_service, drought_monitoring_service, soil_assessment_service, practice_effectiveness_service, cover_crop_mulch_optimization_service, farm_infrastructure_service, equipment_optimization_service, caain_integration_service
     
     service_healthy = True
     service_status = "healthy"
@@ -277,6 +324,17 @@ async def health_check():
         components["equipment_optimization"] = "not_initialized"
         service_healthy = False
     
+    if caain_integration_service:
+        try:
+            components["caain_integration"] = "healthy"
+        except Exception as e:
+            logger.error(f"CAAIN integration service health check failed: {str(e)}")
+            components["caain_integration"] = "unhealthy"
+            service_healthy = False
+    else:
+        components["caain_integration"] = "not_initialized"
+        service_healthy = False
+    
     if not service_healthy:
         service_status = "unhealthy"
     
@@ -290,7 +348,10 @@ async def health_check():
         "integration": {
             "weather_data": "available",
             "soil_data": "available",
-            "crop_data": "available"
+            "crop_data": "available",
+            "caain_services": "integrated",
+            "service_discovery": "active",
+            "cross_service_communication": "enabled"
         }
     }
 
@@ -318,6 +379,10 @@ async def root():
             "cover_crop_mulch_optimization": "/api/v1/optimization",
             "farm_infrastructure": "/api/v1/infrastructure",
             "equipment_optimization": "/api/v1/equipment-optimization",
+            "integration_health": "/api/v1/integration/health",
+            "integration_status": "/api/v1/integration/status",
+            "service_health": "/api/v1/integration/services/health",
+            "data_sync": "/api/v1/integration/data/sync",
             "health": "/health",
             "docs": "/docs"
         },
@@ -347,12 +412,28 @@ async def root():
             "investment_planning",
             "cost_benefit_analysis",
             "financing_options",
-            "risk_assessment"
+            "risk_assessment",
+            "caain_service_integration",
+            "cross_service_data_sync",
+            "service_discovery",
+            "health_monitoring",
+            "ai_powered_explanations",
+            "drought_resilient_crop_recommendations",
+            "cover_crop_integration"
         ],
         "integration": {
             "weather_services": "NOAA, OpenWeatherMap integration",
             "soil_data": "Soil moisture, texture, organic matter analysis",
-            "crop_data": "Water requirements, drought tolerance, growth stages"
+            "crop_data": "Water requirements, drought tolerance, growth stages",
+            "caain_services": {
+                "recommendation_engine": "Crop and fertilizer recommendations",
+                "data_integration": "Soil, weather, and market data",
+                "ai_agent": "AI-powered explanations and context management",
+                "user_management": "User profiles and farm locations",
+                "crop_taxonomy": "Drought-resilient crop varieties",
+                "cover_crop_selection": "Moisture conservation cover crops",
+                "question_router": "Intelligent question routing"
+            }
         }
     }
 
