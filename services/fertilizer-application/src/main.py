@@ -20,6 +20,7 @@ from src.api.economic_optimization_routes import router as economic_optimization
 from src.api.validation_routes import router as validation_router
 from src.api.fertilizer_routes import router as fertilizer_router
 from src.api.advanced_application_routes import router as advanced_application_router
+from src.api.integration_routes import router as integration_router
 from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -86,6 +87,7 @@ app.include_router(economic_optimization_router, prefix="/api/v1", tags=["econom
 app.include_router(validation_router, prefix="/api/v1", tags=["algorithm-validation"])
 app.include_router(fertilizer_router, prefix="/api/v1", tags=["fertilizer-application-methods"])
 app.include_router(advanced_application_router, prefix="/api/v1", tags=["advanced-application-management"])
+app.include_router(integration_router, tags=["caain-integration"])
 
 @app.get("/health")
 async def health_check():
@@ -115,6 +117,9 @@ async def health_check():
             "application_guidance",
             "method_optimization",
             "equipment_compatibility",
+            "caain_integration",
+            "cross_service_communication",
+            "data_synchronization",
             "farm_size_assessment",
             "crop_response_optimization",
             "yield_impact_prediction",

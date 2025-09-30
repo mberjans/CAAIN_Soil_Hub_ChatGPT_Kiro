@@ -5,6 +5,7 @@ API routes for crop response and application method optimization.
 from fastapi import APIRouter, HTTPException, Depends, Query
 from typing import List, Dict, Any, Optional
 import logging
+from pydantic import BaseModel, Field
 
 from src.models.application_models import (
     ApplicationMethodType, CropRequirements, FieldConditions
@@ -156,12 +157,16 @@ async def predict_yield_impact(
         raise HTTPException(status_code=500, detail="Failed to predict yield impact")
 
 
+class MethodComparisonRequest(BaseModel):
+    """Request model for method comparison."""
+    crop_type: str = Field(..., description="Type of crop")
+    methods_to_compare: List[str] = Field(..., description="Methods to compare")
+    field_conditions: Dict[str, Any] = Field(..., description="Field and environmental conditions")
+    crop_requirements: Dict[str, Any] = Field(..., description="Crop-specific requirements")
+
 @router.post("/compare-methods", response_model=Dict[str, Any])
 async def compare_method_effectiveness(
-    crop_type: str = Query(..., description="Type of crop"),
-    methods_to_compare: List[str] = Query(..., description="Methods to compare"),
-    field_conditions: Dict[str, Any] = Query(..., description="Field and environmental conditions"),
-    crop_requirements: Dict[str, Any] = Query(..., description="Crop-specific requirements"),
+    request: MethodComparisonRequest,
     service: ApplicationMethodService = Depends(get_application_method_service)
 ):
     """
@@ -178,21 +183,21 @@ async def compare_method_effectiveness(
     """
     try:
         # Convert string inputs to enums
-        crop_enum = CropType(crop_type.lower())
-        method_enums = [ApplicationMethodType(method.lower()) for method in methods_to_compare]
+        crop_enum = CropType(request.crop_type.lower())
+        method_enums = [ApplicationMethodType(method.lower()) for method in request.methods_to_compare]
         
         # Create crop requirements object
         crop_req = CropRequirements(
-            crop_type=crop_type,
-            growth_stage=crop_requirements.get("growth_stage", "V6"),
-            target_yield=crop_requirements.get("target_yield"),
-            nutrient_requirements=crop_requirements.get("nutrient_requirements", {}),
-            application_timing_preferences=crop_requirements.get("application_timing_preferences", [])
+            crop_type=request.crop_type,
+            growth_stage=request.crop_requirements.get("growth_stage", "V6"),
+            target_yield=request.crop_requirements.get("target_yield"),
+            nutrient_requirements=request.crop_requirements.get("nutrient_requirements", {}),
+            application_timing_preferences=request.crop_requirements.get("application_timing_preferences", [])
         )
         
         # Get method effectiveness comparison
         comparison = await service.get_method_effectiveness_comparison(
-            crop_enum, method_enums, field_conditions, crop_req
+            crop_enum, method_enums, request.field_conditions, crop_req
         )
         
         return comparison
