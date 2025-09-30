@@ -109,6 +109,84 @@ class InteractiveMapSystem {
             description: 'USDA Plant Hardiness Zones',
             isOverlay: true
         };
+
+        // SSURGO Soil Survey Overlay
+        this.mapProviders.ssurgo_soils = {
+            name: 'SSURGO Soils',
+            layer: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Soils/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© USDA NRCS SSURGO',
+                maxZoom: 16,
+                opacity: 0.7
+            }),
+            icon: 'fas fa-seedling',
+            description: 'USDA SSURGO Soil Survey data with detailed soil properties',
+            isOverlay: true
+        };
+
+        // NRCS Conservation Practices Overlay
+        this.mapProviders.nrcs_conservation = {
+            name: 'Conservation Practices',
+            layer: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Conservation_Practices/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© USDA NRCS',
+                maxZoom: 16,
+                opacity: 0.6
+            }),
+            icon: 'fas fa-leaf',
+            description: 'NRCS conservation practices and programs',
+            isOverlay: true
+        };
+
+        // Flood Zones Overlay
+        this.mapProviders.flood_zones = {
+            name: 'Flood Zones',
+            layer: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Flood_Hazard/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© FEMA Flood Maps',
+                maxZoom: 16,
+                opacity: 0.5
+            }),
+            icon: 'fas fa-water',
+            description: 'FEMA flood hazard zones and risk areas',
+            isOverlay: true
+        };
+
+        // Agricultural Districts Overlay
+        this.mapProviders.agricultural_districts = {
+            name: 'Agricultural Districts',
+            layer: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Agricultural_Districts/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© USDA Agricultural Districts',
+                maxZoom: 16,
+                opacity: 0.6
+            }),
+            icon: 'fas fa-tractor',
+            description: 'Agricultural districts and zoning information',
+            isOverlay: true
+        };
+
+        // Watershed Boundaries Overlay
+        this.mapProviders.watershed_boundaries = {
+            name: 'Watershed Boundaries',
+            layer: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Watersheds/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© USGS Watersheds',
+                maxZoom: 16,
+                opacity: 0.5
+            }),
+            icon: 'fas fa-stream',
+            description: 'USGS watershed boundaries and drainage areas',
+            isOverlay: true
+        };
+
+        // Topographic Contours Overlay
+        this.mapProviders.topographic_contours = {
+            name: 'Topographic Contours',
+            layer: L.tileLayer('https://services.arcgisonline.com/ArcGIS/rest/services/USA_Topographic_Contours/MapServer/tile/{z}/{y}/{x}', {
+                attribution: '© USGS Topographic',
+                maxZoom: 16,
+                opacity: 0.4
+            }),
+            icon: 'fas fa-mountain',
+            description: 'Topographic contour lines for elevation analysis',
+            isOverlay: true
+        };
     }
 
     initializeMap() {
@@ -950,6 +1028,470 @@ class InteractiveMapSystem {
         if (fieldInfo) {
             fieldInfo.innerHTML = fieldInfo.innerHTML + analysisHtml;
         }
+    }
+
+    // Agricultural Analysis Tools
+    async performSlopeAnalysis(fieldId) {
+        const fieldData = this.fields.get(fieldId);
+        if (!fieldData) {
+            this.showNotification('Field not found', 'error');
+            return;
+        }
+
+        try {
+            this.showNotification('Performing slope analysis...', 'info');
+            
+            const bounds = fieldData.boundary.getBounds();
+            const center = bounds.getCenter();
+            
+            const response = await fetch(`${this.locationService}/fields/${fieldId}/slope-analysis`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    field_id: fieldId,
+                    coordinates: {
+                        latitude: center.lat,
+                        longitude: center.lng
+                    },
+                    boundary: this.serializeBoundary(fieldData.boundary)
+                })
+            });
+
+            if (response.ok) {
+                const slopeData = await response.json();
+                this.showSlopeAnalysis(slopeData);
+                this.showNotification('Slope analysis completed!', 'success');
+            } else {
+                const error = await response.json();
+                this.showNotification(`Slope analysis failed: ${error.detail}`, 'error');
+            }
+        } catch (error) {
+            console.error('Slope analysis error:', error);
+            this.showNotification('Slope analysis failed due to network error', 'error');
+        }
+    }
+
+    async performDrainageAssessment(fieldId) {
+        const fieldData = this.fields.get(fieldId);
+        if (!fieldData) {
+            this.showNotification('Field not found', 'error');
+            return;
+        }
+
+        try {
+            this.showNotification('Assessing drainage...', 'info');
+            
+            const bounds = fieldData.boundary.getBounds();
+            const center = bounds.getCenter();
+            
+            const response = await fetch(`${this.locationService}/fields/${fieldId}/drainage-assessment`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    field_id: fieldId,
+                    coordinates: {
+                        latitude: center.lat,
+                        longitude: center.lng
+                    },
+                    boundary: this.serializeBoundary(fieldData.boundary),
+                    area: fieldData.area
+                })
+            });
+
+            if (response.ok) {
+                const drainageData = await response.json();
+                this.showDrainageAssessment(drainageData);
+                this.showNotification('Drainage assessment completed!', 'success');
+            } else {
+                const error = await response.json();
+                this.showNotification(`Drainage assessment failed: ${error.detail}`, 'error');
+            }
+        } catch (error) {
+            console.error('Drainage assessment error:', error);
+            this.showNotification('Drainage assessment failed due to network error', 'error');
+        }
+    }
+
+    async evaluateFieldAccessibility(fieldId) {
+        const fieldData = this.fields.get(fieldId);
+        if (!fieldData) {
+            this.showNotification('Field not found', 'error');
+            return;
+        }
+
+        try {
+            this.showNotification('Evaluating field accessibility...', 'info');
+            
+            const bounds = fieldData.boundary.getBounds();
+            const center = bounds.getCenter();
+            
+            const response = await fetch(`${this.locationService}/fields/${fieldId}/accessibility-evaluation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    field_id: fieldId,
+                    coordinates: {
+                        latitude: center.lat,
+                        longitude: center.lng
+                    },
+                    boundary: this.serializeBoundary(fieldData.boundary),
+                    area: fieldData.area
+                })
+            });
+
+            if (response.ok) {
+                const accessibilityData = await response.json();
+                this.showAccessibilityEvaluation(accessibilityData);
+                this.showNotification('Accessibility evaluation completed!', 'success');
+            } else {
+                const error = await response.json();
+                this.showNotification(`Accessibility evaluation failed: ${error.detail}`, 'error');
+            }
+        } catch (error) {
+            console.error('Accessibility evaluation error:', error);
+            this.showNotification('Accessibility evaluation failed due to network error', 'error');
+        }
+    }
+
+    async getSoilSurveyData(fieldId) {
+        const fieldData = this.fields.get(fieldId);
+        if (!fieldData) {
+            this.showNotification('Field not found', 'error');
+            return;
+        }
+
+        try {
+            this.showNotification('Retrieving soil survey data...', 'info');
+            
+            const bounds = fieldData.boundary.getBounds();
+            const center = bounds.getCenter();
+            
+            const response = await fetch(`${this.locationService}/fields/${fieldId}/soil-survey`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    field_id: fieldId,
+                    coordinates: {
+                        latitude: center.lat,
+                        longitude: center.lng
+                    },
+                    boundary: this.serializeBoundary(fieldData.boundary)
+                })
+            });
+
+            if (response.ok) {
+                const soilData = await response.json();
+                this.showSoilSurveyData(soilData);
+                this.showNotification('Soil survey data retrieved!', 'success');
+            } else {
+                const error = await response.json();
+                this.showNotification(`Soil survey retrieval failed: ${error.detail}`, 'error');
+            }
+        } catch (error) {
+            console.error('Soil survey retrieval error:', error);
+            this.showNotification('Soil survey retrieval failed due to network error', 'error');
+        }
+    }
+
+    async getWatershedInformation(fieldId) {
+        const fieldData = this.fields.get(fieldId);
+        if (!fieldData) {
+            this.showNotification('Field not found', 'error');
+            return;
+        }
+
+        try {
+            this.showNotification('Retrieving watershed information...', 'info');
+            
+            const bounds = fieldData.boundary.getBounds();
+            const center = bounds.getCenter();
+            
+            const response = await fetch(`${this.locationService}/fields/${fieldId}/watershed-info`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    field_id: fieldId,
+                    coordinates: {
+                        latitude: center.lat,
+                        longitude: center.lng
+                    },
+                    boundary: this.serializeBoundary(fieldData.boundary)
+                })
+            });
+
+            if (response.ok) {
+                const watershedData = await response.json();
+                this.showWatershedInformation(watershedData);
+                this.showNotification('Watershed information retrieved!', 'success');
+            } else {
+                const error = await response.json();
+                this.showNotification(`Watershed information retrieval failed: ${error.detail}`, 'error');
+            }
+        } catch (error) {
+            console.error('Watershed information retrieval error:', error);
+            this.showNotification('Watershed information retrieval failed due to network error', 'error');
+        }
+    }
+
+    // Display methods for agricultural analysis results
+    showSlopeAnalysis(slopeData) {
+        const analysisHtml = `
+            <div class="agricultural-analysis-panel">
+                <h5><i class="fas fa-mountain"></i> Slope Analysis Results</h5>
+                <div class="analysis-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">Average Slope:</span>
+                        <span class="metric-value">${slopeData.average_slope}%</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Maximum Slope:</span>
+                        <span class="metric-value">${slopeData.max_slope}%</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Slope Classification:</span>
+                        <span class="metric-value">${slopeData.slope_classification}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Erosion Risk:</span>
+                        <span class="metric-value ${slopeData.erosion_risk.toLowerCase()}">${slopeData.erosion_risk}</span>
+                    </div>
+                </div>
+                <div class="recommendations">
+                    <h6>Recommendations:</h6>
+                    <ul>
+                        ${slopeData.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        this.displayAnalysisResults('slope-analysis', analysisHtml);
+    }
+
+    showDrainageAssessment(drainageData) {
+        const analysisHtml = `
+            <div class="agricultural-analysis-panel">
+                <h5><i class="fas fa-tint"></i> Drainage Assessment Results</h5>
+                <div class="analysis-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">Drainage Class:</span>
+                        <span class="metric-value">${drainageData.drainage_class}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Water Table Depth:</span>
+                        <span class="metric-value">${drainageData.water_table_depth}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Flood Risk:</span>
+                        <span class="metric-value ${drainageData.flood_risk.toLowerCase()}">${drainageData.flood_risk}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Drainage Suitability:</span>
+                        <span class="metric-value ${drainageData.suitability.toLowerCase()}">${drainageData.suitability}</span>
+                    </div>
+                </div>
+                <div class="recommendations">
+                    <h6>Drainage Recommendations:</h6>
+                    <ul>
+                        ${drainageData.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        this.displayAnalysisResults('drainage-assessment', analysisHtml);
+    }
+
+    showAccessibilityEvaluation(accessibilityData) {
+        const analysisHtml = `
+            <div class="agricultural-analysis-panel">
+                <h5><i class="fas fa-truck"></i> Field Accessibility Evaluation</h5>
+                <div class="analysis-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">Road Access:</span>
+                        <span class="metric-value ${accessibilityData.road_access.toLowerCase()}">${accessibilityData.road_access}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Equipment Access:</span>
+                        <span class="metric-value ${accessibilityData.equipment_access.toLowerCase()}">${accessibilityData.equipment_access}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Distance to Roads:</span>
+                        <span class="metric-value">${accessibilityData.distance_to_roads}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Accessibility Score:</span>
+                        <span class="metric-value">${accessibilityData.accessibility_score}/10</span>
+                    </div>
+                </div>
+                <div class="recommendations">
+                    <h6>Accessibility Recommendations:</h6>
+                    <ul>
+                        ${accessibilityData.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        this.displayAnalysisResults('accessibility-evaluation', analysisHtml);
+    }
+
+    showSoilSurveyData(soilData) {
+        const analysisHtml = `
+            <div class="agricultural-analysis-panel">
+                <h5><i class="fas fa-seedling"></i> SSURGO Soil Survey Data</h5>
+                <div class="soil-properties">
+                    <h6>Soil Properties:</h6>
+                    <div class="analysis-metrics">
+                        <div class="metric-item">
+                            <span class="metric-label">Soil Series:</span>
+                            <span class="metric-value">${soilData.soil_series}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Soil Texture:</span>
+                            <span class="metric-value">${soilData.texture}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">pH Range:</span>
+                            <span class="metric-value">${soilData.ph_range}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Organic Matter:</span>
+                            <span class="metric-value">${soilData.organic_matter}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Cation Exchange Capacity:</span>
+                            <span class="metric-value">${soilData.cec}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="soil-limitations">
+                    <h6>Soil Limitations:</h6>
+                    <ul>
+                        ${soilData.limitations.map(lim => `<li>${lim}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="recommendations">
+                    <h6>Soil Management Recommendations:</h6>
+                    <ul>
+                        ${soilData.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        this.displayAnalysisResults('soil-survey', analysisHtml);
+    }
+
+    showWatershedInformation(watershedData) {
+        const analysisHtml = `
+            <div class="agricultural-analysis-panel">
+                <h5><i class="fas fa-stream"></i> Watershed Information</h5>
+                <div class="analysis-metrics">
+                    <div class="metric-item">
+                        <span class="metric-label">Watershed Name:</span>
+                        <span class="metric-value">${watershedData.watershed_name}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Watershed Area:</span>
+                        <span class="metric-value">${watershedData.watershed_area}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Stream Order:</span>
+                        <span class="metric-value">${watershedData.stream_order}</span>
+                    </div>
+                    <div class="metric-item">
+                        <span class="metric-label">Water Quality:</span>
+                        <span class="metric-value ${watershedData.water_quality.toLowerCase()}">${watershedData.water_quality}</span>
+                    </div>
+                </div>
+                <div class="watershed-features">
+                    <h6>Watershed Features:</h6>
+                    <ul>
+                        ${watershedData.features.map(feature => `<li>${feature}</li>`).join('')}
+                    </ul>
+                </div>
+                <div class="recommendations">
+                    <h6>Water Management Recommendations:</h6>
+                    <ul>
+                        ${watershedData.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                    </ul>
+                </div>
+            </div>
+        `;
+        
+        this.displayAnalysisResults('watershed-info', analysisHtml);
+    }
+
+    displayAnalysisResults(analysisType, htmlContent) {
+        // Create or update analysis results panel
+        let analysisPanel = document.getElementById('agricultural-analysis-panel');
+        if (!analysisPanel) {
+            analysisPanel = document.createElement('div');
+            analysisPanel.id = 'agricultural-analysis-panel';
+            analysisPanel.className = 'agricultural-analysis-panel';
+            
+            // Add close button
+            const closeButton = document.createElement('button');
+            closeButton.className = 'btn-close-analysis';
+            closeButton.innerHTML = '<i class="fas fa-times"></i>';
+            closeButton.onclick = () => analysisPanel.remove();
+            
+            analysisPanel.appendChild(closeButton);
+            
+            // Insert after map container
+            const mapContainer = document.getElementById('location-map');
+            mapContainer.parentNode.insertBefore(analysisPanel, mapContainer.nextSibling);
+        }
+        
+        analysisPanel.innerHTML = htmlContent;
+        analysisPanel.style.display = 'block';
+        
+        // Scroll to analysis panel
+        analysisPanel.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Overlay Management Methods
+    addOverlay(overlayName) {
+        if (this.mapProviders[overlayName] && this.mapProviders[overlayName].isOverlay) {
+            this.mapProviders[overlayName].layer.addTo(this.map);
+            this.showNotification(`Added ${this.mapProviders[overlayName].name} overlay`, 'success');
+        }
+    }
+
+    removeOverlay(overlayName) {
+        if (this.mapProviders[overlayName] && this.mapProviders[overlayName].isOverlay) {
+            this.map.removeLayer(this.mapProviders[overlayName].layer);
+            this.showNotification(`Removed ${this.mapProviders[overlayName].name} overlay`, 'info');
+        }
+    }
+
+    toggleOverlay(overlayName) {
+        if (this.mapProviders[overlayName] && this.mapProviders[overlayName].isOverlay) {
+            if (this.map.hasLayer(this.mapProviders[overlayName].layer)) {
+                this.removeOverlay(overlayName);
+            } else {
+                this.addOverlay(overlayName);
+            }
+        }
+    }
+
+    clearAllOverlays() {
+        Object.keys(this.mapProviders).forEach(providerName => {
+            if (this.mapProviders[providerName].isOverlay) {
+                this.removeOverlay(providerName);
+            }
+        });
     }
 }
 

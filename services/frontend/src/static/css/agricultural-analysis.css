@@ -1,0 +1,455 @@
+/**
+ * Agricultural Analysis Styles
+ * CAAIN Soil Hub - TICKET-008_farm-location-input-8.2
+ * 
+ * Styles for agricultural analysis panels and overlays
+ */
+
+/* Agricultural Analysis Panel */
+.agricultural-analysis-panel {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 2px solid #28a745;
+    border-radius: 15px;
+    padding: 25px;
+    margin: 20px 0;
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.15);
+    position: relative;
+    animation: slideInUp 0.5s ease-out;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.agricultural-analysis-panel h5 {
+    color: #28a745;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.4rem;
+}
+
+.agricultural-analysis-panel h5 i {
+    font-size: 1.6rem;
+    color: #20c997;
+}
+
+/* Close Button */
+.btn-close-analysis {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+}
+
+.btn-close-analysis:hover {
+    background: #c82333;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+/* Analysis Metrics */
+.analysis-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.metric-item {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.metric-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-color: #28a745;
+}
+
+.metric-label {
+    font-weight: 600;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+.metric-value {
+    font-weight: 700;
+    color: #28a745;
+    font-size: 1.1rem;
+    text-align: right;
+}
+
+/* Risk Level Colors */
+.metric-value.low {
+    color: #28a745;
+}
+
+.metric-value.medium {
+    color: #ffc107;
+}
+
+.metric-value.high {
+    color: #fd7e14;
+}
+
+.metric-value.very_high {
+    color: #dc3545;
+}
+
+.metric-value.excellent {
+    color: #28a745;
+}
+
+.metric-value.good {
+    color: #20c997;
+}
+
+.metric-value.fair {
+    color: #ffc107;
+}
+
+.metric-value.poor {
+    color: #dc3545;
+}
+
+/* Recommendations Section */
+.recommendations,
+.soil-properties,
+.soil-limitations,
+.watershed-features {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-left: 4px solid #28a745;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.recommendations h6,
+.soil-properties h6,
+.soil-limitations h6,
+.watershed-features h6 {
+    color: #28a745;
+    font-weight: 700;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.recommendations h6::before,
+.soil-properties h6::before,
+.soil-limitations h6::before,
+.watershed-features h6::before {
+    content: "💡";
+    font-size: 1.2rem;
+}
+
+.recommendations ul,
+.soil-limitations ul,
+.watershed-features ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.recommendations li,
+.soil-limitations li,
+.watershed-features li {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-bottom: 10px;
+    position: relative;
+    padding-left: 35px;
+    transition: all 0.3s ease;
+}
+
+.recommendations li:hover,
+.soil-limitations li:hover,
+.watershed-features li:hover {
+    background: #e9ecef;
+    border-color: #28a745;
+    transform: translateX(5px);
+}
+
+.recommendations li::before,
+.soil-limitations li::before,
+.watershed-features li::before {
+    content: "✓";
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+/* Soil Properties Grid */
+.soil-properties .analysis-metrics {
+    margin-bottom: 0;
+}
+
+/* Map Overlay Controls */
+.map-overlay-controls {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    min-width: 200px;
+}
+
+.overlay-control-group {
+    margin-bottom: 15px;
+}
+
+.overlay-control-group:last-child {
+    margin-bottom: 0;
+}
+
+.overlay-control-group h6 {
+    color: #28a745;
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.overlay-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.overlay-toggle:hover {
+    background: #e9ecef;
+    border-color: #28a745;
+}
+
+.overlay-toggle.active {
+    background: #d4edda;
+    border-color: #28a745;
+    color: #155724;
+}
+
+.overlay-toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.overlay-toggle-label i {
+    font-size: 1rem;
+    color: #28a745;
+}
+
+.overlay-toggle-switch {
+    position: relative;
+    width: 40px;
+    height: 20px;
+    background: #ccc;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+}
+
+.overlay-toggle-switch.active {
+    background: #28a745;
+}
+
+.overlay-toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.overlay-toggle-switch.active::after {
+    transform: translateX(20px);
+}
+
+/* Analysis Tools Panel */
+.analysis-tools-panel {
+    background: white;
+    border: 2px solid #007bff;
+    border-radius: 15px;
+    padding: 20px;
+    margin: 20px 0;
+    box-shadow: 0 8px 25px rgba(0, 123, 255, 0.15);
+}
+
+.analysis-tools-panel h5 {
+    color: #007bff;
+    font-weight: 700;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.3rem;
+}
+
+.analysis-tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.analysis-tool-button {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 15px 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.analysis-tool-button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+}
+
+.analysis-tool-button i {
+    font-size: 1.5rem;
+}
+
+.analysis-tool-button span {
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .agricultural-analysis-panel {
+        padding: 20px;
+        margin: 15px 0;
+    }
+    
+    .analysis-metrics {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .metric-item {
+        padding: 12px;
+    }
+    
+    .analysis-tools-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .map-overlay-controls {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin-bottom: 20px;
+    }
+}
+
+/* Loading States */
+.analysis-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #28a745;
+    font-weight: 600;
+}
+
+.analysis-loading i {
+    margin-right: 10px;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Error States */
+.analysis-error {
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.analysis-error h6 {
+    color: #721c24;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+/* Success States */
+.analysis-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.analysis-success h6 {
+    color: #155724;
+    font-weight: 700;
+    margin-bottom: 10px;
+}

@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Location Input - CAAIN Soil Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" />
+    <link rel="stylesheet" href="/static/css/location-input.css">
+    <link rel="stylesheet" href="/static/css/agricultural-analysis.css">
+    <style>
+        .coordinate-input-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .format-selector {
+            margin-bottom: 15px;
+        }
+        .coordinate-input-group {
+            margin-bottom: 15px;
+        }
+        .validation-feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .validation-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .validation-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .validation-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .map-container {
+            height: 400px;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .gps-button {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .gps-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .gps-button:disabled {
+            background: #6c757d;
+            transform: none;
+            box-shadow: none;
+        }
+        .coordinate-display {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .format-conversion {
+            background: #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+        .field-item {
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .field-item:hover {
+            background-color: #f8f9fa;
+            border-color: #007bff;
+        }
+        .field-item.active {
+            background-color: #e3f2fd;
+            border-color: #2196f3;
+        }
+        .field-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        .field-area {
+            font-size: 0.875rem;
+            color: #6c757d;
+            font-weight: bold;
+        }
+        .layer-control-panel {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .context-menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: background-color 0.2s;
+        }
+        .context-menu-item:hover {
+            background-color: #f8f9fa;
+        }
+        .map-provider-info {
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="/">
+                            <img src="/static/images/logo.png" alt="CAAIN Soil Hub" height="30" class="me-2">
+                            CAAIN Soil Hub
+                        </a>
+                        <div class="navbar-nav ms-auto">
+                            <a class="nav-link" href="/dashboard">Dashboard</a>
+                            <a class="nav-link" href="/location-input">Location Input</a>
+                            <a class="nav-link active" href="/location-input-enhanced">Enhanced Map</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Interactive Map -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Interactive Map System
+                        </h5>
+                        <div class="map-controls">
+                            <button type="button" class="btn btn-outline-primary btn-sm me-2" onclick="centerOnCurrentLocation()">
+                                <i class="fas fa-crosshairs me-1"></i>
+                                GPS Location
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearMapSelection()">
+                                <i class="fas fa-times me-1"></i>
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="location-map" class="map-container"></div>
+                        
+                        <!-- Map Provider Selection -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label for="map-provider-select" class="form-label">Map Provider</label>
+                                <select id="map-provider-select" class="form-select form-select-sm">
+                                    <option value="openstreetmap">OpenStreetMap</option>
+                                    <option value="usda_aerial">USDA Aerial</option>
+                                    <option value="naip">NAIP Imagery</option>
+                                    <option value="topographic">Topographic</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="map-provider-info" class="mt-4">
+                                    <div class="map-provider-info">
+                                        <h6><i class="fas fa-map me-2"></i>OpenStreetMap</h6>
+                                        <p class="small text-muted mb-0">Standard street map with roads and landmarks</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Field Management Panel -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-draw-polygon me-2"></i>
+                            Field Management
+                        </h5>
+                        <div class="field-controls">
+                            <button type="button" class="btn btn-primary btn-sm me-2" id="add-field-btn">
+                                <i class="fas fa-plus me-1"></i>Add Field
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm me-2" id="save-field-btn" disabled>
+                                <i class="fas fa-save me-1"></i>Save Field
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm me-2" id="delete-field-btn" disabled>
+                                <i class="fas fa-trash me-1"></i>Delete
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm" id="clear-all-fields-btn">
+                                <i class="fas fa-broom me-1"></i>Clear All
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><i class="fas fa-list me-2"></i>Fields</h6>
+                                <div id="field-list">
+                                    <p class="text-muted">No fields created yet</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div id="field-info">
+                                    <p class="text-muted">Select a field to view details</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- Layer Controls -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-layer-group me-2"></i>
+                            Map Layers
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="layer-controls">
+                            <!-- Layer controls will be dynamically generated by JavaScript -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GPS Coordinate Input -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-pin me-2"></i>
+                            GPS Coordinate Input
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Coordinate Format Selection -->
+                        <div class="format-selector">
+                            <label for="coordinate-format" class="form-label">Coordinate Format</label>
+                            <select id="coordinate-format" class="form-select" onchange="changeCoordinateFormat()">
+                                <option value="decimal">Decimal Degrees (DD)</option>
+                                <option value="dms">Degrees Minutes Seconds (DMS)</option>
+                                <option value="utm">UTM Coordinates</option>
+                                <option value="mgrs">MGRS Grid</option>
+                            </select>
+                        </div>
+
+                        <!-- GPS Device Integration -->
+                        <div class="mb-3">
+                            <button type="button" id="gps-button" class="btn gps-button w-100" onclick="getCurrentLocation()">
+                                <i class="fas fa-satellite me-2"></i>
+                                <span id="gps-button-text">Get GPS Location</span>
+                            </button>
+                            <small class="form-text text-muted">
+                                Click to automatically capture your current GPS coordinates
+                            </small>
+                        </div>
+
+                        <!-- Coordinate Input Fields (Dynamic based on format) -->
+                        <div id="coordinate-inputs">
+                            <!-- Decimal Degrees Input -->
+                            <div id="decimal-inputs" class="coordinate-input-section">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="latitude-decimal" class="form-label">Latitude</label>
+                                        <input type="number" id="latitude-decimal" class="form-control" 
+                                               step="any" min="-90" max="90" placeholder="40.7128"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="longitude-decimal" class="form-label">Longitude</label>
+                                        <input type="number" id="longitude-decimal" class="form-control" 
+                                               step="any" min="-180" max="180" placeholder="-74.0060"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DMS Input -->
+                            <div id="dms-inputs" class="coordinate-input-section" style="display: none;">
+                                <div class="row mb-2">
+                                    <div class="col-4">
+                                        <label for="lat-degrees" class="form-label">Lat °</label>
+                                        <input type="number" id="lat-degrees" class="form-control" 
+                                               min="0" max="90" placeholder="40"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="lat-minutes" class="form-label">Lat ′</label>
+                                        <input type="number" id="lat-minutes" class="form-control" 
+                                               min="0" max="59" step="any" placeholder="42"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="lat-seconds" class="form-label">Lat ″</label>
+                                        <input type="number" id="lat-seconds" class="form-control" 
+                                               min="0" max="59" step="any" placeholder="46.08"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="lon-degrees" class="form-label">Lon °</label>
+                                        <input type="number" id="lon-degrees" class="form-control" 
+                                               min="0" max="180" placeholder="74"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="lon-minutes" class="form-label">Lon ′</label>
+                                        <input type="number" id="lon-minutes" class="form-control" 
+                                               min="0" max="59" step="any" placeholder="0"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="lon-seconds" class="form-label">Lon ″</label>
+                                        <input type="number" id="lon-seconds" class="form-control" 
+                                               min="0" max="59" step="any" placeholder="21.6"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- UTM Input -->
+                            <div id="utm-inputs" class="coordinate-input-section" style="display: none;">
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="utm-zone" class="form-label">Zone</label>
+                                        <input type="number" id="utm-zone" class="form-control" 
+                                               min="1" max="60" placeholder="18"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="utm-easting" class="form-label">Easting</label>
+                                        <input type="number" id="utm-easting" class="form-control" 
+                                               step="any" placeholder="583000"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="utm-northing" class="form-label">Northing</label>
+                                        <input type="number" id="utm-northing" class="form-control" 
+                                               step="any" placeholder="4507000"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MGRS Input -->
+                            <div id="mgrs-inputs" class="coordinate-input-section" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="mgrs-coordinate" class="form-label">MGRS Coordinate</label>
+                                    <input type="text" id="mgrs-coordinate" class="form-control" 
+                                           placeholder="18T VK 83000 5070000"
+                                           onchange="validateAndUpdateCoordinates()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Validation Feedback -->
+                        <div id="validation-feedback" class="validation-feedback" style="display: none;"></div>
+
+                        <!-- Coordinate Display -->
+                        <div id="coordinate-display" class="coordinate-display" style="display: none;">
+                            <h6>Current Coordinates</h6>
+                            <div id="coordinate-info"></div>
+                            <div id="format-conversion" class="format-conversion"></div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="button" class="btn btn-primary" onclick="validateLocation()" id="validate-btn" disabled>
+                                <i class="fas fa-check-circle me-2"></i>
+                                Validate Location
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="saveLocation()" id="save-btn" disabled>
+                                <i class="fas fa-save me-2"></i>
+                                Save Location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Input Alternative -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Address Input
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="address-input" class="form-label">
+                                <i class="fas fa-tractor me-2 text-success"></i>
+                                Enter Farm Address
+                            </label>
+                            <input type="text" id="address-input" class="form-control" 
+                                   placeholder="123 Farm Road, City, State ZIP or Rural Route 1 Box 123"
+                                   onkeyup="handleAddressInput()"
+                                   autocomplete="off">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Intelligent autocomplete supports farms, rural routes, research stations, and agricultural facilities
+                            </div>
+                        </div>
+                        <div id="address-suggestions" class="list-group" style="display: none;"></div>
+                        <button type="button" class="btn btn-outline-primary w-100" onclick="geocodeAddress()">
+                            <i class="fas fa-search me-2"></i>
+                            Find Coordinates
+                        </button>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                <strong>Pro Tip:</strong> Try entering "Farm", "Ranch", "RR", or "HC" for agricultural location suggestions
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notification Area -->
+        <div id="map-notification" class="alert alert-info alert-dismissible fade show" style="display: none; position: fixed; top: 20px; right: 20px; z-index: 1000; max-width: 400px;">
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Context Menu -->
+        <div id="map-context-menu" class="context-menu" style="display: none; position: absolute; z-index: 1000; background: white; border: 1px solid #ccc; border-radius: 4px; padding: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+            <div class="context-menu-item" onclick="mapSystem.startFieldDrawing()">
+                <i class="fas fa-plus me-2"></i>Add Field
+            </div>
+            <div class="context-menu-item" onclick="mapSystem.clearAllFields()">
+                <i class="fas fa-broom me-2"></i>Clear All Fields
+            </div>
+        </div>
+
+        <!-- Agricultural Analysis Tools Panel -->
+        <div id="agricultural-analysis-tools" class="analysis-tools-panel" style="display: none;">
+            <h5><i class="fas fa-tools"></i> Agricultural Analysis Tools</h5>
+            <div class="analysis-tools-grid">
+                <button class="analysis-tool-button" onclick="performSlopeAnalysis()">
+                    <i class="fas fa-mountain"></i>
+                    <span>Slope Analysis</span>
+                </button>
+                <button class="analysis-tool-button" onclick="performDrainageAssessment()">
+                    <i class="fas fa-tint"></i>
+                    <span>Drainage Assessment</span>
+                </button>
+                <button class="analysis-tool-button" onclick="evaluateFieldAccessibility()">
+                    <i class="fas fa-truck"></i>
+                    <span>Accessibility Evaluation</span>
+                </button>
+                <button class="analysis-tool-button" onclick="getSoilSurveyData()">
+                    <i class="fas fa-seedling"></i>
+                    <span>Soil Survey Data</span>
+                </button>
+                <button class="analysis-tool-button" onclick="getWatershedInformation()">
+                    <i class="fas fa-stream"></i>
+                    <span>Watershed Information</span>
+                </button>
+                <button class="analysis-tool-button" onclick="exportAnalysisResults()">
+                    <i class="fas fa-download"></i>
+                    <span>Export Results</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Map Overlay Controls -->
+        <div class="map-overlay-controls">
+            <div class="overlay-control-group">
+                <h6><i class="fas fa-layer-group"></i> Agricultural Overlays</h6>
+                <div class="overlay-toggle" onclick="toggleOverlay('ssurgo_soils')">
+                    <div class="overlay-toggle-label">
+                        <i class="fas fa-seedling"></i>
+                        <span>SSURGO Soils</span>
+                    </div>
+                    <div class="overlay-toggle-switch"></div>
+                </div>
+                <div class="overlay-toggle" onclick="toggleOverlay('climate_zones')">
+                    <div class="overlay-toggle-label">
+                        <i class="fas fa-thermometer-half"></i>
+                        <span>Climate Zones</span>
+                    </div>
+                    <div class="overlay-toggle-switch"></div>
+                </div>
+                <div class="overlay-toggle" onclick="toggleOverlay('nrcs_conservation')">
+                    <div class="overlay-toggle-label">
+                        <i class="fas fa-leaf"></i>
+                        <span>Conservation Practices</span>
+                    </div>
+                    <div class="overlay-toggle-switch"></div>
+                </div>
+            </div>
+            
+            <div class="overlay-control-group">
+                <h6><i class="fas fa-map"></i> Environmental Data</h6>
+                <div class="overlay-toggle" onclick="toggleOverlay('flood_zones')">
+                    <div class="overlay-toggle-label">
+                        <i class="fas fa-water"></i>
+                        <span>Flood Zones</span>
+                    </div>
+                    <div class="overlay-toggle-switch"></div>
+                </div>
+                <div class="overlay-toggle" onclick="toggleOverlay('watershed_boundaries')">
+                    <div class="overlay-toggle-label">
+                        <i class="fas fa-stream"></i>
+                        <span>Watershed Boundaries</span>
+                    </div>
+                    <div class="overlay-toggle-switch"></div>
+                </div>
+                <div class="overlay-toggle" onclick="toggleOverlay('topographic_contours')">
+                    <div class="overlay-toggle-label">
+                        <i class="fas fa-mountain"></i>
+                        <span>Topographic Contours</span>
+                    </div>
+                    <div class="overlay-toggle-switch"></div>
+                </div>
+            </div>
+            
+            <div class="overlay-control-group">
+                <h6><i class="fas fa-tractor"></i> Agricultural Districts</h6>
+                <div class="overlay-toggle" onclick="toggleOverlay('agricultural_districts')">
+                    <div class="overlay-toggle-label">
+                        <i class="fas fa-tractor"></i>
+                        <span>Agricultural Districts</span>
+                    </div>
+                    <div class="overlay-toggle-switch"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="/static/js/location-input.js"></script>
+    <script src="/static/js/location-map.js"></script>
+    
+    <script>
+        // Agricultural Analysis Functions
+        let currentFieldId = null;
+        
+        // Show analysis tools when a field is selected
+        function showAnalysisTools(fieldId) {
+            currentFieldId = fieldId;
+            const toolsPanel = document.getElementById('agricultural-analysis-tools');
+            if (toolsPanel) {
+                toolsPanel.style.display = 'block';
+                toolsPanel.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+        
+        // Hide analysis tools
+        function hideAnalysisTools() {
+            const toolsPanel = document.getElementById('agricultural-analysis-tools');
+            if (toolsPanel) {
+                toolsPanel.style.display = 'none';
+            }
+            currentFieldId = null;
+        }
+        
+        // Agricultural Analysis Functions
+        async function performSlopeAnalysis() {
+            if (!currentFieldId) {
+                alert('Please select a field first');
+                return;
+            }
+            
+            try {
+                await mapSystem.performSlopeAnalysis(currentFieldId);
+            } catch (error) {
+                console.error('Slope analysis error:', error);
+                alert('Slope analysis failed: ' + error.message);
+            }
+        }
+        
+        async function performDrainageAssessment() {
+            if (!currentFieldId) {
+                alert('Please select a field first');
+                return;
+            }
+            
+            try {
+                await mapSystem.performDrainageAssessment(currentFieldId);
+            } catch (error) {
+                console.error('Drainage assessment error:', error);
+                alert('Drainage assessment failed: ' + error.message);
+            }
+        }
+        
+        async function evaluateFieldAccessibility() {
+            if (!currentFieldId) {
+                alert('Please select a field first');
+                return;
+            }
+            
+            try {
+                await mapSystem.evaluateFieldAccessibility(currentFieldId);
+            } catch (error) {
+                console.error('Accessibility evaluation error:', error);
+                alert('Accessibility evaluation failed: ' + error.message);
+            }
+        }
+        
+        async function getSoilSurveyData() {
+            if (!currentFieldId) {
+                alert('Please select a field first');
+                return;
+            }
+            
+            try {
+                await mapSystem.getSoilSurveyData(currentFieldId);
+            } catch (error) {
+                console.error('Soil survey retrieval error:', error);
+                alert('Soil survey retrieval failed: ' + error.message);
+            }
+        }
+        
+        async function getWatershedInformation() {
+            if (!currentFieldId) {
+                alert('Please select a field first');
+                return;
+            }
+            
+            try {
+                await mapSystem.getWatershedInformation(currentFieldId);
+            } catch (error) {
+                console.error('Watershed information retrieval error:', error);
+                alert('Watershed information retrieval failed: ' + error.message);
+            }
+        }
+        
+        function exportAnalysisResults() {
+            if (!currentFieldId) {
+                alert('Please select a field first');
+                return;
+            }
+            
+            // Get all analysis results and export them
+            const analysisPanel = document.getElementById('agricultural-analysis-panel');
+            if (analysisPanel) {
+                const analysisData = {
+                    field_id: currentFieldId,
+                    analysis_results: analysisPanel.innerHTML,
+                    export_timestamp: new Date().toISOString()
+                };
+                
+                const dataStr = JSON.stringify(analysisData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `field_${currentFieldId}_analysis_${new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                
+                URL.revokeObjectURL(url);
+            } else {
+                alert('No analysis results to export');
+            }
+        }
+        
+        // Overlay Toggle Functions
+        function toggleOverlay(overlayName) {
+            const toggle = document.querySelector(`[onclick="toggleOverlay('${overlayName}')"]`);
+            const switchElement = toggle.querySelector('.overlay-toggle-switch');
+            
+            if (switchElement.classList.contains('active')) {
+                // Remove overlay
+                switchElement.classList.remove('active');
+                toggle.classList.remove('active');
+                mapSystem.removeOverlay(overlayName);
+            } else {
+                // Add overlay
+                switchElement.classList.add('active');
+                toggle.classList.add('active');
+                mapSystem.addOverlay(overlayName);
+            }
+        }
+        
+        // Override field selection to show analysis tools
+        const originalShowFieldInfo = mapSystem.showFieldInfo;
+        mapSystem.showFieldInfo = function(fieldData) {
+            originalShowFieldInfo.call(this, fieldData);
+            showAnalysisTools(fieldData.id);
+        };
+        
+        // Override field deletion to hide analysis tools
+        const originalDeleteField = mapSystem.deleteField;
+        mapSystem.deleteField = function(fieldId) {
+            originalDeleteField.call(this, fieldId);
+            if (currentFieldId === fieldId) {
+                hideAnalysisTools();
+            }
+        };
+        
+        // Initialize overlay controls
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up overlay toggle event listeners
+            const overlayToggles = document.querySelectorAll('.overlay-toggle');
+            overlayToggles.forEach(toggle => {
+                toggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                });
+            });
+        });
+    </script>
+</body>
+</html>

@@ -19,6 +19,7 @@ from datetime import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), 'api'))
 
 from api.routes import router, location_management_router
+from api.agricultural_analysis_routes import router as agricultural_analysis_router
 
 # Configure logging
 logging.basicConfig(
@@ -66,6 +67,7 @@ async def log_requests(request: Request, call_next):
 # Include API routes
 app.include_router(router)  # Location validation routes
 app.include_router(location_management_router)  # Location management routes
+app.include_router(agricultural_analysis_router)  # Agricultural analysis routes
 
 # Import and include field management routes
 from api.field_routes import router as field_management_router
@@ -84,6 +86,7 @@ async def root():
             "agricultural_validation": "/api/v1/validation/agricultural",
             "health_check": "/api/v1/validation/health",
             "location_management": "/api/v1/locations/",
+            "agricultural_analysis": "/api/v1/fields/{field_id}/analysis-summary",
             "documentation": "/docs"
         },
         "agricultural_features": [
@@ -96,7 +99,13 @@ async def root():
             "Farm location management",
             "Location CRUD operations",
             "Agricultural context validation",
-            "Dependency checking and safe deletion"
+            "Dependency checking and safe deletion",
+            "Advanced mapping features and agricultural overlays",
+            "Slope analysis and topographic assessment",
+            "Drainage evaluation and flood risk assessment",
+            "Field accessibility evaluation",
+            "Soil survey data integration (SSURGO)",
+            "Watershed information and water management"
         ]
     }
 
