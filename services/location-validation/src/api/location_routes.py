@@ -30,6 +30,9 @@ from geocoding_service import (
 )
 from location_sqlalchemy_models import FarmLocation, FarmField, GeocodingCache
 
+# Import GPS accuracy routes
+from .gps_accuracy_routes import router as gps_accuracy_router
+
 logger = logging.getLogger(__name__)
 
 # Create router
@@ -942,6 +945,10 @@ async def batch_geocode_addresses(
                 }
             }
         )
+
+
+# Include GPS accuracy routes
+router.include_router(gps_accuracy_router)
 
 
 # Export router
