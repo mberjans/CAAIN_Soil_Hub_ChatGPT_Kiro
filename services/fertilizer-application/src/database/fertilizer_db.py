@@ -327,3 +327,53 @@ async def get_equipment_by_farm(farm_id: str) -> list[EquipmentRecord]:
             )
         )
         return result.fetchall()
+
+
+class MethodOutcomeRecord(Base):
+    """Database model for method outcome tracking."""
+    __tablename__ = "method_outcomes"
+    
+    outcome_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    application_id = Column(String(100), nullable=False)
+    method_used = Column(String(100), nullable=False)
+    algorithm_used = Column(String(100), nullable=False)
+    predicted_efficiency = Column(Float, nullable=False)
+    predicted_cost = Column(Float, nullable=False)
+    actual_efficiency = Column(Float)
+    actual_cost = Column(Float)
+    yield_impact = Column(Float)
+    farmer_satisfaction = Column(Float)
+    environmental_impact = Column(String(50))
+    outcome_type = Column(String(50), nullable=False)  # success, partial_success, failure, unknown
+    notes = Column(Text)
+    recorded_at = Column(DateTime, default=datetime.utcnow)
+
+
+class MethodPerformanceRecord(Base):
+    """Database model for method performance tracking."""
+    __tablename__ = "method_performance"
+    
+    performance_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    method_used = Column(String(100), nullable=False)
+    algorithm_used = Column(String(100), nullable=False)
+    total_applications = Column(Integer, default=0)
+    total_efficiency = Column(Float, default=0.0)
+    total_cost = Column(Float, default=0.0)
+    total_satisfaction = Column(Float, default=0.0)
+    average_efficiency = Column(Float, default=0.0)
+    average_cost = Column(Float, default=0.0)
+    average_satisfaction = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    last_updated = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class AlgorithmTrainingRecord(Base):
+    """Database model for algorithm training tracking."""
+    __tablename__ = "algorithm_training"
+    
+    training_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    algorithm_name = Column(String(100), nullable=False)
+    training_data_size = Column(Integer, nullable=False)
+    model_metrics = Column(JSON)  # Store training metrics like accuracy, loss, etc.
+    training_time_ms = Column(Float, nullable=False)
+    trained_at = Column(DateTime, default=datetime.utcnow)
