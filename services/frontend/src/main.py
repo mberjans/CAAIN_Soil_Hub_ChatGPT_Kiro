@@ -53,6 +53,7 @@ COVER_CROP_SERVICE_URL = os.getenv("COVER_CROP_SERVICE_URL", "http://localhost:8
 USER_MANAGEMENT_URL = os.getenv("USER_MANAGEMENT_URL", "http://localhost:8005")
 DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003")
 CROP_TAXONOMY_URL = os.getenv("CROP_TAXONOMY_URL", "http://localhost:8003")  # This should point to the crop-taxonomy service
+LOCATION_VALIDATION_URL = os.getenv("LOCATION_VALIDATION_URL", "http://localhost:8006")
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
@@ -1634,6 +1635,89 @@ async def health_check():
             ]
         }
     }
+
+
+# Location Validation Service Proxy Routes
+@app.api_route("/api/v1/validation/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_validation_service(path: str, request: Request):
+    """Proxy requests to the location validation service."""
+    try:
+        async with httpx.AsyncClient() as client:
+            url = f"{LOCATION_VALIDATION_URL}/api/v1/validation/{path}"
+            
+            # Forward the request
+            response = await client.request(
+                method=request.method,
+                url=url,
+                headers=dict(request.headers),
+                content=await request.body()
+            )
+            
+            return JSONResponse(
+                content=response.json(),
+                status_code=response.status_code
+            )
+    except Exception as e:
+        logger.error(f"Error proxying to validation service: {e}")
+        return JSONResponse(
+            content={"error": "Service temporarily unavailable"},
+            status_code=503
+        )
+
+
+@app.api_route("/api/v1/locations/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_location_service(path: str, request: Request):
+    """Proxy requests to the location management service."""
+    try:
+        async with httpx.AsyncClient() as client:
+            url = f"{LOCATION_VALIDATION_URL}/api/v1/locations/{path}"
+            
+            # Forward the request
+            response = await client.request(
+                method=request.method,
+                url=url,
+                headers=dict(request.headers),
+                content=await request.body()
+            )
+            
+            return JSONResponse(
+                content=response.json(),
+                status_code=response.status_code
+            )
+    except Exception as e:
+        logger.error(f"Error proxying to location service: {e}")
+        return JSONResponse(
+            content={"error": "Service temporarily unavailable"},
+            status_code=503
+        )
+
+
+@app.api_route("/api/v1/geocoding/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_geocoding_service(path: str, request: Request):
+    """Proxy requests to the geocoding service."""
+    try:
+        async with httpx.AsyncClient() as client:
+            url = f"{LOCATION_VALIDATION_URL}/api/v1/geocoding/{path}"
+            
+            # Forward the request
+            response = await client.request(
+                method=request.method,
+                url=url,
+                headers=dict(request.headers),
+                content=await request.body()
+            )
+            
+            return JSONResponse(
+                content=response.json(),
+                status_code=response.status_code
+            )
+    except Exception as e:
+        logger.error(f"Error proxying to geocoding service: {e}")
+        return JSONResponse(
+            content={"error": "Service temporarily unavailable"},
+            status_code=503
+        )
+
 
 if __name__ == "__main__":
     port = int(os.getenv("FRONTEND_PORT", 3000))

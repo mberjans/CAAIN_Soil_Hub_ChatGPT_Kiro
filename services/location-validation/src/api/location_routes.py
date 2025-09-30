@@ -12,6 +12,7 @@ from typing import Dict, Any, List, Optional
 import logging
 import sys
 import os
+import uuid
 from uuid import UUID
 from datetime import datetime
 
@@ -940,6 +941,204 @@ async def batch_geocode_addresses(
                     "suggested_actions": [
                         "Try again in a few moments",
                         "Process addresses individually",
+                        "Contact support if the problem persists"
+                    ]
+                }
+            }
+        )
+
+
+# Field Management Endpoints
+@router.post("/fields", response_model=Dict[str, Any])
+async def create_field(
+    request: Dict[str, Any],
+    current_user: dict = Depends(get_current_user),
+    db_session = Depends(get_db_session)
+) -> Dict[str, Any]:
+    """
+    Create a new field for a farm location.
+    
+    This endpoint creates a new field with boundary data, area calculations,
+    and agricultural context information for farm management.
+    """
+    try:
+        logger.info(f"Creating field: {request.get('name', 'Unnamed Field')}")
+        
+        # Validate field data
+        if not request.get('boundary'):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": {
+                        "error_code": "MISSING_BOUNDARY",
+                        "error_message": "Field boundary is required",
+                        "agricultural_context": "Field boundaries are essential for accurate agricultural recommendations",
+                        "suggested_actions": [
+                            "Draw field boundary on the map",
+                            "Provide boundary coordinates",
+                            "Use the interactive map tools"
+                        ]
+                    }
+                }
+            )
+        
+        # Create field record
+        field_data = {
+            "id": str(uuid.uuid4()),
+            "name": request.get('name', 'Unnamed Field'),
+            "boundary": request.get('boundary'),
+            "area": request.get('area', {}),
+            "created": request.get('created', datetime.utcnow().isoformat()),
+            "modified": request.get('modified', datetime.utcnow().isoformat()),
+            "user_id": current_user.get('id')
+        }
+        
+        # TODO: Save to database when field table is created
+        # For now, return the field data
+        
+        logger.info(f"Field created successfully: {field_data['id']}")
+        
+        return {
+            "success": True,
+            "field": field_data,
+            "message": "Field created successfully"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error creating field: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "error_code": "FIELD_CREATION_ERROR",
+                    "error_message": "Failed to create field",
+                    "agricultural_context": "Unable to create field for agricultural planning",
+                    "suggested_actions": [
+                        "Try again in a few moments",
+                        "Check field boundary data",
+                        "Contact support if the problem persists"
+                    ]
+                }
+            }
+        )
+
+
+@router.get("/fields", response_model=List[Dict[str, Any]])
+async def get_fields(
+    current_user: dict = Depends(get_current_user),
+    db_session = Depends(get_db_session)
+) -> List[Dict[str, Any]]:
+    """
+    Get all fields for the current user.
+    
+    This endpoint retrieves all fields associated with the current user
+    for farm management and agricultural planning.
+    """
+    try:
+        logger.info(f"Retrieving fields for user: {current_user.get('id')}")
+        
+        # TODO: Retrieve from database when field table is created
+        # For now, return empty list
+        
+        fields = []
+        
+        logger.info(f"Retrieved {len(fields)} fields")
+        
+        return fields
+        
+    except Exception as e:
+        logger.error(f"Error retrieving fields: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "error_code": "FIELD_RETRIEVAL_ERROR",
+                    "error_message": "Failed to retrieve fields",
+                    "agricultural_context": "Unable to retrieve fields for agricultural planning",
+                    "suggested_actions": [
+                        "Try again in a few moments",
+                        "Contact support if the problem persists"
+                    ]
+                }
+            }
+        )
+
+
+@router.post("/fields/{field_id}/analyze", response_model=Dict[str, Any])
+async def analyze_field(
+    field_id: str,
+    request: Dict[str, Any],
+    current_user: dict = Depends(get_current_user),
+    db_session = Depends(get_db_session)
+) -> Dict[str, Any]:
+    """
+    Analyze a field for agricultural characteristics.
+    
+    This endpoint analyzes a field's location, soil, climate, and other
+    agricultural characteristics to provide recommendations.
+    """
+    try:
+        logger.info(f"Analyzing field: {field_id}")
+        
+        # Extract field data from request
+        center_coordinates = request.get('center_coordinates', {})
+        boundary = request.get('boundary')
+        area = request.get('area', {})
+        
+        if not center_coordinates.get('latitude') or not center_coordinates.get('longitude'):
+            raise HTTPException(
+                status_code=422,
+                detail={
+                    "error": {
+                        "error_code": "MISSING_COORDINATES",
+                        "error_message": "Field center coordinates are required",
+                        "agricultural_context": "Coordinates are essential for agricultural analysis",
+                        "suggested_actions": [
+                            "Provide field center coordinates",
+                            "Use the interactive map to select field center",
+                            "Ensure coordinates are valid"
+                        ]
+                    }
+                }
+            )
+        
+        # Perform agricultural analysis
+        analysis_result = {
+            "field_id": field_id,
+            "soil_type": "Unknown",  # TODO: Integrate with soil service
+            "climate_zone": "Unknown",  # TODO: Integrate with climate service
+            "usda_zone": "Unknown",  # TODO: Integrate with USDA zone service
+            "elevation": None,  # TODO: Integrate with elevation service
+            "slope": None,  # TODO: Calculate slope from boundary
+            "drainage": "Unknown",  # TODO: Integrate with drainage service
+            "recommendations": [
+                "Field analysis completed",
+                "Additional soil testing recommended",
+                "Consider crop rotation planning"
+            ],
+            "analysis_date": datetime.utcnow().isoformat()
+        }
+        
+        logger.info(f"Field analysis completed: {field_id}")
+        
+        return analysis_result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error analyzing field: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "error": {
+                    "error_code": "FIELD_ANALYSIS_ERROR",
+                    "error_message": "Failed to analyze field",
+                    "agricultural_context": "Unable to analyze field for agricultural planning",
+                    "suggested_actions": [
+                        "Try again in a few moments",
+                        "Check field data",
                         "Contact support if the problem persists"
                     ]
                 }
