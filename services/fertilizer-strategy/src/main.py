@@ -15,6 +15,7 @@ from .api.break_even_routes import router as break_even_router
 from .api.yield_goal_routes import router as yield_goal_router
 from .api.yield_response_routes import router as yield_response_router
 from .api.yield_goal_optimization_routes import router as yield_goal_optimization_router
+from .api.nutrient_optimization_routes import router as nutrient_optimization_router
 from .database.fertilizer_price_db import initialize_database, shutdown_database
 from .database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from .services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -90,6 +91,7 @@ app.include_router(break_even_router, prefix="/api/v1", tags=["break-even-analys
 app.include_router(yield_goal_router, prefix="/api/v1", tags=["yield-goal-management"])
 app.include_router(yield_response_router, prefix="/api/v1", tags=["yield-response-curves"])
 app.include_router(yield_goal_optimization_router, prefix="/api/v1", tags=["yield-goal-optimization"])
+app.include_router(nutrient_optimization_router, prefix="/api/v1", tags=["nutrient-optimization"])
 
 @app.get("/health")
 async def health_check():
