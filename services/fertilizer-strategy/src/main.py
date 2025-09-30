@@ -18,6 +18,7 @@ from .api.yield_goal_optimization_routes import router as yield_goal_optimizatio
 from .api.nutrient_optimization_routes import router as nutrient_optimization_router
 from .api.timing_optimization_routes import router as timing_optimization_router
 from .api.application_method_optimization_routes import router as application_method_optimization_router
+from .api.price_adjustment_routes import router as price_adjustment_router
 from .database.fertilizer_price_db import initialize_database, shutdown_database
 from .database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from .services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -96,6 +97,7 @@ app.include_router(yield_goal_optimization_router, prefix="/api/v1", tags=["yiel
 app.include_router(nutrient_optimization_router, prefix="/api/v1", tags=["nutrient-optimization"])
 app.include_router(timing_optimization_router, prefix="/api/v1", tags=["timing-optimization"])
 app.include_router(application_method_optimization_router, prefix="/api/v1", tags=["application-method-optimization"])
+app.include_router(price_adjustment_router, prefix="/api/v1", tags=["price-adjustment"])
 
 @app.get("/health")
 async def health_check():
@@ -213,7 +215,19 @@ async def health_check():
             "method_comparison",
             "equipment_compatibility",
             "soil_condition_analysis",
-            "fertilizer_form_optimization"
+            "fertilizer_form_optimization",
+            "dynamic_price_adjustment",
+            "real_time_price_monitoring",
+            "automatic_strategy_adjustments",
+            "threshold_based_alerts",
+            "economic_impact_assessment",
+            "automated_approval_workflows",
+            "price_volatility_monitoring",
+            "market_shock_detection",
+            "trend_reversal_alerts",
+            "conservative_adjustment_strategies",
+            "aggressive_adjustment_strategies",
+            "balanced_adjustment_strategies"
         ]
     }
 
