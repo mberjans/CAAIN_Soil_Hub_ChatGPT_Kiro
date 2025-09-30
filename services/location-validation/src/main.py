@@ -17,6 +17,7 @@ from datetime import datetime
 
 # Add paths for imports
 sys.path.append(os.path.join(os.path.dirname(__file__), 'api'))
+sys.path.append(os.path.join(os.path.dirname(__file__), 'services'))
 
 from api.routes import router, location_management_router
 from api.agricultural_analysis_routes import router as agricultural_analysis_router
@@ -73,6 +74,22 @@ app.include_router(agricultural_analysis_router)  # Agricultural analysis routes
 from api.field_routes import router as field_management_router
 app.include_router(field_management_router)  # Field management routes
 
+# Import and include field productivity analysis routes
+from api.field_productivity_routes import router as field_productivity_router
+app.include_router(field_productivity_router)  # Field productivity analysis routes
+
+# Import and include field optimization routes
+from api.field_optimization_routes import router as field_optimization_router
+app.include_router(field_optimization_router)  # Field optimization routes
+
+# Import and include mobile location routes
+from api.mobile_location_routes import router as mobile_location_router
+app.include_router(mobile_location_router)  # Mobile location features routes
+
+# Import and include security routes
+from api.security_routes import router as security_router
+app.include_router(security_router)  # Location security and privacy routes
+
 # Root endpoint
 @app.get("/")
 async def root():
@@ -87,6 +104,8 @@ async def root():
             "health_check": "/api/v1/validation/health",
             "location_management": "/api/v1/locations/",
             "agricultural_analysis": "/api/v1/fields/{field_id}/analysis-summary",
+            "mobile_location": "/api/v1/mobile/",
+            "location_security": "/api/v1/security/",
             "documentation": "/docs"
         },
         "agricultural_features": [
@@ -105,7 +124,17 @@ async def root():
             "Drainage evaluation and flood risk assessment",
             "Field accessibility evaluation",
             "Soil survey data integration (SSURGO)",
-            "Watershed information and water management"
+            "Watershed information and water management",
+            "Mobile field boundary recording with GPS tracking",
+            "Field photo capture with automatic geotagging",
+            "Voice notes for field annotations",
+            "Offline field mapping with background synchronization",
+            "Enhanced mobile UX with touch gestures and haptic feedback",
+            "Comprehensive location data security and encryption",
+            "Access control and audit logging for location data",
+            "Location data anonymization and privacy protection",
+            "GDPR compliance for location data management",
+            "Security monitoring and breach detection"
         ]
     }
 

@@ -1,0 +1,27 @@
+# Security Dependencies for Location Validation Service
+# CAAIN Soil Hub - Location Validation Service
+
+# Core security libraries
+cryptography>=41.0.0
+pycryptodome>=3.19.0
+
+# Database security
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+alembic>=1.12.0
+
+# Security utilities
+bcrypt>=4.0.0
+passlib[bcrypt]>=1.7.4
+
+# Audit and logging
+structlog>=23.1.0
+
+# Testing security features
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+
+# Development and security tools
+bandit>=1.7.5  # Security linting
+safety>=2.3.5  # Dependency vulnerability scanning
