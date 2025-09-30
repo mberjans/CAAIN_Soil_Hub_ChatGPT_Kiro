@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farm Location Input - CAAIN Soil Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="/static/css/location-input.css">
+    <style>
+        .coordinate-input-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .format-selector {
+            margin-bottom: 15px;
+        }
+        .coordinate-input-group {
+            margin-bottom: 15px;
+        }
+        .validation-feedback {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .validation-success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .validation-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .validation-error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .map-container {
+            height: 400px;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .gps-button {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .gps-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .gps-button:disabled {
+            background: #6c757d;
+            transform: none;
+            box-shadow: none;
+        }
+        .coordinate-display {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+        .format-conversion {
+            background: #e9ecef;
+            border-radius: 5px;
+            padding: 10px;
+            margin-top: 10px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-12">
+                <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+                    <div class="container-fluid">
+                        <a class="navbar-brand" href="/">
+                            <img src="/static/images/logo.png" alt="CAAIN Soil Hub" height="30" class="me-2">
+                            CAAIN Soil Hub
+                        </a>
+                        <div class="navbar-nav ms-auto">
+                            <a class="nav-link" href="/dashboard">Dashboard</a>
+                            <a class="nav-link active" href="/location-input">Location Input</a>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-8">
+                <!-- Interactive Map -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Interactive Map Selection
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="location-map" class="map-container"></div>
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-outline-primary me-2" onclick="centerOnCurrentLocation()">
+                                <i class="fas fa-crosshairs me-1"></i>
+                                Use Current Location
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="clearMapSelection()">
+                                <i class="fas fa-times me-1"></i>
+                                Clear Selection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-4">
+                <!-- GPS Coordinate Input -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-pin me-2"></i>
+                            GPS Coordinate Input
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <!-- Coordinate Format Selection -->
+                        <div class="format-selector">
+                            <label for="coordinate-format" class="form-label">Coordinate Format</label>
+                            <select id="coordinate-format" class="form-select" onchange="changeCoordinateFormat()">
+                                <option value="decimal">Decimal Degrees (DD)</option>
+                                <option value="dms">Degrees Minutes Seconds (DMS)</option>
+                                <option value="utm">UTM Coordinates</option>
+                                <option value="mgrs">MGRS Grid</option>
+                            </select>
+                        </div>
+
+                        <!-- GPS Device Integration -->
+                        <div class="mb-3">
+                            <button type="button" id="gps-button" class="btn gps-button w-100" onclick="getCurrentLocation()">
+                                <i class="fas fa-satellite me-2"></i>
+                                <span id="gps-button-text">Get GPS Location</span>
+                            </button>
+                            <small class="form-text text-muted">
+                                Click to automatically capture your current GPS coordinates
+                            </small>
+                        </div>
+
+                        <!-- Coordinate Input Fields (Dynamic based on format) -->
+                        <div id="coordinate-inputs">
+                            <!-- Decimal Degrees Input -->
+                            <div id="decimal-inputs" class="coordinate-input-section">
+                                <div class="row">
+                                    <div class="col-6">
+                                        <label for="latitude-decimal" class="form-label">Latitude</label>
+                                        <input type="number" id="latitude-decimal" class="form-control" 
+                                               step="any" min="-90" max="90" placeholder="40.7128"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-6">
+                                        <label for="longitude-decimal" class="form-label">Longitude</label>
+                                        <input type="number" id="longitude-decimal" class="form-control" 
+                                               step="any" min="-180" max="180" placeholder="-74.0060"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DMS Input -->
+                            <div id="dms-inputs" class="coordinate-input-section" style="display: none;">
+                                <div class="row mb-2">
+                                    <div class="col-4">
+                                        <label for="lat-degrees" class="form-label">Lat °</label>
+                                        <input type="number" id="lat-degrees" class="form-control" 
+                                               min="0" max="90" placeholder="40"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="lat-minutes" class="form-label">Lat ′</label>
+                                        <input type="number" id="lat-minutes" class="form-control" 
+                                               min="0" max="59" step="any" placeholder="42"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="lat-seconds" class="form-label">Lat ″</label>
+                                        <input type="number" id="lat-seconds" class="form-control" 
+                                               min="0" max="59" step="any" placeholder="46.08"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="lon-degrees" class="form-label">Lon °</label>
+                                        <input type="number" id="lon-degrees" class="form-control" 
+                                               min="0" max="180" placeholder="74"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="lon-minutes" class="form-label">Lon ′</label>
+                                        <input type="number" id="lon-minutes" class="form-control" 
+                                               min="0" max="59" step="any" placeholder="0"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="lon-seconds" class="form-label">Lon ″</label>
+                                        <input type="number" id="lon-seconds" class="form-control" 
+                                               min="0" max="59" step="any" placeholder="21.6"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- UTM Input -->
+                            <div id="utm-inputs" class="coordinate-input-section" style="display: none;">
+                                <div class="row">
+                                    <div class="col-4">
+                                        <label for="utm-zone" class="form-label">Zone</label>
+                                        <input type="number" id="utm-zone" class="form-control" 
+                                               min="1" max="60" placeholder="18"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="utm-easting" class="form-label">Easting</label>
+                                        <input type="number" id="utm-easting" class="form-control" 
+                                               step="any" placeholder="583000"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                    <div class="col-4">
+                                        <label for="utm-northing" class="form-label">Northing</label>
+                                        <input type="number" id="utm-northing" class="form-control" 
+                                               step="any" placeholder="4507000"
+                                               onchange="validateAndUpdateCoordinates()">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- MGRS Input -->
+                            <div id="mgrs-inputs" class="coordinate-input-section" style="display: none;">
+                                <div class="mb-3">
+                                    <label for="mgrs-coordinate" class="form-label">MGRS Coordinate</label>
+                                    <input type="text" id="mgrs-coordinate" class="form-control" 
+                                           placeholder="18T VK 83000 5070000"
+                                           onchange="validateAndUpdateCoordinates()">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Validation Feedback -->
+                        <div id="validation-feedback" class="validation-feedback" style="display: none;"></div>
+
+                        <!-- Coordinate Display -->
+                        <div id="coordinate-display" class="coordinate-display" style="display: none;">
+                            <h6>Current Coordinates</h6>
+                            <div id="coordinate-info"></div>
+                            <div id="format-conversion" class="format-conversion"></div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="d-grid gap-2 mt-3">
+                            <button type="button" class="btn btn-primary" onclick="validateLocation()" id="validate-btn" disabled>
+                                <i class="fas fa-check-circle me-2"></i>
+                                Validate Location
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="saveLocation()" id="save-btn" disabled>
+                                <i class="fas fa-save me-2"></i>
+                                Save Location
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address Input Alternative -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            Address Input
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="address-input" class="form-label">
+                                <i class="fas fa-tractor me-2 text-success"></i>
+                                Enter Farm Address
+                            </label>
+                            <input type="text" id="address-input" class="form-control" 
+                                   placeholder="123 Farm Road, City, State ZIP or Rural Route 1 Box 123"
+                                   onkeyup="handleAddressInput()"
+                                   autocomplete="off">
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>
+                                Intelligent autocomplete supports farms, rural routes, research stations, and agricultural facilities
+                            </div>
+                        </div>
+                        <div id="address-suggestions" class="list-group" style="display: none;"></div>
+                        <button type="button" class="btn btn-outline-primary w-100" onclick="geocodeAddress()">
+                            <i class="fas fa-search me-2"></i>
+                            Find Coordinates
+                        </button>
+                        <div class="mt-2">
+                            <small class="text-muted">
+                                <i class="fas fa-lightbulb me-1"></i>
+                                <strong>Pro Tip:</strong> Try entering "Farm", "Ranch", "RR", or "HC" for agricultural location suggestions
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="/static/js/location-input.js"></script>
+</body>
+</html>

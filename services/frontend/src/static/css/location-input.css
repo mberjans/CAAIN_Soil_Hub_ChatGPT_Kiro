@@ -1,0 +1,475 @@
+/**
+ * Location Input Styles
+ * CAAIN Soil Hub - Farm Location Input
+ */
+
+/* Main container styling */
+.location-input-container {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+/* Card styling */
+.card {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px 15px 0 0 !important;
+    border: none;
+    padding: 20px;
+}
+
+.card-header h5 {
+    margin: 0;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+}
+
+.card-header i {
+    margin-right: 10px;
+    font-size: 1.2em;
+}
+
+/* Coordinate input sections */
+.coordinate-input-section {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border: 2px solid #e9ecef;
+    transition: border-color 0.3s ease;
+}
+
+.coordinate-input-section:hover {
+    border-color: #667eea;
+}
+
+.format-selector {
+    margin-bottom: 20px;
+}
+
+.format-selector .form-select {
+    border-radius: 10px;
+    border: 2px solid #e9ecef;
+    padding: 12px 15px;
+    font-weight: 500;
+    transition: border-color 0.3s ease;
+}
+
+.format-selector .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+/* Input field styling */
+.form-control {
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    padding: 12px 15px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    transform: translateY(-1px);
+}
+
+.form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+/* GPS button styling */
+.gps-button {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    border: none;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.gps-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.gps-button:hover::before {
+    left: 100%;
+}
+
+.gps-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+.gps-button:active {
+    transform: translateY(0);
+}
+
+.gps-button:disabled {
+    background: #6c757d;
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+.gps-button:disabled::before {
+    display: none;
+}
+
+/* Validation feedback styling */
+.validation-feedback {
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 10px;
+    font-weight: 500;
+    animation: slideIn 0.3s ease;
+}
+
+.validation-success {
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border: 2px solid #28a745;
+    color: #155724;
+}
+
+.validation-warning {
+    background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+    border: 2px solid #ffc107;
+    color: #856404;
+}
+
+.validation-error {
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
+    border: 2px solid #dc3545;
+    color: #721c24;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Map container styling */
+.map-container {
+    height: 400px;
+    border-radius: 15px;
+    border: 3px solid #e9ecef;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.map-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* Coordinate display styling */
+.coordinate-display {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 20px;
+    margin-top: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+.coordinate-display h6 {
+    color: #667eea;
+    font-weight: 600;
+    margin-bottom: 15px;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+}
+
+.format-conversion {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 15px;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    border: 1px solid #e9ecef;
+}
+
+/* Button styling */
+.btn {
+    border-radius: 8px;
+    font-weight: 600;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.btn-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    border-color: #28a745;
+}
+
+.btn-success:hover {
+    background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+}
+
+.btn-outline-primary {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.btn-outline-primary:hover {
+    background: #667eea;
+    border-color: #667eea;
+    transform: translateY(-2px);
+}
+
+.btn-outline-secondary {
+    border-color: #6c757d;
+    color: #6c757d;
+}
+
+.btn-outline-secondary:hover {
+    background: #6c757d;
+    border-color: #6c757d;
+    transform: translateY(-2px);
+}
+
+/* Address suggestions styling */
+.list-group-item {
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    transition: all 0.3s ease;
+}
+
+.list-group-item:hover {
+    background: #f8f9fa;
+    border-color: #667eea;
+    transform: translateX(5px);
+}
+
+/* Loading spinner */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .coordinate-input-section {
+        padding: 15px;
+    }
+    
+    .map-container {
+        height: 300px;
+    }
+    
+    .card-header {
+        padding: 15px;
+    }
+    
+    .btn {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid {
+        padding: 10px;
+    }
+    
+    .coordinate-input-section {
+        padding: 10px;
+    }
+    
+    .map-container {
+        height: 250px;
+    }
+    
+    .format-conversion {
+        font-size: 11px;
+        padding: 10px;
+    }
+}
+
+/* Accessibility improvements */
+.form-control:focus,
+.form-select:focus,
+.btn:focus {
+    outline: 2px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .card {
+        border: 2px solid #000;
+    }
+    
+    .form-control {
+        border: 2px solid #000;
+    }
+    
+    .validation-feedback {
+        border: 2px solid #000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .card,
+    .form-control,
+    .btn,
+    .gps-button,
+    .validation-feedback {
+        transition: none;
+    }
+    
+    .gps-button::before {
+        display: none;
+    }
+    
+    .fa-spinner {
+        animation: none;
+    }
+}
+
+/* Agricultural Address Suggestions Styling */
+.agricultural-suggestion {
+    border-left: 4px solid #28a745 !important;
+    transition: all 0.2s ease;
+}
+
+.agricultural-suggestion:hover {
+    background-color: #f8f9fa;
+    border-left-color: #1e7e34 !important;
+    transform: translateX(2px);
+}
+
+.agricultural-suggestion .badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+}
+
+.agricultural-suggestion .text-info {
+    color: #17a2b8 !important;
+}
+
+.agricultural-suggestion .text-success {
+    color: #28a745 !important;
+}
+
+.agricultural-suggestion .text-primary {
+    color: #007bff !important;
+}
+
+/* Enhanced suggestion container */
+#address-suggestions {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+#address-suggestions .list-group-item {
+    border: none;
+    border-bottom: 1px solid #dee2e6;
+}
+
+#address-suggestions .list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Loading state for suggestions */
+.suggestions-loading {
+    text-align: center;
+    padding: 1rem;
+    color: #6c757d;
+}
+
+.suggestions-loading .spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* No suggestions state */
+.no-suggestions {
+    text-align: center;
+    padding: 1rem;
+    color: #6c757d;
+    font-style: italic;
+}
+
+/* Responsive adjustments for agricultural suggestions */
+@media (max-width: 768px) {
+    .agricultural-suggestion .d-flex {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+    
+    .agricultural-suggestion .text-end {
+        text-align: left !important;
+        margin-top: 0.5rem;
+    }
+    
+    .agricultural-suggestion .badge {
+        margin-bottom: 0.25rem;
+    }
+}

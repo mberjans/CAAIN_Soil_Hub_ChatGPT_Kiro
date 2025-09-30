@@ -921,6 +921,19 @@ function handleAddressInput() {
 
 async function searchAddressSuggestions(query) {
     try {
+        // Try agricultural address suggestions first
+        const agResponse = await fetch(`${gpsInput.geocodingService}/agricultural-address-suggestions?query=${encodeURIComponent(query)}&limit=8&prioritize_agricultural=true`);
+        if (agResponse.ok) {
+            const agData = await agResponse.json();
+            displayAgriculturalAddressSuggestions(agData);
+            return;
+        }
+    } catch (error) {
+        console.log('Agricultural address suggestions not available, falling back to regular suggestions');
+    }
+    
+    // Fallback to regular suggestions
+    try {
         const response = await fetch(`${gpsInput.geocodingService}/suggestions?query=${encodeURIComponent(query)}`);
         if (response.ok) {
             const suggestions = await response.json();
@@ -929,6 +942,49 @@ async function searchAddressSuggestions(query) {
     } catch (error) {
         console.log('Address suggestions not available');
     }
+}
+
+function displayAgriculturalAddressSuggestions(data) {
+    const container = document.getElementById('address-suggestions');
+    
+    if (!data.suggestions || data.suggestions.length === 0) {
+        container.style.display = 'none';
+        return;
+    }
+    
+    container.innerHTML = data.suggestions.map(suggestion => {
+        const agriculturalType = suggestion.agricultural_type || 'general';
+        const typeIcon = getAgriculturalTypeIcon(agriculturalType);
+        const typeLabel = getAgriculturalTypeLabel(agriculturalType);
+        const confidence = Math.round(suggestion.confidence * 100);
+        
+        return `
+            <a href="#" class="list-group-item list-group-item-action agricultural-suggestion" 
+               onclick="selectAgriculturalAddressSuggestion('${suggestion.address}', ${suggestion.latitude}, ${suggestion.longitude})">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div class="flex-grow-1">
+                        <div class="d-flex align-items-center mb-1">
+                            <i class="${typeIcon} me-2 text-primary"></i>
+                            <span class="fw-bold">${suggestion.address}</span>
+                        </div>
+                        <div class="small text-muted">
+                            ${suggestion.display_name}
+                            ${suggestion.county ? ` • ${suggestion.county} County` : ''}
+                            ${suggestion.state ? ` • ${suggestion.state}` : ''}
+                        </div>
+                        ${suggestion.rural_route ? `<div class="small text-info"><i class="fas fa-route me-1"></i>Rural Route: ${suggestion.rural_route}</div>` : ''}
+                        ${suggestion.farm_service_agency ? `<div class="small text-success"><i class="fas fa-building me-1"></i>${suggestion.farm_service_agency}</div>` : ''}
+                    </div>
+                    <div class="text-end">
+                        <span class="badge bg-secondary">${typeLabel}</span>
+                        <div class="small text-muted">${confidence}%</div>
+                    </div>
+                </div>
+            </a>
+        `;
+    }).join('');
+    
+    container.style.display = 'block';
 }
 
 function displayAddressSuggestions(suggestions) {
@@ -947,6 +1003,45 @@ function displayAddressSuggestions(suggestions) {
     `).join('');
     
     container.style.display = 'block';
+}
+
+function getAgriculturalTypeIcon(type) {
+    const icons = {
+        'farm': 'fas fa-tractor',
+        'rural_route': 'fas fa-route',
+        'research_station': 'fas fa-microscope',
+        'extension_office': 'fas fa-building',
+        'agricultural_facility': 'fas fa-industry',
+        'general': 'fas fa-map-marker-alt'
+    };
+    return icons[type] || icons['general'];
+}
+
+function getAgriculturalTypeLabel(type) {
+    const labels = {
+        'farm': 'Farm',
+        'rural_route': 'Rural Route',
+        'research_station': 'Research Station',
+        'extension_office': 'Extension Office',
+        'agricultural_facility': 'Ag Facility',
+        'general': 'Location'
+    };
+    return labels[type] || labels['general'];
+}
+
+function selectAgriculturalAddressSuggestion(address, latitude, longitude) {
+    document.getElementById('address-input').value = address;
+    document.getElementById('address-suggestions').style.display = 'none';
+    
+    // If we have coordinates, use them directly
+    if (latitude && longitude) {
+        gpsInput.currentCoordinates = { latitude: latitude, longitude: longitude };
+        gpsInput.updateMapDisplay();
+        gpsInput.showValidationFeedback('success', 'Agricultural address selected with coordinates');
+    } else {
+        // Fallback to geocoding
+        geocodeAddress();
+    }
 }
 
 function selectAddressSuggestion(address) {
