@@ -30,6 +30,7 @@ try:
     from ..services.rule_engine import AgriculturalRuleEngine, RuleType
     from ..services.ai_explanation_service import AIExplanationService
     from ..services.climate_integration_service import climate_integration_service
+    from ..services.location_integration_service import location_integration_service
 except ImportError:
     from models.agricultural_models import (
         RecommendationRequest,
@@ -51,6 +52,7 @@ except ImportError:
     from services.rule_engine import AgriculturalRuleEngine, RuleType
     from services.ai_explanation_service import AIExplanationService
     from services.climate_integration_service import climate_integration_service
+    from services.location_integration_service import location_integration_service
 
 logger = logging.getLogger(__name__)
 
@@ -115,31 +117,54 @@ class RecommendationEngine:
             # Validate request data
             self._validate_request(request)
             
-            # CLIMATE ZONE INTEGRATION: Auto-detect climate zone if not provided
-            climate_data = None
-            if request.location:
+            # LOCATION INTEGRATION: Deep integration with location services
+            location_integration_result = None
+            if request.location or True:  # Always attempt location integration
                 try:
-                    climate_data = await climate_integration_service.detect_climate_zone(
-                        latitude=request.location.latitude,
-                        longitude=request.location.longitude,
-                        elevation_ft=getattr(request.location, 'elevation_ft', None)
+                    location_integration_result = await location_integration_service.integrate_location_with_recommendation(
+                        request=request,
+                        auto_detect_location=True,  # Auto-detect if no location provided
+                        validate_location=True
                     )
                     
-                    if climate_data:
-                        # Enhance location data with climate zone information
-                        enhanced_location_dict = climate_integration_service.enhance_location_with_climate(
-                            request.location.dict(), climate_data
-                        )
+                    if location_integration_result.success:
+                        logger.info(f"Location integration successful: {location_integration_result.enhanced_location.climate_zone if location_integration_result.enhanced_location else 'unknown'}")
                         
-                        # Update request with enhanced location data (preserve original structure)
-                        for key, value in enhanced_location_dict.items():
-                            if hasattr(request.location, key):
-                                setattr(request.location, key, value)
+                        # Log regional adaptations
+                        if location_integration_result.regional_adaptations:
+                            logger.info(f"Regional adaptations applied: {len(location_integration_result.regional_adaptations)}")
                         
-                        logger.info(f"Enhanced request with climate zone: {enhanced_location_dict.get('climate_zone', 'unknown')}")
+                        # Log agricultural suitability
+                        if location_integration_result.agricultural_suitability:
+                            logger.info(f"Agricultural suitability: {location_integration_result.agricultural_suitability}")
                     
                 except Exception as e:
-                    logger.warning(f"Climate zone detection failed, proceeding without: {str(e)}")
+                    logger.warning(f"Location integration failed, proceeding with basic climate detection: {str(e)}")
+                    
+                    # Fallback to basic climate zone integration
+                    if request.location:
+                        try:
+                            climate_data = await climate_integration_service.detect_climate_zone(
+                                latitude=request.location.latitude,
+                                longitude=request.location.longitude,
+                                elevation_ft=getattr(request.location, 'elevation_ft', None)
+                            )
+                            
+                            if climate_data:
+                                # Enhance location data with climate zone information
+                                enhanced_location_dict = climate_integration_service.enhance_location_with_climate(
+                                    request.location.dict(), climate_data
+                                )
+                                
+                                # Update request with enhanced location data (preserve original structure)
+                                for key, value in enhanced_location_dict.items():
+                                    if hasattr(request.location, key):
+                                        setattr(request.location, key, value)
+                                
+                                logger.info(f"Fallback climate zone enhancement: {enhanced_location_dict.get('climate_zone', 'unknown')}")
+                            
+                        except Exception as e2:
+                            logger.warning(f"Fallback climate zone detection also failed: {str(e2)}")
             
             # Check if this involves filtering and generate impact analysis if requested
             filter_impact_analysis = None
@@ -173,8 +198,22 @@ class RecommendationEngine:
                 except Exception as e:
                     logger.warning(f"Filter impact analysis failed: {str(e)}")
             
+            # LOCATION-BASED INTEGRATION: Apply location-specific adjustments
+            if location_integration_result and location_integration_result.success and recommendations:
+                # Apply regional adaptations to recommendations
+                if location_integration_result.regional_adaptations:
+                    recommendations = self._apply_regional_adaptations(
+                        recommendations, location_integration_result.regional_adaptations
+                    )
+                
+                # Apply agricultural suitability adjustments
+                if location_integration_result.agricultural_suitability:
+                    recommendations = self._apply_agricultural_suitability_adjustments(
+                        recommendations, location_integration_result.agricultural_suitability
+                    )
+            
             # CLIMATE ZONE INTEGRATION: Adjust recommendations based on climate data
-            if climate_data and recommendations:
+            elif climate_data and recommendations:
                 if request.question_type in ["crop_selection", "crop_selection_with_filtering", "crop_rotation"]:
                     recommendations = climate_integration_service.get_climate_adjusted_crop_recommendations(
                         [rec.dict() for rec in recommendations], climate_data
@@ -969,4 +1008,111 @@ class RecommendationEngine:
         except Exception as e:
             logger.error(f"Error enhancing recommendations with AI explanations: {e}")
             # Return original recommendations if AI enhancement fails
+            return recommendations
+    
+    def _apply_regional_adaptations(
+        self,
+        recommendations: List[RecommendationItem],
+        regional_adaptations: List[str]
+    ) -> List[RecommendationItem]:
+        """
+        Apply regional adaptations to recommendations.
+        
+        Args:
+            recommendations: List of recommendation items
+            regional_adaptations: List of regional adaptation strings
+            
+        Returns:
+            Recommendations with regional adaptations applied
+        """
+        try:
+            enhanced_recommendations = []
+            
+            for rec in recommendations:
+                enhanced_rec = rec.copy()
+                
+                # Add regional adaptations to description
+                if regional_adaptations:
+                    adaptation_text = "Regional considerations: " + "; ".join(regional_adaptations[:3])
+                    enhanced_rec.description = f"{enhanced_rec.description} {adaptation_text}"
+                
+                # Add regional adaptations to implementation steps
+                if regional_adaptations:
+                    existing_steps = enhanced_rec.implementation_steps or []
+                    regional_steps = [f"Consider regional practice: {adaptation}" for adaptation in regional_adaptations[:2]]
+                    enhanced_rec.implementation_steps = existing_steps + regional_steps
+                
+                enhanced_recommendations.append(enhanced_rec)
+            
+            logger.info(f"Applied {len(regional_adaptations)} regional adaptations to {len(recommendations)} recommendations")
+            return enhanced_recommendations
+            
+        except Exception as e:
+            logger.error(f"Error applying regional adaptations: {e}")
+            return recommendations
+    
+    def _apply_agricultural_suitability_adjustments(
+        self,
+        recommendations: List[RecommendationItem],
+        agricultural_suitability: str
+    ) -> List[RecommendationItem]:
+        """
+        Apply agricultural suitability adjustments to recommendations.
+        
+        Args:
+            recommendations: List of recommendation items
+            agricultural_suitability: Agricultural suitability rating
+            
+        Returns:
+            Recommendations with agricultural suitability adjustments applied
+        """
+        try:
+            enhanced_recommendations = []
+            
+            # Define suitability-based adjustments
+            suitability_adjustments = {
+                "excellent": {
+                    "confidence_boost": 0.1,
+                    "message": "Location has excellent agricultural potential"
+                },
+                "very_good": {
+                    "confidence_boost": 0.05,
+                    "message": "Location has very good agricultural potential"
+                },
+                "good": {
+                    "confidence_boost": 0.0,
+                    "message": "Location has good agricultural potential"
+                },
+                "moderate": {
+                    "confidence_boost": -0.05,
+                    "message": "Location has moderate agricultural potential - consider site-specific adjustments"
+                },
+                "challenging": {
+                    "confidence_boost": -0.1,
+                    "message": "Location has challenging agricultural conditions - expert consultation recommended"
+                },
+                "limited": {
+                    "confidence_boost": -0.15,
+                    "message": "Location has limited agricultural potential - consider alternative approaches"
+                }
+            }
+            
+            adjustment = suitability_adjustments.get(agricultural_suitability, suitability_adjustments["moderate"])
+            
+            for rec in recommendations:
+                enhanced_rec = rec.copy()
+                
+                # Adjust confidence based on agricultural suitability
+                enhanced_rec.confidence = max(0.0, min(1.0, enhanced_rec.confidence + adjustment["confidence_boost"]))
+                
+                # Add suitability message to description
+                enhanced_rec.description = f"{enhanced_rec.description} {adjustment['message']}"
+                
+                enhanced_recommendations.append(enhanced_rec)
+            
+            logger.info(f"Applied agricultural suitability adjustments ({agricultural_suitability}) to {len(recommendations)} recommendations")
+            return enhanced_recommendations
+            
+        except Exception as e:
+            logger.error(f"Error applying agricultural suitability adjustments: {e}")
             return recommendations

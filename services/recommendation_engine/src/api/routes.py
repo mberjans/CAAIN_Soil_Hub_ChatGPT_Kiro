@@ -303,6 +303,80 @@ async def generate_recommendations(request: RecommendationRequest):
         )
 
 
+@router.post("/recommendations/location-based", response_model=RecommendationResponse)
+async def get_location_based_recommendations(request: RecommendationRequest):
+    """
+    Get location-aware agricultural recommendations with deep location integration.
+    
+    This endpoint provides comprehensive location integration including:
+    - Automatic location detection and validation
+    - Location-based filtering and regional adaptation
+    - Real-time location updates and change notifications
+    - Seamless location data sharing between services
+    - Agricultural suitability assessment
+    - Regional best practices integration
+    
+    Features:
+    - Auto-detects location if not provided
+    - Validates agricultural suitability of location
+    - Applies regional adaptations to recommendations
+    - Provides location-specific timing and practice recommendations
+    - Integrates with climate zone detection
+    - Supports location change notifications
+    """
+    try:
+        logger.info(f"Processing location-based recommendation request: {request.request_id}")
+        
+        # Force location integration for this endpoint
+        request.question_type = f"{request.question_type}_location_integrated"
+        
+        return await recommendation_engine.generate_recommendations(request)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error generating location-based recommendations: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error generating location-based recommendations: {str(e)}"
+        )
+
+
+@router.get("/location/integration-status")
+async def get_location_integration_status():
+    """
+    Get the status of location integration services.
+    
+    Returns information about:
+    - Location validation service availability
+    - Current location detection service status
+    - Geocoding service availability
+    - Location integration configuration
+    """
+    try:
+        from ..services.location_integration_service import location_integration_service
+        
+        status = {
+            "location_integration_available": True,
+            "location_validation_available": location_integration_service.location_validation is not None,
+            "current_location_detection_available": location_integration_service.current_location_detection is not None,
+            "geocoding_service_available": location_integration_service.geocoding_service is not None,
+            "climate_integration_available": location_integration_service.climate_service is not None,
+            "configuration": location_integration_service.config,
+            "cache_size": len(location_integration_service.location_cache),
+            "notification_count": len(location_integration_service.location_notifications)
+        }
+        
+        return status
+        
+    except Exception as e:
+        logger.error(f"Error getting location integration status: {str(e)}")
+        return {
+            "location_integration_available": False,
+            "error": str(e)
+        }
+
+
 # Include fertilizer type selection routes
 if fertilizer_router:
     router.include_router(fertilizer_router)
