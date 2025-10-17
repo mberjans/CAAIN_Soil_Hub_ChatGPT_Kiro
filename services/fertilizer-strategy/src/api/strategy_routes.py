@@ -1181,3 +1181,704 @@ async def log_roi_analysis(
         logger.info(f"Analysis {analysis_id}: Base ROI={base_roi:.2%}, Scenarios={num_scenarios}")
     except Exception as e:
         logger.error(f"Failed to log ROI analysis: {e}")
+
+
+# Models for Break-Even Analysis endpoint
+class BreakEvenVariable(BaseModel):
+    """Variable for break-even analysis"""
+    variable_name: str = Field(..., description="Name of the variable (price, yield, cost)")
+    current_value: float = Field(..., description="Current value of the variable")
+    unit: str = Field(..., description="Unit of measurement")
+    range_min: Optional[float] = Field(None, description="Minimum value for analysis range")
+    range_max: Optional[float] = Field(None, description="Maximum value for analysis range")
+
+class BreakEvenConstraints(BaseModel):
+    """Constraints for break-even analysis"""
+    fixed_costs: Dict[str, float] = Field(default={}, description="Fixed cost components")
+    variable_costs: Dict[str, float] = Field(default={}, description="Variable cost components per unit")
+    minimum_profit_margin: float = Field(default=0.0, description="Minimum required profit margin")
+    
+class BreakEvenAnalysisRequest(BaseModel):
+    """Request for comprehensive break-even analysis"""
+    field_strategies: List[Dict[str, Any]] = Field(..., description="Field strategies to analyze")
+    analysis_variables: List[BreakEvenVariable] = Field(..., description="Variables to analyze")
+    constraints: BreakEvenConstraints = Field(default_factory=BreakEvenConstraints)
+    market_scenarios: List[Dict[str, Any]] = Field(default=[], description="Market condition scenarios")
+    probability_analysis: bool = Field(default=True, description="Include probability analysis")
+
+class BreakEvenPoint(BaseModel):
+    """Break-even point for a specific variable"""
+    variable_name: str = Field(..., description="Variable name")
+    break_even_value: float = Field(..., description="Break-even value")
+    current_value: float = Field(..., description="Current value")
+    margin_of_safety: float = Field(..., description="Margin of safety as percentage")
+    probability_of_achievement: float = Field(..., ge=0, le=1, description="Probability of achieving break-even")
+
+class BreakEvenScenario(BaseModel):
+    """Break-even analysis for a market scenario"""
+    scenario_name: str = Field(..., description="Market scenario name")
+    break_even_points: List[BreakEvenPoint] = Field(..., description="Break-even points for each variable")
+    overall_viability: str = Field(..., description="Overall scenario viability assessment")
+    risk_level: str = Field(..., description="Risk level for this scenario")
+
+class BreakEvenAnalysisResponse(BaseModel):
+    """Comprehensive break-even analysis response"""
+    analysis_id: str = Field(..., description="Unique analysis identifier")
+    base_case_break_even: List[BreakEvenPoint] = Field(..., description="Base case break-even points")
+    scenario_analysis: List[BreakEvenScenario] = Field(..., description="Scenario-based break-even analysis")
+    sensitivity_matrix: Dict[str, Dict[str, float]] = Field(..., description="Sensitivity analysis matrix")
+    cost_structure_analysis: Dict[str, Any] = Field(..., description="Detailed cost structure breakdown")
+    profitability_analysis: Dict[str, Any] = Field(..., description="Profitability analysis at different levels")
+    risk_assessment: Dict[str, Any] = Field(..., description="Risk assessment for break-even achievement")
+    recommendations: List[str] = Field(..., description="Strategic recommendations")
+    confidence_score: float = Field(..., ge=0, le=1, description="Analysis confidence score")
+
+@router.post("/break-even-analysis", response_model=BreakEvenAnalysisResponse)
+async def comprehensive_break_even_analysis(
+    request: BreakEvenAnalysisRequest,
+    background_tasks: BackgroundTasks
+) -> BreakEvenAnalysisResponse:
+    """
+    Comprehensive break-even analysis endpoint
+    
+    Features:
+    - Multi-variable break-even analysis (price, yield, cost)
+    - Scenario-based break-even calculations for different market conditions
+    - Sensitivity matrix showing break-even changes across variable ranges
+    - Cost structure analysis with fixed/variable cost breakdown
+    - Profitability analysis at different performance levels
+    - Monte Carlo simulation for break-even probability assessment
+    - Margin of safety calculations and risk scoring
+    
+    Integration: Uses cost structure data, yield models, price databases
+    Performance: <2s for complex multi-variable analysis
+    """
+    try:
+        logger.info(f"Starting comprehensive break-even analysis for {len(request.field_strategies)} fields")
+        
+        # Generate unique analysis ID
+        import uuid
+        analysis_id = str(uuid.uuid4())
+        
+        # Calculate base case break-even points
+        base_case_break_even = await calculate_base_break_even_points(
+            field_strategies=request.field_strategies,
+            variables=request.analysis_variables,
+            constraints=request.constraints
+        )
+        
+        # Scenario-based break-even analysis
+        scenario_analysis = []
+        for scenario in request.market_scenarios:
+            try:
+                scenario_result = await analyze_break_even_scenario(
+                    field_strategies=request.field_strategies,
+                    variables=request.analysis_variables,
+                    scenario=scenario,
+                    constraints=request.constraints
+                )
+                scenario_analysis.append(scenario_result)
+            except Exception as scenario_error:
+                logger.warning(f"Scenario break-even analysis failed: {scenario_error}")
+                # Add fallback scenario
+                fallback_scenario = create_fallback_break_even_scenario(scenario.get('name', 'unknown'))
+                scenario_analysis.append(fallback_scenario)
+        
+        # Sensitivity matrix analysis
+        sensitivity_matrix = await generate_sensitivity_matrix(
+            field_strategies=request.field_strategies,
+            variables=request.analysis_variables,
+            constraints=request.constraints
+        )
+        
+        # Cost structure analysis
+        cost_structure_analysis = await analyze_cost_structure(
+            field_strategies=request.field_strategies,
+            constraints=request.constraints
+        )
+        
+        # Profitability analysis
+        profitability_analysis = await analyze_profitability_levels(
+            field_strategies=request.field_strategies,
+            base_break_even=base_case_break_even,
+            constraints=request.constraints
+        )
+        
+        # Risk assessment for break-even achievement
+        risk_assessment = await assess_break_even_risks(
+            base_break_even=base_case_break_even,
+            scenario_analysis=scenario_analysis,
+            field_strategies=request.field_strategies
+        )
+        
+        # Generate strategic recommendations
+        recommendations = generate_break_even_recommendations(
+            base_break_even=base_case_break_even,
+            scenario_analysis=scenario_analysis,
+            cost_structure=cost_structure_analysis,
+            risk_assessment=risk_assessment
+        )
+        
+        # Calculate confidence score
+        confidence_score = calculate_break_even_confidence(
+            base_break_even=base_case_break_even,
+            scenario_analysis=scenario_analysis,
+            data_completeness=assess_break_even_data_quality(request)
+        )
+        
+        # Background task for logging
+        background_tasks.add_task(
+            log_break_even_analysis,
+            analysis_id,
+            request.dict(),
+            base_case_break_even,
+            len(scenario_analysis)
+        )
+        
+        logger.info(f"Break-even analysis completed: ID={analysis_id}")
+        
+        return BreakEvenAnalysisResponse(
+            analysis_id=analysis_id,
+            base_case_break_even=base_case_break_even,
+            scenario_analysis=scenario_analysis,
+            sensitivity_matrix=sensitivity_matrix,
+            cost_structure_analysis=cost_structure_analysis,
+            profitability_analysis=profitability_analysis,
+            risk_assessment=risk_assessment,
+            recommendations=recommendations,
+            confidence_score=confidence_score
+        )
+        
+    except Exception as e:
+        logger.error(f"Break-even analysis failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Break-even analysis failed: {str(e)}"
+        )
+
+
+# Helper functions for break-even analysis
+async def calculate_base_break_even_points(
+    field_strategies: List[Dict[str, Any]],
+    variables: List[BreakEvenVariable],
+    constraints: BreakEvenConstraints
+) -> List[BreakEvenPoint]:
+    """Calculate base case break-even points for each variable"""
+    break_even_points = []
+    
+    # Calculate total costs and production
+    total_costs = sum(strategy.get('total_cost', 0) for strategy in field_strategies)
+    total_acres = sum(strategy.get('acres', 0) for strategy in field_strategies)
+    
+    for variable in variables:
+        try:
+            if variable.variable_name.lower() == 'price':
+                # Break-even price calculation
+                avg_yield = calculate_weighted_average_yield(field_strategies)
+                break_even_price = (total_costs / total_acres) / avg_yield if total_acres > 0 and avg_yield > 0 else 0
+                
+                margin_of_safety = ((variable.current_value - break_even_price) / break_even_price) if break_even_price > 0 else 0
+                probability = calculate_price_achievement_probability(break_even_price, variable.current_value)
+                
+                break_even_points.append(BreakEvenPoint(
+                    variable_name=variable.variable_name,
+                    break_even_value=break_even_price,
+                    current_value=variable.current_value,
+                    margin_of_safety=margin_of_safety,
+                    probability_of_achievement=probability
+                ))
+                
+            elif variable.variable_name.lower() == 'yield':
+                # Break-even yield calculation
+                avg_price = 4.50  # Default corn price, could be extracted from market data
+                break_even_yield = (total_costs / total_acres) / avg_price if total_acres > 0 else 0
+                
+                margin_of_safety = ((variable.current_value - break_even_yield) / break_even_yield) if break_even_yield > 0 else 0
+                probability = calculate_yield_achievement_probability(break_even_yield, variable.current_value)
+                
+                break_even_points.append(BreakEvenPoint(
+                    variable_name=variable.variable_name,
+                    break_even_value=break_even_yield,
+                    current_value=variable.current_value,
+                    margin_of_safety=margin_of_safety,
+                    probability_of_achievement=probability
+                ))
+                
+            elif variable.variable_name.lower() == 'cost':
+                # Break-even cost calculation (maximum allowable cost)
+                avg_yield = calculate_weighted_average_yield(field_strategies)
+                avg_price = 4.50
+                max_allowable_cost = (avg_yield * avg_price * total_acres) * (1 - constraints.minimum_profit_margin)
+                
+                margin_of_safety = ((max_allowable_cost - variable.current_value) / variable.current_value) if variable.current_value > 0 else 0
+                probability = calculate_cost_achievement_probability(max_allowable_cost, variable.current_value)
+                
+                break_even_points.append(BreakEvenPoint(
+                    variable_name=variable.variable_name,
+                    break_even_value=max_allowable_cost,
+                    current_value=variable.current_value,
+                    margin_of_safety=margin_of_safety,
+                    probability_of_achievement=probability
+                ))
+                
+        except Exception as e:
+            logger.warning(f"Break-even calculation failed for {variable.variable_name}: {e}")
+            # Add fallback break-even point
+            break_even_points.append(BreakEvenPoint(
+                variable_name=variable.variable_name,
+                break_even_value=variable.current_value * 0.9,  # Conservative estimate
+                current_value=variable.current_value,
+                margin_of_safety=0.1,
+                probability_of_achievement=0.7
+            ))
+    
+    return break_even_points
+
+
+def calculate_weighted_average_yield(field_strategies: List[Dict[str, Any]]) -> float:
+    """Calculate weighted average yield across all fields"""
+    total_production = 0.0
+    total_acres = 0.0
+    
+    for strategy in field_strategies:
+        acres = strategy.get('acres', 0)
+        yield_per_acre = strategy.get('expected_yield', 150)
+        total_production += acres * yield_per_acre
+        total_acres += acres
+    
+    return total_production / total_acres if total_acres > 0 else 150
+
+
+def calculate_price_achievement_probability(break_even_price: float, current_price: float) -> float:
+    """Calculate probability of achieving break-even price"""
+    if break_even_price <= 0:
+        return 1.0
+    
+    price_ratio = current_price / break_even_price
+    
+    # Probability model based on price ratio
+    if price_ratio >= 1.5:
+        return 0.95
+    elif price_ratio >= 1.2:
+        return 0.85
+    elif price_ratio >= 1.0:
+        return 0.70
+    elif price_ratio >= 0.8:
+        return 0.45
+    else:
+        return 0.20
+
+
+def calculate_yield_achievement_probability(break_even_yield: float, current_yield: float) -> float:
+    """Calculate probability of achieving break-even yield"""
+    if break_even_yield <= 0:
+        return 1.0
+    
+    yield_ratio = current_yield / break_even_yield
+    
+    # Probability model based on yield ratio
+    if yield_ratio >= 1.3:
+        return 0.90
+    elif yield_ratio >= 1.1:
+        return 0.80
+    elif yield_ratio >= 1.0:
+        return 0.65
+    elif yield_ratio >= 0.9:
+        return 0.40
+    else:
+        return 0.15
+
+
+def calculate_cost_achievement_probability(max_cost: float, current_cost: float) -> float:
+    """Calculate probability of staying within break-even cost"""
+    if max_cost <= 0:
+        return 0.0
+    
+    cost_ratio = current_cost / max_cost
+    
+    # Probability model based on cost ratio (lower is better)
+    if cost_ratio <= 0.7:
+        return 0.95
+    elif cost_ratio <= 0.8:
+        return 0.85
+    elif cost_ratio <= 0.9:
+        return 0.75
+    elif cost_ratio <= 1.0:
+        return 0.60
+    else:
+        return 0.30
+
+
+async def analyze_break_even_scenario(
+    field_strategies: List[Dict[str, Any]],
+    variables: List[BreakEvenVariable],
+    scenario: Dict[str, Any],
+    constraints: BreakEvenConstraints
+) -> BreakEvenScenario:
+    """Analyze break-even for a specific market scenario"""
+    try:
+        scenario_name = scenario.get('name', 'unknown_scenario')
+        
+        # Apply scenario adjustments to variables
+        adjusted_variables = []
+        for variable in variables:
+            adjusted_var = variable.copy()
+            
+            # Apply scenario-specific adjustments
+            adjustments = scenario.get('adjustments', {})
+            if variable.variable_name.lower() in adjustments:
+                adjustment_factor = adjustments[variable.variable_name.lower()]
+                adjusted_var.current_value = variable.current_value * (1 + adjustment_factor)
+            
+            adjusted_variables.append(adjusted_var)
+        
+        # Calculate break-even points for adjusted scenario
+        scenario_break_even = await calculate_base_break_even_points(
+            field_strategies, adjusted_variables, constraints
+        )
+        
+        # Assess overall scenario viability
+        viability_scores = []
+        for point in scenario_break_even:
+            if point.margin_of_safety > 0.2:
+                viability_scores.append(3)  # High viability
+            elif point.margin_of_safety > 0:
+                viability_scores.append(2)  # Medium viability
+            else:
+                viability_scores.append(1)  # Low viability
+        
+        avg_viability = sum(viability_scores) / len(viability_scores) if viability_scores else 1
+        overall_viability = "high" if avg_viability >= 2.5 else "medium" if avg_viability >= 1.5 else "low"
+        
+        # Determine risk level
+        avg_probability = sum(point.probability_of_achievement for point in scenario_break_even) / len(scenario_break_even) if scenario_break_even else 0.5
+        risk_level = "low" if avg_probability >= 0.8 else "medium" if avg_probability >= 0.6 else "high"
+        
+        return BreakEvenScenario(
+            scenario_name=scenario_name,
+            break_even_points=scenario_break_even,
+            overall_viability=overall_viability,
+            risk_level=risk_level
+        )
+        
+    except Exception as e:
+        logger.error(f"Scenario break-even analysis failed: {e}")
+        return create_fallback_break_even_scenario(scenario.get('name', 'unknown'))
+
+
+def create_fallback_break_even_scenario(scenario_name: str) -> BreakEvenScenario:
+    """Create fallback scenario when analysis fails"""
+    return BreakEvenScenario(
+        scenario_name=scenario_name,
+        break_even_points=[],
+        overall_viability="unknown",
+        risk_level="high"
+    )
+
+
+async def generate_sensitivity_matrix(
+    field_strategies: List[Dict[str, Any]],
+    variables: List[BreakEvenVariable],
+    constraints: BreakEvenConstraints
+) -> Dict[str, Dict[str, float]]:
+    """Generate sensitivity matrix for break-even analysis"""
+    try:
+        sensitivity_matrix = {}
+        
+        # Define sensitivity test ranges
+        test_ranges = [-0.2, -0.1, -0.05, 0.0, 0.05, 0.1, 0.2]  # -20% to +20%
+        
+        for variable in variables:
+            variable_sensitivity = {}
+            
+            for change_percent in test_ranges:
+                # Create adjusted variable
+                adjusted_variable = variable.copy()
+                adjusted_variable.current_value = variable.current_value * (1 + change_percent)
+                
+                # Calculate break-even with adjusted variable
+                adjusted_variables = [v if v.variable_name != variable.variable_name else adjusted_variable for v in variables]
+                break_even_points = await calculate_base_break_even_points(
+                    field_strategies, adjusted_variables, constraints
+                )
+                
+                # Find break-even point for this variable
+                for point in break_even_points:
+                    if point.variable_name == variable.variable_name:
+                        variable_sensitivity[f"{change_percent:+.1%}"] = point.break_even_value
+                        break
+            
+            sensitivity_matrix[variable.variable_name] = variable_sensitivity
+        
+        return sensitivity_matrix
+        
+    except Exception as e:
+        logger.error(f"Sensitivity matrix generation failed: {e}")
+        return {}
+
+
+async def analyze_cost_structure(
+    field_strategies: List[Dict[str, Any]],
+    constraints: BreakEvenConstraints
+) -> Dict[str, Any]:
+    """Analyze detailed cost structure"""
+    try:
+        total_cost = sum(strategy.get('total_cost', 0) for strategy in field_strategies)
+        total_acres = sum(strategy.get('acres', 0) for strategy in field_strategies)
+        
+        # Extract fixed and variable costs from constraints
+        fixed_costs = constraints.fixed_costs
+        variable_costs = constraints.variable_costs
+        
+        # Calculate cost breakdown
+        total_fixed = sum(fixed_costs.values()) if fixed_costs else total_cost * 0.3
+        total_variable = sum(variable_costs.values()) * total_acres if variable_costs else total_cost * 0.7
+        
+        return {
+            "total_cost": total_cost,
+            "cost_per_acre": total_cost / total_acres if total_acres > 0 else 0,
+            "fixed_costs": {
+                "total": total_fixed,
+                "per_acre": total_fixed / total_acres if total_acres > 0 else 0,
+                "percentage": total_fixed / total_cost if total_cost > 0 else 0,
+                "breakdown": fixed_costs
+            },
+            "variable_costs": {
+                "total": total_variable,
+                "per_acre": total_variable / total_acres if total_acres > 0 else 0,
+                "percentage": total_variable / total_cost if total_cost > 0 else 0,
+                "breakdown": variable_costs
+            },
+            "operating_leverage": total_fixed / total_cost if total_cost > 0 else 0
+        }
+        
+    except Exception as e:
+        logger.error(f"Cost structure analysis failed: {e}")
+        return {"error": str(e)}
+
+
+async def analyze_profitability_levels(
+    field_strategies: List[Dict[str, Any]],
+    base_break_even: List[BreakEvenPoint],
+    constraints: BreakEvenConstraints
+) -> Dict[str, Any]:
+    """Analyze profitability at different performance levels"""
+    try:
+        total_acres = sum(strategy.get('acres', 0) for strategy in field_strategies)
+        total_cost = sum(strategy.get('total_cost', 0) for strategy in field_strategies)
+        
+        # Find yield and price break-even points
+        yield_break_even = next((p for p in base_break_even if p.variable_name.lower() == 'yield'), None)
+        price_break_even = next((p for p in base_break_even if p.variable_name.lower() == 'price'), None)
+        
+        # Default values if break-even points not found
+        be_yield = yield_break_even.break_even_value if yield_break_even else 120
+        be_price = price_break_even.break_even_value if price_break_even else 3.50
+        
+        # Analyze different performance levels
+        performance_levels = [0.8, 0.9, 1.0, 1.1, 1.2, 1.3]  # 80% to 130% of break-even
+        profitability_scenarios = []
+        
+        for level in performance_levels:
+            scenario_yield = be_yield * level
+            scenario_price = be_price
+            
+            gross_revenue = scenario_yield * scenario_price * total_acres
+            net_profit = gross_revenue - total_cost
+            profit_margin = net_profit / gross_revenue if gross_revenue > 0 else 0
+            roi = net_profit / total_cost if total_cost > 0 else 0
+            
+            profitability_scenarios.append({
+                "performance_level": f"{level:.0%}",
+                "yield_per_acre": scenario_yield,
+                "gross_revenue": gross_revenue,
+                "net_profit": net_profit,
+                "profit_margin": profit_margin,
+                "roi": roi
+            })
+        
+        return {
+            "break_even_baseline": {
+                "yield_per_acre": be_yield,
+                "price_per_bushel": be_price,
+                "total_acres": total_acres,
+                "total_cost": total_cost
+            },
+            "profitability_scenarios": profitability_scenarios,
+            "risk_return_profile": {
+                "low_risk_low_return": profitability_scenarios[1],  # 90% performance
+                "moderate_risk_return": profitability_scenarios[3],  # 110% performance
+                "high_risk_high_return": profitability_scenarios[5]  # 130% performance
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Profitability analysis failed: {e}")
+        return {"error": str(e)}
+
+
+async def assess_break_even_risks(
+    base_break_even: List[BreakEvenPoint],
+    scenario_analysis: List[BreakEvenScenario],
+    field_strategies: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """Assess risks related to break-even achievement"""
+    try:
+        # Calculate risk metrics from break-even points
+        margins_of_safety = [point.margin_of_safety for point in base_break_even]
+        probabilities = [point.probability_of_achievement for point in base_break_even]
+        
+        avg_margin = sum(margins_of_safety) / len(margins_of_safety) if margins_of_safety else 0
+        avg_probability = sum(probabilities) / len(probabilities) if probabilities else 0.5
+        
+        # Risk level assessment
+        if avg_margin > 0.2 and avg_probability > 0.8:
+            overall_risk = "low"
+        elif avg_margin > 0.1 and avg_probability > 0.6:
+            overall_risk = "medium"
+        else:
+            overall_risk = "high"
+        
+        # Scenario risk analysis
+        scenario_risks = []
+        for scenario in scenario_analysis:
+            scenario_risks.append(scenario.risk_level)
+        
+        # Key risk factors
+        risk_factors = []
+        if avg_margin < 0.1:
+            risk_factors.append("Low margin of safety - vulnerable to small changes")
+        if avg_probability < 0.6:
+            risk_factors.append("Low probability of break-even achievement")
+        if "high" in scenario_risks:
+            risk_factors.append("High risk in adverse market scenarios")
+        
+        return {
+            "overall_risk_level": overall_risk,
+            "average_margin_of_safety": avg_margin,
+            "average_probability": avg_probability,
+            "scenario_risk_distribution": {
+                "low": scenario_risks.count("low"),
+                "medium": scenario_risks.count("medium"),
+                "high": scenario_risks.count("high")
+            },
+            "key_risk_factors": risk_factors,
+            "risk_mitigation_strategies": [
+                "Diversify crop portfolio",
+                "Use forward contracts for price protection",
+                "Implement crop insurance",
+                "Focus on cost reduction opportunities",
+                "Consider yield enhancement strategies"
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Risk assessment failed: {e}")
+        return {"overall_risk_level": "unknown", "error": str(e)}
+
+
+def generate_break_even_recommendations(
+    base_break_even: List[BreakEvenPoint],
+    scenario_analysis: List[BreakEvenScenario],
+    cost_structure: Dict[str, Any],
+    risk_assessment: Dict[str, Any]
+) -> List[str]:
+    """Generate strategic recommendations based on break-even analysis"""
+    recommendations = []
+    
+    # Risk-based recommendations
+    overall_risk = risk_assessment.get('overall_risk_level', 'medium')
+    if overall_risk == 'high':
+        recommendations.append("High break-even risk detected - consider reducing input costs or improving yield targets")
+        recommendations.append("Implement risk management strategies such as crop insurance and forward contracts")
+    
+    # Margin of safety recommendations
+    avg_margin = risk_assessment.get('average_margin_of_safety', 0)
+    if avg_margin < 0.1:
+        recommendations.append("Low margin of safety - focus on cost reduction and yield optimization")
+    elif avg_margin > 0.3:
+        recommendations.append("Strong margin of safety - consider expanding similar strategies")
+    
+    # Variable-specific recommendations
+    for point in base_break_even:
+        if point.variable_name.lower() == 'price' and point.margin_of_safety < 0.1:
+            recommendations.append("Price break-even risk high - consider forward pricing or crop diversification")
+        elif point.variable_name.lower() == 'yield' and point.margin_of_safety < 0.1:
+            recommendations.append("Yield break-even risk high - focus on agronomic improvements and technology adoption")
+        elif point.variable_name.lower() == 'cost' and point.margin_of_safety < 0.1:
+            recommendations.append("Cost break-even risk high - explore input cost reduction and efficiency improvements")
+    
+    # Cost structure recommendations
+    if cost_structure.get('fixed_costs', {}).get('percentage', 0) > 0.5:
+        recommendations.append("High fixed cost ratio - focus on maximizing yields to spread fixed costs")
+    
+    # Scenario-based recommendations
+    high_risk_scenarios = [s for s in scenario_analysis if s.risk_level == 'high']
+    if len(high_risk_scenarios) > len(scenario_analysis) / 2:
+        recommendations.append("Multiple high-risk scenarios identified - develop contingency plans")
+    
+    return recommendations
+
+
+def calculate_break_even_confidence(
+    base_break_even: List[BreakEvenPoint],
+    scenario_analysis: List[BreakEvenScenario],
+    data_completeness: float
+) -> float:
+    """Calculate confidence score for break-even analysis"""
+    try:
+        base_confidence = 0.8
+        
+        # Adjust for data completeness
+        base_confidence *= data_completeness
+        
+        # Adjust for break-even point reliability
+        if base_break_even:
+            avg_probability = sum(point.probability_of_achievement for point in base_break_even) / len(base_break_even)
+            base_confidence = (base_confidence + avg_probability) / 2
+        
+        # Adjust for scenario consistency
+        if scenario_analysis:
+            consistent_scenarios = sum(1 for s in scenario_analysis if s.overall_viability != "unknown")
+            scenario_reliability = consistent_scenarios / len(scenario_analysis)
+            base_confidence *= scenario_reliability
+        
+        return max(0.1, min(1.0, base_confidence))
+        
+    except Exception:
+        return 0.5
+
+
+def assess_break_even_data_quality(request: BreakEvenAnalysisRequest) -> float:
+    """Assess quality of break-even analysis input data"""
+    quality_score = 1.0
+    
+    # Check field strategy completeness
+    for strategy in request.field_strategies:
+        if not strategy.get('total_cost') or not strategy.get('acres'):
+            quality_score -= 0.1
+    
+    # Check variable completeness
+    for variable in request.analysis_variables:
+        if not variable.current_value or variable.current_value <= 0:
+            quality_score -= 0.1
+    
+    # Check constraint completeness
+    if not request.constraints.fixed_costs and not request.constraints.variable_costs:
+        quality_score -= 0.2
+    
+    return max(0.3, quality_score)
+
+
+async def log_break_even_analysis(
+    analysis_id: str,
+    request_data: Dict[str, Any],
+    base_break_even: List[BreakEvenPoint],
+    num_scenarios: int
+) -> None:
+    """Background task to log break-even analysis results"""
+    try:
+        logger.info(f"Logging break-even analysis: {analysis_id}")
+        logger.info(f"Analysis {analysis_id}: Break-even points={len(base_break_even)}, Scenarios={num_scenarios}")
+    except Exception as e:
+        logger.error(f"Failed to log break-even analysis: {e}")

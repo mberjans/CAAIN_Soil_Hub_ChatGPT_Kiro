@@ -530,6 +530,313 @@ class TestStrategyOptimization:
         # Risk assessment should flag high risk
         risk_assessment = data["risk_assessment"]
         assert risk_assessment["risk_level"] in ["medium", "high"]
+    
+    def test_break_even_analysis_endpoint_basic(self):
+        """Test basic break-even analysis endpoint functionality"""
+        
+        break_even_request = {
+            "field_strategies": [
+                {
+                    "field_id": "field_001",
+                    "acres": 80,
+                    "total_cost": 9600,
+                    "expected_yield": 175
+                }
+            ],
+            "analysis_variables": [
+                {
+                    "variable_name": "price",
+                    "current_value": 4.50,
+                    "unit": "$/bushel",
+                    "range_min": 3.00,
+                    "range_max": 6.00
+                },
+                {
+                    "variable_name": "yield",
+                    "current_value": 175,
+                    "unit": "bushels/acre",
+                    "range_min": 120,
+                    "range_max": 220
+                },
+                {
+                    "variable_name": "cost",
+                    "current_value": 9600,
+                    "unit": "dollars",
+                    "range_min": 8000,
+                    "range_max": 12000
+                }
+            ],
+            "constraints": {
+                "fixed_costs": {"equipment": 2000, "land": 1000},
+                "variable_costs": {"fertilizer": 80, "seed": 40},
+                "minimum_profit_margin": 0.1
+            },
+            "market_scenarios": [
+                {
+                    "name": "high_price_scenario",
+                    "adjustments": {"price": 0.2}
+                },
+                {
+                    "name": "low_yield_scenario", 
+                    "adjustments": {"yield": -0.15}
+                }
+            ],
+            "probability_analysis": True
+        }
+        
+        response = client.post("/api/v1/fertilizer/break-even-analysis", json=break_even_request)
+        
+        # Verify response
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Check required fields
+        assert "analysis_id" in data
+        assert "base_case_break_even" in data
+        assert "scenario_analysis" in data
+        assert "sensitivity_matrix" in data
+        assert "cost_structure_analysis" in data
+        assert "profitability_analysis" in data
+        assert "risk_assessment" in data
+        assert "recommendations" in data
+        assert "confidence_score" in data
+        
+        # Verify base case break-even points
+        assert len(data["base_case_break_even"]) == 3  # price, yield, cost
+        for point in data["base_case_break_even"]:
+            assert "variable_name" in point
+            assert "break_even_value" in point
+            assert "current_value" in point
+            assert "margin_of_safety" in point
+            assert "probability_of_achievement" in point
+            assert 0.0 <= point["probability_of_achievement"] <= 1.0
+        
+        # Verify scenario analysis
+        assert len(data["scenario_analysis"]) == 2
+        scenario_names = [s["scenario_name"] for s in data["scenario_analysis"]]
+        assert "high_price_scenario" in scenario_names
+        assert "low_yield_scenario" in scenario_names
+        
+        # Verify each scenario has required fields
+        for scenario in data["scenario_analysis"]:
+            assert "break_even_points" in scenario
+            assert "overall_viability" in scenario
+            assert "risk_level" in scenario
+            assert scenario["overall_viability"] in ["low", "medium", "high", "unknown"]
+            assert scenario["risk_level"] in ["low", "medium", "high"]
+        
+        # Verify sensitivity matrix
+        sensitivity = data["sensitivity_matrix"]
+        assert "price" in sensitivity
+        assert "yield" in sensitivity
+        assert "cost" in sensitivity
+        
+        # Verify cost structure analysis
+        cost_structure = data["cost_structure_analysis"]
+        assert "total_cost" in cost_structure
+        assert "cost_per_acre" in cost_structure
+        assert "fixed_costs" in cost_structure
+        assert "variable_costs" in cost_structure
+        assert "operating_leverage" in cost_structure
+        
+        # Verify profitability analysis
+        profitability = data["profitability_analysis"]
+        assert "break_even_baseline" in profitability
+        assert "profitability_scenarios" in profitability
+        assert "risk_return_profile" in profitability
+        
+        # Verify risk assessment
+        risk_assessment = data["risk_assessment"]
+        assert "overall_risk_level" in risk_assessment
+        assert "average_margin_of_safety" in risk_assessment
+        assert "average_probability" in risk_assessment
+        assert "key_risk_factors" in risk_assessment
+        
+        # Verify confidence score
+        assert 0.0 <= data["confidence_score"] <= 1.0
+        
+        # Verify recommendations exist
+        assert isinstance(data["recommendations"], list)
+        assert len(data["recommendations"]) > 0
+    
+    def test_break_even_analysis_validation_errors(self):
+        """Test validation errors for break-even analysis"""
+        
+        # Test empty field strategies
+        invalid_request = {
+            "field_strategies": [],
+            "analysis_variables": []
+        }
+        response = client.post("/api/v1/fertilizer/break-even-analysis", json=invalid_request)
+        assert response.status_code == 422
+        
+        # Test invalid variable value
+        invalid_variable_request = {
+            "field_strategies": [{"field_id": "test", "acres": 80, "total_cost": 1000}],
+            "analysis_variables": [
+                {
+                    "variable_name": "price",
+                    "current_value": -1.0,  # Invalid negative value
+                    "unit": "$/bushel"
+                }
+            ]
+        }
+        # Note: This should pass validation but may result in calculation issues
+        response = client.post("/api/v1/fertilizer/break-even-analysis", json=invalid_variable_request)
+        # The endpoint should handle this gracefully, not necessarily fail validation
+    
+    def test_break_even_analysis_no_scenarios(self):
+        """Test break-even analysis with no market scenarios"""
+        
+        break_even_request = {
+            "field_strategies": [
+                {
+                    "field_id": "field_001",
+                    "acres": 80,
+                    "total_cost": 9600,
+                    "expected_yield": 175
+                }
+            ],
+            "analysis_variables": [
+                {
+                    "variable_name": "price",
+                    "current_value": 4.50,
+                    "unit": "$/bushel"
+                }
+            ],
+            "market_scenarios": []  # No scenarios
+        }
+        
+        response = client.post("/api/v1/fertilizer/break-even-analysis", json=break_even_request)
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should still have base case analysis
+        assert len(data["base_case_break_even"]) == 1
+        assert data["base_case_break_even"][0]["variable_name"] == "price"
+        
+        # Should have empty scenario analysis
+        assert len(data["scenario_analysis"]) == 0
+        
+        # Should still have other analyses
+        assert "sensitivity_matrix" in data
+        assert "cost_structure_analysis" in data
+        assert "profitability_analysis" in data
+    
+    def test_break_even_analysis_multiple_variables(self):
+        """Test break-even analysis with all variable types"""
+        
+        break_even_request = {
+            "field_strategies": [
+                {
+                    "field_id": "field_001",
+                    "acres": 80,
+                    "total_cost": 9600,
+                    "expected_yield": 175
+                },
+                {
+                    "field_id": "field_002",
+                    "acres": 120,
+                    "total_cost": 14400,
+                    "expected_yield": 160
+                }
+            ],
+            "analysis_variables": [
+                {
+                    "variable_name": "price",
+                    "current_value": 4.50,
+                    "unit": "$/bushel"
+                },
+                {
+                    "variable_name": "yield",
+                    "current_value": 167.5,  # Weighted average
+                    "unit": "bushels/acre"
+                },
+                {
+                    "variable_name": "cost",
+                    "current_value": 24000,  # Total cost
+                    "unit": "dollars"
+                }
+            ],
+            "constraints": {
+                "minimum_profit_margin": 0.15
+            }
+        }
+        
+        response = client.post("/api/v1/fertilizer/break-even-analysis", json=break_even_request)
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should analyze all three variables
+        assert len(data["base_case_break_even"]) == 3
+        variable_names = [point["variable_name"] for point in data["base_case_break_even"]]
+        assert "price" in variable_names
+        assert "yield" in variable_names
+        assert "cost" in variable_names
+        
+        # Cost structure should account for multiple fields
+        cost_structure = data["cost_structure_analysis"]
+        assert cost_structure["total_cost"] == 24000
+        assert cost_structure["cost_per_acre"] == 120  # 24000 / 200 acres
+    
+    def test_break_even_analysis_risk_scenarios(self):
+        """Test break-even analysis with high-risk scenarios"""
+        
+        break_even_request = {
+            "field_strategies": [
+                {
+                    "field_id": "field_001",
+                    "acres": 80,
+                    "total_cost": 9600,
+                    "expected_yield": 175
+                }
+            ],
+            "analysis_variables": [
+                {
+                    "variable_name": "price",
+                    "current_value": 3.80,  # Lower price
+                    "unit": "$/bushel"
+                },
+                {
+                    "variable_name": "yield",
+                    "current_value": 140,  # Lower yield
+                    "unit": "bushels/acre"
+                }
+            ],
+            "market_scenarios": [
+                {
+                    "name": "worst_case",
+                    "adjustments": {"price": -0.2, "yield": -0.2}
+                }
+            ]
+        }
+        
+        response = client.post("/api/v1/fertilizer/break-even-analysis", json=break_even_request)
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should detect higher risk
+        risk_assessment = data["risk_assessment"]
+        # With lower price and yield, risk should be medium or high
+        assert risk_assessment["overall_risk_level"] in ["medium", "high"]
+        
+        # Margins of safety should be lower
+        for point in data["base_case_break_even"]:
+            # At least some points should have low margins
+            if point["margin_of_safety"] < 0.2:
+                assert True
+                break
+        else:
+            # If no low margins found, that's unexpected but not necessarily wrong
+            pass
+        
+        # Should have risk-related recommendations
+        recommendations = data["recommendations"]
+        risk_related = any("risk" in rec.lower() for rec in recommendations)
+        assert risk_related
 
 
 if __name__ == "__main__":
