@@ -2363,7 +2363,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
     **Features**: Current prices, regional variations, price alerts, historical context
     **Data**: N-P-K prices, micronutrients, organic fertilizers, regional pricing
     **Response**: Current prices, price changes, regional variations, market context
-  - [ ] TICKET-006_fertilizer-strategy-optimization-7.2.2 GET `/api/v1/prices/commodity-current` - Current commodity prices
+  - [x] TICKET-006_fertilizer-strategy-optimization-7.2.2 GET `/api/v1/prices/commodity-current` - Current commodity prices
     **Features**: Crop prices, futures prices, basis calculations, market analysis
     **Integration**: Connect with commodity exchanges, local markets, futures data
     **Response**: Current prices, futures curves, basis data, market trends

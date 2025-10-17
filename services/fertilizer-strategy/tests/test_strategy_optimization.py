@@ -1382,6 +1382,300 @@ class TestStrategyOptimization:
             # (though we allow for same costs in simulation)
             assert isinstance(midwest_urea["transportation_cost"], float)
             assert isinstance(west_urea["transportation_cost"], float)
+    
+    def test_get_current_commodity_prices_basic(self):
+        """Test basic commodity prices endpoint"""
+        
+        response = client.get("/api/v1/fertilizer/prices/commodity-current")
+        
+        # Verify response
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Check required fields
+        assert "request_timestamp" in data
+        assert "commodity_prices" in data
+        assert "market_indicators" in data
+        assert "fertilizer_correlations" in data
+        assert "market_summary" in data
+        assert "trading_insights" in data
+        assert "data_freshness" in data
+        
+        # Verify commodity prices structure
+        prices = data["commodity_prices"]
+        assert isinstance(prices, list)
+        assert len(prices) > 0  # Should have default commodity types
+        
+        for price in prices:
+            assert "commodity_type" in price
+            assert "commodity_name" in price
+            assert "current_price" in price
+            assert "price_unit" in price
+            assert "currency" in price
+            assert "last_updated" in price
+            assert "price_change_24h" in price
+            assert "price_change_percent_24h" in price
+            assert "market_status" in price
+            assert "exchange" in price
+            
+            # Verify data types and ranges
+            assert price["current_price"] > 0
+            assert price["currency"] == "USD"
+            assert price["market_status"] in ["open", "closed", "after_hours", "delayed"]
+            assert price["exchange"] in ["CBOT", "CME", "ICE"]
+        
+        # Verify market indicators
+        market_indicators = data["market_indicators"]
+        assert isinstance(market_indicators, dict)
+        
+        for commodity_type, indicators in market_indicators.items():
+            assert "supply_demand_ratio" in indicators
+            assert "inventory_levels" in indicators
+            assert "weather_impact" in indicators
+            assert "export_demand" in indicators
+            assert "seasonal_factor" in indicators
+            
+            # Verify data ranges
+            assert indicators["supply_demand_ratio"] > 0
+            assert indicators["inventory_levels"] in ["low", "moderate", "high"]
+            assert indicators["weather_impact"] in ["favorable", "neutral", "concern", "drought_risk", "flood_risk"]
+            assert indicators["export_demand"] in ["strong", "moderate", "weak", "increasing", "decreasing"]
+            assert indicators["seasonal_factor"] > 0
+        
+        # Verify fertilizer correlations
+        correlations = data["fertilizer_correlations"]
+        assert isinstance(correlations, list)
+        
+        for correlation in correlations:
+            assert "commodity_type" in correlation
+            assert "fertilizer_type" in correlation
+            assert "correlation_coefficient" in correlation
+            assert "correlation_strength" in correlation
+            assert "impact_direction" in correlation
+            
+            # Verify correlation coefficient range
+            assert -1.0 <= correlation["correlation_coefficient"] <= 1.0
+            assert correlation["correlation_strength"] in ["weak", "moderate", "strong"]
+            assert correlation["impact_direction"] in ["positive", "negative"]
+        
+        # Verify market summary
+        market_summary = data["market_summary"]
+        if "average_24h_change" in market_summary:
+            assert "market_sentiment" in market_summary
+            assert market_summary["market_sentiment"] in ["bullish", "bearish", "neutral"]
+            assert "supply_situation" in market_summary
+            assert market_summary["supply_situation"] in ["oversupply", "balanced", "undersupply"]
+        
+        # Verify trading insights
+        trading_insights = data["trading_insights"]
+        assert isinstance(trading_insights, list)
+        
+        # Verify data freshness
+        assert data["data_freshness"] in ["real_time", "recent", "delayed", "moderate", "stale", "no_data", "unknown"]
+    
+    def test_get_current_commodity_prices_specific_types(self):
+        """Test commodity prices for specific commodity types"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/commodity-current?commodity_types=corn&commodity_types=soybean"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have exactly 2 commodity prices
+        prices = data["commodity_prices"]
+        assert len(prices) == 2
+        
+        # Check specific commodity types
+        commodity_types = [price["commodity_type"] for price in prices]
+        assert "corn" in commodity_types
+        assert "soybean" in commodity_types
+        
+        # Verify commodity-specific data
+        for price in prices:
+            if price["commodity_type"] == "corn":
+                assert price["exchange"] == "CBOT"
+                assert "bushel" in price["price_unit"]
+            elif price["commodity_type"] == "soybean":
+                assert price["exchange"] == "CBOT"
+                assert "bushel" in price["price_unit"]
+        
+        # Should have market indicators for both commodities
+        market_indicators = data["market_indicators"]
+        assert "corn" in market_indicators
+        assert "soybean" in market_indicators
+        
+        # Should have correlations for corn and soybean
+        correlations = data["fertilizer_correlations"]
+        corn_correlations = [c for c in correlations if c["commodity_type"] == "corn"]
+        soybean_correlations = [c for c in correlations if c["commodity_type"] == "soybean"]
+        
+        assert len(corn_correlations) > 0
+        assert len(soybean_correlations) > 0
+    
+    def test_get_current_commodity_prices_no_correlations(self):
+        """Test commodity prices without correlations"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/commodity-current"
+            "?commodity_types=wheat"
+            "&include_correlations=false"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have commodity prices
+        assert len(data["commodity_prices"]) == 1
+        assert data["commodity_prices"][0]["commodity_type"] == "wheat"
+        
+        # Should have empty correlations
+        assert len(data["fertilizer_correlations"]) == 0
+        
+        # Should still have other analyses
+        assert "market_indicators" in data
+        assert "market_summary" in data
+        assert "trading_insights" in data
+    
+    def test_get_current_commodity_prices_no_indicators(self):
+        """Test commodity prices without market indicators"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/commodity-current"
+            "?commodity_types=rice"
+            "&include_market_indicators=false"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have commodity prices
+        assert len(data["commodity_prices"]) == 1
+        assert data["commodity_prices"][0]["commodity_type"] == "rice"
+        
+        # Should have empty market indicators
+        assert len(data["market_indicators"]) == 0
+        
+        # Should still have other analyses
+        assert "fertilizer_correlations" in data
+        assert "market_summary" in data
+        assert "trading_insights" in data
+    
+    def test_get_current_commodity_prices_exchange_filter(self):
+        """Test commodity prices with exchange filter"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/commodity-current"
+            "?commodity_types=cotton"
+            "&exchange=ICE"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have cotton price
+        prices = data["commodity_prices"]
+        assert len(prices) == 1
+        cotton_price = prices[0]
+        assert cotton_price["commodity_type"] == "cotton"
+        assert cotton_price["exchange"] == "ICE"
+        assert "lb" in cotton_price["price_unit"]  # Cotton priced per pound
+    
+    def test_get_current_commodity_prices_seasonal_factors(self):
+        """Test seasonal factors in commodity market indicators"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/commodity-current"
+            "?commodity_types=corn"
+            "&commodity_types=soybean"
+            "&commodity_types=wheat"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        market_indicators = data["market_indicators"]
+        
+        # All commodities should have seasonal factors
+        for commodity_type in ["corn", "soybean", "wheat"]:
+            if commodity_type in market_indicators:
+                indicators = market_indicators[commodity_type]
+                assert "seasonal_factor" in indicators
+                seasonal_factor = indicators["seasonal_factor"]
+                assert isinstance(seasonal_factor, float)
+                assert seasonal_factor > 0
+                # Seasonal factors typically range from 0.8 to 1.3
+                assert 0.5 <= seasonal_factor <= 1.5
+    
+    def test_get_current_commodity_prices_correlations_analysis(self):
+        """Test fertilizer-commodity correlations analysis"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/commodity-current"
+            "?commodity_types=corn"
+            "&commodity_types=wheat"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        correlations = data["fertilizer_correlations"]
+        
+        # Should have correlations for corn and wheat
+        corn_correlations = [c for c in correlations if c["commodity_type"] == "corn"]
+        wheat_correlations = [c for c in correlations if c["commodity_type"] == "wheat"]
+        
+        assert len(corn_correlations) > 0
+        assert len(wheat_correlations) > 0
+        
+        # Verify correlation data quality
+        for corr in corn_correlations:
+            assert corr["fertilizer_type"] in ["urea", "DAP", "potash"]
+            # Corn should have strong correlation with nitrogen (urea)
+            if corr["fertilizer_type"] == "urea":
+                assert corr["correlation_strength"] in ["moderate", "strong"]
+        
+        for corr in wheat_correlations:
+            assert corr["fertilizer_type"] in ["urea", "DAP", "potash"]
+            # Wheat should also have strong correlation with nitrogen
+            if corr["fertilizer_type"] == "urea":
+                assert corr["correlation_strength"] in ["moderate", "strong"]
+    
+    def test_get_current_commodity_prices_trading_insights(self):
+        """Test trading insights generation"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/commodity-current"
+            "?commodity_types=corn"
+            "&commodity_types=soybean"
+            "&commodity_types=wheat"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        trading_insights = data["trading_insights"]
+        assert isinstance(trading_insights, list)
+        assert len(trading_insights) > 0
+        
+        # Should have actionable insights
+        for insight in trading_insights:
+            assert isinstance(insight, str)
+            assert len(insight) > 10  # Should be meaningful text
+        
+        # Check for common insight patterns
+        insight_text = " ".join(trading_insights).lower()
+        
+        # Should mention fertilizer strategy
+        fertilizer_related = any(keyword in insight_text for keyword in 
+                               ["fertilizer", "demand", "purchasing", "strategy"])
+        assert fertilizer_related
+        
+        # Should have seasonal or market-related insights
+        market_related = any(keyword in insight_text for keyword in 
+                           ["season", "momentum", "supply", "weather", "correlation"])
+        assert market_related
 
 
 if __name__ == "__main__":
