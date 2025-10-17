@@ -2346,7 +2346,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
     ```
     **Response**: Optimized strategy with rates, timing, methods, economic analysis, environmental impact
     **Performance**: <5s optimization for complex multi-field scenarios
-  - [ ] TICKET-006_fertilizer-strategy-optimization-7.1.2 POST `/api/v1/fertilizer/roi-analysis` - Advanced ROI analysis
+  - [x] TICKET-006_fertilizer-strategy-optimization-7.1.2 POST `/api/v1/fertilizer/roi-analysis` - Advanced ROI analysis
     **Features**: Multi-scenario ROI analysis, risk-adjusted returns, sensitivity analysis
     **Integration**: Connect with price data, yield models, cost analysis
     **Response**: ROI calculations, break-even analysis, risk assessments, scenario comparisons
