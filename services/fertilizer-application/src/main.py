@@ -21,6 +21,7 @@ from src.api.validation_routes import router as validation_router
 from src.api.fertilizer_routes import router as fertilizer_router
 from src.api.advanced_application_routes import router as advanced_application_router
 from src.api.integration_routes import router as integration_router
+from src.api.analytics_routes import router as analytics_router
 from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -88,6 +89,7 @@ app.include_router(validation_router, prefix="/api/v1", tags=["algorithm-validat
 app.include_router(fertilizer_router, prefix="/api/v1", tags=["fertilizer-application-methods"])
 app.include_router(advanced_application_router, prefix="/api/v1", tags=["advanced-application-management"])
 app.include_router(integration_router, tags=["caain-integration"])
+app.include_router(analytics_router, tags=["analytics"])
 
 @app.get("/health")
 async def health_check():
@@ -157,7 +159,15 @@ async def health_check():
             "performance_tracking",
             "continuous_improvement",
             "model_training",
-            "performance_optimization"
+            "performance_optimization",
+            "production_monitoring",
+            "analytics_reporting",
+            "user_engagement_tracking",
+            "recommendation_effectiveness",
+            "agricultural_impact_assessment",
+            "system_performance_analytics",
+            "usage_pattern_analysis",
+            "comprehensive_reporting"
         ]
     }
 

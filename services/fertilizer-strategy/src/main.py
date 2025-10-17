@@ -22,6 +22,7 @@ from .api.price_adjustment_routes import router as price_adjustment_router
 from .api.price_scenario_routes import router as price_scenario_router
 from .api.price_optimization_alert_routes import router as price_optimization_alert_router
 from .api.environmental_routes import router as environmental_router
+from .api.environmental_optimization_routes import router as sustainability_router
 from .database.fertilizer_price_db import initialize_database, shutdown_database
 from .database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from .services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -104,6 +105,7 @@ app.include_router(price_adjustment_router, prefix="/api/v1", tags=["price-adjus
 app.include_router(price_scenario_router, prefix="/api/v1", tags=["price-scenario-modeling"])
 app.include_router(price_optimization_alert_router, prefix="/api/v1", tags=["price-optimization-alerts"])
 app.include_router(environmental_router, prefix="/api/v1", tags=["regulatory-compliance"])
+app.include_router(sustainability_router, prefix="/api/v1", tags=["sustainability-optimization"])
 
 @app.get("/health")
 async def health_check():
@@ -274,7 +276,16 @@ async def health_check():
             "risk_assessment",
             "recommendation_generation",
             "historical_compliance_analysis",
-            "statistical_reporting"
+            "statistical_reporting",
+            "advanced_sustainability_optimization",
+            "multi_objective_optimization",
+            "carbon_footprint_tracking",
+            "trade_off_analysis",
+            "scenario_comparison",
+            "genetic_algorithm_optimization",
+            "gradient_descent_optimization",
+            "environmental_compliance_optimization",
+            "sustainability_certification_support"
         ]
     }
 

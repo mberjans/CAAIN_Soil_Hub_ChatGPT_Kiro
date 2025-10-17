@@ -109,3 +109,26 @@ temp/
 .kiro/steering/byterover-rules.md
 .qoder/rules/byterover-rules.md
 .augment/rules/byterover-rules.md
+
+# Test output files
+test-report.html
+test-results.xml
+**/test-report.html
+**/test-results.xml
+
+# Additional virtual environment variations
+.venv*
+venv*/
+*venv/
+
+# Archive files (compressed venvs, backups)
+*.tar.gz
+*.zip
+*.tar
+*.gz
+
+# Pip error files
+=*
+
+# Migration directories (often auto-generated)
+**/migrations/__pycache__/

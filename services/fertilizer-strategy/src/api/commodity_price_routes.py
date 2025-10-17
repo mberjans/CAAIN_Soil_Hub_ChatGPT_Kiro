@@ -197,9 +197,7 @@ async def get_basis_analysis(
 
 @router.post("/price-ratios", response_model=List[FertilizerCropPriceRatio])
 async def calculate_price_ratios(
-    fertilizer_prices: Dict[str, float] = Query(..., description="Fertilizer prices by product"),
-    crop_prices: Dict[str, float] = Query(..., description="Crop prices by commodity"),
-    region: str = Query("US", description="Geographic region"),
+    request: Dict[str, Any],
     service: CommodityPriceService = Depends(get_commodity_service)
 ):
     """
@@ -216,6 +214,10 @@ async def calculate_price_ratios(
     - Market timing for fertilizer purchases
     """
     try:
+        fertilizer_prices = request.get("fertilizer_prices", {})
+        crop_prices = request.get("crop_prices", {})
+        region = request.get("region", "US")
+        
         ratios = await service.calculate_fertilizer_crop_price_ratios(
             fertilizer_prices, crop_prices, region
         )
