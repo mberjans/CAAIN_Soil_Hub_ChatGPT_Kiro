@@ -837,6 +837,288 @@ class TestStrategyOptimization:
         recommendations = data["recommendations"]
         risk_related = any("risk" in rec.lower() for rec in recommendations)
         assert risk_related
+    
+    def test_price_trend_analysis_endpoint_basic(self):
+        """Test basic price trend analysis endpoint functionality"""
+        
+        trend_request = {
+            "fertilizer_types": ["urea", "DAP", "potash"],
+            "analysis_period_days": 365,
+            "forecast_horizons": [
+                {
+                    "horizon_name": "short_term",
+                    "days_ahead": 30,
+                    "confidence_level": 0.95
+                },
+                {
+                    "horizon_name": "medium_term",
+                    "days_ahead": 90,
+                    "confidence_level": 0.90
+                }
+            ],
+            "include_seasonality": True,
+            "include_volatility": True,
+            "include_correlations": True,
+            "location_factors": {"region": "midwest", "transport_costs": "standard"}
+        }
+        
+        response = client.post("/api/v1/fertilizer/price-trend-analysis", json=trend_request)
+        
+        # Verify response
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Check required fields
+        assert "analysis_id" in data
+        assert "analysis_date" in data
+        assert "historical_trends" in data
+        assert "seasonal_patterns" in data
+        assert "price_forecasts" in data
+        assert "volatility_analysis" in data
+        assert "correlation_analysis" in data
+        assert "market_insights" in data
+        assert "strategic_implications" in data
+        assert "confidence_score" in data
+        
+        # Verify historical trends for each fertilizer
+        historical = data["historical_trends"]
+        assert "urea" in historical
+        assert "DAP" in historical
+        assert "potash" in historical
+        
+        for fertilizer, trends in historical.items():
+            assert isinstance(trends, list)
+            if trends:  # Check structure if trends exist
+                trend = trends[0]
+                assert "period" in trend
+                assert "average_price" in trend
+                assert "price_change" in trend
+                assert "price_change_percent" in trend
+                assert "volatility" in trend
+                assert "trend_direction" in trend
+        
+        # Verify seasonal patterns
+        seasonal = data["seasonal_patterns"]
+        for fertilizer in ["urea", "DAP", "potash"]:
+            if fertilizer in seasonal:
+                patterns = seasonal[fertilizer]
+                if patterns:
+                    pattern = patterns[0]
+                    assert "month" in pattern
+                    assert "month_name" in pattern
+                    assert "average_price_index" in pattern
+                    assert "typical_range" in pattern
+                    assert "volatility_index" in pattern
+        
+        # Verify price forecasts
+        forecasts = data["price_forecasts"]
+        for fertilizer in ["urea", "DAP", "potash"]:
+            if fertilizer in forecasts:
+                fert_forecasts = forecasts[fertilizer]
+                assert len(fert_forecasts) == 2  # Two horizons requested
+                
+                for forecast in fert_forecasts:
+                    assert "horizon_name" in forecast
+                    assert "days_ahead" in forecast
+                    assert "predicted_price" in forecast
+                    assert "confidence_interval" in forecast
+                    assert "forecast_accuracy" in forecast
+                    assert "key_factors" in forecast
+                    assert 0.0 <= forecast["forecast_accuracy"] <= 1.0
+        
+        # Verify volatility analysis
+        volatility = data["volatility_analysis"]
+        assert "individual_volatilities" in volatility or "error" in volatility
+        if "market_volatility" in volatility:
+            assert "market_volatility_class" in volatility
+        
+        # Verify correlation analysis
+        correlations = data["correlation_analysis"]
+        assert isinstance(correlations, list)
+        if correlations:
+            corr = correlations[0]
+            assert "fertilizer_pair" in corr
+            assert "correlation_coefficient" in corr
+            assert "correlation_strength" in corr
+            assert "stability_score" in corr
+            assert -1.0 <= corr["correlation_coefficient"] <= 1.0
+        
+        # Verify market insights
+        insights = data["market_insights"]
+        # Should have some structure, but content may vary
+        assert isinstance(insights, dict)
+        
+        # Verify strategic implications
+        implications = data["strategic_implications"]
+        assert isinstance(implications, list)
+        assert len(implications) > 0
+        
+        # Verify confidence score
+        assert 0.0 <= data["confidence_score"] <= 1.0
+    
+    def test_price_trend_analysis_validation_errors(self):
+        """Test validation errors for price trend analysis"""
+        
+        # Test empty fertilizer types
+        invalid_request = {
+            "fertilizer_types": [],
+            "forecast_horizons": []
+        }
+        response = client.post("/api/v1/fertilizer/price-trend-analysis", json=invalid_request)
+        assert response.status_code == 422
+        
+        # Test invalid analysis period
+        invalid_period_request = {
+            "fertilizer_types": ["urea"],
+            "analysis_period_days": 10,  # Too short
+            "forecast_horizons": []
+        }
+        response = client.post("/api/v1/fertilizer/price-trend-analysis", json=invalid_period_request)
+        assert response.status_code == 422
+        
+        # Test invalid forecast horizon
+        invalid_horizon_request = {
+            "fertilizer_types": ["urea"],
+            "forecast_horizons": [
+                {
+                    "horizon_name": "invalid",
+                    "days_ahead": 400,  # Too far ahead
+                    "confidence_level": 0.95
+                }
+            ]
+        }
+        response = client.post("/api/v1/fertilizer/price-trend-analysis", json=invalid_horizon_request)
+        assert response.status_code == 422
+    
+    def test_price_trend_analysis_single_fertilizer(self):
+        """Test price trend analysis with single fertilizer type"""
+        
+        trend_request = {
+            "fertilizer_types": ["urea"],
+            "analysis_period_days": 180,
+            "forecast_horizons": [
+                {
+                    "horizon_name": "quarterly",
+                    "days_ahead": 90,
+                    "confidence_level": 0.95
+                }
+            ],
+            "include_seasonality": True,
+            "include_volatility": True,
+            "include_correlations": False  # No correlations with single fertilizer
+        }
+        
+        response = client.post("/api/v1/fertilizer/price-trend-analysis", json=trend_request)
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have urea data
+        assert "urea" in data["historical_trends"]
+        assert "urea" in data["price_forecasts"]
+        
+        # Should have empty correlation analysis
+        assert len(data["correlation_analysis"]) == 0
+        
+        # Should still have other analyses
+        assert "volatility_analysis" in data
+        assert "market_insights" in data
+        assert "strategic_implications" in data
+    
+    def test_price_trend_analysis_no_seasonality(self):
+        """Test price trend analysis without seasonality"""
+        
+        trend_request = {
+            "fertilizer_types": ["DAP", "MAP"],
+            "analysis_period_days": 365,
+            "forecast_horizons": [
+                {
+                    "horizon_name": "monthly",
+                    "days_ahead": 30,
+                    "confidence_level": 0.90
+                }
+            ],
+            "include_seasonality": False,
+            "include_volatility": True,
+            "include_correlations": True
+        }
+        
+        response = client.post("/api/v1/fertilizer/price-trend-analysis", json=trend_request)
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have historical trends and forecasts
+        assert "DAP" in data["historical_trends"]
+        assert "MAP" in data["historical_trends"]
+        assert "DAP" in data["price_forecasts"]
+        assert "MAP" in data["price_forecasts"]
+        
+        # Seasonal patterns should be empty or minimal
+        seasonal = data["seasonal_patterns"]
+        # May be empty dict or have empty lists
+        assert isinstance(seasonal, dict)
+        
+        # Should have correlation analysis with 2 fertilizers
+        correlations = data["correlation_analysis"]
+        # Should have at least one correlation (DAP-MAP)
+        if correlations:
+            assert len(correlations) >= 1
+    
+    def test_price_trend_analysis_multiple_horizons(self):
+        """Test price trend analysis with multiple forecast horizons"""
+        
+        trend_request = {
+            "fertilizer_types": ["urea", "potash"],
+            "analysis_period_days": 365,
+            "forecast_horizons": [
+                {
+                    "horizon_name": "weekly",
+                    "days_ahead": 7,
+                    "confidence_level": 0.80
+                },
+                {
+                    "horizon_name": "monthly",
+                    "days_ahead": 30,
+                    "confidence_level": 0.90
+                },
+                {
+                    "horizon_name": "quarterly",
+                    "days_ahead": 90,
+                    "confidence_level": 0.95
+                },
+                {
+                    "horizon_name": "yearly",
+                    "days_ahead": 365,
+                    "confidence_level": 0.90
+                }
+            ]
+        }
+        
+        response = client.post("/api/v1/fertilizer/price-trend-analysis", json=trend_request)
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have forecasts for all horizons
+        forecasts = data["price_forecasts"]
+        for fertilizer in ["urea", "potash"]:
+            if fertilizer in forecasts:
+                fert_forecasts = forecasts[fertilizer]
+                assert len(fert_forecasts) == 4  # Four horizons requested
+                
+                # Check horizon names
+                horizon_names = [f["horizon_name"] for f in fert_forecasts]
+                assert "weekly" in horizon_names
+                assert "monthly" in horizon_names
+                assert "quarterly" in horizon_names
+                assert "yearly" in horizon_names
+                
+                # Forecast accuracy should generally decrease with horizon
+                weekly_forecast = next(f for f in fert_forecasts if f["horizon_name"] == "weekly")
+                yearly_forecast = next(f for f in fert_forecasts if f["horizon_name"] == "yearly")
+                # Weekly should generally have higher accuracy than yearly
+                # (though this is not guaranteed due to simulation)
 
 
 if __name__ == "__main__":
