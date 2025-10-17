@@ -6,26 +6,27 @@ import logging
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 
-from .api.price_routes import router as price_router
-from .api.commodity_price_routes import router as commodity_router
-from .api.price_impact_routes import router as price_impact_router
-from .api.roi_routes import router as roi_router
-from .api.budget_constraint_routes import router as budget_constraint_router
-from .api.break_even_routes import router as break_even_router
-from .api.yield_goal_routes import router as yield_goal_router
-from .api.yield_response_routes import router as yield_response_router
-from .api.yield_goal_optimization_routes import router as yield_goal_optimization_router
-from .api.nutrient_optimization_routes import router as nutrient_optimization_router
-from .api.timing_optimization_routes import router as timing_optimization_router
-from .api.application_method_optimization_routes import router as application_method_optimization_router
-from .api.price_adjustment_routes import router as price_adjustment_router
-from .api.price_scenario_routes import router as price_scenario_router
-from .api.price_optimization_alert_routes import router as price_optimization_alert_router
-from .api.environmental_routes import router as environmental_router
-from .api.environmental_optimization_routes import router as sustainability_router
-from .database.fertilizer_price_db import initialize_database, shutdown_database
-from .database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
-from .services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
+from api.price_routes import router as price_router
+from api.commodity_price_routes import router as commodity_router
+from api.price_impact_routes import router as price_impact_router
+from api.roi_routes import router as roi_router
+from api.budget_constraint_routes import router as budget_constraint_router
+from api.break_even_routes import router as break_even_router
+from api.yield_goal_routes import router as yield_goal_router
+from api.yield_response_routes import router as yield_response_router
+from api.yield_goal_optimization_routes import router as yield_goal_optimization_router
+from api.nutrient_optimization_routes import router as nutrient_optimization_router
+from api.timing_optimization_routes import router as timing_optimization_router
+from api.application_method_optimization_routes import router as application_method_optimization_router
+from api.price_adjustment_routes import router as price_adjustment_router
+from api.price_scenario_routes import router as price_scenario_router
+from api.price_optimization_alert_routes import router as price_optimization_alert_router
+from api.environmental_routes import router as environmental_router
+from api.environmental_optimization_routes import router as sustainability_router
+from api.strategy_routes import router as strategy_router
+from database.fertilizer_price_db import initialize_database, shutdown_database
+from database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
+from services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
 
 load_dotenv()
 
@@ -106,6 +107,7 @@ app.include_router(price_scenario_router, prefix="/api/v1", tags=["price-scenari
 app.include_router(price_optimization_alert_router, prefix="/api/v1", tags=["price-optimization-alerts"])
 app.include_router(environmental_router, prefix="/api/v1", tags=["regulatory-compliance"])
 app.include_router(sustainability_router, prefix="/api/v1", tags=["sustainability-optimization"])
+app.include_router(strategy_router, prefix="/api/v1", tags=["strategy-optimization"])
 
 @app.get("/health")
 async def health_check():
