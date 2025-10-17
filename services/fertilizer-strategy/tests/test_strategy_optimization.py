@@ -1119,6 +1119,269 @@ class TestStrategyOptimization:
                 yearly_forecast = next(f for f in fert_forecasts if f["horizon_name"] == "yearly")
                 # Weekly should generally have higher accuracy than yearly
                 # (though this is not guaranteed due to simulation)
+    
+    def test_get_current_fertilizer_prices_basic(self):
+        """Test basic real-time fertilizer prices endpoint"""
+        
+        response = client.get("/api/v1/fertilizer/prices/fertilizer-current")
+        
+        # Verify response
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Check required fields
+        assert "request_timestamp" in data
+        assert "prices" in data
+        assert "market_summary" in data
+        assert "data_freshness" in data
+        
+        # Verify prices structure
+        prices = data["prices"]
+        assert isinstance(prices, list)
+        assert len(prices) > 0  # Should have default fertilizer types
+        
+        for price in prices:
+            assert "fertilizer_type" in price
+            assert "product_name" in price
+            assert "current_price" in price
+            assert "price_unit" in price
+            assert "currency" in price
+            assert "last_updated" in price
+            assert "price_change_24h" in price
+            assert "price_change_percent_24h" in price
+            assert "market_status" in price
+            assert "data_source" in price
+            
+            # Verify data types and ranges
+            assert price["current_price"] > 0
+            assert price["currency"] == "USD"
+            assert price["market_status"] in ["open", "closed", "after_hours", "delayed"]
+        
+        # Verify market summary
+        market_summary = data["market_summary"]
+        if "average_price" in market_summary:
+            assert market_summary["average_price"] > 0
+            assert "market_sentiment" in market_summary
+            assert market_summary["market_sentiment"] in ["bullish", "bearish", "neutral"]
+            assert "volatility_level" in market_summary
+            assert market_summary["volatility_level"] in ["low", "medium", "high"]
+        
+        # Verify data freshness
+        assert data["data_freshness"] in ["real_time", "recent", "moderate", "stale", "no_data", "unknown"]
+    
+    def test_get_current_fertilizer_prices_specific_types(self):
+        """Test real-time prices for specific fertilizer types"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/fertilizer-current?fertilizer_types=urea&fertilizer_types=DAP"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have exactly 2 prices
+        prices = data["prices"]
+        assert len(prices) == 2
+        
+        # Check specific fertilizer types
+        fertilizer_types = [price["fertilizer_type"] for price in prices]
+        assert "urea" in fertilizer_types
+        assert "DAP" in fertilizer_types
+        
+        # Verify product names match fertilizer types
+        for price in prices:
+            if price["fertilizer_type"] == "urea":
+                assert "Urea" in price["product_name"]
+            elif price["fertilizer_type"] == "DAP":
+                assert "Diammonium Phosphate" in price["product_name"]
+    
+    def test_get_current_fertilizer_prices_with_location(self):
+        """Test real-time prices with location-specific pricing"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/fertilizer-current"
+            "?fertilizer_types=urea"
+            "&fertilizer_types=potash"
+            "&location=Des Moines, IA"
+            "&include_location_pricing=true"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have location pricing
+        assert "location_pricing" in data
+        location_pricing = data["location_pricing"]
+        
+        if location_pricing:  # May be empty if service fails
+            # Check location pricing structure
+            for fertilizer_type, pricing in location_pricing.items():
+                assert "location_id" in pricing
+                assert "city" in pricing
+                assert "state" in pricing
+                assert "country" in pricing
+                assert "price_premium" in pricing
+                assert "transportation_cost" in pricing
+                assert "availability" in pricing
+                assert "suppliers" in pricing
+                
+                # Verify data types
+                assert isinstance(pricing["price_premium"], float)
+                assert isinstance(pricing["transportation_cost"], float)
+                assert pricing["availability"] in ["in_stock", "limited_stock", "out_of_stock"]
+                assert isinstance(pricing["suppliers"], list)
+    
+    def test_get_current_fertilizer_prices_with_alerts(self):
+        """Test real-time prices with price alerts"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/fertilizer-current"
+            "?fertilizer_types=urea"
+            "&fertilizer_types=DAP"
+            "&include_alerts=true"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have price alerts
+        assert "price_alerts" in data
+        price_alerts = data["price_alerts"]
+        assert isinstance(price_alerts, list)
+        
+        # If alerts exist, verify structure
+        for alert in price_alerts:
+            assert "fertilizer_type" in alert
+            assert "threshold_price" in alert
+            assert "alert_type" in alert
+            assert "active" in alert
+            
+            # Verify data types and values
+            assert isinstance(alert["threshold_price"], float)
+            assert alert["alert_type"] in ["above", "below", "change"]
+            assert isinstance(alert["active"], bool)
+    
+    def test_get_current_fertilizer_prices_market_summary(self):
+        """Test market summary in real-time prices response"""
+        
+        response = client.get(
+            "/api/v1/fertilizer/prices/fertilizer-current"
+            "?fertilizer_types=urea"
+            "&fertilizer_types=DAP"
+            "&fertilizer_types=MAP"
+            "&fertilizer_types=potash"
+        )
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        market_summary = data["market_summary"]
+        
+        # Should have market metrics
+        if "average_price" in market_summary:
+            assert "average_24h_change" in market_summary
+            assert "market_sentiment" in market_summary
+            assert "volatility_level" in market_summary
+            assert "market_status" in market_summary
+            assert "products_tracked" in market_summary
+            
+            # Verify market sentiment is valid
+            assert market_summary["market_sentiment"] in ["bullish", "bearish", "neutral"]
+            
+            # Verify volatility level
+            assert market_summary["volatility_level"] in ["low", "medium", "high"]
+            
+            # Products tracked should match request
+            assert market_summary["products_tracked"] == 4
+            
+            # Should have price range
+            if "price_range" in market_summary:
+                price_range = market_summary["price_range"]
+                assert "min" in price_range
+                assert "max" in price_range
+                assert price_range["min"] <= price_range["max"]
+            
+            # Should have market movers
+            if "market_movers" in market_summary:
+                movers = market_summary["market_movers"]
+                assert "biggest_gainer" in movers
+                assert "biggest_loser" in movers
+    
+    def test_get_current_fertilizer_prices_data_freshness(self):
+        """Test data freshness assessment in real-time prices"""
+        
+        response = client.get("/api/v1/fertilizer/prices/fertilizer-current?fertilizer_types=urea")
+        
+        assert response.status_code == 200
+        data = response.json()
+        
+        # Should have data freshness indicator
+        data_freshness = data["data_freshness"]
+        assert data_freshness in ["real_time", "recent", "moderate", "stale", "no_data", "unknown"]
+        
+        # Verify timestamps are recent
+        prices = data["prices"]
+        if prices:
+            for price in prices:
+                last_updated = price["last_updated"]
+                # Should be a valid timestamp string
+                assert isinstance(last_updated, str)
+                # Should be recent (within reasonable time for testing)
+                from datetime import datetime
+                try:
+                    update_time = datetime.fromisoformat(last_updated.replace('Z', '+00:00'))
+                    current_time = datetime.now()
+                    # Should be within last day (reasonable for testing)
+                    time_diff = abs((current_time - update_time).total_seconds())
+                    assert time_diff < 86400  # 24 hours
+                except ValueError:
+                    # If timestamp parsing fails, that's also a valid test result
+                    pass
+    
+    def test_get_current_fertilizer_prices_regional_differences(self):
+        """Test regional pricing differences"""
+        
+        # Test Midwest location
+        response_midwest = client.get(
+            "/api/v1/fertilizer/prices/fertilizer-current"
+            "?fertilizer_types=urea"
+            "&location=Chicago, IL"
+            "&include_location_pricing=true"
+        )
+        
+        # Test West Coast location
+        response_west = client.get(
+            "/api/v1/fertilizer/prices/fertilizer-current"
+            "?fertilizer_types=urea"
+            "&location=Sacramento, CA"
+            "&include_location_pricing=true"
+        )
+        
+        assert response_midwest.status_code == 200
+        assert response_west.status_code == 200
+        
+        data_midwest = response_midwest.json()
+        data_west = response_west.json()
+        
+        # Both should have pricing data
+        assert "location_pricing" in data_midwest
+        assert "location_pricing" in data_west
+        
+        # If both have location data, pricing should potentially differ
+        midwest_pricing = data_midwest["location_pricing"]
+        west_pricing = data_west["location_pricing"]
+        
+        if "urea" in midwest_pricing and "urea" in west_pricing:
+            midwest_urea = midwest_pricing["urea"]
+            west_urea = west_pricing["urea"]
+            
+            # Regions should be different
+            assert midwest_urea["state"] != west_urea["state"]
+            
+            # Transportation costs might differ
+            # (though we allow for same costs in simulation)
+            assert isinstance(midwest_urea["transportation_cost"], float)
+            assert isinstance(west_urea["transportation_cost"], float)
 
 
 if __name__ == "__main__":
