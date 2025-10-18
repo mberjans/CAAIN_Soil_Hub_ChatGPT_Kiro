@@ -44,6 +44,246 @@
             background: #f8f9fa;
         }
         .recommended { border-left: 4px solid #28a745; background: #d4edda; }
+        .advanced-tool-card {
+            background: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+            border: 1px solid rgba(40, 167, 69, 0.15);
+            overflow: hidden;
+        }
+        .modification-toolbar {
+            background: rgba(40, 167, 69, 0.08);
+            border: 1px solid rgba(40, 167, 69, 0.25);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+        }
+        .tool-button {
+            border-radius: 999px;
+            border: 1px solid rgba(25, 135, 84, 0.4);
+            background: #ffffff;
+            color: #198754;
+            font-weight: 600;
+            padding: 0.35rem 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .tool-button:hover {
+            background: rgba(25, 135, 84, 0.12);
+            box-shadow: 0 3px 10px rgba(25, 135, 84, 0.15);
+        }
+        .tool-button.active {
+            background: #198754;
+            color: #ffffff;
+        }
+        .real-time-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(25, 135, 84, 0.16);
+            border-radius: 999px;
+            padding: 0.25rem 0.75rem;
+            color: #0f5132;
+            font-weight: 600;
+        }
+        .real-time-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 999px;
+            background: #198754;
+            position: relative;
+        }
+        .real-time-dot::after {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            border-radius: 999px;
+            border: 2px solid rgba(25, 135, 84, 0.4);
+            top: -6px;
+            left: -6px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% {
+                transform: scale(0.95);
+                opacity: 0.7;
+            }
+            70% {
+                transform: scale(1.2);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(0.95);
+                opacity: 0;
+            }
+        }
+        .strategy-timeline {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            min-height: 120px;
+            padding: 0.75rem;
+            background: #f8fff8;
+            border-radius: 12px;
+            border: 1px dashed rgba(25, 135, 84, 0.4);
+        }
+        .strategy-step {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid rgba(52, 58, 64, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+            padding: 0.75rem;
+            min-width: 180px;
+            cursor: grab;
+            position: relative;
+            transition: border 0.2s ease, transform 0.2s ease;
+        }
+        .strategy-step.dragging {
+            opacity: 0.75;
+            transform: rotate(2deg);
+            border-color: rgba(25, 135, 84, 0.6);
+        }
+        .strategy-step .drag-handle {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: #ffffff;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(52, 58, 64, 0.12);
+            color: #6c757d;
+            cursor: grab;
+        }
+        .strategy-step h6 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: #198754;
+            margin-bottom: 0.35rem;
+        }
+        .strategy-step .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #495057;
+            margin-bottom: 0.15rem;
+        }
+        .strategy-step .impact-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(13, 110, 253, 0.1);
+            color: #0d6efd;
+            border-radius: 999px;
+            padding: 0.25rem 0.6rem;
+            font-size: 0.75rem;
+        }
+        .constraint-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            border: 1px solid rgba(108, 117, 125, 0.25);
+            padding: 1rem;
+        }
+        .constraint-panel h5 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #0f5132;
+        }
+        .constraint-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+        .constraint-item:last-child {
+            margin-bottom: 0;
+        }
+        .constraint-item label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .live-metrics {
+            margin-top: 1.25rem;
+            background: rgba(13, 110, 253, 0.08);
+            border-radius: 12px;
+            padding: 1rem;
+        }
+        .live-metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            margin-bottom: 0.65rem;
+        }
+        .live-metric:last-child {
+            margin-bottom: 0;
+        }
+        .live-metric .label {
+            font-size: 0.9rem;
+            color: #0f5132;
+            font-weight: 600;
+        }
+        .live-metric .value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #0d6efd;
+        }
+        .analysis-card {
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            background: #ffffff;
+            padding: 1rem;
+            margin-top: 1rem;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+        }
+        .analysis-card h6 {
+            font-weight: 700;
+            color: #0f5132;
+            margin-bottom: 0.75rem;
+        }
+        .analysis-list {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 0;
+        }
+        .analysis-list li {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.4rem 0;
+            font-size: 0.9rem;
+            color: #495057;
+        }
+        .analysis-list li i {
+            color: #198754;
+        }
+        .slider-input {
+            accent-color: #198754;
+        }
+        .adjuster-row {
+            margin-bottom: 1rem;
+        }
+        .adjuster-row:last-child {
+            margin-bottom: 0;
+        }
+        .adjuster-row label {
+            font-weight: 600;
+            color: #495057;
+        }
+        .adjuster-value {
+            font-weight: 700;
+            color: #198754;
+        }
     </style>
 </head>
 <body>
@@ -258,6 +498,135 @@
                 <h3><i class="fas fa-balance-scale"></i> Strategy Comparison</h3>
                 <div id="comparisonCards">
                     <!-- Dynamic content will be inserted here -->
+                </div>
+            </div>
+        </div>
+        
+        <!-- Advanced Strategy Modification Tools -->
+        <div id="modificationToolkit" class="row mt-4" style="display: none;">
+            <div class="col-lg-8">
+                <div class="advanced-tool-card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tools"></i> Interactive Strategy Builder
+                        </h5>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="real-time-chip">
+                                <span class="real-time-dot"></span>
+                                Live optimization active
+                            </span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="modification-toolbar">
+                            <button class="tool-button" id="optimizeNowBtn">
+                                <i class="fas fa-rocket"></i> Re-Optimize Strategy
+                            </button>
+                            <button class="tool-button" id="simulateImpactBtn">
+                                <i class="fas fa-chart-area"></i> Simulate Impact
+                            </button>
+                            <button class="tool-button" id="restoreDefaultsBtn">
+                                <i class="fas fa-undo-alt"></i> Reset Modifications
+                            </button>
+                            <button class="tool-button" id="saveStrategyBtn">
+                                <i class="fas fa-save"></i> Save Custom Version
+                            </button>
+                            <span class="text-muted small">
+                                Drag and drop application events to reorder. Adjust rates and timing to instantly recalculate ROI.
+                            </span>
+                        </div>
+                        
+                        <div class="strategy-timeline" id="strategyTimeline">
+                            <!-- Strategy steps will be rendered here -->
+                        </div>
+                        
+                        <div class="analysis-card">
+                            <h6><i class="fas fa-clipboard-check"></i> Modification Insights</h6>
+                            <ul class="analysis-list" id="modificationInsights">
+                                <li><i class="fas fa-check-circle"></i> Adjust rates or timing to see profit, cost, and environmental impact updates instantly.</li>
+                                <li><i class="fas fa-database"></i> Live validation checks nutrient balance and regulatory compliance.</li>
+                                <li><i class="fas fa-bell"></i> Critical constraint breaches trigger alerts requiring approval.</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="advanced-tool-card">
+                    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 text-success">
+                            <i class="fas fa-sliders-h"></i> Precision Adjusters
+                        </h5>
+                        <span class="badge bg-success" id="validationStatusBadge">Validated</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="constraint-panel mb-3">
+                            <h5><i class="fas fa-balance-scale"></i> Constraints</h5>
+                            <div class="constraint-item">
+                                <label for="maxRateInput">Max Rate (lbs/ac)</label>
+                                <input type="number" id="maxRateInput" class="form-control" min="0" value="220">
+                            </div>
+                            <div class="constraint-item">
+                                <label for="environmentToggle" class="form-check-label">Protect Waterways</label>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="environmentToggle" checked>
+                                </div>
+                            </div>
+                            <div class="constraint-item">
+                                <label for="riskSelect">Risk Tolerance</label>
+                                <select id="riskSelect" class="form-select">
+                                    <option value="conservative">Conservative</option>
+                                    <option value="moderate" selected>Moderate</option>
+                                    <option value="aggressive">Aggressive</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="adjuster-row">
+                            <label for="nitrogenAdjuster">Nitrogen Adjustment</label>
+                            <input type="range" class="form-range slider-input" min="-30" max="30" value="0" id="nitrogenAdjuster">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">-30 lbs/ac</small>
+                                <span class="adjuster-value" id="nitrogenAdjusterValue">0 lbs/ac</span>
+                                <small class="text-muted">+30 lbs/ac</small>
+                            </div>
+                        </div>
+                        
+                        <div class="adjuster-row">
+                            <label for="phosphorusAdjuster">Phosphorus Adjustment</label>
+                            <input type="range" class="form-range slider-input" min="-20" max="20" value="0" id="phosphorusAdjuster">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">-20 lbs/ac</small>
+                                <span class="adjuster-value" id="phosphorusAdjusterValue">0 lbs/ac</span>
+                                <small class="text-muted">+20 lbs/ac</small>
+                            </div>
+                        </div>
+                        
+                        <div class="adjuster-row">
+                            <label for="potassiumAdjuster">Potassium Adjustment</label>
+                            <input type="range" class="form-range slider-input" min="-20" max="20" value="0" id="potassiumAdjuster">
+                            <div class="d-flex justify-content-between">
+                                <small class="text-muted">-20 lbs/ac</small>
+                                <span class="adjuster-value" id="potassiumAdjusterValue">0 lbs/ac</span>
+                                <small class="text-muted">+20 lbs/ac</small>
+                            </div>
+                        </div>
+                        
+                        <div class="live-metrics">
+                            <div class="live-metric">
+                                <span class="label">Updated ROI</span>
+                                <span class="value" id="liveRoiValue">-</span>
+                            </div>
+                            <div class="live-metric">
+                                <span class="label">Total Cost</span>
+                                <span class="value" id="liveCostValue">-</span>
+                            </div>
+                            <div class="live-metric">
+                                <span class="label">Nutrient Balance</span>
+                                <span class="value" id="liveBalanceValue">-</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
