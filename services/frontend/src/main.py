@@ -166,6 +166,17 @@ async def mobile_fertilizer_application_page(request: Request):
     else:
         return HTMLResponse("<h1>Mobile Fertilizer Application - Coming Soon</h1>")
 
+@app.get("/mobile-fertilizer-strategy", response_class=HTMLResponse)
+async def mobile_fertilizer_strategy_page(request: Request):
+    """Mobile-optimized fertilizer strategy planning interface"""
+    if templates:
+        return templates.TemplateResponse("mobile_fertilizer_strategy.html", {
+            "request": request,
+            "title": "Mobile Fertilizer Strategy"
+        })
+    else:
+        return HTMLResponse("<h1>Mobile Fertilizer Strategy - Coming Soon</h1>")
+
 @app.get("/goal-prioritization", response_class=HTMLResponse)
 async def goal_prioritization_page(request: Request):
     """Goal prioritization interface page"""

@@ -161,6 +161,15 @@ async def mobile_ph_management(request: Request):
     })
 
 
+@router.get("/mobile-fertilizer-strategy", response_class=HTMLResponse)
+async def mobile_fertilizer_strategy(request: Request):
+    """Serve the mobile fertilizer strategy planning page."""
+    return templates.TemplateResponse("mobile_fertilizer_strategy.html", {
+        "request": request,
+        "title": "Mobile Fertilizer Strategy"
+    })
+
+
 @router.get("/mobile-rotation-planning", response_class=HTMLResponse)
 async def mobile_rotation_planning(request: Request):
     """Serve the mobile rotation planning page."""
