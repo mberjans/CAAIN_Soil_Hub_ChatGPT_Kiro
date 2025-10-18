@@ -15,6 +15,7 @@ from ..database.strategy_management_db import (
     StrategyVersionRecord,
 )
 from ..models.strategy_management_models import (
+    FieldStrategyData,
     PerformanceMetric,
     SaveStrategyRequest,
     StrategyComparisonMetric,
@@ -23,6 +24,7 @@ from ..models.strategy_management_models import (
     StrategyPerformanceRequest,
     StrategyPerformanceResponse,
     StrategySaveResponse,
+    StrategySharingSettings,
     StrategySummary,
     StrategyUpdateRequest,
     StrategyUpdateResponse,
@@ -127,8 +129,90 @@ class StrategyManagementService:
         user_id: str,
     ) -> StrategyUpdateResponse:
         """Update an existing strategy with a new version."""
-        # Placeholder for upcoming implementation
-        raise NotImplementedError("Strategy update is not implemented yet")
+        if not strategy_id or not strategy_id.strip():
+            raise ValueError("Strategy identifier cannot be blank")
+
+        if not user_id or not user_id.strip():
+            raise ValueError("User identifier cannot be blank")
+
+        strategy_record = await asyncio.to_thread(self.repository.fetch_strategy, strategy_id)
+        if strategy_record is None:
+            raise LookupError(f"Strategy not found: {strategy_id}")
+
+        version_record = await asyncio.to_thread(self.repository.fetch_latest_version, strategy_id)
+        if version_record is None:
+            raise LookupError(f"Strategy version data unavailable for: {strategy_id}")
+
+        updated_name = strategy_record.strategy_name
+        if request.strategy_name:
+            updated_name = request.strategy_name
+
+        updated_description = strategy_record.description
+        if request.description:
+            updated_description = request.description
+
+        field_models = self._resolve_field_strategies(request, version_record)
+
+        economic_summary = {}
+        if isinstance(version_record.economic_summary, dict):
+            economic_summary = version_record.economic_summary
+        if request.economic_summary is not None:
+            economic_summary = request.economic_summary
+
+        environmental_metrics = {}
+        if isinstance(version_record.environmental_metrics, dict):
+            environmental_metrics = version_record.environmental_metrics
+        if request.environmental_metrics is not None:
+            environmental_metrics = request.environmental_metrics
+
+        roi_estimate = version_record.roi_estimate
+        if request.roi_estimate is not None:
+            roi_estimate = request.roi_estimate
+
+        metadata_payload = {}
+        if isinstance(strategy_record.metadata_payload, dict):
+            metadata_payload = strategy_record.metadata_payload
+        if request.metadata is not None:
+            metadata_payload = request.metadata
+
+        tags_list: List[str] = []
+        if isinstance(strategy_record.tags, list):
+            for tag in strategy_record.tags:
+                tags_list.append(tag)
+
+        sharing_kwargs: Dict[str, Any] = {}
+        if isinstance(strategy_record.sharing_settings, dict):
+            if "is_public" in strategy_record.sharing_settings:
+                sharing_kwargs["is_public"] = strategy_record.sharing_settings.get("is_public")
+            if "shared_with" in strategy_record.sharing_settings:
+                sharing_kwargs["shared_with"] = strategy_record.sharing_settings.get("shared_with")
+        sharing_settings = StrategySharingSettings(**sharing_kwargs) if sharing_kwargs else StrategySharingSettings()
+
+        save_request = SaveStrategyRequest(
+            strategy_name=updated_name,
+            description=updated_description,
+            user_id=user_id,
+            farm_id=strategy_record.farm_id,
+            is_template=strategy_record.is_template,
+            tags=tags_list,
+            sharing=sharing_settings,
+            field_strategies=field_models,
+            economic_summary=economic_summary,
+            environmental_metrics=environmental_metrics,
+            roi_estimate=roi_estimate,
+            metadata=metadata_payload,
+            strategy_id=strategy_id,
+            version_notes=request.version_notes,
+        )
+
+        save_response = await self.save_strategy(save_request)
+
+        update_response = StrategyUpdateResponse(
+            strategy_id=save_response.strategy_id,
+            latest_version=save_response.latest_version,
+            message="Strategy updated successfully",
+        )
+        return update_response
 
     async def track_performance(
         self,
@@ -182,6 +266,41 @@ class StrategyManagementService:
                     else:
                         aggregated[metric_name] = metric_value
         return aggregated
+
+    def _resolve_field_strategies(
+        self,
+        request: StrategyUpdateRequest,
+        version_record: StrategyVersionRecord,
+    ) -> List[FieldStrategyData]:
+        """Determine field strategies to persist for update."""
+        if request.field_strategies is not None:
+            models = self._convert_field_entries_to_models(request.field_strategies)
+            if models:
+                return models
+        field_entries: List[Any] = []
+        if isinstance(version_record.field_strategies, list):
+            index = 0
+            while index < len(version_record.field_strategies):
+                field_entries.append(version_record.field_strategies[index])
+                index += 1
+        models = self._convert_field_entries_to_models(field_entries)
+        if not models:
+            raise ValueError("At least one field strategy must be provided")
+        return models
+
+    def _convert_field_entries_to_models(self, entries: List[Any]) -> List[FieldStrategyData]:
+        """Convert various field entries into FieldStrategyData models."""
+        models: List[FieldStrategyData] = []
+        for entry in entries:
+            if isinstance(entry, FieldStrategyData):
+                models.append(entry)
+            elif isinstance(entry, dict):
+                try:
+                    model = FieldStrategyData(**entry)
+                    models.append(model)
+                except Exception:
+                    continue
+        return models
 
     def _build_comparison_metrics(
         self,

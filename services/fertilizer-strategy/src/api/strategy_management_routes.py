@@ -10,6 +10,8 @@ from ..models.strategy_management_models import (
     SaveStrategyRequest,
     StrategyComparisonRequest,
     StrategyComparisonResponse,
+    StrategyUpdateRequest,
+    StrategyUpdateResponse,
     StrategySaveResponse,
 )
 from ..services.strategy_management_service import StrategyManagementService
@@ -92,3 +94,25 @@ async def compare_strategies(
     except Exception as error:
         logger.error("Strategy comparison failed: %s", error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Strategy comparison failed") from error
+
+
+@router.put("/{strategy_id}/update", response_model=StrategyUpdateResponse, status_code=status.HTTP_200_OK)
+async def update_strategy(
+    strategy_id: str,
+    request: StrategyUpdateRequest,
+    user_id: str = Query(..., description="User performing the update"),
+    service: StrategyManagementService = Depends(get_strategy_management_service),
+) -> StrategyUpdateResponse:
+    """Create a new strategy version with updates."""
+    try:
+        response = await service.update_strategy(strategy_id, request, user_id)
+        return response
+    except ValueError as error:
+        logger.warning("Strategy update validation error: %s", error)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    except LookupError as error:
+        logger.warning("Strategy update missing data: %s", error)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except Exception as error:
+        logger.error("Strategy update failed: %s", error)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Strategy update failed") from error

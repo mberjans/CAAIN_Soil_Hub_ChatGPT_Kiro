@@ -41,6 +41,8 @@ StrategyManagementService = service_module.StrategyManagementService
 StrategyRepository = database_module.StrategyRepository
 StrategyComparisonRequest = models_module.StrategyComparisonRequest
 StrategyComparisonResponse = models_module.StrategyComparisonResponse
+StrategyUpdateRequest = models_module.StrategyUpdateRequest
+StrategyUpdateResponse = models_module.StrategyUpdateResponse
 
 
 @pytest.fixture
@@ -247,6 +249,60 @@ class TestStrategyManagementService:
         with pytest.raises(LookupError):
             await in_memory_service.compare_strategies(request)
 
+    @pytest.mark.asyncio
+    async def test_update_strategy_creates_new_version(self, in_memory_service):
+        """Ensure update creates an additional strategy version."""
+        base_field = FieldStrategyData(
+            field_id="field-update-1",
+            acres=70.0,
+            crop_type="corn",
+            recommended_rates={"N": 155.0},
+            application_schedule=["pre-plant"],
+            application_method="broadcast",
+            expected_yield=188.0,
+            total_cost=135.0,
+            roi_projection=0.31,
+        )
+
+        create_request = SaveStrategyRequest(
+            strategy_name="Update Plan",
+            description="Plan prior to updates",
+            user_id="user-update",
+            farm_id="farm-update",
+            field_strategies=[base_field],
+            economic_summary={"total_cost": 11000.0},
+            environmental_metrics={"runoff_risk": 0.23},
+            roi_estimate=0.41,
+            metadata={"season": "2025"},
+        )
+
+        initial_response = await in_memory_service.save_strategy(create_request)
+
+        update_request = StrategyUpdateRequest(
+            description="Plan after updates",
+            economic_summary={"total_cost": 10850.0},
+            environmental_metrics={"runoff_risk": 0.19},
+            roi_estimate=0.44,
+            version_notes="Adjusted cost and risk",
+        )
+
+        update_response = await in_memory_service.update_strategy(
+            initial_response.strategy_id,
+            update_request,
+            user_id="user-update",
+        )
+
+        assert isinstance(update_response, StrategyUpdateResponse)
+        assert update_response.latest_version.version_number == 2
+        assert update_response.latest_version.version_notes == "Adjusted cost and risk"
+
+    @pytest.mark.asyncio
+    async def test_update_strategy_missing_record(self, in_memory_service):
+        """Ensure missing strategy update raises error."""
+        update_request = StrategyUpdateRequest(description="No strategy")
+        with pytest.raises(LookupError):
+            await in_memory_service.update_strategy("missing-strategy", update_request, user_id="user-1")
+
 
 class TestStrategyManagementAPI:
     """API tests for strategy management endpoints."""
@@ -404,5 +460,64 @@ class TestStrategyManagementAPI:
         ]
 
         response = client.get("/api/v1/strategies/compare", params=params)
+
+        assert response.status_code == 404
+        data = response.json()
+        assert "Strategies not found" in data["detail"]
+
+    def test_update_strategy_endpoint_success(self):
+        """Ensure update endpoint creates a new version."""
+        client = TestClient(app)
+
+        create_payload = {
+            "strategy_name": "Update Endpoint Plan",
+            "description": "Original strategy",
+            "user_id": "user-endpoint",
+            "field_strategies": [
+                {
+                    "field_id": "field-endpoint",
+                    "acres": 42.0,
+                    "crop_type": "corn",
+                    "recommended_rates": {"N": 140.0},
+                    "application_schedule": ["pre-plant"],
+                    "application_method": "broadcast",
+                    "expected_yield": 175.0,
+                    "total_cost": 120.0,
+                }
+            ],
+            "economic_summary": {"total_cost": 9000.0},
+            "environmental_metrics": {"runoff_risk": 0.26},
+            "roi_estimate": 0.38,
+        }
+
+        create_response = client.post("/api/v1/strategies/save", json=create_payload)
+        strategy_id = create_response.json()["strategy_id"]
+
+        update_payload = {
+            "description": "Updated strategy",
+            "economic_summary": {"total_cost": 8800.0},
+            "roi_estimate": 0.40,
+            "version_notes": "Cost optimization",
+        }
+
+        params = [("user_id", "user-endpoint")]
+
+        update_response = client.put(
+            f"/api/v1/strategies/{strategy_id}/update",
+            params=params,
+            json=update_payload,
+        )
+
+        assert update_response.status_code == 200
+        data = update_response.json()
+        assert data["latest_version"]["version_number"] == 2
+
+    def test_update_strategy_endpoint_not_found(self):
+        """Ensure update endpoint returns not found for missing strategy."""
+        client = TestClient(app)
+        params = [("user_id", "user-zzz")]
+        payload = {"description": "No strategy"}
+
+        response = client.put("/api/v1/strategies/missing/update", params=params, json=payload)
 
         assert response.status_code == 404
