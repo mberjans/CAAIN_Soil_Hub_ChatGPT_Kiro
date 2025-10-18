@@ -266,3 +266,62 @@ class AlertBatchResponse(BaseModel):
     processing_time_ms: float = Field(..., description="Processing time in milliseconds")
     success: bool = Field(..., description="Whether batch processing was successful")
     errors: List[str] = Field(default_factory=list, description="Any errors encountered")
+
+
+class MobilePriceAlert(BaseModel):
+    """Mobile-optimized price alert payload."""
+    
+    alert_id: str = Field(..., description="Unique alert identifier")
+    user_id: str = Field(..., description="User identifier")
+    fertilizer_type: FertilizerType = Field(..., description="Fertilizer type for the alert")
+    alert_type: AlertType = Field(..., description="Alert trigger type")
+    priority: AlertPriority = Field(..., description="Alert urgency level")
+    
+    title: str = Field(..., description="Alert title for display")
+    summary: str = Field(..., description="Concise alert summary message")
+    details: Dict[str, Any] = Field(default_factory=dict, description="Detailed alert context")
+    
+    price_per_unit: Optional[float] = Field(None, description="Current price per unit")
+    price_unit: Optional[str] = Field(None, description="Unit for the price information")
+    price_change_percent: Optional[float] = Field(None, description="Price change percentage compared to baseline")
+    region: str = Field(..., description="Region the alert applies to")
+    
+    confidence_score: float = Field(0.0, ge=0.0, le=1.0, description="Alert confidence score")
+    recommended_actions: List[str] = Field(default_factory=list, description="Suggested actions for the user")
+    notification_channel: AlertChannel = Field(AlertChannel.APP_NOTIFICATION, description="Recommended delivery channel")
+    
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Alert creation timestamp")
+    action_deadline: Optional[datetime] = Field(None, description="Suggested deadline for acting on the alert")
+    requires_action: bool = Field(default=True, description="Whether the alert requires user action")
+
+
+class MobilePriceAlertRequest(BaseModel):
+    """Mobile alert request parameters with location context."""
+    
+    user_id: str = Field(..., description="User requesting alerts")
+    latitude: Optional[float] = Field(None, ge=-90.0, le=90.0, description="Latitude for location-based alerts")
+    longitude: Optional[float] = Field(None, ge=-180.0, le=180.0, description="Longitude for location-based alerts")
+    location_accuracy: Optional[float] = Field(None, ge=0.0, description="Location accuracy in meters")
+    region: Optional[str] = Field(None, description="Fallback region identifier")
+    
+    fertilizer_types: List[FertilizerType] = Field(default_factory=list, description="Target fertilizer types")
+    alert_types: List[AlertType] = Field(default_factory=list, description="Alert types to evaluate")
+    max_alerts: int = Field(5, ge=1, le=20, description="Maximum number of alerts to return")
+    history_days: int = Field(30, ge=7, le=120, description="Historical window in days")
+    
+    user_preferences: Optional[UserAlertPreferences] = Field(None, description="User alert preferences")
+    delivery_channel: AlertChannel = Field(AlertChannel.APP_NOTIFICATION, description="Preferred delivery channel")
+    include_price_details: bool = Field(True, description="Include price information in alert response")
+    include_recommendations: bool = Field(True, description="Include recommendation messages")
+
+
+class MobilePriceAlertResponse(BaseModel):
+    """Response payload for mobile alert requests."""
+    
+    user_id: str = Field(..., description="User identifier")
+    region: str = Field(..., description="Resolved region for the alerts")
+    alerts: List[MobilePriceAlert] = Field(default_factory=list, description="Generated mobile alerts")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Response generation timestamp")
+    fallback_used: bool = Field(False, description="Indicates if fallback data was required")
+    insights: Dict[str, Any] = Field(default_factory=dict, description="Aggregated insight data")
+    recommendations: List[str] = Field(default_factory=list, description="High-level recommendations for the user")

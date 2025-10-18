@@ -13,9 +13,11 @@ from ..models.price_optimization_alert_models import (
     AlertStatistics, MLModelPerformance, AlertOptimizationRequest,
     AlertOptimizationResponse, AlertDeliveryRequest, AlertDeliveryResponse,
     AlertFeedback, AlertBatchRequest, AlertBatchResponse, IntelligentAlert,
-    UserAlertPreferences, AlertType, AlertPriority, AlertChannel, AlertStatus
+    UserAlertPreferences, AlertType, AlertPriority, AlertChannel, AlertStatus,
+    MobilePriceAlertRequest, MobilePriceAlertResponse
 )
 from ..services.price_optimization_alert_service import PriceOptimizationAlertService
+from ..services.mobile_price_alert_service import MobilePriceAlertManager
 from ..database.fertilizer_price_db import get_db_session
 
 logger = logging.getLogger(__name__)
@@ -24,6 +26,10 @@ router = APIRouter(prefix="/api/v1/alerts", tags=["price-optimization-alerts"])
 # Dependency injection
 async def get_alert_service() -> PriceOptimizationAlertService:
     return PriceOptimizationAlertService()
+
+
+async def get_mobile_alert_manager() -> MobilePriceAlertManager:
+    return MobilePriceAlertManager()
 
 
 @router.post("/create", response_model=AlertCreationResponse)
@@ -193,6 +199,36 @@ async def get_alert_statistics(
     except Exception as e:
         logger.error(f"Error getting alert statistics: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/mobile-price", response_model=MobilePriceAlertResponse)
+async def generate_mobile_price_alerts(
+    request: MobilePriceAlertRequest,
+    manager: MobilePriceAlertManager = Depends(get_mobile_alert_manager)
+):
+    """
+    Generate intelligent mobile price alerts with location awareness.
+    
+    Features:
+    - Location-aware region resolution
+    - Personalized alert thresholds and preferences
+    - Mobile-ready alert packaging with action guidance
+    """
+    try:
+        logger.info(
+            "Generating mobile price alerts for user %s (region hint: %s)",
+            request.user_id,
+            request.region or "none"
+        )
+        
+        response = await manager.generate_mobile_alerts(request)
+        return response
+    
+    except HTTPException:
+        raise
+    except Exception as error:
+        logger.error("Error generating mobile price alerts: %s", error)
+        raise HTTPException(status_code=500, detail=str(error))
 
 
 @router.post("/optimize", response_model=AlertOptimizationResponse)

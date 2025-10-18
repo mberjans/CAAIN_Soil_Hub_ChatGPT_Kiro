@@ -250,6 +250,15 @@ class PriceOptimizationAlertService:
                 expires_at=datetime.utcnow() + timedelta(hours=24)
             )
             
+            if alert.details is None:
+                alert.details = {}
+            try:
+                alert.details["analysis_confidence"] = confidence
+                alert.details["pattern_analysis"] = pattern_analysis
+                alert.details["alert_type"] = alert_type.value
+            except Exception as details_error:
+                self.logger.debug("Unable to enrich alert details: %s", details_error)
+            
             # 7. Update metrics
             self._total_alerts_sent += 1
             
