@@ -6,9 +6,14 @@ capturing scenario-level metrics, aggregate accuracy, and any issues that
 require review by agricultural economists.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional
 from pydantic import BaseModel, Field, field_validator
+
+
+def get_current_utc_time() -> datetime:
+    """Return timezone-aware UTC timestamp for validation records."""
+    return datetime.now(timezone.utc)
 
 
 class ValidationThresholds(BaseModel):
@@ -44,7 +49,7 @@ class EconomicScenarioMetrics(BaseModel):
 class EconomicValidationSummary(BaseModel):
     """Aggregate validation summary across all scenarios."""
 
-    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Timestamp when validation ran")
+    generated_at: datetime = Field(default_factory=get_current_utc_time, description="Timestamp when validation ran")
     price_accuracy: Optional[float] = Field(None, ge=0.0, le=1.0, description="Aggregate price accuracy")
     cost_accuracy: Optional[float] = Field(None, ge=0.0, le=1.0, description="Aggregate cost accuracy")
     roi_accuracy: Optional[float] = Field(None, ge=0.0, le=1.0, description="Aggregate ROI accuracy")
@@ -53,4 +58,3 @@ class EconomicValidationSummary(BaseModel):
     passed: bool = Field(default=False, description="Whether aggregate metrics satisfy thresholds")
     issues: List[str] = Field(default_factory=list, description="Aggregate issues requiring expert review")
     warnings: List[str] = Field(default_factory=list, description="Aggregate warnings for monitoring")
-
