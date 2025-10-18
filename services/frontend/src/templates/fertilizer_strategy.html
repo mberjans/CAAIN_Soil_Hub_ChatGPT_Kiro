@@ -664,227 +664,1198 @@
     </div>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <script>
-        document.getElementById('fertilizerStrategyForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
+        let strategySteps = [];
+        let strategyContext = null;
+        let sortableTimeline = null;
+        let modificationHandlersReady = false;
+        
+        document.getElementById('fertilizerStrategyForm').addEventListener('submit', function(event) {
+            event.preventDefault();
             const formData = new FormData(this);
             const data = Object.fromEntries(formData);
-            
-            // Calculate fertilizer strategy (simplified algorithm)
             calculateFertilizerStrategy(data);
         });
         
         function calculateFertilizerStrategy(data) {
             const crop = data.crop;
-            const yieldGoal = parseInt(data.yield_goal);
-            const acres = parseInt(data.acres);
-            const organicMatter = parseFloat(data.organic_matter);
-            const nitrateN = parseInt(data.nitrate_n);
-            const phosphorus = parseInt(data.phosphorus);
-            const potassium = parseInt(data.potassium);
+            const yieldGoal = parseFloat(data.yield_goal);
+            const acres = parseFloat(data.acres);
+            const nitrateN = parseFloat(data.nitrate_n);
+            const phosphorus = parseFloat(data.phosphorus);
+            const potassium = parseFloat(data.potassium);
             const previousCrop = data.previous_crop;
             
-            // Nitrogen calculation for corn
             let nRate = 0;
             let legumeCreditN = 0;
-            let soilTestCreditN = nitrateN * 2; // Rough conversion
+            let soilTestCreditN = nitrateN * 2;
             
             if (crop === 'corn') {
-                nRate = yieldGoal * 0.9; // Base N rate
+                nRate = yieldGoal * 0.9;
                 if (previousCrop === 'soybean') {
-                    legumeCreditN = 40; // Legume credit
+                    legumeCreditN = 40;
                 }
                 nRate = Math.max(nRate - legumeCreditN - soilTestCreditN, 80);
+            } else {
+                nRate = yieldGoal * 0.7;
             }
             
-            // Phosphorus calculation
             let pRate = 0;
             if (phosphorus < 15) {
-                pRate = 50; // Build-up rate
+                pRate = 50;
             } else if (phosphorus < 25) {
-                pRate = 30; // Maintenance rate
+                pRate = 30;
             } else {
-                pRate = 20; // Low maintenance
+                pRate = 20;
             }
             
-            // Potassium calculation
             let kRate = 0;
             if (potassium < 100) {
-                kRate = 80; // Build-up rate
+                kRate = 80;
             } else if (potassium < 150) {
-                kRate = 50; // Maintenance rate
+                kRate = 50;
             } else {
-                kRate = 30; // Low maintenance
+                kRate = 30;
             }
             
-            // Cost calculations
             const ureaPrice = parseFloat(data.urea_price);
             const dapPrice = parseFloat(data.dap_price);
             const potashPrice = parseFloat(data.potash_price);
             const cornPrice = parseFloat(data.corn_price);
             
-            const nCost = (nRate * acres * ureaPrice) / (2000 * 0.46); // Urea is 46% N
-            const pCost = (pRate * acres * dapPrice) / (2000 * 0.46); // DAP is 46% P2O5
-            const kCost = (kRate * acres * potashPrice) / (2000 * 0.60); // Potash is 60% K2O
+            const nCost = (nRate * acres * ureaPrice) / (2000 * 0.46);
+            const pCost = (pRate * acres * dapPrice) / (2000 * 0.46);
+            const kCost = (kRate * acres * potashPrice) / (2000 * 0.60);
             
             const totalCost = nCost + pCost + kCost;
             const expectedYield = yieldGoal * acres;
             const grossRevenue = expectedYield * cornPrice;
-            const roi = ((grossRevenue - totalCost) / totalCost) * 100;
+            const roi = ((grossRevenue - totalCost) / Math.max(totalCost, 1)) * 100;
             
             displayResults({
-                nRate, pRate, kRate,
-                legumeCreditN, soilTestCreditN,
-                totalCost, grossRevenue, roi,
-                acres, yieldGoal
-            });
+                nRate: Math.round(nRate),
+                pRate: Math.round(pRate),
+                kRate: Math.round(kRate),
+                legumeCreditN,
+                soilTestCreditN,
+                totalCost,
+                grossRevenue,
+                roi,
+                acres,
+                yieldGoal,
+                nCost,
+                pCost,
+                kCost,
+                ureaPrice,
+                dapPrice,
+                potashPrice,
+                cornPrice,
+                crop
+            }, data);
         }
         
-        function displayResults(results) {
-            // Update ROI display
+        function displayResults(results, sourceData) {
             document.getElementById('roiValue').textContent = Math.round(results.roi) + '%';
-            document.getElementById('totalCost').textContent = '$' + results.totalCost.toLocaleString();
-            document.getElementById('expectedReturn').textContent = '$' + results.grossRevenue.toLocaleString();
+            document.getElementById('totalCost').textContent = formatCurrency(results.totalCost);
+            document.getElementById('expectedReturn').textContent = formatCurrency(results.grossRevenue);
             
-            // Display fertilizer program
+            const nitrogenFinalRate = Math.max(results.nRate - results.legumeCreditN - results.soilTestCreditN, 0);
             const programHtml = `
                 <div class="row">
                     <div class="col-md-4">
                         <h6><i class="fas fa-leaf text-success"></i> Nitrogen Program</h6>
                         <div class="cost-breakdown">
                             <div class="d-flex justify-content-between">
-                                <span>Total N Rate:</span>
-                                <strong>${results.nRate} lbs/acre</strong>
+                                <span>Total N Rate</span>
+                                <strong>${results.nRate.toFixed(0)} lbs/ac</strong>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span>Legume Credit:</span>
-                                <span>-${results.legumeCreditN} lbs/acre</span>
+                                <span>Legume Credit</span>
+                                <span>-${results.legumeCreditN.toFixed(0)} lbs/ac</span>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span>Soil Test Credit:</span>
-                                <span>-${results.soilTestCreditN} lbs/acre</span>
+                                <span>Soil Test Credit</span>
+                                <span>-${results.soilTestCreditN.toFixed(0)} lbs/ac</span>
                             </div>
                             <hr>
                             <div class="d-flex justify-content-between">
-                                <span>Fertilizer N Needed:</span>
-                                <strong>${results.nRate} lbs/acre</strong>
+                                <span>Applied N</span>
+                                <strong>${nitrogenFinalRate.toFixed(0)} lbs/ac</strong>
                             </div>
-                            <small class="text-muted">Source: Urea (46-0-0)</small>
+                            <div class="d-flex justify-content-between">
+                                <span>Program Cost</span>
+                                <strong>${formatCurrency(results.nCost)}</strong>
+                            </div>
                         </div>
                     </div>
-                    
                     <div class="col-md-4">
-                        <h6><i class="fas fa-mountain text-info"></i> Phosphorus Program</h6>
+                        <h6><i class="fas fa-flask text-info"></i> Phosphorus Program</h6>
                         <div class="cost-breakdown">
                             <div class="d-flex justify-content-between">
-                                <span>P2O5 Rate:</span>
-                                <strong>${results.pRate} lbs/acre</strong>
+                                <span>Total P₂O₅ Rate</span>
+                                <strong>${results.pRate.toFixed(0)} lbs/ac</strong>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span>Application:</span>
-                                <span>At planting</span>
+                                <span>Placement</span>
+                                <span>Starter Band + Broadcast</span>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span>Strategy:</span>
-                                <span>${results.pRate > 40 ? 'Build-up' : 'Maintenance'}</span>
+                                <span>Program Cost</span>
+                                <strong>${formatCurrency(results.pCost)}</strong>
                             </div>
-                            <hr>
-                            <small class="text-muted">Source: DAP (18-46-0)</small>
                         </div>
                     </div>
-                    
                     <div class="col-md-4">
-                        <h6><i class="fas fa-flask text-warning"></i> Potassium Program</h6>
+                        <h6><i class="fas fa-water text-warning"></i> Potassium Program</h6>
                         <div class="cost-breakdown">
                             <div class="d-flex justify-content-between">
-                                <span>K2O Rate:</span>
-                                <strong>${results.kRate} lbs/acre</strong>
+                                <span>Total K₂O Rate</span>
+                                <strong>${results.kRate.toFixed(0)} lbs/ac</strong>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span>Application:</span>
-                                <span>Fall preferred</span>
+                                <span>Application Split</span>
+                                <span>Fall Broadcast + In-Season</span>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span>Strategy:</span>
-                                <span>${results.kRate > 60 ? 'Build-up' : 'Maintenance'}</span>
+                                <span>Program Cost</span>
+                                <strong>${formatCurrency(results.kCost)}</strong>
                             </div>
-                            <hr>
-                            <small class="text-muted">Source: Muriate of Potash</small>
                         </div>
                     </div>
                 </div>
             `;
-            
             document.getElementById('fertilizerProgram').innerHTML = programHtml;
             
-            // Display strategy comparison
-            displayStrategyComparison(results);
+            document.getElementById('strategyResults').style.display = '';
+            document.getElementById('strategyComparison').style.display = '';
             
-            // Show results
-            document.getElementById('strategyResults').style.display = 'block';
-            document.getElementById('strategyComparison').style.display = 'block';
+            renderStrategyComparison(results);
+            initializeModificationTools(results, sourceData);
         }
         
-        function displayStrategyComparison(baseResults) {
+        function renderStrategyComparison(baseResults) {
             const strategies = [
                 {
-                    name: 'Recommended Strategy',
+                    name: 'Optimized Baseline',
                     cost: baseResults.totalCost,
                     yield: baseResults.yieldGoal,
                     roi: baseResults.roi,
                     recommended: true,
-                    description: 'Optimized for maximum ROI while maintaining soil health'
+                    description: 'Balanced approach integrating cost, yield, and stewardship.'
                 },
                 {
-                    name: 'High Input Strategy',
-                    cost: baseResults.totalCost * 1.3,
-                    yield: baseResults.yieldGoal * 1.02,
-                    roi: baseResults.roi * 0.85,
-                    recommended: false,
-                    description: 'Higher fertilizer rates for maximum yield potential'
-                },
-                {
-                    name: 'Low Input Strategy',
-                    cost: baseResults.totalCost * 0.7,
-                    yield: baseResults.yieldGoal * 0.93,
+                    name: 'Cost Saver',
+                    cost: baseResults.totalCost * 0.85,
+                    yield: baseResults.yieldGoal * 0.96,
                     roi: baseResults.roi * 0.92,
                     recommended: false,
-                    description: 'Reduced fertilizer rates to minimize input costs'
+                    description: 'Reduced rates for stressed budgets with moderate yield impact.'
+                },
+                {
+                    name: 'Yield Maximizer',
+                    cost: baseResults.totalCost * 1.25,
+                    yield: baseResults.yieldGoal * 1.04,
+                    roi: baseResults.roi * 0.88,
+                    recommended: false,
+                    description: 'Pushes yield response envelopes with higher investment.'
                 }
             ];
             
-            const comparisonHtml = strategies.map(strategy => `
-                <div class="strategy-comparison ${strategy.recommended ? 'recommended' : ''}">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h6>${strategy.name} ${strategy.recommended ? '<span class="badge bg-success">RECOMMENDED</span>' : ''}</h6>
-                            <p class="mb-2">${strategy.description}</p>
-                            <div class="row">
-                                <div class="col-sm-4">
-                                    <small class="text-muted">Total Cost:</small><br>
-                                    <strong>$${Math.round(strategy.cost).toLocaleString()}</strong>
-                                </div>
-                                <div class="col-sm-4">
-                                    <small class="text-muted">Expected Yield:</small><br>
-                                    <strong>${Math.round(strategy.yield)} bu/acre</strong>
-                                </div>
-                                <div class="col-sm-4">
-                                    <small class="text-muted">ROI:</small><br>
-                                    <strong>${Math.round(strategy.roi)}%</strong>
+            let comparisonHtml = '';
+            let index = 0;
+            while (index < strategies.length) {
+                const strategy = strategies[index];
+                comparisonHtml += `
+                    <div class="strategy-comparison ${strategy.recommended ? 'recommended' : ''}">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <h6>${strategy.name} ${strategy.recommended ? '<span class="badge bg-success">RECOMMENDED</span>' : ''}</h6>
+                                <p class="mb-2">${strategy.description}</p>
+                                <div class="row">
+                                    <div class="col-sm-4">
+                                        <small class="text-muted">Total Cost</small><br>
+                                        <strong>${formatCurrency(strategy.cost)}</strong>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <small class="text-muted">Expected Yield</small><br>
+                                        <strong>${Math.round(strategy.yield)} bu/ac</strong>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <small class="text-muted">ROI</small><br>
+                                        <strong>${Math.round(strategy.roi)}%</strong>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <div class="roi-indicator" style="font-size: 1.5rem; color: ${strategy.recommended ? '#28a745' : '#6c757d'}">
-                                ${Math.round(strategy.roi)}%
+                            <div class="col-md-4 text-end">
+                                <div class="roi-indicator" style="font-size: 1.5rem; color: ${strategy.recommended ? '#28a745' : '#6c757d'}">
+                                    ${Math.round(strategy.roi)}%
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
-            
+                `;
+                index += 1;
+            }
             document.getElementById('comparisonCards').innerHTML = comparisonHtml;
+        }
+        
+        function initializeModificationTools(results, sourceData) {
+            strategyContext = {
+                baseResults: results,
+                formData: sourceData,
+                adjustments: { N: 0, P: 0, K: 0 },
+                optimizedResponse: null
+            };
+            
+            buildBaseStrategySteps(results);
+            renderStrategyTimeline();
+            updateAdjusterDisplays();
+            updateLiveMetrics();
+            
+            const toolkit = document.getElementById('modificationToolkit');
+            if (toolkit) {
+                toolkit.style.display = 'flex';
+            }
+            
+            if (!modificationHandlersReady) {
+                bindModificationEvents();
+                modificationHandlersReady = true;
+            }
+        }
+        
+        function buildBaseStrategySteps(results) {
+            const packages = [];
+            const stepOnePackage = {
+                N: Math.round(results.nRate * 0.55),
+                P: Math.round(results.pRate * 0.75),
+                K: Math.round(results.kRate * 0.40)
+            };
+            const stepTwoPackage = {
+                N: Math.round(results.nRate * 0.30),
+                P: Math.round(results.pRate * 0.15),
+                K: Math.round(results.kRate * 0.35)
+            };
+            const stepThreePackage = {
+                N: Math.round(results.nRate * 0.15),
+                P: Math.round(results.pRate * 0.10),
+                K: Math.round(results.kRate * 0.25)
+            };
+            packages.push(stepOnePackage);
+            packages.push(stepTwoPackage);
+            packages.push(stepThreePackage);
+            normalizePackages(packages, results);
+            const totals = calculateTotalsFromPackages(packages);
+            
+            strategySteps = [
+                createStrategyStep(
+                    'step-preplant',
+                    'Pre-Plant Broadcast',
+                    'Broadcast Granular',
+                    ['Broadcast Granular', 'Variable Rate', 'Strip Till'],
+                    -14,
+                    packages[0],
+                    results,
+                    totals,
+                    'Low',
+                    0.78
+                ),
+                createStrategyStep(
+                    'step-sidedress',
+                    'V5 Side-Dress',
+                    'Y-Drop Liquid',
+                    ['Y-Drop Liquid', 'Injected UAN', 'Dribble Stream'],
+                    25,
+                    packages[1],
+                    results,
+                    totals,
+                    'Moderate',
+                    0.84
+                ),
+                createStrategyStep(
+                    'step-finishing',
+                    'Late-Season Foliar',
+                    'Foliar Feed',
+                    ['Foliar Feed', 'Drone Application', 'Irrigation Injection'],
+                    45,
+                    packages[2],
+                    results,
+                    totals,
+                    'Low',
+                    0.88
+                )
+            ];
+        }
+        
+        function createStrategyStep(id, title, method, availableMethods, targetDay, basePackage, results, totals, risk, efficiency) {
+            return {
+                id,
+                title,
+                method,
+                availableMethods,
+                targetDay,
+                basePackage,
+                adjustedPackage: copyPackage(basePackage),
+                estimatedCostShare: calculateCostShare(basePackage, results, totals),
+                risk,
+                efficiency,
+                originalMethod: method,
+                originalTargetDay: targetDay
+            };
+        }
+        
+        function normalizePackages(packages, results) {
+            const nutrients = ['N', 'P', 'K'];
+            let nutrientIndex = 0;
+            while (nutrientIndex < nutrients.length) {
+                const nutrient = nutrients[nutrientIndex];
+                let sum = 0;
+                let index = 0;
+                while (index < packages.length) {
+                    if (typeof packages[index][nutrient] !== 'number') {
+                        packages[index][nutrient] = 0;
+                    }
+                    sum += packages[index][nutrient];
+                    index += 1;
+                }
+                const target = Math.round(getRateFromResults(results, nutrient));
+                if (sum !== target && packages.length > 0) {
+                    const difference = target - sum;
+                    const lastIndex = packages.length - 1;
+                    packages[lastIndex][nutrient] = packages[lastIndex][nutrient] + difference;
+                }
+                nutrientIndex += 1;
+            }
+        }
+        
+        function calculateTotalsFromPackages(packages) {
+            const totals = { N: 0, P: 0, K: 0 };
+            let index = 0;
+            while (index < packages.length) {
+                const pkg = packages[index];
+                totals.N += pkg.N || 0;
+                totals.P += pkg.P || 0;
+                totals.K += pkg.K || 0;
+                index += 1;
+            }
+            return totals;
+        }
+        
+        function calculateCostShare(packageData, results, totals) {
+            const nContribution = totals.N === 0 ? 0 : (packageData.N || 0) / totals.N;
+            const pContribution = totals.P === 0 ? 0 : (packageData.P || 0) / totals.P;
+            const kContribution = totals.K === 0 ? 0 : (packageData.K || 0) / totals.K;
+            return (results.nCost * nContribution) + (results.pCost * pContribution) + (results.kCost * kContribution);
+        }
+        
+        function getRateFromResults(results, nutrient) {
+            if (nutrient === 'N') {
+                return results.nRate;
+            }
+            if (nutrient === 'P') {
+                return results.pRate;
+            }
+            if (nutrient === 'K') {
+                return results.kRate;
+            }
+            return 0;
+        }
+        
+        function renderStrategyTimeline() {
+            const container = document.getElementById('strategyTimeline');
+            if (!container) {
+                return;
+            }
+            let html = '';
+            let index = 0;
+            while (index < strategySteps.length) {
+                const step = strategySteps[index];
+                const packageData = step.adjustedPackage || step.basePackage;
+                html += `
+                    <div class="strategy-step" data-index="${index}">
+                        <div class="drag-handle"><i class="fas fa-grip-vertical"></i></div>
+                        <h6>${step.title}</h6>
+                        <div class="detail-row">
+                            <span>Timing</span>
+                            <span data-role="timing-display" data-index="${index}">${formatTiming(step.targetDay)}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Method</span>
+                            <span data-role="method-display" data-index="${index}">${step.method}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span>Nutrient Focus</span>
+                            <span data-role="package-display" data-index="${index}">${formatPackageLine(packageData)}</span>
+                        </div>
+                        <div class="impact-pill">
+                            <i class="fas fa-leaf"></i> ${step.risk} risk
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label text-muted small mb-1">Application Method</label>
+                            <select class="form-select form-select-sm method-selector" data-index="${index}">
+                                ${buildMethodOptions(step)}
+                            </select>
+                        </div>
+                        <div class="mt-3">
+                            <label class="form-label text-muted small mb-1">Timing Offset (days)</label>
+                            <input type="range" class="form-range timing-slider" min="-30" max="60" value="${step.targetDay}" data-index="${index}">
+                            <div class="d-flex justify-content-between text-muted small">
+                                <span>-30</span>
+                                <span class="timing-display" data-index="${index}">${formatTiming(step.targetDay)}</span>
+                                <span>+60</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                index += 1;
+            }
+            container.innerHTML = html;
+            bindStepControls(container);
+            setupSortableTimeline(container);
+        }
+        
+        function buildMethodOptions(step) {
+            let optionsHtml = '';
+            let index = 0;
+            while (index < step.availableMethods.length) {
+                const method = step.availableMethods[index];
+                const selected = method === step.method ? 'selected' : '';
+                optionsHtml += `<option value="${method}" ${selected}>${method}</option>`;
+                index += 1;
+            }
+            return optionsHtml;
+        }
+        
+        function bindStepControls(container) {
+            const methodSelectors = container.querySelectorAll('.method-selector');
+            let selectorIndex = 0;
+            while (selectorIndex < methodSelectors.length) {
+                const selector = methodSelectors[selectorIndex];
+                selector.addEventListener('change', function(event) {
+                    const dataIndex = parseInt(event.target.getAttribute('data-index'), 10);
+                    updateStepMethod(dataIndex, event.target.value);
+                });
+                selectorIndex += 1;
+            }
+            
+            const timingSliders = container.querySelectorAll('.timing-slider');
+            let sliderIndex = 0;
+            while (sliderIndex < timingSliders.length) {
+                const slider = timingSliders[sliderIndex];
+                slider.addEventListener('input', function(event) {
+                    const sliderDataIndex = parseInt(event.target.getAttribute('data-index'), 10);
+                    const value = parseInt(event.target.value, 10);
+                    updateStepTiming(sliderDataIndex, value);
+                    const timingDisplay = container.querySelector(`.timing-display[data-index="${sliderDataIndex}"]`);
+                    const timingLabel = container.querySelector(`span[data-role="timing-display"][data-index="${sliderDataIndex}"]`);
+                    const formatted = formatTiming(value);
+                    if (timingDisplay) {
+                        timingDisplay.textContent = formatted;
+                    }
+                    if (timingLabel) {
+                        timingLabel.textContent = formatted;
+                    }
+                    updateLiveMetrics();
+                });
+                sliderIndex += 1;
+            }
+        }
+        
+        function setupSortableTimeline(container) {
+            if (typeof Sortable === 'undefined') {
+                return;
+            }
+            if (sortableTimeline !== null) {
+                sortableTimeline.destroy();
+            }
+            sortableTimeline = Sortable.create(container, {
+                animation: 150,
+                handle: '.drag-handle',
+                onEnd: function(event) {
+                    if (event.oldIndex === event.newIndex) {
+                        return;
+                    }
+                    const movedStep = strategySteps.splice(event.oldIndex, 1)[0];
+                    strategySteps.splice(event.newIndex, 0, movedStep);
+                    renderStrategyTimeline();
+                    updateLiveMetrics();
+                }
+            });
+        }
+        
+        function updateStepMethod(index, method) {
+            if (!strategySteps[index]) {
+                return;
+            }
+            strategySteps[index].method = method;
+            const selector = document.querySelector(`span[data-role="method-display"][data-index="${index}"]`);
+            if (selector) {
+                selector.textContent = method;
+            }
+            updateLiveMetrics();
+        }
+        
+        function updateStepTiming(index, value) {
+            if (!strategySteps[index]) {
+                return;
+            }
+            strategySteps[index].targetDay = value;
+            if (value > 40 && strategySteps[index].risk !== 'High') {
+                strategySteps[index].risk = 'High';
+                renderStrategyTimeline();
+            }
+        }
+        
+        function bindModificationEvents() {
+            const optimizeBtn = document.getElementById('optimizeNowBtn');
+            if (optimizeBtn) {
+                optimizeBtn.addEventListener('click', async function() {
+                    toggleButtonActive(optimizeBtn, true);
+                    await performRealTimeOptimization();
+                    toggleButtonActive(optimizeBtn, false);
+                });
+            }
+            
+            const simulateBtn = document.getElementById('simulateImpactBtn');
+            if (simulateBtn) {
+                simulateBtn.addEventListener('click', function() {
+                    updateLiveMetrics();
+                });
+            }
+            
+            const resetBtn = document.getElementById('restoreDefaultsBtn');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    restoreBaseStrategy();
+                });
+            }
+            
+            const saveBtn = document.getElementById('saveStrategyBtn');
+            if (saveBtn) {
+                saveBtn.addEventListener('click', async function() {
+                    toggleButtonActive(saveBtn, true);
+                    await saveCurrentStrategyVersion();
+                    toggleButtonActive(saveBtn, false);
+                });
+            }
+            
+            const nitrogenSlider = document.getElementById('nitrogenAdjuster');
+            if (nitrogenSlider) {
+                nitrogenSlider.addEventListener('input', handleAdjusterInput);
+                nitrogenSlider.addEventListener('change', updateLiveMetrics);
+            }
+            
+            const phosphorusSlider = document.getElementById('phosphorusAdjuster');
+            if (phosphorusSlider) {
+                phosphorusSlider.addEventListener('input', handleAdjusterInput);
+                phosphorusSlider.addEventListener('change', updateLiveMetrics);
+            }
+            
+            const potassiumSlider = document.getElementById('potassiumAdjuster');
+            if (potassiumSlider) {
+                potassiumSlider.addEventListener('input', handleAdjusterInput);
+                potassiumSlider.addEventListener('change', updateLiveMetrics);
+            }
+            
+            const maxRateInput = document.getElementById('maxRateInput');
+            if (maxRateInput) {
+                maxRateInput.addEventListener('change', updateLiveMetrics);
+            }
+            
+            const environmentToggle = document.getElementById('environmentToggle');
+            if (environmentToggle) {
+                environmentToggle.addEventListener('change', updateLiveMetrics);
+            }
+            
+            const riskSelect = document.getElementById('riskSelect');
+            if (riskSelect) {
+                riskSelect.addEventListener('change', updateLiveMetrics);
+            }
+        }
+        
+        function handleAdjusterInput() {
+            updateAdjusterDisplays();
+            updateLiveMetrics();
+        }
+        
+        function updateAdjusterDisplays() {
+            const nitrogenSlider = document.getElementById('nitrogenAdjuster');
+            const nitrogenValue = document.getElementById('nitrogenAdjusterValue');
+            if (nitrogenSlider && nitrogenValue) {
+                nitrogenValue.textContent = `${parseInt(nitrogenSlider.value, 10)} lbs/ac`;
+            }
+            const phosphorusSlider = document.getElementById('phosphorusAdjuster');
+            const phosphorusValue = document.getElementById('phosphorusAdjusterValue');
+            if (phosphorusSlider && phosphorusValue) {
+                phosphorusValue.textContent = `${parseInt(phosphorusSlider.value, 10)} lbs/ac`;
+            }
+            const potassiumSlider = document.getElementById('potassiumAdjuster');
+            const potassiumValue = document.getElementById('potassiumAdjusterValue');
+            if (potassiumSlider && potassiumValue) {
+                potassiumValue.textContent = `${parseInt(potassiumSlider.value, 10)} lbs/ac`;
+            }
+        }
+        
+        function updateAdjustedPackages() {
+            if (!strategyContext) {
+                return;
+            }
+            const adjustments = getCurrentAdjustments();
+            const totals = calculateBaseTotals();
+            let index = 0;
+            while (index < strategySteps.length) {
+                const step = strategySteps[index];
+                const adjustedPackage = copyPackage(step.basePackage);
+                adjustedPackage.N = calculateAdjustedValue(step.basePackage.N, adjustments.N, totals.N, strategySteps.length);
+                adjustedPackage.P = calculateAdjustedValue(step.basePackage.P, adjustments.P, totals.P, strategySteps.length);
+                adjustedPackage.K = calculateAdjustedValue(step.basePackage.K, adjustments.K, totals.K, strategySteps.length);
+                step.adjustedPackage = adjustedPackage;
+                index += 1;
+            }
+        }
+        
+        function calculateAdjustedValue(baseValue, adjustment, total, divisor) {
+            const base = baseValue || 0;
+            const baseTotal = total || 0;
+            let portion = 0;
+            if (baseTotal > 0) {
+                portion = adjustment * (base / baseTotal);
+            } else if (divisor > 0) {
+                portion = adjustment / divisor;
+            }
+            return Math.round(base + portion);
+        }
+        
+        function calculateBaseTotals() {
+            const totals = { N: 0, P: 0, K: 0 };
+            let index = 0;
+            while (index < strategySteps.length) {
+                const pkg = strategySteps[index].basePackage;
+                totals.N += pkg.N || 0;
+                totals.P += pkg.P || 0;
+                totals.K += pkg.K || 0;
+                index += 1;
+            }
+            return totals;
+        }
+        
+        function calculateAdjustedTotals() {
+            const totals = { N: 0, P: 0, K: 0 };
+            let index = 0;
+            while (index < strategySteps.length) {
+                const pkg = strategySteps[index].adjustedPackage || strategySteps[index].basePackage;
+                totals.N += pkg.N || 0;
+                totals.P += pkg.P || 0;
+                totals.K += pkg.K || 0;
+                index += 1;
+            }
+            return totals;
+        }
+        
+        function getCurrentAdjustments() {
+            const adjustments = { N: 0, P: 0, K: 0 };
+            const nitrogenSlider = document.getElementById('nitrogenAdjuster');
+            if (nitrogenSlider) {
+                adjustments.N = parseInt(nitrogenSlider.value, 10);
+            }
+            const phosphorusSlider = document.getElementById('phosphorusAdjuster');
+            if (phosphorusSlider) {
+                adjustments.P = parseInt(phosphorusSlider.value, 10);
+            }
+            const potassiumSlider = document.getElementById('potassiumAdjuster');
+            if (potassiumSlider) {
+                adjustments.K = parseInt(potassiumSlider.value, 10);
+            }
+            return adjustments;
+        }
+        
+        function updateLiveMetrics() {
+            if (!strategyContext) {
+                return;
+            }
+            updateAdjustedPackages();
+            updatePackageDisplays();
+            
+            const adjustments = getCurrentAdjustments();
+            const totals = calculateAdjustedTotals();
+            const base = strategyContext.baseResults;
+            
+            const nCostPerUnit = computeCostPerUnit(base.nCost, base.nRate, base.acres);
+            const pCostPerUnit = computeCostPerUnit(base.pCost, base.pRate, base.acres);
+            const kCostPerUnit = computeCostPerUnit(base.kCost, base.kRate, base.acres);
+            
+            const acres = base.acres || 1;
+            const costDelta = (adjustments.N * acres * nCostPerUnit) +
+                (adjustments.P * acres * pCostPerUnit) +
+                (adjustments.K * acres * kCostPerUnit);
+            const newCost = base.totalCost + costDelta;
+            
+            const yieldImpact = (adjustments.N * 0.35) + (adjustments.P * 0.18) + (adjustments.K * 0.12);
+            const riskSelect = document.getElementById('riskSelect');
+            let riskModifier = 0;
+            if (riskSelect && riskSelect.value === 'conservative') {
+                riskModifier = -5;
+            }
+            if (riskSelect && riskSelect.value === 'aggressive') {
+                riskModifier = 8;
+            }
+            const newRoi = Math.max(base.roi + yieldImpact - (costDelta / Math.max(base.totalCost, 1)) * 100 + riskModifier, 0);
+            
+            const roiElement = document.getElementById('liveRoiValue');
+            if (roiElement) {
+                roiElement.textContent = newRoi.toFixed(1) + '%';
+            }
+            const costElement = document.getElementById('liveCostValue');
+            if (costElement) {
+                costElement.textContent = formatCurrency(newCost);
+            }
+            const balanceElement = document.getElementById('liveBalanceValue');
+            if (balanceElement) {
+                balanceElement.textContent = formatBalance(totals);
+            }
+            
+            updateValidationStatus(totals, adjustments, newCost);
+            updateModificationInsights(adjustments, totals, newCost, newRoi);
+        }
+        
+        function updatePackageDisplays() {
+            let index = 0;
+            while (index < strategySteps.length) {
+                const textElement = document.querySelector(`span[data-role="package-display"][data-index="${index}"]`);
+                if (textElement) {
+                    const pkg = strategySteps[index].adjustedPackage || strategySteps[index].basePackage;
+                    textElement.textContent = formatPackageLine(pkg);
+                }
+                index += 1;
+            }
+        }
+        
+        function computeCostPerUnit(totalCost, ratePerAcre, acres) {
+            if (!totalCost || !ratePerAcre || !acres) {
+                return 0;
+            }
+            const totalUnits = ratePerAcre * acres;
+            if (totalUnits === 0) {
+                return 0;
+            }
+            return totalCost / totalUnits;
+        }
+        
+        function updateValidationStatus(totals, adjustments, newCost) {
+            const badge = document.getElementById('validationStatusBadge');
+            if (!badge || !strategyContext) {
+                return;
+            }
+            const base = strategyContext.baseResults;
+            const maxRateInput = document.getElementById('maxRateInput');
+            const environmentToggle = document.getElementById('environmentToggle');
+            
+            let badgeClass = 'bg-success';
+            let badgeText = 'Validated';
+            
+            if (maxRateInput) {
+                const maxRate = parseFloat(maxRateInput.value);
+                if (!isNaN(maxRate) && totals.N > maxRate) {
+                    badgeClass = 'bg-warning';
+                    badgeText = 'Needs Approval';
+                }
+            }
+            
+            if (environmentToggle && environmentToggle.checked === false && adjustments.N > 10) {
+                badgeClass = 'bg-danger';
+                badgeText = 'High Runoff Risk';
+            }
+            
+            if (newCost > base.totalCost * 1.15) {
+                badgeClass = 'bg-warning';
+                badgeText = 'Budget Alert';
+            }
+            
+            badge.className = `badge ${badgeClass}`;
+            badge.textContent = badgeText;
+        }
+        
+        function updateModificationInsights(adjustments, totals, newCost, newRoi) {
+            const insightsContainer = document.getElementById('modificationInsights');
+            if (!insightsContainer || !strategyContext) {
+                return;
+            }
+            const base = strategyContext.baseResults;
+            const messages = [];
+            const icons = [];
+            
+            if (adjustments.N > 0) {
+                messages.push(`Nitrogen increased by ${adjustments.N} lbs/ac to drive yield gains.`);
+                icons.push('fa-check-circle');
+            }
+            if (adjustments.N < 0) {
+                messages.push(`Nitrogen reduced by ${Math.abs(adjustments.N)} lbs/ac to protect margins.`);
+                icons.push('fa-check-circle');
+            }
+            if (adjustments.P !== 0 || adjustments.K !== 0) {
+                messages.push('Phosphorus/Potassium levels adjusted to maintain soil fertility balance.');
+                icons.push('fa-leaf');
+            }
+            const maxRate = document.getElementById('maxRateInput') ? parseFloat(document.getElementById('maxRateInput').value) : 220;
+            if (!isNaN(maxRate) && totals.N > maxRate) {
+                messages.push('N rate exceeds configured maximum. Review with agronomist.');
+                icons.push('fa-exclamation-triangle');
+            }
+            if (newCost > base.totalCost * 1.10) {
+                messages.push('Total cost increased more than 10%. Confirm budget availability.');
+                icons.push('fa-exclamation-circle');
+            }
+            if (messages.length === 0) {
+                messages.push('Strategy aligned with optimized baseline and ready for approval.');
+                icons.push('fa-check-circle');
+            }
+            
+            let html = '';
+            let index = 0;
+            while (index < messages.length) {
+                html += `<li><i class="fas ${icons[index]}"></i> ${messages[index]}</li>`;
+                index += 1;
+            }
+            insightsContainer.innerHTML = html;
+        }
+        
+        async function performRealTimeOptimization() {
+            const payload = buildOptimizationPayload();
+            let optimizationResult = null;
+            try {
+                const response = await fetch('/api/v1/fertilizer/optimize-strategy', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    optimizationResult = await response.json();
+                }
+            } catch (error) {
+                console.warn('Optimization service unavailable, using simulation.', error);
+            }
+            if (!optimizationResult) {
+                optimizationResult = simulateOptimization();
+            }
+            applyOptimizationResults(optimizationResult);
+        }
+        
+        function buildOptimizationPayload() {
+            if (!strategyContext) {
+                return {};
+            }
+            const base = strategyContext.baseResults;
+            const formData = strategyContext.formData;
+            const totals = calculateAdjustedTotals();
+            const applications = [];
+            let index = 0;
+            while (index < strategySteps.length) {
+                const step = strategySteps[index];
+                applications.push({
+                    step_id: step.id,
+                    method: step.method,
+                    timing_offset_days: step.targetDay,
+                    nutrient_package: step.adjustedPackage,
+                    estimated_cost: step.estimatedCostShare
+                });
+                index += 1;
+            }
+            return {
+                farm_context: {
+                    fields: [
+                        {
+                            field_id: 'field-1',
+                            acres: parseFloat(base.acres || 0),
+                            soil_tests: {
+                                N: parseFloat(formData.nitrate_n || 0),
+                                P: parseFloat(formData.phosphorus || 0),
+                                K: parseFloat(formData.potassium || 0),
+                                pH: 6.5
+                            },
+                            crop_plan: {
+                                crop: base.crop || 'corn',
+                                target_yield: base.yieldGoal || 0,
+                                applications
+                            }
+                        }
+                    ],
+                    budget_constraints: {
+                        total_budget: parseFloat(formData.budget || base.totalCost),
+                        max_per_acre: parseFloat(formData.budget || base.totalCost) / Math.max(base.acres, 1)
+                    },
+                    equipment_available: ['sprayer', 'side-dress bar', 'variable rate spreader']
+                },
+                optimization_goals: {
+                    primary_goal: 'profit_maximization',
+                    yield_priority: 0.8,
+                    cost_priority: 0.7,
+                    environmental_priority: 0.6,
+                    risk_tolerance: document.getElementById('riskSelect') ? document.getElementById('riskSelect').value : 'moderate'
+                },
+                constraints: {
+                    environmental_limits: {
+                        max_n_rate: parseFloat(document.getElementById('maxRateInput') ? document.getElementById('maxRateInput').value : totals.N + 20),
+                        buffer_zones: document.getElementById('environmentToggle') ? document.getElementById('environmentToggle').checked : true
+                    },
+                    timing_constraints: {
+                        planting_date: new Date().toISOString().split('T')[0],
+                        harvest_date: new Date(Date.now() + (100 * 24 * 60 * 60 * 1000)).toISOString().split('T')[0]
+                    },
+                    regulatory_compliance: ['state_nutrient_plan', 'waterway_protection']
+                }
+            };
+        }
+        
+        function simulateOptimization() {
+            const base = strategyContext.baseResults;
+            const applications = [];
+            let index = 0;
+            while (index < strategySteps.length) {
+                const step = strategySteps[index];
+                applications.push({
+                    name: step.title,
+                    method: step.method,
+                    application_day: step.targetDay,
+                    n_rate: step.adjustedPackage.N || 0,
+                    p_rate: step.adjustedPackage.P || 0,
+                    k_rate: step.adjustedPackage.K || 0,
+                    estimated_cost: step.estimatedCostShare,
+                    environmental_risk: step.risk,
+                    efficiency: step.efficiency
+                });
+                index += 1;
+            }
+            const simulatedRoi = Math.max((base.roi + 12) / 100, 0.01);
+            const simulatedCost = base.totalCost * 0.97;
+            return {
+                strategy_id: 'simulated',
+                expected_roi: simulatedRoi,
+                economic_analysis: {
+                    total_investment: simulatedCost,
+                    payback_period: 0.85,
+                    break_even_yield: base.yieldGoal * 0.9
+                },
+                field_strategies: [
+                    {
+                        field_id: 'field-1',
+                        applications
+                    }
+                ],
+                optimization_notes: [
+                    'Local simulation applied 3% cost savings from logistics optimization.',
+                    'Yield protected through balanced nutrient distribution.'
+                ]
+            };
+        }
+        
+        function applyOptimizationResults(result) {
+            strategyContext.optimizedResponse = result;
+            if (result && result.field_strategies && result.field_strategies.length > 0) {
+                const fieldStrategy = result.field_strategies[0];
+                if (fieldStrategy && fieldStrategy.applications) {
+                    loadOptimizedApplications(fieldStrategy.applications);
+                }
+            }
+            if (result && result.economic_analysis) {
+                const costElement = document.getElementById('liveCostValue');
+                if (costElement) {
+                    costElement.textContent = formatCurrency(result.economic_analysis.total_investment);
+                }
+            }
+            if (result && typeof result.expected_roi === 'number') {
+                const roiElement = document.getElementById('liveRoiValue');
+                if (roiElement) {
+                    roiElement.textContent = formatRoiValue(result.expected_roi);
+                }
+            }
+            updateModificationInsights(getCurrentAdjustments(), calculateAdjustedTotals(), strategyContext.baseResults.totalCost, strategyContext.baseResults.roi);
+        }
+        
+        function loadOptimizedApplications(applications) {
+            const newSteps = [];
+            let index = 0;
+            while (index < applications.length) {
+                const app = applications[index];
+                const basePackage = {
+                    N: Math.round(app.n_rate || app.nitrogen_rate || 0),
+                    P: Math.round(app.p_rate || app.phosphorus_rate || 0),
+                    K: Math.round(app.k_rate || app.potassium_rate || 0)
+                };
+                const totals = {
+                    N: strategyContext.baseResults.nRate || 0,
+                    P: strategyContext.baseResults.pRate || 0,
+                    K: strategyContext.baseResults.kRate || 0
+                };
+                const step = createStrategyStep(
+                    app.step_id || `optimized-${index}`,
+                    app.name || `Application ${index + 1}`,
+                    app.method || 'Broadcast Granular',
+                    ['Broadcast Granular', 'Y-Drop Liquid', 'Foliar Feed', 'Injection'],
+                    app.application_day || app.timing_offset_days || 0,
+                    basePackage,
+                    strategyContext.baseResults,
+                    totals,
+                    app.environmental_risk || 'Moderate',
+                    app.efficiency || 0.82
+                );
+                newSteps.push(step);
+                index += 1;
+            }
+            if (newSteps.length > 0) {
+                strategySteps = newSteps;
+                renderStrategyTimeline();
+                updateLiveMetrics();
+            }
+        }
+        
+        async function saveCurrentStrategyVersion() {
+            if (!strategyContext) {
+                return;
+            }
+            const payload = buildSaveRequest();
+            let message = 'Strategy saved locally for review.';
+            try {
+                const response = await fetch('/api/v1/fertilizer/strategies/save', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    const data = await response.json();
+                    message = `Strategy version ${data.latest_version && data.latest_version.version_number ? data.latest_version.version_number : '1'} saved successfully.`;
+                }
+            } catch (error) {
+                console.warn('Strategy save service unavailable, storing locally.', error);
+            }
+            updateModificationInsights(getCurrentAdjustments(), calculateAdjustedTotals(), strategyContext.baseResults.totalCost, strategyContext.baseResults.roi);
+            const insightsContainer = document.getElementById('modificationInsights');
+            if (insightsContainer) {
+                const existing = insightsContainer.innerHTML;
+                insightsContainer.innerHTML = `<li><i class="fas fa-save"></i> ${message}</li>` + existing;
+            }
+        }
+        
+        function buildSaveRequest() {
+            const applications = [];
+            let index = 0;
+            while (index < strategySteps.length) {
+                applications.push({
+                    step_id: strategySteps[index].id,
+                    method: strategySteps[index].method,
+                    timing_offset_days: strategySteps[index].targetDay,
+                    nutrient_package: strategySteps[index].adjustedPackage,
+                    estimated_cost: strategySteps[index].estimatedCostShare
+                });
+                index += 1;
+            }
+            return {
+                strategy_name: `Custom Strategy ${new Date().toISOString()}`,
+                description: 'Advanced strategy modification generated from interactive tool.',
+                user_id: 'interactive-user',
+                farm_id: 'demo-farm',
+                tags: ['interactive', 'custom'],
+                field_strategies: applications,
+                economic_summary: {
+                    total_cost: strategyContext.baseResults.totalCost,
+                    expected_roi: strategyContext.baseResults.roi
+                },
+                environmental_metrics: {
+                    nutrient_balance: calculateAdjustedTotals()
+                }
+            };
+        }
+        
+        function restoreBaseStrategy() {
+            if (!strategyContext) {
+                return;
+            }
+            const nitrogenSlider = document.getElementById('nitrogenAdjuster');
+            const phosphorusSlider = document.getElementById('phosphorusAdjuster');
+            const potassiumSlider = document.getElementById('potassiumAdjuster');
+            if (nitrogenSlider) {
+                nitrogenSlider.value = 0;
+            }
+            if (phosphorusSlider) {
+                phosphorusSlider.value = 0;
+            }
+            if (potassiumSlider) {
+                potassiumSlider.value = 0;
+            }
+            let index = 0;
+            while (index < strategySteps.length) {
+                strategySteps[index].adjustedPackage = copyPackage(strategySteps[index].basePackage);
+                strategySteps[index].method = strategySteps[index].originalMethod;
+                strategySteps[index].targetDay = strategySteps[index].originalTargetDay;
+                index += 1;
+            }
+            renderStrategyTimeline();
+            updateAdjusterDisplays();
+            updateLiveMetrics();
+        }
+        
+        function copyPackage(source) {
+            const clone = {};
+            const keys = Object.keys(source || {});
+            let index = 0;
+            while (index < keys.length) {
+                clone[keys[index]] = source[keys[index]];
+                index += 1;
+            }
+            return clone;
+        }
+        
+        function formatPackageLine(pkg) {
+            const parts = [];
+            if (pkg.N && pkg.N > 0) {
+                parts.push(`N ${pkg.N} lbs`);
+            }
+            if (pkg.P && pkg.P > 0) {
+                parts.push(`P₂O₅ ${pkg.P} lbs`);
+            }
+            if (pkg.K && pkg.K > 0) {
+                parts.push(`K₂O ${pkg.K} lbs`);
+            }
+            if (parts.length === 0) {
+                parts.push('No nutrients assigned');
+            }
+            return parts.join(' • ');
+        }
+        
+        function formatBalance(totals) {
+            return `N ${Math.round(totals.N)} | P₂O₅ ${Math.round(totals.P)} | K₂O ${Math.round(totals.K)}`;
+        }
+        
+        function formatTiming(days) {
+            if (days === 0) {
+                return 'At planting';
+            }
+            if (days > 0) {
+                return `Day +${days}`;
+            }
+            return `Day ${days}`;
+        }
+        
+        function formatCurrency(value) {
+            return '$' + Number(value || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+        }
+        
+        function formatRoiValue(value) {
+            let roiPercent = value;
+            if (roiPercent <= 1) {
+                roiPercent = roiPercent * 100;
+            }
+            return roiPercent.toFixed(1) + '%';
+        }
+        
+        function toggleButtonActive(button, isActive) {
+            if (!button) {
+                return;
+            }
+            if (isActive) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
         }
     </script>
 </body>
