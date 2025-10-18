@@ -10,12 +10,19 @@
             summary: null,
             recommendations: [],
             marketSignals: [],
+            alerts: [],
+            alertSummary: {
+                total: 0,
+                high: 0,
+                medium: 0
+            },
             field: {
                 name: "No field selected",
                 coordinates: null
             },
             offlineQueue: 0,
-            lastPriceUpdate: null
+            lastPriceUpdate: null,
+            lastAlertUpdate: null
         };
         this.deviceIntegration = null;
         this.offlineDatabase = null;
@@ -81,6 +88,13 @@
         this.dom.priceList = document.getElementById("priceTrendList");
         this.dom.priceLastUpdatedLabel = document.getElementById("priceLastUpdatedLabel");
         this.dom.priceRefreshButton = document.getElementById("priceRefreshButton");
+        this.dom.priceAlertList = document.getElementById("mobilePriceAlertList");
+        this.dom.priceAlertPlaceholder = document.getElementById("priceAlertPlaceholder");
+        this.dom.priceAlertLastUpdatedLabel = document.getElementById("priceAlertLastUpdatedLabel");
+        this.dom.refreshPriceAlertsButton = document.getElementById("refreshPriceAlertsButton");
+        this.dom.alertSummaryTotal = document.getElementById("alertSummaryTotal");
+        this.dom.alertSummaryHigh = document.getElementById("alertSummaryHigh");
+        this.dom.alertSummaryMedium = document.getElementById("alertSummaryMedium");
         this.dom.syncStatusDot = document.getElementById("syncStatusDot");
         this.dom.syncStatusLabel = document.getElementById("syncStatusLabel");
         this.dom.networkBanner = document.getElementById("networkBanner");
@@ -128,6 +142,10 @@
 
         if (this.dom.priceRefreshButton) {
             this.dom.priceRefreshButton.addEventListener("click", this.fetchPriceSignals.bind(this));
+        }
+
+        if (this.dom.refreshPriceAlertsButton) {
+            this.dom.refreshPriceAlertsButton.addEventListener("click", this.fetchMobilePriceAlerts.bind(this));
         }
 
         if (this.dom.markActionCompleteButton) {
@@ -238,6 +256,7 @@
     MobileFertilizerStrategyApp.prototype.loadInitialData = async function () {
         await this.fetchStrategySummary();
         await this.fetchPriceSignals();
+        await this.fetchMobilePriceAlerts();
         this.updateOfflineQueueCount();
     };
 
@@ -633,10 +652,350 @@
         }
     };
 
+    MobileFertilizerStrategyApp.prototype.fetchMobilePriceAlerts = async function () {
+        if (this.dom.refreshPriceAlertsButton) {
+            this.dom.refreshPriceAlertsButton.disabled = true;
+        }
+
+        var alertPackage = null;
+        var payload = {
+            user_id: "mobile_strategy_user",
+            max_alerts: 5,
+            history_days: 21,
+            include_price_details: true,
+            include_recommendations: true,
+            fertilizer_types: ["nitrogen", "phosphorus", "potassium"],
+            alert_types: ["price_threshold", "opportunity", "timing", "risk"]
+        };
+
+        if (this.state.field && this.state.field.coordinates) {
+            var coords = this.state.field.coordinates;
+            payload.latitude = coords.latitude;
+            payload.longitude = coords.longitude;
+            if (coords.accuracy) {
+                payload.location_accuracy = coords.accuracy;
+            }
+        }
+
+        try {
+            var response = await fetch("/api/v1/alerts/mobile-price", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                var apiData = await response.json();
+                alertPackage = this.transformMobilePriceAlerts(apiData);
+            }
+        } catch (error) {
+            console.warn("Price alerts fetch failed:", error);
+        }
+
+        if (!alertPackage) {
+            alertPackage = this.buildSampleAlerts();
+        }
+
+        this.state.alerts = alertPackage.alerts;
+        this.state.alertSummary = alertPackage.summary;
+        this.state.lastAlertUpdate = alertPackage.generatedAt;
+
+        this.renderPriceAlerts(alertPackage.alerts);
+        this.renderAlertSummary(alertPackage.summary);
+        this.updateAlertTimestamp(alertPackage.generatedAt);
+        this.notifyPriceAlerts(alertPackage.alerts);
+
+        if (this.dom.refreshPriceAlertsButton) {
+            this.dom.refreshPriceAlertsButton.disabled = false;
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.transformMobilePriceAlerts = function (apiData) {
+        if (!apiData) {
+            return null;
+        }
+
+        var transformed = {
+            alerts: [],
+            summary: {
+                total: 0,
+                high: 0,
+                medium: 0
+            },
+            generatedAt: new Date(),
+            recommendations: []
+        };
+
+        if (apiData.generated_at) {
+            transformed.generatedAt = new Date(apiData.generated_at);
+        }
+
+        if (apiData.recommendations && apiData.recommendations.length > 0) {
+            transformed.recommendations = apiData.recommendations;
+        }
+
+        if (apiData.alerts && apiData.alerts.length > 0) {
+            for (var index = 0; index < apiData.alerts.length; index++) {
+                var alertData = apiData.alerts[index];
+                var priority = alertData.priority || "medium";
+                var normalizedPriority = priority.toLowerCase();
+
+                transformed.summary.total += 1;
+                if (normalizedPriority === "high") {
+                    transformed.summary.high += 1;
+                } else if (normalizedPriority === "medium") {
+                    transformed.summary.medium += 1;
+                }
+
+                var actions = [];
+                if (alertData.recommended_actions && alertData.recommended_actions.length > 0) {
+                    for (var actionIndex = 0; actionIndex < alertData.recommended_actions.length; actionIndex++) {
+                        var actionText = alertData.recommended_actions[actionIndex];
+                        if (typeof actionText === "string" && actionText.trim().length > 0) {
+                            actions.push(actionText);
+                        }
+                    }
+                }
+                if (actions.length === 0 && alertData.details && alertData.details.recommendation) {
+                    actions.push(alertData.details.recommendation);
+                }
+
+                var alert = {
+                    id: alertData.alert_id || "mobile_alert_" + index,
+                    title: alertData.title || "Market alert",
+                    summary: alertData.summary || alertData.message || "Market change detected.",
+                    priority: normalizedPriority,
+                    alertType: alertData.alert_type || "price_threshold",
+                    price: alertData.price_per_unit || null,
+                    unit: alertData.price_unit || "$/ton",
+                    priceChange: alertData.price_change_percent,
+                    region: alertData.region || apiData.region || "US",
+                    recommendedActions: actions,
+                    requiresAction: alertData.requires_action === true,
+                    confidence: alertData.confidence_score || 0,
+                    actionDeadline: alertData.action_deadline ? new Date(alertData.action_deadline) : null,
+                    createdAt: alertData.created_at ? new Date(alertData.created_at) : transformed.generatedAt
+                };
+
+                transformed.alerts.push(alert);
+            }
+        }
+
+        return transformed;
+    };
+
+    MobileFertilizerStrategyApp.prototype.renderPriceAlerts = function (alerts) {
+        if (!this.dom.priceAlertList) {
+            return;
+        }
+
+        this.dom.priceAlertList.innerHTML = "";
+
+        if (!alerts || alerts.length === 0) {
+            if (this.dom.priceAlertPlaceholder) {
+                this.dom.priceAlertPlaceholder.classList.remove("d-none");
+                this.dom.priceAlertPlaceholder.textContent = "No active price alerts. Capture GPS to personalize alerts.";
+                this.dom.priceAlertList.appendChild(this.dom.priceAlertPlaceholder);
+            }
+            return;
+        }
+
+        if (this.dom.priceAlertPlaceholder && this.dom.priceAlertPlaceholder.parentNode === this.dom.priceAlertList) {
+            this.dom.priceAlertPlaceholder.remove();
+        }
+
+        for (var index = 0; index < alerts.length; index++) {
+            var alert = alerts[index];
+
+            var listItem = document.createElement("li");
+            listItem.className = "price-alert-card " + alert.priority;
+
+            var title = document.createElement("p");
+            title.className = "price-alert-title";
+            title.textContent = alert.title;
+            listItem.appendChild(title);
+
+            var summary = document.createElement("p");
+            summary.className = "price-alert-summary";
+            summary.textContent = alert.summary;
+            listItem.appendChild(summary);
+
+            var meta = document.createElement("div");
+            meta.className = "price-alert-meta";
+
+            var leftMeta = document.createElement("span");
+            if (alert.price !== null && alert.price !== undefined) {
+                leftMeta.textContent = "$" + alert.price.toFixed(2) + " " + alert.unit;
+            } else {
+                leftMeta.textContent = "Price pending";
+            }
+            meta.appendChild(leftMeta);
+
+            var rightMeta = document.createElement("span");
+            var changeLabel = "--";
+            if (alert.priceChange !== null && alert.priceChange !== undefined) {
+                var sign = alert.priceChange >= 0 ? "+" : "";
+                changeLabel = sign + alert.priceChange.toFixed(1) + "%";
+            }
+            rightMeta.textContent = changeLabel + " • " + (alert.region || "Region pending");
+            meta.appendChild(rightMeta);
+
+            listItem.appendChild(meta);
+
+            if (alert.recommendedActions && alert.recommendedActions.length > 0) {
+                var actionsWrapper = document.createElement("div");
+                actionsWrapper.className = "price-alert-actions";
+
+                for (var actionIndex = 0; actionIndex < alert.recommendedActions.length; actionIndex++) {
+                    var actionText = alert.recommendedActions[actionIndex];
+                    var actionPill = document.createElement("span");
+                    actionPill.className = "price-alert-pill";
+                    actionPill.textContent = actionText;
+                    actionsWrapper.appendChild(actionPill);
+                }
+
+                listItem.appendChild(actionsWrapper);
+            }
+
+            this.dom.priceAlertList.appendChild(listItem);
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.renderAlertSummary = function (summary) {
+        if (!summary) {
+            return;
+        }
+
+        if (this.dom.alertSummaryTotal) {
+            this.dom.alertSummaryTotal.textContent = summary.total + " alerts";
+        }
+
+        if (this.dom.alertSummaryHigh) {
+            this.dom.alertSummaryHigh.textContent = summary.high + " high";
+        }
+
+        if (this.dom.alertSummaryMedium) {
+            this.dom.alertSummaryMedium.textContent = summary.medium + " medium";
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.updateAlertTimestamp = function (generatedAt) {
+        if (!this.dom.priceAlertLastUpdatedLabel) {
+            return;
+        }
+
+        if (!generatedAt) {
+            this.dom.priceAlertLastUpdatedLabel.textContent = "Last checked: --";
+            return;
+        }
+
+        this.dom.priceAlertLastUpdatedLabel.textContent = "Last checked: " + generatedAt.toLocaleTimeString();
+    };
+
+    MobileFertilizerStrategyApp.prototype.buildSampleAlerts = function () {
+        var now = new Date();
+        var alerts = [];
+
+        alerts.push({
+            id: "sample_high",
+            title: "Nitrogen pricing up 7.4%",
+            summary: "Nitrogen prices increased sharply this week. Lock in quotes before weekend trading.",
+            priority: "high",
+            alertType: "price_threshold",
+            price: 642.75,
+            unit: "$/ton",
+            priceChange: 7.4,
+            region: "Corn Belt",
+            recommendedActions: [
+                "Confirm supplier availability",
+                "Revisit sidedress timing plan"
+            ],
+            requiresAction: true,
+            confidence: 0.82,
+            actionDeadline: new Date(now.getTime() + 6 * 60 * 60 * 1000),
+            createdAt: now
+        });
+
+        alerts.push({
+            id: "sample_medium",
+            title: "Phosphorus purchase opportunity",
+            summary: "DAP pricing dipped slightly versus 30-day average. Consider filling fall inventory.",
+            priority: "medium",
+            alertType: "opportunity",
+            price: 598.10,
+            unit: "$/ton",
+            priceChange: -2.1,
+            region: "Great Plains",
+            recommendedActions: [
+                "Compare dealer quotes",
+                "Coordinate delivery timing"
+            ],
+            requiresAction: false,
+            confidence: 0.68,
+            actionDeadline: null,
+            createdAt: now
+        });
+
+        var summary = {
+            total: alerts.length,
+            high: 1,
+            medium: 1
+        };
+
+        return {
+            alerts: alerts,
+            summary: summary,
+            generatedAt: now,
+            recommendations: []
+        };
+    };
+
+    MobileFertilizerStrategyApp.prototype.notifyPriceAlerts = function (alerts) {
+        if (!alerts || alerts.length === 0) {
+            return;
+        }
+
+        var hasShownNotification = false;
+
+        for (var index = 0; index < alerts.length; index++) {
+            var alert = alerts[index];
+            if (alert.priority === "high" && alert.requiresAction) {
+                this.showNotification("High priority price alert: " + alert.title, {
+                    type: "warning",
+                    duration: 6000
+                });
+
+                if (typeof window !== "undefined" && "Notification" in window) {
+                    if (Notification.permission === "granted") {
+                        try {
+                            new Notification(alert.title, {
+                                body: alert.summary,
+                                tag: alert.id
+                            });
+                        } catch (notificationError) {
+                            console.debug("Native notification skipped:", notificationError);
+                        }
+                    }
+                }
+
+                hasShownNotification = true;
+                break;
+            }
+        }
+
+        if (!hasShownNotification) {
+            var firstAlert = alerts[0];
+            this.showNotification(firstAlert.title, { type: "info", duration: 4000 });
+        }
+    };
+
     MobileFertilizerStrategyApp.prototype.refreshStrategyData = async function () {
         this.showNotification("Refreshing strategy data...", { type: "info" });
         await this.fetchStrategySummary();
         await this.fetchPriceSignals();
+        await this.fetchMobilePriceAlerts();
         this.showNotification("Strategy data refreshed", { type: "success" });
     };
 
@@ -699,6 +1058,7 @@
 
                 self.showNotification("GPS captured successfully", { type: "success" });
                 self.updateOfflineQueueCount();
+                await self.fetchMobilePriceAlerts();
             },
             function (error) {
                 self.showNotification("Unable to capture location: " + error.message, { type: "error" });

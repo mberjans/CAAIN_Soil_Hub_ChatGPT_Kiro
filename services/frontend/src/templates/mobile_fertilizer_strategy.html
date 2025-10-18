@@ -147,6 +147,36 @@
             </div>
         </section>
 
+        <section class="card-section" id="priceAlertsSection" aria-label="Price alerts">
+            <div class="section-header">
+                <h2><i class="fas fa-bell"></i> Price Alerts</h2>
+                <button class="section-toggle" data-target="priceAlertsContent">
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+            </div>
+            <div class="section-content" id="priceAlertsContent">
+                <div class="price-alert-header">
+                    <span class="real-time-indicator">
+                        <span class="real-time-dot"></span>
+                        <span id="priceAlertLastUpdatedLabel">Last checked: --</span>
+                    </span>
+                    <button class="btn btn-outline-warning btn-sm" id="refreshPriceAlertsButton">
+                        Refresh Alerts
+                    </button>
+                </div>
+                <div class="alert-summary" id="priceAlertSummary">
+                    <span class="alert-summary-pill alert-summary-total" id="alertSummaryTotal">0 alerts</span>
+                    <span class="alert-summary-pill alert-summary-high" id="alertSummaryHigh">0 high</span>
+                    <span class="alert-summary-pill alert-summary-medium" id="alertSummaryMedium">0 medium</span>
+                </div>
+                <ul class="price-alert-list" id="mobilePriceAlertList" aria-live="polite">
+                    <li class="price-alert-placeholder" id="priceAlertPlaceholder">
+                        Intelligent alerts will appear here once pricing data loads.
+                    </li>
+                </ul>
+            </div>
+        </section>
+
         <section class="card-section" id="fieldActionsSection" aria-label="Field actions">
             <div class="section-header">
                 <h2><i class="fas fa-tractor"></i> Field Actions</h2>
