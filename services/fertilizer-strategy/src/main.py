@@ -24,6 +24,7 @@ from api.price_optimization_alert_routes import router as price_optimization_ale
 from api.environmental_routes import router as environmental_router
 from api.environmental_optimization_routes import router as sustainability_router
 from api.strategy_routes import router as strategy_router
+from api.strategy_management_routes import router as strategy_management_router
 from database.fertilizer_price_db import initialize_database, shutdown_database
 from database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -108,6 +109,7 @@ app.include_router(price_optimization_alert_router, prefix="/api/v1", tags=["pri
 app.include_router(environmental_router, prefix="/api/v1", tags=["regulatory-compliance"])
 app.include_router(sustainability_router, prefix="/api/v1", tags=["sustainability-optimization"])
 app.include_router(strategy_router, prefix="/api/v1", tags=["strategy-optimization"])
+app.include_router(strategy_management_router, prefix="/api/v1", tags=["strategy-management"])
 
 @app.get("/health")
 async def health_check():
