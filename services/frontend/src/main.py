@@ -133,6 +133,17 @@ async def fertilizer_strategy_page(request: Request):
     else:
         return HTMLResponse("<h1>Fertilizer Strategy - Coming Soon</h1>")
 
+@app.get("/fertilizer-strategy-dashboard", response_class=HTMLResponse)
+async def fertilizer_strategy_dashboard_page(request: Request):
+    """Comprehensive fertilizer strategy dashboard page"""
+    if templates:
+        return templates.TemplateResponse("fertilizer_strategy_dashboard.html", {
+            "request": request,
+            "title": "Fertilizer Strategy Dashboard"
+        })
+    else:
+        return HTMLResponse("<h1>Fertilizer Strategy Dashboard - Coming Soon</h1>")
+
 @app.get("/fertilizer-application", response_class=HTMLResponse)
 async def fertilizer_application_page(request: Request):
     """Fertilizer application method selection page"""
