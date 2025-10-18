@@ -109,6 +109,14 @@ class MobileOfflineDatabase {
             photosStore.createIndex('createdAt', 'created_at', { unique: false });
             photosStore.createIndex('synced', 'synced', { unique: false });
         }
+
+        // Strategy tracking store
+        if (!db.objectStoreNames.contains('strategyTracking')) {
+            const trackingStore = db.createObjectStore('strategyTracking', { keyPath: 'client_event_id' });
+            trackingStore.createIndex('strategyId', 'strategy_id', { unique: false });
+            trackingStore.createIndex('synced', 'synced', { unique: false });
+            trackingStore.createIndex('createdAt', 'created_at', { unique: false });
+        }
     }
 
     /**
@@ -326,6 +334,293 @@ class MobileOfflineDatabase {
     }
 
     /**
+     * Queue strategy progress for offline storage and sync
+     */
+    async queueStrategyProgress(entry) {
+        const storedEntry = this.prepareStrategyTrackingEntry(entry);
+        await this.saveToStore('strategyTracking', storedEntry);
+
+        if (this.isOnline) {
+            try {
+                await this.syncStrategyProgress(storedEntry);
+                return storedEntry;
+            } catch (error) {
+                console.error('Immediate strategy sync failed, adding to queue:', error);
+            }
+        }
+
+        await this.addToSyncQueue('strategyProgress', storedEntry);
+        return storedEntry;
+    }
+
+    /**
+     * Prepare strategy tracking entry for persistence
+     */
+    prepareStrategyTrackingEntry(entry) {
+        const stored = {};
+        const nowIso = new Date().toISOString();
+
+        stored.client_event_id = entry && entry.client_event_id ? entry.client_event_id : this.generateId();
+        stored.strategy_id = entry && entry.strategy_id ? entry.strategy_id : null;
+        stored.version_number = entry && entry.version_number ? entry.version_number : 1;
+        stored.user_id = entry && entry.user_id ? entry.user_id : null;
+        stored.field_id = entry && entry.field_id ? entry.field_id : null;
+        stored.activity_type = entry && entry.activity_type ? entry.activity_type : 'recorded';
+        stored.status = entry && entry.status ? entry.status : 'recorded';
+        stored.activity_timestamp = this.normalizeTimestamp(entry && entry.activity_timestamp ? entry.activity_timestamp : nowIso);
+        stored.device_identifier = entry && entry.device_identifier ? entry.device_identifier : null;
+        stored.notes = entry && entry.notes ? entry.notes : null;
+        stored.captured_offline = entry && typeof entry.captured_offline === 'boolean' ? entry.captured_offline : !this.isOnline;
+        stored.gps = this.normalizeGps(entry && entry.gps ? entry.gps : null);
+        stored.application = this.normalizeNestedObject(entry && entry.application ? entry.application : null);
+        stored.cost_summary = this.normalizeNestedObject(entry && entry.cost_summary ? entry.cost_summary : null);
+        stored.yield_summary = this.normalizeNestedObject(entry && entry.yield_summary ? entry.yield_summary : null);
+        stored.photos = this.normalizePhotoList(entry && entry.photos ? entry.photos : []);
+        stored.attachments = this.normalizeNestedObject(entry && entry.attachments ? entry.attachments : null);
+        stored.synced = false;
+        stored.activity_id = entry && entry.activity_id ? entry.activity_id : null;
+        stored.created_at = nowIso;
+        stored.updated_at = nowIso;
+
+        return stored;
+    }
+
+    /**
+     * Normalize GPS payload
+     */
+    normalizeGps(gps) {
+        if (!gps) {
+            return null;
+        }
+
+        const normalized = {};
+        if (typeof gps.latitude === 'number') {
+            normalized.latitude = gps.latitude;
+        }
+        if (typeof gps.longitude === 'number') {
+            normalized.longitude = gps.longitude;
+        }
+        if (typeof gps.accuracy === 'number') {
+            normalized.accuracy = gps.accuracy;
+        }
+
+        return normalized;
+    }
+
+    /**
+     * Normalize nested objects (application, cost, yield, attachments)
+     */
+    normalizeNestedObject(source) {
+        if (!source) {
+            return {};
+        }
+
+        const target = {};
+        for (const key in source) {
+            if (Object.prototype.hasOwnProperty.call(source, key)) {
+                const value = source[key];
+                if (value instanceof Date) {
+                    target[key] = value.toISOString();
+                } else {
+                    target[key] = value;
+                }
+            }
+        }
+        return target;
+    }
+
+    /**
+     * Normalize photo metadata list
+     */
+    normalizePhotoList(photos) {
+        const normalized = [];
+        if (!photos) {
+            return normalized;
+        }
+
+        let index = 0;
+        while (index < photos.length) {
+            const photo = photos[index];
+            if (photo) {
+                const photoEntry = {};
+                for (const key in photo) {
+                    if (Object.prototype.hasOwnProperty.call(photo, key)) {
+                        let value = photo[key];
+                        if (value instanceof Date) {
+                            value = value.toISOString();
+                        }
+                        if (key === 'captured_at') {
+                            value = this.normalizeTimestamp(value);
+                        }
+                        photoEntry[key] = value;
+                    }
+                }
+                normalized.push(photoEntry);
+            }
+            index += 1;
+        }
+
+        return normalized;
+    }
+
+    /**
+     * Normalize timestamp values to ISO 8601 strings
+     */
+    normalizeTimestamp(value) {
+        if (!value) {
+            return new Date().toISOString();
+        }
+
+        if (value instanceof Date) {
+            return value.toISOString();
+        }
+
+        if (typeof value === 'number') {
+            return new Date(value).toISOString();
+        }
+
+        if (typeof value === 'string') {
+            const parsed = Date.parse(value);
+            if (!isNaN(parsed)) {
+                return new Date(parsed).toISOString();
+            }
+        }
+
+        return new Date().toISOString();
+    }
+
+    /**
+     * Sync strategy progress entry with backend
+     */
+    async syncStrategyProgress(entry) {
+        const payload = this.prepareStrategyPayload(entry);
+
+        const response = await fetch('/api/v1/mobile-strategy/progress', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to sync strategy progress');
+        }
+
+        const result = await response.json();
+        const statusValue = result && result.status ? result.status : entry.status;
+        const activityId = result && result.activity_id ? result.activity_id : entry.activity_id;
+        await this.markStrategyTrackingSynced(entry.client_event_id, activityId, statusValue);
+        return result;
+    }
+
+    /**
+     * Prepare API payload for strategy progress
+     */
+    prepareStrategyPayload(entry) {
+        const payload = {};
+
+        payload.client_event_id = entry.client_event_id;
+        payload.strategy_id = entry.strategy_id;
+        payload.version_number = entry.version_number;
+        payload.user_id = entry.user_id;
+        if (entry.field_id) {
+            payload.field_id = entry.field_id;
+        }
+        payload.activity_type = entry.activity_type || 'recorded';
+        payload.status = entry.status || 'recorded';
+        payload.activity_timestamp = this.normalizeTimestamp(entry.activity_timestamp);
+        if (entry.device_identifier) {
+            payload.device_identifier = entry.device_identifier;
+        }
+        if (entry.notes) {
+            payload.notes = entry.notes;
+        }
+        payload.captured_offline = entry.captured_offline === true;
+
+        if (entry.gps && Object.keys(entry.gps).length > 0) {
+            payload.gps = entry.gps;
+        }
+        if (entry.application && Object.keys(entry.application).length > 0) {
+            payload.application = entry.application;
+        }
+        if (entry.cost_summary && Object.keys(entry.cost_summary).length > 0) {
+            payload.cost_summary = entry.cost_summary;
+        }
+        if (entry.yield_summary && Object.keys(entry.yield_summary).length > 0) {
+            payload.yield_summary = entry.yield_summary;
+        }
+
+        payload.photos = [];
+        if (entry.photos) {
+            let photoIndex = 0;
+            while (photoIndex < entry.photos.length) {
+                const photo = entry.photos[photoIndex];
+                if (photo) {
+                    payload.photos.push(photo);
+                }
+                photoIndex += 1;
+            }
+        }
+
+        if (entry.attachments && Object.keys(entry.attachments).length > 0) {
+            payload.attachments = entry.attachments;
+        }
+
+        return payload;
+    }
+
+    /**
+     * Retrieve pending strategy tracking entries
+     */
+    async getPendingStrategyTrackingEntries() {
+        const entries = await this.getAllFromStore('strategyTracking');
+        const pending = [];
+
+        let index = 0;
+        while (index < entries.length) {
+            const record = entries[index];
+            if (record && !record.synced) {
+                pending.push(record);
+            }
+            index += 1;
+        }
+
+        return pending;
+    }
+
+    /**
+     * Mark strategy tracking entry as synced
+     */
+    async markStrategyTrackingSynced(clientEventId, activityId, status) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['strategyTracking'], 'readwrite');
+            const store = transaction.objectStore('strategyTracking');
+            const request = store.get(clientEventId);
+
+            request.onsuccess = () => {
+                const record = request.result;
+                if (!record) {
+                    resolve(false);
+                    return;
+                }
+
+                record.synced = true;
+                record.activity_id = activityId || record.activity_id;
+                record.status = status || record.status;
+                record.synced_at = new Date().toISOString();
+                record.updated_at = new Date().toISOString();
+
+                const updateRequest = store.put(record);
+                updateRequest.onsuccess = () => resolve(true);
+                updateRequest.onerror = () => reject(updateRequest.error);
+            };
+
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
      * Save user preference
      */
     async savePreference(key, value) {
@@ -410,6 +705,9 @@ class MobileOfflineDatabase {
                 break;
             case 'photo':
                 await this.syncPhoto(data);
+                break;
+            case 'strategyProgress':
+                await this.syncStrategyProgress(data);
                 break;
         }
     }
@@ -600,7 +898,7 @@ class MobileOfflineDatabase {
     async getDatabaseStats() {
         const stats = {};
         
-        const stores = ['varieties', 'recommendations', 'preferences', 'syncQueue', 'fieldData', 'photos'];
+        const stores = ['varieties', 'recommendations', 'preferences', 'syncQueue', 'fieldData', 'photos', 'strategyTracking'];
         
         for (const storeName of stores) {
             const items = await this.getAllFromStore(storeName);
@@ -614,7 +912,7 @@ class MobileOfflineDatabase {
      * Clear all data
      */
     async clearAllData() {
-        const stores = ['varieties', 'recommendations', 'preferences', 'syncQueue', 'fieldData', 'photos'];
+        const stores = ['varieties', 'recommendations', 'preferences', 'syncQueue', 'fieldData', 'photos', 'strategyTracking'];
         
         for (const storeName of stores) {
             const transaction = this.db.transaction([storeName], 'readwrite');
