@@ -171,6 +171,80 @@
         .trend-negative {
             color: #842029;
         }
+        .analysis-control-panel {
+            background: rgba(25, 135, 84, 0.08);
+            border: 1px solid rgba(25, 135, 84, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .analysis-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            border-radius: 999px;
+            border: 1px solid rgba(25, 135, 84, 0.35);
+            background: #ffffff;
+            color: #198754;
+            padding: 0.35rem 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .analysis-chip:hover {
+            background: rgba(25, 135, 84, 0.12);
+            box-shadow: 0 4px 12px rgba(25, 135, 84, 0.12);
+        }
+        .analysis-chip.active {
+            background: #198754;
+            color: #ffffff;
+        }
+        .scenario-summary-table tr td:first-child {
+            font-weight: 600;
+            color: #495057;
+        }
+        .scenario-summary-table tr td {
+            padding: 0.35rem 0.25rem;
+            font-size: 0.9rem;
+        }
+        .d3-chart-container {
+            min-height: 280px;
+            position: relative;
+        }
+        .d3-placeholder {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #6c757d;
+            text-align: center;
+            font-size: 0.95rem;
+        }
+        .map-container {
+            min-height: 320px;
+            position: relative;
+        }
+        .map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.35rem;
+            font-size: 0.85rem;
+            color: #495057;
+        }
+        .legend-swatch {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -321,6 +395,113 @@
                 <div class="chart-container">
                     <h5 class="mb-3"><i class="fas fa-bell text-success"></i> Alerts & Notifications</h5>
                     <div id="alertsContainer"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-xl-6">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0"><i class="fas fa-random text-success"></i> Scenario Comparison</h5>
+                        <small class="text-muted">Evaluate alternative strategies</small>
+                    </div>
+                    <div class="analysis-control-panel" id="scenarioControlPanel">
+                        <span class="analysis-chip active" data-scenario="baseline"><i class="fas fa-dot-circle"></i> Baseline</span>
+                        <span class="analysis-chip" data-scenario="optimistic"><i class="fas fa-sun"></i> Optimistic</span>
+                        <span class="analysis-chip" data-scenario="pessimistic"><i class="fas fa-cloud-showers-heavy"></i> Pessimistic</span>
+                        <span class="analysis-chip" data-scenario="volatile"><i class="fas fa-exchange-alt"></i> Volatile</span>
+                        <span class="analysis-chip" data-scenario="custom"><i class="fas fa-sliders-h"></i> Custom</span>
+                    </div>
+                    <canvas id="scenarioComparisonChart" height="240"></canvas>
+                    <table class="table table-borderless mt-3 scenario-summary-table">
+                        <tbody id="scenarioSummaryBody">
+                            <tr>
+                                <td>Net Profit</td>
+                                <td class="text-end text-muted">Awaiting analysis</td>
+                            </tr>
+                            <tr>
+                                <td>Margin Shift</td>
+                                <td class="text-end text-muted">Awaiting analysis</td>
+                            </tr>
+                            <tr>
+                                <td>Risk Level</td>
+                                <td class="text-end text-muted">Awaiting analysis</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0"><i class="fas fa-seedling text-success"></i> Yield Response Curves</h5>
+                        <small class="text-muted">Compare nutrient response</small>
+                    </div>
+                    <canvas id="yieldResponseChart" height="240"></canvas>
+                    <p class="text-muted small mb-0 mt-3" id="yieldResponseSummary">
+                        Configure response curves to visualize nutrient rate impacts on yield potential.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-xl-6">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-sliders-h text-success"></i> Sensitivity Analysis</h5>
+                    <div class="d3-chart-container" id="sensitivityAnalysisChart">
+                        <div class="d3-placeholder">Sensitivity results will appear here once data is loaded.</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="chart-container">
+                    <h5 class="mb-3"><i class="fas fa-globe-americas text-success"></i> Environmental Impact Map</h5>
+                    <div class="map-container" id="environmentalImpactMap">
+                        <div class="d3-placeholder">Environmental impact layers will appear once analysis is available.</div>
+                    </div>
+                    <div class="map-legend" id="environmentalLegend">
+                        <span class="legend-item"><span class="legend-swatch" style="background-color:#198754;"></span>Low impact</span>
+                        <span class="legend-item"><span class="legend-swatch" style="background-color:#ffc107;"></span>Moderate</span>
+                        <span class="legend-item"><span class="legend-swatch" style="background-color:#dc3545;"></span>High impact</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4 mb-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h5 class="mb-0"><i class="fas fa-layer-group text-success"></i> Parameter Adjustments & Trade-offs</h5>
+                        <small class="text-muted">Track changes across strategy assumptions</small>
+                    </div>
+                    <div class="analysis-control-panel" id="tradeoffControlPanel">
+                        <span class="analysis-chip active" data-metric="profit">Profitability</span>
+                        <span class="analysis-chip" data-metric="cost">Cost Efficiency</span>
+                        <span class="analysis-chip" data-metric="yield">Yield Stability</span>
+                        <span class="analysis-chip" data-metric="impact">Environmental Impact</span>
+                        <span class="analysis-chip" data-metric="risk">Risk Exposure</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle" id="tradeoffTable">
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col">Scenario</th>
+                                    <th scope="col">Key Adjustment</th>
+                                    <th scope="col" class="text-end">Expected Impact</th>
+                                    <th scope="col" class="text-end">Confidence</th>
+                                    <th scope="col" class="text-end">Time Horizon</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tradeoffTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Awaiting scenario analysis.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
