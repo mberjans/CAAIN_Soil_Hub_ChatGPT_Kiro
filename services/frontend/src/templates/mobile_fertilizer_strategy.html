@@ -219,6 +219,65 @@
                         </div>
                     </article>
                 </div>
+
+                <div class="tracking-panel" id="trackingPanel" aria-label="Strategy tracking tools">
+                    <div class="tracking-header">
+                        <h3><i class="fas fa-clipboard-list"></i> Strategy Tracking</h3>
+                        <button class="btn btn-outline-primary btn-sm" id="syncNowButton" type="button">
+                            <i class="fas fa-cloud-upload-alt"></i> Sync Now
+                        </button>
+                    </div>
+
+                    <form class="tracking-form" id="trackingForm">
+                        <div class="tracking-grid">
+                            <label class="form-label" for="trackingActivityType">Activity</label>
+                            <select id="trackingActivityType" class="form-select" required>
+                                <option value="application">Application Completed</option>
+                                <option value="scouting">Scouting Observation</option>
+                                <option value="cost_update">Cost Update</option>
+                                <option value="yield_check">Yield Check</option>
+                                <option value="photo_capture">Photo Capture</option>
+                            </select>
+
+                            <label class="form-label" for="trackingStatus">Status</label>
+                            <select id="trackingStatus" class="form-select" required>
+                                <option value="completed">Completed</option>
+                                <option value="in_progress">In Progress</option>
+                                <option value="delayed">Delayed</option>
+                                <option value="scheduled">Scheduled</option>
+                            </select>
+
+                            <label class="form-label" for="trackingCostInput">Total Cost ($)</label>
+                            <input id="trackingCostInput" class="form-control" type="number" min="0" step="0.01" placeholder="e.g., 125.50">
+
+                            <label class="form-label" for="trackingYieldInput">Observed Yield</label>
+                            <input id="trackingYieldInput" class="form-control" type="number" min="0" step="0.1" placeholder="e.g., 185">
+
+                            <label class="form-label" for="trackingNotesInput">Notes</label>
+                            <textarea id="trackingNotesInput" class="form-control" rows="2" placeholder="Add field notes"></textarea>
+                        </div>
+
+                        <div class="tracking-form-actions">
+                            <div class="tracking-photo-hint">
+                                <i class="fas fa-camera"></i>
+                                <span id="trackingPhotoHint">Photos captured: 0</span>
+                            </div>
+                            <button class="btn btn-success" id="trackingSubmitButton" type="submit">
+                                <i class="fas fa-save"></i> Save Activity
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="tracking-status" aria-live="polite">
+                        <span class="tracking-status-pill" id="lastSyncLabel">Last sync: --</span>
+                        <span class="tracking-status-pill" id="pendingTrackingCount">Pending: 0</span>
+                        <span class="tracking-status-pill" id="trackingProgressLabel">Progress: 0%</span>
+                    </div>
+
+                    <ul class="activity-timeline" id="activityTimeline" aria-live="polite">
+                        <li class="timeline-placeholder">Log field activities to build your mobile strategy timeline.</li>
+                    </ul>
+                </div>
             </div>
         </section>
 

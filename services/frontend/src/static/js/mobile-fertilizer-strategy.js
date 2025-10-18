@@ -22,8 +22,16 @@
             },
             offlineQueue: 0,
             lastPriceUpdate: null,
-            lastAlertUpdate: null
+            lastAlertUpdate: null,
+            strategyId: null,
+            strategyVersion: 1,
+            trackingEntries: [],
+            trackingStats: {
+                progressPercent: 0,
+                lastSyncedAt: null
+            }
         };
+        this.userId = "mobile-operator";
         this.deviceIntegration = null;
         this.offlineDatabase = null;
         this.chart = null;
@@ -52,6 +60,7 @@
     MobileFertilizerStrategyApp.prototype.initialize = async function () {
         this.cacheDom();
         this.bindEvents();
+        this.initializeTrackingDefaults();
         await this.setupIntegrations();
         this.initializeChart();
         this.updateNetworkIndicators(navigator.onLine);
@@ -114,6 +123,20 @@
         this.dom.cameraPreview = document.getElementById("cameraPreview");
         this.dom.photoCanvas = document.getElementById("photoCanvas");
         this.dom.photoCount = document.getElementById("photoCount");
+        this.dom.trackingPanel = document.getElementById("trackingPanel");
+        this.dom.trackingForm = document.getElementById("trackingForm");
+        this.dom.trackingActivityType = document.getElementById("trackingActivityType");
+        this.dom.trackingStatus = document.getElementById("trackingStatus");
+        this.dom.trackingCostInput = document.getElementById("trackingCostInput");
+        this.dom.trackingYieldInput = document.getElementById("trackingYieldInput");
+        this.dom.trackingNotesInput = document.getElementById("trackingNotesInput");
+        this.dom.trackingSubmitButton = document.getElementById("trackingSubmitButton");
+        this.dom.syncNowButton = document.getElementById("syncNowButton");
+        this.dom.activityTimeline = document.getElementById("activityTimeline");
+        this.dom.lastSyncLabel = document.getElementById("lastSyncLabel");
+        this.dom.pendingTrackingCount = document.getElementById("pendingTrackingCount");
+        this.dom.trackingProgressLabel = document.getElementById("trackingProgressLabel");
+        this.dom.trackingPhotoHint = document.getElementById("trackingPhotoHint");
     };
 
     MobileFertilizerStrategyApp.prototype.bindEvents = function () {
@@ -166,11 +189,38 @@
             navItem.addEventListener("click", this.handleBottomNavigation.bind(this));
         }
 
+        if (this.dom.trackingForm) {
+            this.dom.trackingForm.addEventListener("submit", this.handleTrackingSubmit.bind(this));
+        }
+
+        if (this.dom.syncNowButton) {
+            this.dom.syncNowButton.addEventListener("click", this.handleSyncNow.bind(this));
+        }
+
         window.addEventListener("online", this.handleOnline.bind(this));
         window.addEventListener("offline", this.handleOffline.bind(this));
 
         document.addEventListener("mobileDevice:networkChange", this.handleDeviceNetworkChange.bind(this));
         document.addEventListener("mobileDevice:visibilityChange", this.handleVisibilityChange.bind(this));
+    };
+
+    MobileFertilizerStrategyApp.prototype.initializeTrackingDefaults = function () {
+        if (this.dom.trackingActivityType) {
+            this.dom.trackingActivityType.value = "application";
+        }
+        if (this.dom.trackingStatus) {
+            this.dom.trackingStatus.value = "completed";
+        }
+        if (this.dom.trackingCostInput) {
+            this.dom.trackingCostInput.value = "";
+        }
+        if (this.dom.trackingYieldInput) {
+            this.dom.trackingYieldInput.value = "";
+        }
+        if (this.dom.trackingNotesInput) {
+            this.dom.trackingNotesInput.value = "";
+        }
+        this.updatePhotoHint();
     };
 
     MobileFertilizerStrategyApp.prototype.setupIntegrations = async function () {
@@ -258,6 +308,7 @@
         await this.fetchPriceSignals();
         await this.fetchMobilePriceAlerts();
         this.updateOfflineQueueCount();
+        await this.fetchTrackingSummary();
     };
 
     MobileFertilizerStrategyApp.prototype.fetchStrategySummary = async function () {
@@ -278,6 +329,18 @@
         }
 
         this.state.summary = summaryData;
+        if (summaryData.strategyId) {
+            this.state.strategyId = summaryData.strategyId;
+        }
+        if (summaryData.versionNumber) {
+            this.state.strategyVersion = summaryData.versionNumber;
+        }
+        if (summaryData.fieldId) {
+            this.state.field.fieldId = summaryData.fieldId;
+        }
+        if (summaryData.userId) {
+            this.userId = summaryData.userId;
+        }
         this.renderSummary(summaryData);
         this.renderNextAction(summaryData.nextAction);
         this.renderRecommendations(summaryData.recommendations);
@@ -337,6 +400,10 @@
                     sustainability: firstComparison.sustainability_score || 65,
                     risk: firstComparison.risk_score ? 100 - firstComparison.risk_score : 58
                 };
+                summary.strategyId = firstComparison.strategy_id || firstComparison.strategyId || firstComparison.id || "mobile-strategy-demo";
+                summary.versionNumber = firstComparison.version_number || firstComparison.versionNumber || 1;
+                summary.fieldId = firstComparison.field_id || firstComparison.fieldId || null;
+                summary.userId = firstComparison.user_id || firstComparison.userId || this.userId;
             }
         } catch (error) {
             console.warn("Unable to transform strategy summary:", error);
@@ -382,8 +449,590 @@
                 profitability: 78,
                 sustainability: 82,
                 risk: 62
-            }
+            },
+            strategyId: "mobile-strategy-demo",
+            versionNumber: 1,
+            fieldId: "field-demo",
+            userId: this.userId
         };
+    };
+
+    MobileFertilizerStrategyApp.prototype.fetchTrackingSummary = async function () {
+        if (!this.offlineDatabase) {
+            return;
+        }
+
+        var strategyId = this.state.strategyId;
+        if (!strategyId) {
+            return;
+        }
+
+        var versionNumber = this.state.strategyVersion || 1;
+        var requestUrl = "/api/v1/mobile-strategy/summary?strategy_id=" + encodeURIComponent(strategyId) + "&version_number=" + versionNumber + "&limit=10";
+        var summary = null;
+
+        try {
+            var response = await fetch(requestUrl);
+            if (response.ok) {
+                summary = await response.json();
+            }
+        } catch (error) {
+            console.warn("Mobile tracking summary fetch failed:", error);
+        }
+
+        if (summary && summary.recent_activities) {
+            var mappedActivities = this.mapTrackingActivities(summary.recent_activities, false);
+            this.state.trackingEntries = mappedActivities;
+            this.renderTrackingTimeline(mappedActivities);
+            this.updateTrackingStats(summary);
+        } else {
+            var offlineEntries = await this.offlineDatabase.getPendingStrategyTrackingEntries();
+            var mappedOffline = this.mapTrackingActivities(offlineEntries, true);
+            this.state.trackingEntries = mappedOffline;
+            this.renderTrackingTimeline(mappedOffline);
+            this.updateTrackingStats(null);
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.mapTrackingActivities = function (activities, pendingOnly) {
+        var mapped = [];
+        if (!activities) {
+            return mapped;
+        }
+
+        var index = 0;
+        while (index < activities.length) {
+            var record = activities[index];
+            if (record) {
+                var pendingFlag = pendingOnly;
+                if (record.synced === false) {
+                    pendingFlag = true;
+                }
+                var entry = this.buildTimelineEntryFromRecord(record, pendingFlag);
+                mapped.push(entry);
+            }
+            index += 1;
+        }
+
+        mapped.sort(function (a, b) {
+            if (a.timestamp < b.timestamp) {
+                return 1;
+            }
+            if (a.timestamp > b.timestamp) {
+                return -1;
+            }
+            return 0;
+        });
+
+        return mapped;
+    };
+
+    MobileFertilizerStrategyApp.prototype.buildTimelineEntryFromRecord = function (record, pendingFlag) {
+        var entryId = record.activity_id || record.client_event_id || this.generateTimelineId();
+        var timestampValue = record.recorded_at || record.activity_timestamp || record.created_at || record.updated_at;
+        var normalizedTimestamp = this.normalizeTimestamp(timestampValue);
+        var timestampDate = new Date(normalizedTimestamp);
+
+        var activityType = record.activity_type || record.activityType || "activity";
+        var status = record.status || "recorded";
+        var iconInfo = this.resolveActivityIcon(activityType, status, pendingFlag);
+        var notes = this.buildNotesFromRecord(record);
+        var costLabel = this.buildCostLabel(record.cost_summary || record.costSummary || null);
+        var yieldLabel = this.buildYieldLabel(record.yield_summary || record.yieldSummary || null);
+
+        return {
+            id: entryId,
+            activityType: activityType,
+            status: status,
+            title: this.formatActivityTitle(activityType, status),
+            timestamp: timestampDate,
+            timestampLabel: this.formatTimestamp(timestampDate),
+            notes: notes,
+            costLabel: costLabel,
+            yieldLabel: yieldLabel,
+            pending: pendingFlag,
+            iconClass: iconInfo.background,
+            icon: iconInfo.icon
+        };
+    };
+
+    MobileFertilizerStrategyApp.prototype.resolveActivityIcon = function (activityType, status, pendingFlag) {
+        var icon = "fa-clipboard";
+        var background = "timeline-icon-default";
+        var normalizedType = activityType ? activityType.toLowerCase() : "";
+        var normalizedStatus = status ? status.toLowerCase() : "";
+
+        if (normalizedType === "application") {
+            icon = "fa-tractor";
+            background = "timeline-icon-success";
+        } else if (normalizedType === "scouting") {
+            icon = "fa-binoculars";
+            background = "timeline-icon-info";
+        } else if (normalizedType === "cost_update") {
+            icon = "fa-dollar-sign";
+            background = "timeline-icon-warning";
+        } else if (normalizedType === "yield_check") {
+            icon = "fa-seedling";
+            background = "timeline-icon-success";
+        } else if (normalizedType === "photo_capture") {
+            icon = "fa-camera";
+            background = "timeline-icon-info";
+        }
+
+        if (normalizedStatus === "delayed") {
+            background = "timeline-icon-warning";
+        } else if (normalizedStatus === "scheduled" || normalizedStatus === "in_progress") {
+            background = "timeline-icon-info";
+        } else if (normalizedStatus === "completed") {
+            background = "timeline-icon-success";
+        }
+
+        if (pendingFlag) {
+            background = "timeline-icon-pending";
+        }
+
+        return {
+            icon: icon,
+            background: background
+        };
+    };
+
+    MobileFertilizerStrategyApp.prototype.formatActivityTitle = function (activityType, status) {
+        var baseTitle = "Field Activity";
+        var normalizedType = activityType ? activityType.toLowerCase() : "";
+
+        if (normalizedType === "application") {
+            baseTitle = "Application";
+        } else if (normalizedType === "scouting") {
+            baseTitle = "Scouting";
+        } else if (normalizedType === "cost_update") {
+            baseTitle = "Cost Update";
+        } else if (normalizedType === "yield_check") {
+            baseTitle = "Yield Check";
+        } else if (normalizedType === "photo_capture") {
+            baseTitle = "Photo Capture";
+        }
+
+        var statusLabel = this.formatStatusLabel(status);
+        if (statusLabel) {
+            return baseTitle + " • " + statusLabel;
+        }
+        return baseTitle;
+    };
+
+    MobileFertilizerStrategyApp.prototype.formatStatusLabel = function (status) {
+        if (!status) {
+            return "";
+        }
+
+        var cleaned = "";
+        var index = 0;
+        while (index < status.length) {
+            var character = status.charAt(index);
+            if (character === "_") {
+                cleaned += " ";
+            } else {
+                cleaned += character;
+            }
+            index += 1;
+        }
+
+        cleaned = cleaned.trim();
+        if (cleaned.length === 0) {
+            return "";
+        }
+
+        var parts = cleaned.split(" ");
+        var formattedParts = [];
+        var partIndex = 0;
+        while (partIndex < parts.length) {
+            var word = parts[partIndex];
+            if (word.length > 0) {
+                var formatted = word.charAt(0).toUpperCase() + word.slice(1);
+                formattedParts.push(formatted);
+            }
+            partIndex += 1;
+        }
+
+        return formattedParts.join(" ");
+    };
+
+    MobileFertilizerStrategyApp.prototype.formatTimestamp = function (date) {
+        if (!(date instanceof Date) || isNaN(date.getTime())) {
+            return "Recorded";
+        }
+
+        var options = {
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        };
+
+        try {
+            return date.toLocaleString(undefined, options);
+        } catch (error) {
+            return date.toISOString();
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.renderTrackingTimeline = function (entries) {
+        if (!this.dom.activityTimeline) {
+            return;
+        }
+
+        this.dom.activityTimeline.innerHTML = "";
+
+        if (!entries || entries.length === 0) {
+            var placeholder = document.createElement("li");
+            placeholder.className = "timeline-placeholder";
+            placeholder.textContent = "Log field activities to build your mobile strategy timeline.";
+            this.dom.activityTimeline.appendChild(placeholder);
+            return;
+        }
+
+        var index = 0;
+        while (index < entries.length) {
+            var entry = entries[index];
+            var item = document.createElement("li");
+            var itemClass = "timeline-item";
+            if (entry.pending) {
+                itemClass += " pending";
+            }
+            item.className = itemClass;
+
+            var iconWrapper = document.createElement("div");
+            iconWrapper.className = "timeline-icon " + entry.iconClass;
+            iconWrapper.innerHTML = "<i class=\"fas " + entry.icon + "\"></i>";
+
+            var body = document.createElement("div");
+            body.className = "timeline-body";
+
+            var title = document.createElement("p");
+            title.className = "timeline-title";
+            title.textContent = entry.title;
+            body.appendChild(title);
+
+            var meta = document.createElement("p");
+            meta.className = "timeline-meta";
+            var metaText = entry.timestampLabel;
+            if (entry.pending) {
+                metaText += " • Pending sync";
+            }
+            meta.textContent = metaText;
+            body.appendChild(meta);
+
+            if (entry.costLabel) {
+                var costLine = document.createElement("p");
+                costLine.className = "timeline-metric";
+                costLine.textContent = "Cost: " + entry.costLabel;
+                body.appendChild(costLine);
+            }
+
+            if (entry.yieldLabel) {
+                var yieldLine = document.createElement("p");
+                yieldLine.className = "timeline-metric";
+                yieldLine.textContent = "Yield: " + entry.yieldLabel;
+                body.appendChild(yieldLine);
+            }
+
+            if (entry.notes) {
+                var noteLine = document.createElement("p");
+                noteLine.className = "timeline-notes";
+                noteLine.textContent = entry.notes;
+                body.appendChild(noteLine);
+            }
+
+            item.appendChild(iconWrapper);
+            item.appendChild(body);
+            this.dom.activityTimeline.appendChild(item);
+            index += 1;
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.prependTrackingEntry = function (entry) {
+        if (!this.state.trackingEntries) {
+            this.state.trackingEntries = [];
+        }
+        this.state.trackingEntries.unshift(entry);
+        if (this.state.trackingEntries.length > 20) {
+            this.state.trackingEntries.pop();
+        }
+        this.renderTrackingTimeline(this.state.trackingEntries);
+    };
+
+    MobileFertilizerStrategyApp.prototype.updateTrackingStats = function (summary) {
+        var progressPercent = 0;
+        if (summary && typeof summary.progress_percent === "number") {
+            progressPercent = summary.progress_percent;
+        } else if (this.state.trackingStats && typeof this.state.trackingStats.progressPercent === "number") {
+            progressPercent = this.state.trackingStats.progressPercent;
+        }
+
+        this.state.trackingStats.progressPercent = progressPercent;
+
+        var lastSyncedAt = null;
+        if (summary && summary.performance_snapshot && summary.performance_snapshot.last_synced_at) {
+            lastSyncedAt = summary.performance_snapshot.last_synced_at;
+        } else if (summary && summary.progress_percent !== undefined) {
+            lastSyncedAt = new Date().toISOString();
+        } else if (this.state.trackingStats && this.state.trackingStats.lastSyncedAt) {
+            lastSyncedAt = this.state.trackingStats.lastSyncedAt;
+        }
+
+        this.state.trackingStats.lastSyncedAt = lastSyncedAt;
+
+        if (this.dom.trackingProgressLabel) {
+            var progressText = "Progress: " + progressPercent.toFixed(0) + "%";
+            this.dom.trackingProgressLabel.textContent = progressText;
+        }
+
+        if (this.dom.lastSyncLabel) {
+            var syncLabel = "Last sync: --";
+            if (lastSyncedAt) {
+                var syncDate = new Date(lastSyncedAt);
+                syncLabel = "Last sync: " + this.formatTimestamp(syncDate);
+            }
+            this.dom.lastSyncLabel.textContent = syncLabel;
+        }
+
+        this.updatePendingTrackingCount();
+    };
+
+    MobileFertilizerStrategyApp.prototype.updatePendingTrackingCount = async function () {
+        if (!this.offlineDatabase) {
+            return;
+        }
+
+        try {
+            var pendingEntries = await this.offlineDatabase.getPendingStrategyTrackingEntries();
+            if (this.dom.pendingTrackingCount) {
+                this.dom.pendingTrackingCount.textContent = "Pending: " + pendingEntries.length;
+            }
+        } catch (error) {
+            console.warn("Unable to update pending tracking count:", error);
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.handleTrackingSubmit = async function (event) {
+        event.preventDefault();
+        if (!this.state.strategyId) {
+            this.showNotification("Strategy data unavailable - refresh data first", { type: "warning" });
+            return;
+        }
+
+        var payload = this.buildTrackingPayload();
+        await this.recordStrategyProgress(payload);
+    };
+
+    MobileFertilizerStrategyApp.prototype.buildTrackingPayload = function () {
+        var payload = {};
+        payload.strategy_id = this.state.strategyId || "mobile-strategy-demo";
+        payload.version_number = this.state.strategyVersion || 1;
+        payload.user_id = this.userId;
+        payload.field_id = this.state.field.fieldId || null;
+        payload.activity_type = this.dom.trackingActivityType ? this.dom.trackingActivityType.value : "application";
+        payload.status = this.dom.trackingStatus ? this.dom.trackingStatus.value : "completed";
+        payload.activity_timestamp = new Date().toISOString();
+        payload.captured_offline = !navigator.onLine;
+        payload.notes = this.dom.trackingNotesInput ? this.dom.trackingNotesInput.value : null;
+
+        if (this.state.field && this.state.field.coordinates) {
+            payload.gps = {
+                latitude: this.state.field.coordinates.latitude,
+                longitude: this.state.field.coordinates.longitude,
+                accuracy: this.state.field.coordinates.accuracy
+            };
+        }
+
+        if (this.dom.trackingCostInput && this.dom.trackingCostInput.value) {
+            var costValue = parseFloat(this.dom.trackingCostInput.value);
+            if (!isNaN(costValue)) {
+                payload.cost_summary = {
+                    total_cost: costValue,
+                    currency: "USD"
+                };
+            }
+        }
+
+        if (this.dom.trackingYieldInput && this.dom.trackingYieldInput.value) {
+            var yieldValue = parseFloat(this.dom.trackingYieldInput.value);
+            if (!isNaN(yieldValue)) {
+                payload.yield_summary = {
+                    observed_yield: yieldValue,
+                    yield_unit: "bu/ac"
+                };
+            }
+        }
+
+        payload.photos = [];
+        return payload;
+    };
+
+    MobileFertilizerStrategyApp.prototype.buildQuickTrackingPayload = function (activityType, status, notes) {
+        var payload = {
+            strategy_id: this.state.strategyId || "mobile-strategy-demo",
+            version_number: this.state.strategyVersion || 1,
+            user_id: this.userId,
+            field_id: this.state.field.fieldId || null,
+            activity_type: activityType,
+            status: status,
+            activity_timestamp: new Date().toISOString(),
+            captured_offline: !navigator.onLine,
+            notes: notes,
+            photos: []
+        };
+
+        if (this.state.field && this.state.field.coordinates) {
+            payload.gps = {
+                latitude: this.state.field.coordinates.latitude,
+                longitude: this.state.field.coordinates.longitude,
+                accuracy: this.state.field.coordinates.accuracy
+            };
+        }
+
+        return payload;
+    };
+
+    MobileFertilizerStrategyApp.prototype.recordStrategyProgress = async function (payload) {
+        if (!this.offlineDatabase) {
+            this.showNotification("Offline storage unavailable", { type: "error" });
+            return;
+        }
+
+        try {
+            var storedEntry = await this.offlineDatabase.queueStrategyProgress(payload);
+            var timelineEntry = this.buildTimelineEntryFromRecord(storedEntry, !storedEntry.synced);
+            this.prependTrackingEntry(timelineEntry);
+            this.showNotification("Activity saved for tracking", { type: "success" });
+            this.resetTrackingForm();
+            this.updateOfflineQueueCount();
+
+            if (navigator.onLine) {
+                await this.fetchTrackingSummary();
+            }
+        } catch (error) {
+            console.error("Failed to record strategy progress:", error);
+            this.showNotification("Unable to save activity", { type: "error" });
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.handleSyncNow = async function () {
+        if (!this.offlineDatabase) {
+            return;
+        }
+
+        this.showNotification("Synchronizing activities...", { type: "info" });
+        try {
+            await this.offlineDatabase.syncOfflineData();
+            await this.fetchTrackingSummary();
+            await this.updateOfflineQueueCount();
+            this.showNotification("Sync complete", { type: "success" });
+        } catch (error) {
+            console.error("Manual sync failed:", error);
+            this.showNotification("Sync failed - will retry later", { type: "error" });
+        }
+    };
+
+    MobileFertilizerStrategyApp.prototype.resetTrackingForm = function () {
+        if (this.dom.trackingForm) {
+            this.dom.trackingForm.reset();
+        }
+        this.initializeTrackingDefaults();
+    };
+
+    MobileFertilizerStrategyApp.prototype.buildCostLabel = function (summary) {
+        if (!summary) {
+            return null;
+        }
+
+        if (typeof summary.total_cost === "number" && !isNaN(summary.total_cost)) {
+            return "$" + summary.total_cost.toFixed(2);
+        }
+
+        if (typeof summary.input_cost === "number" && !isNaN(summary.input_cost)) {
+            return "$" + summary.input_cost.toFixed(2);
+        }
+
+        if (typeof summary.labor_cost === "number" && !isNaN(summary.labor_cost)) {
+            return "$" + summary.labor_cost.toFixed(2);
+        }
+
+        return null;
+    };
+
+    MobileFertilizerStrategyApp.prototype.buildYieldLabel = function (summary) {
+        if (!summary) {
+            return null;
+        }
+
+        if (typeof summary.observed_yield === "number" && !isNaN(summary.observed_yield)) {
+            return summary.observed_yield.toFixed(1) + " bu/ac";
+        }
+
+        if (typeof summary.expected_yield === "number" && !isNaN(summary.expected_yield)) {
+            return summary.expected_yield.toFixed(1) + " bu/ac";
+        }
+
+        return null;
+    };
+
+    MobileFertilizerStrategyApp.prototype.buildNotesFromRecord = function (record) {
+        if (record.notes && typeof record.notes === "string" && record.notes.trim().length > 0) {
+            return record.notes.trim();
+        }
+        if (record.attachments && record.attachments.notes && typeof record.attachments.notes === "string") {
+            var attachmentNote = record.attachments.notes.trim();
+            if (attachmentNote.length > 0) {
+                return attachmentNote;
+            }
+        }
+        if (record.observations && typeof record.observations === "string" && record.observations.trim().length > 0) {
+            return record.observations.trim();
+        }
+        return null;
+    };
+
+    MobileFertilizerStrategyApp.prototype.generateTimelineId = function () {
+        return "timeline_" + Date.now().toString(36) + Math.floor(Math.random() * 1000).toString(36);
+    };
+
+    MobileFertilizerStrategyApp.prototype.updatePhotoHint = function () {
+        if (!this.dom.trackingPhotoHint) {
+            return;
+        }
+
+        var photoCountText = "Photos captured: 0";
+        if (this.dom.photoCount && this.dom.photoCount.textContent) {
+            var parsed = parseInt(this.dom.photoCount.textContent, 10);
+            if (!isNaN(parsed)) {
+                photoCountText = "Photos captured: " + parsed;
+            }
+        }
+        this.dom.trackingPhotoHint.textContent = photoCountText;
+    };
+
+    MobileFertilizerStrategyApp.prototype.normalizeTimestamp = function (value) {
+        if (!value) {
+            return new Date().toISOString();
+        }
+
+        if (value instanceof Date) {
+            return value.toISOString();
+        }
+
+        if (typeof value === "number") {
+            return new Date(value).toISOString();
+        }
+
+        if (typeof value === "string") {
+            var parsed = Date.parse(value);
+            if (!isNaN(parsed)) {
+                return new Date(parsed).toISOString();
+            }
+        }
+
+        return new Date().toISOString();
     };
 
     MobileFertilizerStrategyApp.prototype.renderSummary = function (summary) {
@@ -1192,6 +1841,7 @@
         }
         current += 1;
         this.dom.photoCount.textContent = current + " stored";
+        this.updatePhotoHint();
     };
 
     MobileFertilizerStrategyApp.prototype.closeCameraOverlay = function () {
@@ -1295,7 +1945,24 @@
     };
 
     MobileFertilizerStrategyApp.prototype.handleRecommendationTrack = function (recommendation) {
+        if (!recommendation) {
+            return;
+        }
+
         this.showNotification("Tracking recommendation: " + (recommendation.title || "Strategy item"), { type: "info" });
+
+        if (this.dom.trackingActivityType) {
+            this.dom.trackingActivityType.value = "application";
+        }
+        if (this.dom.trackingStatus) {
+            this.dom.trackingStatus.value = "scheduled";
+        }
+        if (this.dom.trackingNotesInput) {
+            this.dom.trackingNotesInput.value = recommendation.detail || recommendation.title || "";
+        }
+        if (this.dom.trackingPanel && this.dom.trackingPanel.scrollIntoView) {
+            this.dom.trackingPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
     };
 
     MobileFertilizerStrategyApp.prototype.handleBottomNavigation = function (event) {
@@ -1336,11 +2003,15 @@
         }
     };
 
-    MobileFertilizerStrategyApp.prototype.handleActionCompleted = function () {
+    MobileFertilizerStrategyApp.prototype.handleActionCompleted = async function () {
         this.showNotification("Marked action as completed", { type: "success" });
+        var notes = null;
         if (this.dom.nextActionDescription) {
             this.dom.nextActionDescription.textContent = "Action recorded. Awaiting new recommendation.";
+            notes = this.dom.nextActionDescription.textContent;
         }
+        var payload = this.buildQuickTrackingPayload("application", "completed", notes);
+        await this.recordStrategyProgress(payload);
     };
 
     MobileFertilizerStrategyApp.prototype.handleActionReschedule = function () {
@@ -1354,6 +2025,7 @@
         this.updateNetworkIndicators(true);
         this.showNotification("Connection restored", { type: "success" });
         this.updateOfflineQueueCount();
+        this.fetchTrackingSummary();
     };
 
     MobileFertilizerStrategyApp.prototype.handleOffline = function () {
@@ -1413,6 +2085,7 @@
             var queueSize = stats.syncQueue || 0;
             this.state.offlineQueue = queueSize;
             this.dom.offlineQueueCount.textContent = queueSize.toString();
+            await this.updatePendingTrackingCount();
         } catch (error) {
             console.error("Offline queue update failed:", error);
         }
