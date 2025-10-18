@@ -6,6 +6,7 @@ import importlib
 import importlib.machinery
 import importlib.util
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import List
 
@@ -43,6 +44,9 @@ StrategyComparisonRequest = models_module.StrategyComparisonRequest
 StrategyComparisonResponse = models_module.StrategyComparisonResponse
 StrategyUpdateRequest = models_module.StrategyUpdateRequest
 StrategyUpdateResponse = models_module.StrategyUpdateResponse
+StrategyPerformanceRequest = models_module.StrategyPerformanceRequest
+StrategyPerformanceResponse = models_module.StrategyPerformanceResponse
+PerformanceMetric = models_module.PerformanceMetric
 
 
 @pytest.fixture
@@ -303,6 +307,74 @@ class TestStrategyManagementService:
         with pytest.raises(LookupError):
             await in_memory_service.update_strategy("missing-strategy", update_request, user_id="user-1")
 
+    @pytest.mark.asyncio
+    async def test_track_performance_records_metrics(self, in_memory_service):
+        """Ensure performance tracking logs metrics successfully."""
+        base_field = FieldStrategyData(
+            field_id="field-perf-1",
+            acres=80.0,
+            crop_type="corn",
+            recommended_rates={"N": 150.0},
+            application_schedule=["pre-plant"],
+            application_method="broadcast",
+            expected_yield=190.0,
+            total_cost=140.0,
+            roi_projection=0.33,
+        )
+
+        create_request = SaveStrategyRequest(
+            strategy_name="Performance Plan",
+            description="Performance baseline",
+            user_id="user-perf",
+            farm_id="farm-perf",
+            field_strategies=[base_field],
+            economic_summary={"total_cost": 11500.0},
+            environmental_metrics={"runoff_risk": 0.21},
+            roi_estimate=0.43,
+            metadata={"season": "2025"},
+        )
+
+        save_response = await in_memory_service.save_strategy(create_request)
+
+        metrics: List[PerformanceMetric] = []
+        metrics.append(PerformanceMetric(metric_name="yield_delta", metric_value=5.0))
+        metrics.append(PerformanceMetric(metric_name="cost_variance", metric_value=-200.0))
+
+        reporting_start = datetime(2025, 7, 1)
+        reporting_end = datetime(2025, 8, 1)
+
+        performance_request = StrategyPerformanceRequest(
+            strategy_id=save_response.strategy_id,
+            version_number=1,
+            reporting_period_start=reporting_start,
+            reporting_period_end=reporting_end,
+            realized_yield=188.0,
+            realized_cost=11300.0,
+            realized_revenue=14500.0,
+            performance_metrics=metrics,
+            observations="Strong season performance",
+        )
+
+        performance_response = await in_memory_service.track_performance(performance_request)
+
+        assert isinstance(performance_response, StrategyPerformanceResponse)
+        assert performance_response.metrics_recorded == 2
+
+    @pytest.mark.asyncio
+    async def test_track_performance_missing_version(self, in_memory_service):
+        """Ensure missing version raises error during performance tracking."""
+        metrics: List[PerformanceMetric] = []
+        request = StrategyPerformanceRequest(
+            strategy_id="missing-strategy",
+            version_number=1,
+            reporting_period_start=datetime(2025, 1, 1),
+            reporting_period_end=datetime(2025, 2, 1),
+            performance_metrics=metrics,
+        )
+
+        with pytest.raises(LookupError):
+            await in_memory_service.track_performance(request)
+
 
 class TestStrategyManagementAPI:
     """API tests for strategy management endpoints."""
@@ -519,5 +591,69 @@ class TestStrategyManagementAPI:
         payload = {"description": "No strategy"}
 
         response = client.put("/api/v1/strategies/missing/update", params=params, json=payload)
+
+        assert response.status_code == 404
+
+    def test_track_performance_endpoint_success(self):
+        """Ensure performance endpoint records metrics."""
+        client = TestClient(app)
+
+        create_payload = {
+            "strategy_name": "Performance Endpoint Plan",
+            "description": "Baseline strategy",
+            "user_id": "user-perf-endpoint",
+            "field_strategies": [
+                {
+                    "field_id": "field-perf",
+                    "acres": 60.0,
+                    "crop_type": "corn",
+                    "recommended_rates": {"N": 145.0},
+                    "application_schedule": ["pre-plant"],
+                    "application_method": "broadcast",
+                    "expected_yield": 182.0,
+                    "total_cost": 125.0,
+                }
+            ],
+            "economic_summary": {"total_cost": 9500.0},
+            "environmental_metrics": {"runoff_risk": 0.24},
+            "roi_estimate": 0.39,
+        }
+
+        save_response = client.post("/api/v1/strategies/save", json=create_payload)
+        strategy_id = save_response.json()["strategy_id"]
+
+        track_payload = {
+            "strategy_id": strategy_id,
+            "version_number": 1,
+            "reporting_period_start": datetime(2025, 9, 1).isoformat(),
+            "reporting_period_end": datetime(2025, 10, 1).isoformat(),
+            "realized_yield": 180.0,
+            "realized_cost": 9400.0,
+            "realized_revenue": 12800.0,
+            "performance_metrics": [
+                {"metric_name": "yield_delta", "metric_value": -2.0},
+                {"metric_name": "cost_variance", "metric_value": -100.0},
+            ],
+            "observations": "Slightly below projection",
+        }
+
+        response = client.post("/api/v1/strategies/track-performance", json=track_payload)
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["metrics_recorded"] == 2
+
+    def test_track_performance_endpoint_missing_strategy(self):
+        """Ensure performance endpoint handles missing strategy."""
+        client = TestClient(app)
+        payload = {
+            "strategy_id": "missing-value",
+            "version_number": 1,
+            "reporting_period_start": datetime(2025, 1, 1).isoformat(),
+            "reporting_period_end": datetime(2025, 2, 1).isoformat(),
+            "performance_metrics": [],
+        }
+
+        response = client.post("/api/v1/strategies/track-performance", json=payload)
 
         assert response.status_code == 404

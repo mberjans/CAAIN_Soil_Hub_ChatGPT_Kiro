@@ -10,6 +10,8 @@ from ..models.strategy_management_models import (
     SaveStrategyRequest,
     StrategyComparisonRequest,
     StrategyComparisonResponse,
+    StrategyPerformanceRequest,
+    StrategyPerformanceResponse,
     StrategyUpdateRequest,
     StrategyUpdateResponse,
     StrategySaveResponse,
@@ -116,3 +118,23 @@ async def update_strategy(
     except Exception as error:
         logger.error("Strategy update failed: %s", error)
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Strategy update failed") from error
+
+
+@router.post("/track-performance", response_model=StrategyPerformanceResponse, status_code=status.HTTP_200_OK)
+async def track_performance(
+    request: StrategyPerformanceRequest,
+    service: StrategyManagementService = Depends(get_strategy_management_service),
+) -> StrategyPerformanceResponse:
+    """Record realized strategy performance metrics."""
+    try:
+        response = await service.track_performance(request)
+        return response
+    except ValueError as error:
+        logger.warning("Strategy performance validation error: %s", error)
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(error)) from error
+    except LookupError as error:
+        logger.warning("Strategy performance missing data: %s", error)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(error)) from error
+    except Exception as error:
+        logger.error("Strategy performance tracking failed: %s", error)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Strategy performance tracking failed") from error

@@ -219,8 +219,44 @@ class StrategyManagementService:
         request: StrategyPerformanceRequest,
     ) -> StrategyPerformanceResponse:
         """Persist performance tracking data for a strategy."""
-        # Placeholder for upcoming implementation
-        raise NotImplementedError("Strategy performance tracking is not implemented yet")
+        self._validate_performance_request(request)
+
+        strategy_record = await asyncio.to_thread(self.repository.fetch_strategy, request.strategy_id)
+        if strategy_record is None:
+            raise LookupError(f"Strategy not found: {request.strategy_id}")
+
+        version_record = await asyncio.to_thread(
+            self.repository.fetch_version,
+            request.strategy_id,
+            request.version_number,
+        )
+        if version_record is None:
+            raise LookupError(
+                f"Strategy version {request.version_number} not found for {request.strategy_id}"
+            )
+
+        metrics = self._prepare_performance_metrics(request.performance_metrics)
+
+        record = await asyncio.to_thread(
+            self.repository.log_performance,
+            request.strategy_id,
+            request.version_number,
+            request.reporting_period_start,
+            request.reporting_period_end,
+            request.realized_yield,
+            request.realized_cost,
+            request.realized_revenue,
+            metrics,
+            request.observations,
+        )
+
+        response = StrategyPerformanceResponse(
+            strategy_id=record.strategy_id,
+            version_number=record.version_number,
+            metrics_recorded=len(metrics),
+            message="Performance data recorded successfully",
+        )
+        return response
 
     def _map_version(self, version_record: StrategyVersionRecord) -> StrategyVersionInfo:
         """Convert database version record to response model."""
@@ -428,3 +464,40 @@ class StrategyManagementService:
                 message = f"{message}{strategy_id}"
             index += 1
         return message
+
+    def _validate_performance_request(self, request: StrategyPerformanceRequest) -> None:
+        """Validate performance tracking request."""
+        if request.reporting_period_end < request.reporting_period_start:
+            raise ValueError("Reporting period end must be after start date")
+
+        if request.realized_yield is not None and request.realized_yield < 0:
+            raise ValueError("Realized yield cannot be negative")
+
+        if request.realized_cost is not None and request.realized_cost < 0:
+            raise ValueError("Realized cost cannot be negative")
+
+        if request.realized_revenue is not None and request.realized_revenue < 0:
+            raise ValueError("Realized revenue cannot be negative")
+
+    def _prepare_performance_metrics(
+        self,
+        metrics: List[PerformanceMetric],
+    ) -> List[PerformanceMetric]:
+        """Sanitize performance metrics collection."""
+        if metrics is None:
+            return []
+
+        sanitized: List[PerformanceMetric] = []
+        seen: Dict[str, bool] = {}
+        for metric in metrics:
+            metric_name = ""
+            if metric.metric_name:
+                metric_name = str(metric.metric_name).strip()
+            if not metric_name:
+                continue
+            if metric_name in seen:
+                continue
+            sanitized_metric = PerformanceMetric(metric_name=metric_name, metric_value=metric.metric_value)
+            sanitized.append(sanitized_metric)
+            seen[metric_name] = True
+        return sanitized
