@@ -28,6 +28,7 @@ from ..models.strategy_management_models import (
     PerformanceMetric,
     SaveStrategyRequest,
 )
+from ..models.mobile_strategy_tracking_models import MobileStrategyProgressEntry
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +90,38 @@ class StrategyPerformanceRecord(Base):
     performance_metrics = Column(JSON, nullable=False, default=list)
     observations = Column(Text, nullable=True)
     recorded_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class MobileStrategyActivityRecord(Base):
+    """Mobile activity tracking data recorded from the field."""
+
+    __tablename__ = "mobile_strategy_activity"
+
+    id = Column(String(36), primary_key=True, default=lambda: str(uuid4()))
+    activity_id = Column(String(36), unique=True, nullable=False, index=True)
+    strategy_id = Column(String(36), nullable=False, index=True)
+    version_number = Column(Integer, nullable=False)
+    user_id = Column(String(64), nullable=False, index=True)
+    field_id = Column(String(64), nullable=True, index=True)
+    activity_type = Column(String(64), nullable=False)
+    status = Column(String(32), nullable=False, default="recorded")
+    activity_timestamp = Column(DateTime, nullable=False, default=datetime.utcnow)
+    device_identifier = Column(String(128), nullable=True)
+    captured_offline = Column(Boolean, nullable=False, default=False)
+    gps_latitude = Column(Float, nullable=True)
+    gps_longitude = Column(Float, nullable=True)
+    gps_accuracy = Column(Float, nullable=True)
+    application_detail = Column(JSON, nullable=False, default=dict)
+    cost_summary = Column(JSON, nullable=False, default=dict)
+    yield_summary = Column(JSON, nullable=False, default=dict)
+    photo_metadata = Column(JSON, nullable=False, default=list)
+    attachments = Column(JSON, nullable=False, default=dict)
+    client_event_id = Column(String(128), nullable=False, unique=True, index=True)
+    conflict_resolved = Column(Boolean, nullable=False, default=False)
+    sync_status = Column(String(32), nullable=False, default="pending")
+    synced_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
 
 class StrategyRepository:
@@ -333,5 +366,269 @@ class StrategyRepository:
             session.rollback()
             logger.error("Failed to log strategy performance: %s", error)
             raise
+        finally:
+            session.close()
+
+    def fetch_mobile_activity_by_client_event(
+        self,
+        client_event_id: str,
+    ) -> Optional[MobileStrategyActivityRecord]:
+        """Fetch stored mobile activity by client event identifier."""
+        session = self.get_session()
+        try:
+            record = (
+                session.query(MobileStrategyActivityRecord)
+                .filter(MobileStrategyActivityRecord.client_event_id == client_event_id)
+                .first()
+            )
+            return record
+        finally:
+            session.close()
+
+    def log_mobile_activity(
+        self,
+        entry: MobileStrategyProgressEntry,
+    ) -> Dict[str, Any]:
+        """Persist mobile strategy activity with conflict resolution."""
+        session = self.get_session()
+        created = False
+        conflict_resolved = False
+
+        try:
+            existing = (
+                session.query(MobileStrategyActivityRecord)
+                .filter(MobileStrategyActivityRecord.client_event_id == entry.client_event_id)
+                .first()
+            )
+
+            photos_payload: List[Dict[str, Any]] = []
+            if entry.photos:
+                index = 0
+                while index < len(entry.photos):
+                    photo = entry.photos[index]
+                    if photo is not None:
+                        photo_dict = photo.model_dump()
+                        if "captured_at" in photo_dict:
+                            captured_value = photo_dict.get("captured_at")
+                            if isinstance(captured_value, datetime):
+                                photo_dict["captured_at"] = captured_value.isoformat()
+                        photos_payload.append(photo_dict)
+                    index += 1
+
+            application_payload: Dict[str, Any] = {}
+            if entry.application is not None:
+                application_payload = entry.application.model_dump()
+
+            cost_payload: Dict[str, Any] = {}
+            if entry.cost_summary is not None:
+                cost_payload = entry.cost_summary.model_dump()
+
+            yield_payload: Dict[str, Any] = {}
+            if entry.yield_summary is not None:
+                yield_payload = entry.yield_summary.model_dump()
+
+            attachments_payload: Dict[str, Any] = {}
+            if entry.attachments:
+                for key in entry.attachments:
+                    value = entry.attachments[key]
+                    if isinstance(value, datetime):
+                        attachments_payload[key] = value.isoformat()
+                    else:
+                        attachments_payload[key] = value
+
+            if entry.notes:
+                attachments_payload["notes"] = entry.notes
+
+            if existing:
+                conflict_resolved = True
+                existing.status = entry.status
+                existing.activity_timestamp = entry.activity_timestamp
+                existing.user_id = entry.user_id
+                existing.field_id = entry.field_id
+                existing.activity_type = entry.activity_type
+                existing.device_identifier = entry.device_identifier
+                existing.captured_offline = entry.captured_offline
+                existing.application_detail = application_payload
+                existing.cost_summary = cost_payload
+                existing.yield_summary = yield_payload
+                existing.photo_metadata = photos_payload
+                existing.attachments = attachments_payload
+                existing.conflict_resolved = True
+                if entry.gps:
+                    existing.gps_latitude = entry.gps.latitude
+                    existing.gps_longitude = entry.gps.longitude
+                    existing.gps_accuracy = entry.gps.accuracy
+                session.commit()
+                session.refresh(existing)
+                return {
+                    "created": created,
+                    "conflict_resolved": conflict_resolved,
+                    "record": existing,
+                }
+
+            activity_id = str(uuid4())
+            gps_latitude = None
+            gps_longitude = None
+            gps_accuracy = None
+            if entry.gps:
+                gps_latitude = entry.gps.latitude
+                gps_longitude = entry.gps.longitude
+                gps_accuracy = entry.gps.accuracy
+
+            record = MobileStrategyActivityRecord(
+                activity_id=activity_id,
+                strategy_id=entry.strategy_id,
+                version_number=entry.version_number,
+                user_id=entry.user_id,
+                field_id=entry.field_id,
+                activity_type=entry.activity_type,
+                status=entry.status,
+                activity_timestamp=entry.activity_timestamp,
+                device_identifier=entry.device_identifier,
+                captured_offline=entry.captured_offline,
+                gps_latitude=gps_latitude,
+                gps_longitude=gps_longitude,
+                gps_accuracy=gps_accuracy,
+                application_detail=application_payload,
+                cost_summary=cost_payload,
+                yield_summary=yield_payload,
+                photo_metadata=photos_payload,
+                attachments=attachments_payload,
+                client_event_id=entry.client_event_id,
+                conflict_resolved=False,
+                sync_status="pending",
+            )
+
+            session.add(record)
+            session.commit()
+            session.refresh(record)
+            created = True
+
+            return {
+                "created": created,
+                "conflict_resolved": conflict_resolved,
+                "record": record,
+            }
+
+        except Exception as error:
+            session.rollback()
+            logger.error("Failed to log mobile activity: %s", error)
+            raise
+        finally:
+            session.close()
+
+    def fetch_recent_mobile_activities(
+        self,
+        strategy_id: str,
+        limit: int = 10,
+    ) -> List[MobileStrategyActivityRecord]:
+        """Fetch recent mobile activities for a strategy."""
+        session = self.get_session()
+        try:
+            query = (
+                session.query(MobileStrategyActivityRecord)
+                .filter(MobileStrategyActivityRecord.strategy_id == strategy_id)
+                .order_by(MobileStrategyActivityRecord.activity_timestamp.desc())
+            )
+            if limit and limit > 0:
+                query = query.limit(limit)
+            records = query.all()
+            return records
+        finally:
+            session.close()
+
+    def calculate_mobile_progress(
+        self,
+        strategy_id: str,
+        version_number: int,
+    ) -> Dict[str, Any]:
+        """Calculate progress metrics based on mobile activities."""
+        session = self.get_session()
+        try:
+            records = (
+                session.query(MobileStrategyActivityRecord)
+                .filter(MobileStrategyActivityRecord.strategy_id == strategy_id)
+                .filter(MobileStrategyActivityRecord.version_number == version_number)
+                .all()
+            )
+
+            total_events = 0
+            completed_events = 0
+            pending_actions = 0
+            last_synced_at: Optional[datetime] = None
+
+            index = 0
+            while index < len(records):
+                record = records[index]
+                total_events += 1
+                status_value = record.status or ""
+                normalized_status = status_value.lower()
+
+                if normalized_status in ("completed", "complete", "done"):
+                    completed_events += 1
+                elif normalized_status in ("pending", "scheduled", "in_progress"):
+                    pending_actions += 1
+
+                if record.synced_at:
+                    if last_synced_at is None or record.synced_at > last_synced_at:
+                        last_synced_at = record.synced_at
+
+                index += 1
+
+            progress_percent = 0.0
+            if total_events > 0:
+                progress_percent = (completed_events / total_events) * 100.0
+
+            return {
+                "progress_percent": progress_percent,
+                "pending_actions": pending_actions,
+                "total_events": total_events,
+                "last_synced_at": last_synced_at,
+            }
+        finally:
+            session.close()
+
+    def mark_activity_synced(
+        self,
+        activity_id: str,
+        sync_status: str = "synced",
+    ) -> Optional[MobileStrategyActivityRecord]:
+        """Update activity sync status."""
+        session = self.get_session()
+        try:
+            record = (
+                session.query(MobileStrategyActivityRecord)
+                .filter(MobileStrategyActivityRecord.activity_id == activity_id)
+                .first()
+            )
+            if record is None:
+                return None
+
+            record.sync_status = sync_status
+            record.synced_at = datetime.utcnow()
+            session.commit()
+            session.refresh(record)
+            return record
+        except Exception as error:
+            session.rollback()
+            logger.error("Failed to update activity sync status: %s", error)
+            raise
+        finally:
+            session.close()
+
+    def fetch_latest_performance(
+        self,
+        strategy_id: str,
+    ) -> Optional[StrategyPerformanceRecord]:
+        """Fetch the latest performance record for a strategy."""
+        session = self.get_session()
+        try:
+            record = (
+                session.query(StrategyPerformanceRecord)
+                .filter(StrategyPerformanceRecord.strategy_id == strategy_id)
+                .order_by(StrategyPerformanceRecord.recorded_at.desc())
+                .first()
+            )
+            return record
         finally:
             session.close()

@@ -25,6 +25,7 @@ from api.environmental_routes import router as environmental_router
 from api.environmental_optimization_routes import router as sustainability_router
 from api.strategy_routes import router as strategy_router
 from api.strategy_management_routes import router as strategy_management_router
+from api.mobile_strategy_tracking_routes import router as mobile_strategy_router
 from database.fertilizer_price_db import initialize_database, shutdown_database
 from database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -110,6 +111,7 @@ app.include_router(environmental_router, prefix="/api/v1", tags=["regulatory-com
 app.include_router(sustainability_router, prefix="/api/v1", tags=["sustainability-optimization"])
 app.include_router(strategy_router, prefix="/api/v1", tags=["strategy-optimization"])
 app.include_router(strategy_management_router, prefix="/api/v1", tags=["strategy-management"])
+app.include_router(mobile_strategy_router, prefix="/api/v1", tags=["mobile-strategy-tracking"])
 
 @app.get("/health")
 async def health_check():
