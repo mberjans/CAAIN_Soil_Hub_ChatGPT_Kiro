@@ -7,6 +7,7 @@ import importlib.machinery
 import importlib.util
 import sys
 from pathlib import Path
+from typing import List
 
 import pytest
 from fastapi import FastAPI
@@ -38,6 +39,8 @@ SaveStrategyRequest = models_module.SaveStrategyRequest
 StrategySaveResponse = models_module.StrategySaveResponse
 StrategyManagementService = service_module.StrategyManagementService
 StrategyRepository = database_module.StrategyRepository
+StrategyComparisonRequest = models_module.StrategyComparisonRequest
+StrategyComparisonResponse = models_module.StrategyComparisonResponse
 
 
 @pytest.fixture
@@ -157,6 +160,93 @@ class TestStrategyManagementService:
         assert updated_response.latest_version.version_number == 2
         assert updated_response.latest_version.version_notes == "Adjustments after soil test"
 
+    @pytest.mark.asyncio
+    async def test_compare_strategies_success(self, in_memory_service):
+        """Verify strategy comparison produces metrics."""
+        base_field = FieldStrategyData(
+            field_id="field-100",
+            acres=60.0,
+            crop_type="corn",
+            recommended_rates={"N": 160.0},
+            application_schedule=["pre-plant"],
+            application_method="broadcast",
+            expected_yield=185.0,
+            total_cost=140.0,
+            roi_projection=0.28,
+        )
+
+        first_request = SaveStrategyRequest(
+            strategy_name="Corn Growth Plan A",
+            description="Baseline corn program",
+            user_id="user-abc",
+            farm_id="farm-orange",
+            field_strategies=[base_field],
+            economic_summary={"total_cost": 12000.0},
+            environmental_metrics={"runoff_risk": 0.22},
+            roi_estimate=0.42,
+            metadata={"season": "2025"},
+        )
+
+        first_response = await in_memory_service.save_strategy(first_request)
+
+        modified_field = FieldStrategyData(
+            field_id="field-101",
+            acres=60.0,
+            crop_type="corn",
+            recommended_rates={"N": 150.0},
+            application_schedule=["pre-plant", "side-dress"],
+            application_method="banded",
+            expected_yield=190.0,
+            total_cost=145.0,
+            roi_projection=0.30,
+        )
+
+        second_request = SaveStrategyRequest(
+            strategy_name="Corn Growth Plan B",
+            description="Alternative corn program",
+            user_id="user-abc",
+            farm_id="farm-orange",
+            field_strategies=[modified_field],
+            economic_summary={"total_cost": 11800.0},
+            environmental_metrics={"runoff_risk": 0.18},
+            roi_estimate=0.45,
+            metadata={"season": "2025"},
+        )
+
+        second_response = await in_memory_service.save_strategy(second_request)
+
+        metric_list: List[str] = []
+        metric_list.append("total_cost")
+        metric_list.append("roi_estimate")
+        metric_list.append("expected_yield")
+
+        comparison_request = StrategyComparisonRequest(
+            strategy_ids=[first_response.strategy_id, second_response.strategy_id],
+            include_metrics=metric_list,
+            comparison_window_days=None,
+        )
+
+        comparison_response = await in_memory_service.compare_strategies(comparison_request)
+
+        assert isinstance(comparison_response, StrategyComparisonResponse)
+        assert len(comparison_response.strategies) == 2
+        assert comparison_response.metrics
+
+    @pytest.mark.asyncio
+    async def test_compare_strategies_missing_strategy(self, in_memory_service):
+        """Ensure missing strategies produce lookup error."""
+        metric_list: List[str] = []
+        metric_list.append("total_cost")
+
+        request = StrategyComparisonRequest(
+            strategy_ids=["missing-1", "missing-2"],
+            include_metrics=metric_list,
+            comparison_window_days=None,
+        )
+
+        with pytest.raises(LookupError):
+            await in_memory_service.compare_strategies(request)
+
 
 class TestStrategyManagementAPI:
     """API tests for strategy management endpoints."""
@@ -238,3 +328,81 @@ class TestStrategyManagementAPI:
         assert response.status_code == 400
         data = response.json()
         assert "Invalid request data" in data["detail"]
+
+    def test_compare_strategies_endpoint_success(self, in_memory_service):
+        """Ensure comparison endpoint returns metrics."""
+        client = TestClient(app)
+
+        first_payload = {
+            "strategy_name": "Compare Plan A",
+            "description": "First comparison strategy",
+            "user_id": "user-900",
+            "field_strategies": [
+                {
+                    "field_id": "field-900",
+                    "acres": 50.0,
+                    "crop_type": "corn",
+                    "recommended_rates": {"N": 150.0},
+                    "application_schedule": ["pre-plant"],
+                    "application_method": "broadcast",
+                    "expected_yield": 180.0,
+                    "total_cost": 130.0,
+                }
+            ],
+            "economic_summary": {"total_cost": 10000.0},
+            "environmental_metrics": {"runoff_risk": 0.25},
+            "roi_estimate": 0.4,
+        }
+
+        second_payload = {
+            "strategy_name": "Compare Plan B",
+            "description": "Second comparison strategy",
+            "user_id": "user-900",
+            "field_strategies": [
+                {
+                    "field_id": "field-901",
+                    "acres": 55.0,
+                    "crop_type": "corn",
+                    "recommended_rates": {"N": 140.0},
+                    "application_schedule": ["pre-plant", "mid-season"],
+                    "application_method": "banded",
+                    "expected_yield": 185.0,
+                    "total_cost": 128.0,
+                }
+            ],
+            "economic_summary": {"total_cost": 9800.0},
+            "environmental_metrics": {"runoff_risk": 0.20},
+            "roi_estimate": 0.45,
+        }
+
+        first_response = client.post("/api/v1/strategies/save", json=first_payload)
+        second_response = client.post("/api/v1/strategies/save", json=second_payload)
+
+        first_id = first_response.json()["strategy_id"]
+        second_id = second_response.json()["strategy_id"]
+
+        params = [
+            ("strategy_ids", first_id),
+            ("strategy_ids", second_id),
+            ("include_metrics", "total_cost"),
+            ("include_metrics", "roi_estimate"),
+        ]
+
+        compare_response = client.get("/api/v1/strategies/compare", params=params)
+
+        assert compare_response.status_code == 200
+        data = compare_response.json()
+        assert len(data["strategies"]) == 2
+        assert data["metrics"]
+
+    def test_compare_strategies_endpoint_not_found(self):
+        """Ensure comparison endpoint returns not found for unknown strategies."""
+        client = TestClient(app)
+        params = [
+            ("strategy_ids", "missing-a"),
+            ("strategy_ids", "missing-b"),
+        ]
+
+        response = client.get("/api/v1/strategies/compare", params=params)
+
+        assert response.status_code == 404

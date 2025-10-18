@@ -261,6 +261,20 @@ class StrategyRepository:
         finally:
             session.close()
 
+    def fetch_latest_version(self, strategy_id: str) -> Optional[StrategyVersionRecord]:
+        """Fetch the most recent version record for a strategy."""
+        session = self.get_session()
+        try:
+            query = (
+                session.query(StrategyVersionRecord)
+                .filter(StrategyVersionRecord.strategy_id == strategy_id)
+                .order_by(StrategyVersionRecord.version_number.desc())
+            )
+            record = query.first()
+            return record
+        finally:
+            session.close()
+
     def log_performance(
         self,
         strategy_id: str,
