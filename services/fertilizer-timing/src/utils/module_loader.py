@@ -10,6 +10,7 @@ import logging
 import sys
 from pathlib import Path
 from types import ModuleType
+from typing import Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -48,6 +49,34 @@ def _ensure_package(name: str, path: Path) -> ModuleType:
     return package
 
 
+def _ensure_services_namespace() -> ModuleType:
+    """
+    Ensure the root services namespace is available.
+
+    Returns:
+        ModuleType for the root services package.
+    """
+    try:
+        services_module = sys.modules["services"]
+    except KeyError:
+        services_module = ModuleType("services")
+        services_module.__path__ = [str(_SERVICES_DIR)]
+        sys.modules["services"] = services_module
+        return services_module
+
+    if not hasattr(services_module, "__path__"):
+        services_module.__path__ = []
+
+    if services_module.__path__ is None:
+        services_module.__path__ = []
+
+    services_dir_str = str(_SERVICES_DIR)
+    if services_dir_str not in services_module.__path__:
+        services_module.__path__.append(services_dir_str)
+
+    return services_module
+
+
 def _prepare_strategy_packages() -> None:
     """Register synthetic packages that mirror the fertilizer strategy layout."""
     if not _STRATEGY_SRC_DIR.exists():
@@ -55,24 +84,57 @@ def _prepare_strategy_packages() -> None:
             f"Fertilizer strategy source directory not found at {_STRATEGY_SRC_DIR}"
         )
 
-    try:
-        import services as services_module  # pylint: disable=import-outside-toplevel
-    except ImportError:
-        services_module = ModuleType("services")
-        services_module.__path__ = [str(_SERVICES_DIR)]
-        sys.modules["services"] = services_module
-    else:
-        if not hasattr(services_module, "__path__"):
-            services_module.__path__ = [str(_SERVICES_DIR)]
-        else:
-            path_str = str(_SERVICES_DIR)
-            if path_str not in services_module.__path__:
-                services_module.__path__.append(path_str)
+    _ensure_services_namespace()
 
     _ensure_package("services.fertilizer_strategy", _STRATEGY_DIR)
     _ensure_package("services.fertilizer_strategy.src", _STRATEGY_SRC_DIR)
     _ensure_package("services.fertilizer_strategy.src.models", _STRATEGY_SRC_DIR / "models")
     _ensure_package("services.fertilizer_strategy.src.services", _STRATEGY_SRC_DIR / "services")
+
+
+def ensure_service_packages(
+    service_name: str,
+    additional_packages: Optional[Dict[str, Path]] = None,
+    filesystem_name: Optional[str] = None,
+) -> Path:
+    """
+    Ensure dynamic import support for a named service.
+
+    Args:
+        service_name: Python package name to expose under the services namespace.
+        additional_packages: Optional mapping of package suffix to filesystem path
+            that should be registered beneath the service src namespace.
+        filesystem_name: Optional directory name when it differs from the package name.
+
+    Returns:
+        Path to the service src directory.
+    """
+    _ensure_services_namespace()
+
+    directory_name = filesystem_name or service_name
+    service_dir = _SERVICES_DIR / directory_name
+    if not service_dir.exists():
+        raise FileNotFoundError(f"Service directory not found for {service_name}: {service_dir}")
+
+    src_dir = service_dir / "src"
+    if not src_dir.exists():
+        raise FileNotFoundError(f"Source directory not found for {service_name}: {src_dir}")
+
+    base_package = f"services.{service_name}"
+    _ensure_package(base_package, service_dir)
+    _ensure_package(f"{base_package}.src", src_dir)
+
+    if additional_packages is not None:
+        for package_suffix, package_path in additional_packages.items():
+            package_name = f"{base_package}.src.{package_suffix}"
+            _ensure_package(package_name, package_path)
+
+    return src_dir
+
+
+def get_services_root() -> Path:
+    """Expose the root services directory for callers."""
+    return _SERVICES_DIR
 
 
 def load_strategy_module(module_name: str, module_path: Path) -> ModuleType:
@@ -115,4 +177,9 @@ def get_strategy_src_dir() -> Path:
     return _STRATEGY_SRC_DIR
 
 
-__all__ = ["load_strategy_module", "get_strategy_src_dir"]
+__all__ = [
+    "ensure_service_packages",
+    "get_services_root",
+    "load_strategy_module",
+    "get_strategy_src_dir",
+]

@@ -66,9 +66,9 @@ class CropTimingProfile:
 class VarietyTimingProfile:
     """Variety-specific timing and growth characteristics."""
     
-    variety_id: str
-    variety_name: str
     crop_name: str
+    variety_id: Optional[str] = None
+    variety_name: Optional[str] = None
     relative_maturity: Optional[int] = None  # Relative maturity units (corn) or days
     maturity_group: Optional[str] = None  # Maturity group classification
     days_to_emergence: Optional[int] = None
@@ -86,8 +86,8 @@ class VarietyTimingProfile:
 class VarietyPlantingWindow(PlantingWindow):
     """Enhanced planting window with variety-specific information."""
     
-    variety_id: str
-    variety_name: str
+    variety_id: Optional[str] = None
+    variety_name: Optional[str] = None
     relative_maturity: Optional[int] = None
     maturity_group: Optional[str] = None
     variety_specific_notes: List[str] = field(default_factory=list)
