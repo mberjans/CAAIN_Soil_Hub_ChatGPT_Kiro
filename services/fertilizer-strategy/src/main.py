@@ -27,6 +27,7 @@ from api.environmental_optimization_routes import router as sustainability_route
 from api.strategy_routes import router as strategy_router
 from api.strategy_management_routes import router as strategy_management_router
 from api.mobile_strategy_tracking_routes import router as mobile_strategy_router
+from api.comparison_routes import router as comparison_router
 from database.fertilizer_price_db import initialize_database, shutdown_database
 from database.commodity_price_db import initialize_commodity_database, shutdown_commodity_database
 from services.scheduled_price_updater import start_scheduled_updates, stop_scheduled_updates
@@ -114,6 +115,7 @@ app.include_router(sustainability_router, prefix="/api/v1", tags=["sustainabilit
 app.include_router(strategy_router, prefix="/api/v1", tags=["strategy-optimization"])
 app.include_router(strategy_management_router, prefix="/api/v1", tags=["strategy-management"])
 app.include_router(mobile_strategy_router, prefix="/api/v1", tags=["mobile-strategy-tracking"])
+app.include_router(comparison_router, tags=["fertilizer-comparison"])
 
 @app.get("/health")
 async def health_check():
@@ -293,7 +295,18 @@ async def health_check():
             "genetic_algorithm_optimization",
             "gradient_descent_optimization",
             "environmental_compliance_optimization",
-            "sustainability_certification_support"
+            "sustainability_certification_support",
+            "comprehensive_fertilizer_comparison",
+            "multi_criteria_decision_analysis",
+            "weighted_scoring_comparison",
+            "topsis_analysis",
+            "ahp_analysis",
+            "trade_off_analysis",
+            "fertilizer_ranking",
+            "cost_effectiveness_scoring",
+            "environmental_impact_scoring",
+            "nutrient_value_assessment",
+            "application_convenience_scoring"
         ]
     }
 
