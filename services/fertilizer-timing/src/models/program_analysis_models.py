@@ -8,7 +8,7 @@ from datetime import date, datetime
 from typing import Dict, List, Optional
 from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 from .strategy_integration import TimingOptimizationResult
 
@@ -160,9 +160,25 @@ class TimingExplanation(BaseModel):
 class TimingExplanationRequest(BaseModel):
     """Payload for generating a fertilizer timing explanation."""
 
-    optimization_result: TimingOptimizationResult = Field(..., description="Timing optimization result to explain")
+    request_id: Optional[str] = Field(None, description="Existing optimization request identifier to load results from persistence")
+    optimization_result: Optional[TimingOptimizationResult] = Field(
+        None,
+        description="Timing optimization result to explain when not referencing persistence",
+    )
     context: Optional[ProgramAnalysisContext] = Field(None, description="Field and crop context for additional reasoning")
     timing_assessment: Optional[TimingAssessment] = Field(None, description="Program timing assessment for comparison")
+
+    @model_validator(mode="after")
+    def validate_payload(self) -> "TimingExplanationRequest":
+        """Ensure sufficient data is provided for explanation generation."""
+        has_result = self.optimization_result is not None
+        has_request_id = self.request_id is not None and self.request_id.strip() != ""
+
+        if not has_result and not has_request_id:
+            message = "Provide an optimization_result or request_id to generate an explanation."
+            raise ValueError(message)
+
+        return self
 
 
 class ImprovementRecommendation(BaseModel):

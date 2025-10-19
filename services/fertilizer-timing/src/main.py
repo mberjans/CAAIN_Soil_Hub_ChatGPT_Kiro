@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from api.alert_routes import router as alert_router
 from api.calendar_routes import router as calendar_router
+from api.explanation_routes import router as explanation_router
 from api.timing_routes import router as timing_router
 from database.timing_db import initialize_database, shutdown_database
 
@@ -61,6 +62,7 @@ app.add_middleware(
 app.include_router(timing_router, prefix="/api/v1")
 app.include_router(calendar_router, prefix="/api/v1")
 app.include_router(alert_router, prefix="/api/v1")
+app.include_router(explanation_router, prefix="/api/v1")
 
 
 @app.get("/health")
