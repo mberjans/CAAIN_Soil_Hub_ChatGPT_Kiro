@@ -20,6 +20,12 @@ from .program_analysis_models import (  # noqa: F401
     TimingAssessment,
     YieldRecord,
 )
+from .weather_integration_models import (  # noqa: F401
+    SoilConditionSnapshot,
+    WeatherConditionSummary,
+    WeatherSoilIntegrationReport,
+    WeatherSoilWindow,
+)
 from .strategy_integration import (  # noqa: F401
     ApplicationMethod,
     ApplicationTiming,
@@ -68,4 +74,8 @@ __all__ = [
     "SoilTestResult",
     "TimingAssessment",
     "YieldRecord",
+    "SoilConditionSnapshot",
+    "WeatherConditionSummary",
+    "WeatherSoilIntegrationReport",
+    "WeatherSoilWindow",
 ]
