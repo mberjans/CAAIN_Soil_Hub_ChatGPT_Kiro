@@ -34,6 +34,7 @@ from .strategy_integration import (  # noqa: F401
     TimingOptimizationResult,
     TimingOptimizationSummary,
     WeatherWindow,
+    WeatherCondition,
 )
 
 __all__ = [
@@ -54,6 +55,7 @@ __all__ = [
     "TimingOptimizationResult",
     "TimingOptimizationSummary",
     "WeatherWindow",
+    "WeatherCondition",
     "ApplicationTimingDeviation",
     "EfficiencyAssessment",
     "FertilizerApplicationRecord",

@@ -32,6 +32,7 @@ TimingOptimizationResult = _export("TimingOptimizationResult")
 ApplicationTiming = _export("ApplicationTiming")
 SplitApplicationPlan = _export("SplitApplicationPlan")
 WeatherWindow = _export("WeatherWindow")
+WeatherCondition = _export("WeatherCondition")
 TimingOptimizationSummary = _export("TimingOptimizationSummary")
 EquipmentAvailability = _export("EquipmentAvailability")
 LaborAvailability = _export("LaborAvailability")
@@ -56,4 +57,5 @@ __all__ = [
     "TimingOptimizationResult",
     "TimingOptimizationSummary",
     "WeatherWindow",
+    "WeatherCondition",
 ]
