@@ -274,15 +274,235 @@ class LaborAvailability(BaseModel):
 
 class TimingOptimizationSummary(BaseModel):
     """Summary of timing optimization results."""
-    
+
     total_applications: int = Field(..., description="Total number of applications")
     applications_by_month: Dict[str, int] = Field(..., description="Applications by month")
     risk_level: str = Field(..., description="Overall risk level")
     cost_efficiency_score: float = Field(..., ge=0.0, le=1.0, description="Cost efficiency score")
     weather_dependency_score: float = Field(..., ge=0.0, le=1.0, description="Weather dependency score")
     flexibility_score: float = Field(..., ge=0.0, le=1.0, description="Schedule flexibility score")
-    
+
     # Key insights
     primary_risks: List[str] = Field(..., description="Primary risk factors")
     optimization_opportunities: List[str] = Field(..., description="Optimization opportunities")
     critical_timing_windows: List[str] = Field(..., description="Critical timing windows")
+
+
+# Models for new timing routes API endpoints
+
+class FieldContext(BaseModel):
+    """Field context for timing optimization."""
+
+    field_id: str = Field(..., description="Field identifier")
+    crop: str = Field(..., description="Crop type")
+    planting_date: date = Field(..., description="Planting date")
+    soil_conditions: Dict[str, Any] = Field(..., description="Soil conditions")
+    previous_applications: List[Dict[str, Any]] = Field(default_factory=list, description="Previous applications")
+
+
+class EquipmentConstraints(BaseModel):
+    """Equipment constraints for timing optimization."""
+
+    available_equipment: List[str] = Field(..., description="Available equipment types")
+    capacity_per_day: float = Field(..., ge=0.0, description="Capacity per day in acres")
+    maintenance_windows: List[date] = Field(default_factory=list, description="Maintenance window dates")
+
+
+class LaborConstraints(BaseModel):
+    """Labor constraints for timing optimization."""
+
+    available_hours_per_day: int = Field(..., ge=0, le=24, description="Available hours per day")
+    skilled_operators: int = Field(..., ge=0, description="Number of skilled operators")
+    peak_season_conflicts: List[str] = Field(default_factory=list, description="Peak season conflicts")
+
+
+class FarmContext(BaseModel):
+    """Farm context for advanced timing optimization."""
+
+    fields: List[FieldContext] = Field(..., description="List of fields")
+    equipment_constraints: EquipmentConstraints = Field(..., description="Equipment constraints")
+    labor_constraints: LaborConstraints = Field(..., description="Labor constraints")
+
+
+class OptimizationGoals(BaseModel):
+    """Optimization goals for timing optimization."""
+
+    primary_goal: str = Field(..., description="Primary optimization goal")
+    weather_risk_tolerance: str = Field(default="moderate", description="Weather risk tolerance")
+    cost_priority: float = Field(default=0.5, ge=0.0, le=1.0, description="Cost priority weight")
+    environmental_priority: float = Field(default=0.5, ge=0.0, le=1.0, description="Environmental priority weight")
+
+
+class TimingConstraints(BaseModel):
+    """Timing constraints for optimization."""
+
+    earliest_application: date = Field(..., description="Earliest application date")
+    latest_application: date = Field(..., description="Latest application date")
+    restricted_periods: List[str] = Field(default_factory=list, description="Restricted period date ranges")
+    regulatory_windows: List[str] = Field(default_factory=list, description="Regulatory window identifiers")
+
+
+class AdvancedTimingOptimizationRequest(BaseModel):
+    """Advanced timing optimization request model."""
+
+    request_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Unique request identifier")
+    farm_context: FarmContext = Field(..., description="Farm context information")
+    optimization_goals: OptimizationGoals = Field(..., description="Optimization goals")
+    timing_constraints: TimingConstraints = Field(..., description="Timing constraints")
+
+
+class EfficiencyPrediction(BaseModel):
+    """Efficiency prediction for timing optimization."""
+
+    nutrient_efficiency: float = Field(..., ge=0.0, le=1.0, description="Nutrient efficiency score")
+    application_efficiency: float = Field(..., ge=0.0, le=1.0, description="Application efficiency score")
+    cost_efficiency: float = Field(..., ge=0.0, le=1.0, description="Cost efficiency score")
+
+
+class RiskAssessment(BaseModel):
+    """Risk assessment for timing optimization."""
+
+    weather_risk: float = Field(..., ge=0.0, le=1.0, description="Weather risk score")
+    timing_risk: float = Field(..., ge=0.0, le=1.0, description="Timing risk score")
+    operational_risk: float = Field(..., ge=0.0, le=1.0, description="Operational risk score")
+    overall_risk: float = Field(..., ge=0.0, le=1.0, description="Overall risk score")
+
+
+class AdvancedTimingOptimizationResponse(BaseModel):
+    """Advanced timing optimization response model."""
+
+    request_id: str = Field(..., description="Request identifier")
+    optimization_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Optimization identifier")
+    optimized_schedule: List[ApplicationTiming] = Field(..., description="Optimized application schedule")
+    weather_integration: Dict[str, Any] = Field(..., description="Weather integration data")
+    efficiency_predictions: EfficiencyPrediction = Field(..., description="Efficiency predictions")
+    risk_assessments: RiskAssessment = Field(..., description="Risk assessments")
+    recommendations: List[str] = Field(..., description="Recommendations")
+    processing_time_ms: float = Field(..., description="Processing time in milliseconds")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+
+
+class CalendarEvent(BaseModel):
+    """Calendar event for fertilizer application."""
+
+    event_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Event identifier")
+    event_type: str = Field(..., description="Event type (application, alert, weather)")
+    event_date: date = Field(..., description="Event date")
+    title: str = Field(..., description="Event title")
+    description: str = Field(..., description="Event description")
+    field_id: Optional[str] = Field(None, description="Associated field identifier")
+    fertilizer_type: Optional[str] = Field(None, description="Fertilizer type")
+    amount: Optional[float] = Field(None, description="Application amount")
+    priority: str = Field(default="normal", description="Event priority (low, normal, high)")
+    status: str = Field(default="scheduled", description="Event status")
+
+
+class WeatherOverlay(BaseModel):
+    """Weather overlay data for calendar."""
+
+    overlay_date: date = Field(..., description="Date")
+    condition: WeatherCondition = Field(..., description="Weather condition")
+    temperature_f: float = Field(..., description="Temperature in Fahrenheit")
+    precipitation_probability: float = Field(..., ge=0.0, le=1.0, description="Precipitation probability")
+    suitability_score: float = Field(..., ge=0.0, le=1.0, description="Application suitability score")
+
+
+class FertilizerCalendarResponse(BaseModel):
+    """Fertilizer calendar response model."""
+
+    farm_id: str = Field(..., description="Farm identifier")
+    year: int = Field(..., description="Calendar year")
+    events: List[CalendarEvent] = Field(..., description="Calendar events")
+    weather_overlays: List[WeatherOverlay] = Field(default_factory=list, description="Weather overlays")
+    crop_types: List[str] = Field(..., description="Crop types included")
+    total_applications: int = Field(..., description="Total applications planned")
+    format: str = Field(default="json", description="Response format")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Generation timestamp")
+
+
+class ApplicationWindow(BaseModel):
+    """Application window recommendation."""
+
+    window_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Window identifier")
+    start_date: date = Field(..., description="Window start date")
+    end_date: date = Field(..., description="Window end date")
+    optimal_date: date = Field(..., description="Optimal application date within window")
+    confidence_score: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
+    weather_forecast: WeatherWindow = Field(..., description="Weather forecast for window")
+    soil_conditions: Dict[str, Any] = Field(..., description="Soil conditions")
+    crop_readiness: float = Field(..., ge=0.0, le=1.0, description="Crop readiness score")
+    equipment_available: bool = Field(..., description="Equipment availability")
+    risk_factors: List[str] = Field(default_factory=list, description="Risk factors")
+    recommendation: str = Field(..., description="Window recommendation")
+
+
+class ApplicationWindowsResponse(BaseModel):
+    """Application windows response model."""
+
+    field_id: str = Field(..., description="Field identifier")
+    analysis_period: Dict[str, date] = Field(..., description="Analysis period (start, end)")
+    fertilizer_type: Optional[str] = Field(None, description="Fertilizer type analyzed")
+    windows: List[ApplicationWindow] = Field(..., description="Application windows")
+    optimal_windows: List[ApplicationWindow] = Field(..., description="Top optimal windows")
+    weather_summary: Dict[str, Any] = Field(..., description="Weather summary for period")
+    risk_summary: Dict[str, Any] = Field(..., description="Risk summary")
+    generated_at: datetime = Field(default_factory=datetime.utcnow, description="Generation timestamp")
+
+
+class AlertPreferences(BaseModel):
+    """Alert preferences for user subscription."""
+
+    timing_alerts: bool = Field(default=True, description="Enable timing alerts")
+    weather_alerts: bool = Field(default=True, description="Enable weather alerts")
+    equipment_alerts: bool = Field(default=True, description="Enable equipment alerts")
+    regulatory_alerts: bool = Field(default=True, description="Enable regulatory alerts")
+
+
+class AlertSubscriptionRequest(BaseModel):
+    """Alert subscription request model."""
+
+    user_id: str = Field(..., description="User identifier")
+    farm_id: str = Field(..., description="Farm identifier")
+    alert_preferences: AlertPreferences = Field(..., description="Alert preferences")
+    notification_channels: List[str] = Field(..., description="Notification channels (email, sms, push)")
+    alert_frequency: str = Field(default="daily", description="Alert frequency")
+
+
+class AlertSubscriptionResponse(BaseModel):
+    """Alert subscription response model."""
+
+    subscription_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Subscription identifier")
+    user_id: str = Field(..., description="User identifier")
+    farm_id: str = Field(..., description="Farm identifier")
+    alert_preferences: AlertPreferences = Field(..., description="Alert preferences")
+    notification_channels: List[str] = Field(..., description="Notification channels")
+    alert_frequency: str = Field(..., description="Alert frequency")
+    status: str = Field(default="active", description="Subscription status")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+
+
+class Alert(BaseModel):
+    """Alert model."""
+
+    alert_id: str = Field(default_factory=lambda: str(uuid.uuid4()), description="Alert identifier")
+    alert_type: str = Field(..., description="Alert type")
+    severity: str = Field(..., description="Alert severity (low, medium, high, critical)")
+    title: str = Field(..., description="Alert title")
+    message: str = Field(..., description="Alert message")
+    field_id: Optional[str] = Field(None, description="Associated field identifier")
+    action_required: bool = Field(default=False, description="Action required flag")
+    expiration_date: Optional[datetime] = Field(None, description="Alert expiration date")
+    created_at: datetime = Field(default_factory=datetime.utcnow, description="Creation timestamp")
+
+
+class AlertManagementResponse(BaseModel):
+    """Alert management response model."""
+
+    user_id: str = Field(..., description="User identifier")
+    farm_id: Optional[str] = Field(None, description="Farm identifier filter")
+    subscriptions: List[AlertSubscriptionResponse] = Field(..., description="User subscriptions")
+    active_alerts: List[Alert] = Field(default_factory=list, description="Active alerts")
+    alert_history: List[Alert] = Field(default_factory=list, description="Alert history")
+    total_subscriptions: int = Field(..., description="Total subscriptions")
+    total_active_alerts: int = Field(..., description="Total active alerts")
+    retrieved_at: datetime = Field(default_factory=datetime.utcnow, description="Retrieval timestamp")

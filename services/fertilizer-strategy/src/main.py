@@ -17,6 +17,7 @@ from api.yield_response_routes import router as yield_response_router
 from api.yield_goal_optimization_routes import router as yield_goal_optimization_router
 from api.nutrient_optimization_routes import router as nutrient_optimization_router
 from api.timing_optimization_routes import router as timing_optimization_router
+from api.timing_routes import router as timing_routes_router
 from api.application_method_optimization_routes import router as application_method_optimization_router
 from api.price_adjustment_routes import router as price_adjustment_router
 from api.price_scenario_routes import router as price_scenario_router
@@ -103,6 +104,7 @@ app.include_router(yield_response_router, prefix="/api/v1", tags=["yield-respons
 app.include_router(yield_goal_optimization_router, prefix="/api/v1", tags=["yield-goal-optimization"])
 app.include_router(nutrient_optimization_router, prefix="/api/v1", tags=["nutrient-optimization"])
 app.include_router(timing_optimization_router, prefix="/api/v1", tags=["timing-optimization"])
+app.include_router(timing_routes_router, tags=["timing-routes"])
 app.include_router(application_method_optimization_router, prefix="/api/v1", tags=["application-method-optimization"])
 app.include_router(price_adjustment_router, prefix="/api/v1", tags=["price-adjustment"])
 app.include_router(price_scenario_router, prefix="/api/v1", tags=["price-scenario-modeling"])
