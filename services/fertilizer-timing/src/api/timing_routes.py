@@ -7,13 +7,13 @@ from typing import Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from ..models import (
+from models import (
     SplitApplicationPlan,
     TimingOptimizationRequest,
     TimingOptimizationResult,
     WeatherWindow,
 )
-from ..services import TimingOptimizationAdapter, TimingResultRepository
+from timing_services import TimingOptimizationAdapter, TimingResultRepository
 
 logger = logging.getLogger(__name__)
 

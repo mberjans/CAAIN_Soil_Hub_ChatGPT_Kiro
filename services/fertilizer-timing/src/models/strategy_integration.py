@@ -9,7 +9,7 @@ domain logic while providing clean re-exports for the microservice.
 from pathlib import Path
 from typing import Any, Type
 
-from ..utils.module_loader import get_strategy_src_dir, load_strategy_module
+from utils.module_loader import get_strategy_src_dir, load_strategy_module
 
 _STRATEGY_SRC_DIR = get_strategy_src_dir()
 _MODELS_PATH = _STRATEGY_SRC_DIR / "models" / "timing_optimization_models.py"

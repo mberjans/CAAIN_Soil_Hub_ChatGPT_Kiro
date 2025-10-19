@@ -5,9 +5,9 @@ from typing import Any, Dict, List
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from ..models import SeasonalCalendarResponse, TimingOptimizationRequest
-from ..services import SeasonalCalendarService
-from ..services import TimingResultRepository
+from models import SeasonalCalendarResponse, TimingOptimizationRequest
+from timing_services import SeasonalCalendarService
+from timing_services import TimingResultRepository
 from .timing_routes import get_adapter, get_repository
 
 logger = logging.getLogger(__name__)

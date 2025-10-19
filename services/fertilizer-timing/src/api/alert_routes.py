@@ -7,8 +7,8 @@ from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from ..models import TimingAlertResponse, TimingOptimizationRequest
-from ..services import TimingAlertService, TimingResultRepository
+from models import TimingAlertResponse, TimingOptimizationRequest
+from timing_services import TimingAlertService, TimingResultRepository
 from .timing_routes import get_adapter, get_repository
 
 logger = logging.getLogger(__name__)
