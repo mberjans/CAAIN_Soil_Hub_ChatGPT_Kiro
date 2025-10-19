@@ -6,6 +6,20 @@ Re-exports key strategy models alongside calendar and alert response models.
 
 from .alert_models import TimingAlert, TimingAlertResponse  # noqa: F401
 from .calendar_models import SeasonalCalendarEntry, SeasonalCalendarResponse  # noqa: F401
+from .program_analysis_models import (  # noqa: F401
+    ApplicationTimingDeviation,
+    EfficiencyAssessment,
+    FertilizerApplicationRecord,
+    ImprovementRecommendation,
+    LossRiskAssessment,
+    NutrientSynchronizationAssessment,
+    ProgramAnalysisContext,
+    ProgramAnalysisRequest,
+    ProgramAssessmentReport,
+    SoilTestResult,
+    TimingAssessment,
+    YieldRecord,
+)
 from .strategy_integration import (  # noqa: F401
     ApplicationMethod,
     ApplicationTiming,
@@ -40,4 +54,16 @@ __all__ = [
     "TimingOptimizationResult",
     "TimingOptimizationSummary",
     "WeatherWindow",
+    "ApplicationTimingDeviation",
+    "EfficiencyAssessment",
+    "FertilizerApplicationRecord",
+    "ImprovementRecommendation",
+    "LossRiskAssessment",
+    "NutrientSynchronizationAssessment",
+    "ProgramAnalysisContext",
+    "ProgramAnalysisRequest",
+    "ProgramAssessmentReport",
+    "SoilTestResult",
+    "TimingAssessment",
+    "YieldRecord",
 ]
