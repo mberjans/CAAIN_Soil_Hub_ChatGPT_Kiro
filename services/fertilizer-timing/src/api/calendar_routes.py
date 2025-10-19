@@ -6,7 +6,7 @@ from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from models import SeasonalCalendarResponse, TimingOptimizationRequest
-from timing_services import SeasonalCalendarService
+from services.calendar_service import SeasonalCalendarService
 from timing_services import TimingResultRepository
 from .timing_routes import get_adapter, get_repository
 
@@ -34,7 +34,7 @@ async def generate_calendar(
     try:
         result = await adapter.optimize(request)
         await repository.save_result(request, result)
-        calendar = calendar_service.build_calendar(result)
+        calendar = calendar_service.assemble_calendar(request, result)
         return calendar
     except Exception as exc:  # pylint: disable=broad-except
         logger.exception("Calendar generation failed")
