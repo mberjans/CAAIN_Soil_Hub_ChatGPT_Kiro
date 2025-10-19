@@ -18,6 +18,8 @@ from .program_analysis_models import (  # noqa: F401
     ProgramAssessmentReport,
     SoilTestResult,
     TimingAssessment,
+    TimingExplanation,
+    TimingExplanationRequest,
     YieldRecord,
 )
 from .weather_integration_models import (  # noqa: F401
@@ -73,6 +75,8 @@ __all__ = [
     "ProgramAssessmentReport",
     "SoilTestResult",
     "TimingAssessment",
+    "TimingExplanation",
+    "TimingExplanationRequest",
     "YieldRecord",
     "SoilConditionSnapshot",
     "WeatherConditionSummary",

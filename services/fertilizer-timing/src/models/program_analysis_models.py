@@ -10,6 +10,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field, field_validator
 
+from .strategy_integration import TimingOptimizationResult
+
 
 class FertilizerApplicationRecord(BaseModel):
     """Historical or planned fertilizer application record."""
@@ -141,6 +143,28 @@ class EfficiencyAssessment(BaseModel):
     recommended_focus_areas: List[str] = Field(default_factory=list, description="Key focus areas for efficiency gains")
 
 
+class TimingExplanation(BaseModel):
+    """Structured reasoning and explanation for timing recommendations."""
+
+    summary: str = Field(..., description="Narrative summary of timing alignment and impact")
+    key_points: List[str] = Field(default_factory=list, description="Key takeaways for fertilizer applications")
+    weather_impacts: List[str] = Field(default_factory=list, description="Weather-driven reasoning notes")
+    crop_stage_reasoning: List[str] = Field(default_factory=list, description="Crop physiology timing rationale")
+    soil_condition_notes: List[str] = Field(default_factory=list, description="Soil condition considerations")
+    operational_considerations: List[str] = Field(default_factory=list, description="Operational constraint highlights")
+    trade_offs: List[str] = Field(default_factory=list, description="Trade-offs evaluated during optimization")
+    educational_guidance: List[str] = Field(default_factory=list, description="Educational best practices and guidance")
+    knowledge_references: List[str] = Field(default_factory=list, description="References supporting the explanation")
+
+
+class TimingExplanationRequest(BaseModel):
+    """Payload for generating a fertilizer timing explanation."""
+
+    optimization_result: TimingOptimizationResult = Field(..., description="Timing optimization result to explain")
+    context: Optional[ProgramAnalysisContext] = Field(None, description="Field and crop context for additional reasoning")
+    timing_assessment: Optional[TimingAssessment] = Field(None, description="Program timing assessment for comparison")
+
+
 class ImprovementRecommendation(BaseModel):
     """Actionable improvement recommendation."""
 
@@ -175,5 +199,7 @@ __all__ = [
     "ProgramAssessmentReport",
     "SoilTestResult",
     "TimingAssessment",
+    "TimingExplanation",
+    "TimingExplanationRequest",
     "YieldRecord",
 ]
