@@ -1,0 +1,217 @@
+{
+  "scenarios": [
+    {
+      "id": "corn_optimal_spring",
+      "name": "Corn - Optimal Spring Timing",
+      "description": "Ideal spring conditions for corn sidedress nitrogen application",
+      "crop_type": "corn",
+      "planting_date": "2024-05-01",
+      "field_characteristics": {
+        "soil_type": "silt loam",
+        "soil_moisture": 0.60,
+        "drainage_class": "well drained",
+        "slope_percent": 2.5,
+        "organic_matter": 3.2
+      },
+      "fertilizer_requirements": {
+        "nitrogen": 150.0,
+        "phosphorus": 50.0,
+        "potassium": 60.0
+      },
+      "expected_timing": {
+        "optimal_date": "2024-05-28",
+        "growth_stage": "v6",
+        "days_after_planting": 27
+      },
+      "weather_conditions": {
+        "precipitation_forecast": "low",
+        "temperature_range": [65, 75],
+        "wind_conditions": "calm"
+      }
+    },
+    {
+      "id": "corn_wet_spring",
+      "name": "Corn - Wet Spring Conditions",
+      "description": "Challenging wet spring requiring delayed application",
+      "crop_type": "corn",
+      "planting_date": "2024-05-10",
+      "field_characteristics": {
+        "soil_type": "silty clay loam",
+        "soil_moisture": 0.85,
+        "drainage_class": "moderately well drained",
+        "slope_percent": 1.5,
+        "organic_matter": 4.0
+      },
+      "fertilizer_requirements": {
+        "nitrogen": 180.0,
+        "phosphorus": 60.0,
+        "potassium": 80.0
+      },
+      "expected_timing": {
+        "optimal_date": "2024-06-15",
+        "growth_stage": "v8",
+        "days_after_planting": 36
+      },
+      "weather_conditions": {
+        "precipitation_forecast": "high",
+        "temperature_range": [58, 68],
+        "wind_conditions": "moderate"
+      },
+      "constraints": {
+        "field_access": "limited",
+        "equipment_availability": "delayed"
+      }
+    },
+    {
+      "id": "soybean_establishment",
+      "name": "Soybean - Establishment Fertilization",
+      "description": "Pre-plant P and K for soybean establishment",
+      "crop_type": "soybean",
+      "planting_date": "2024-05-15",
+      "field_characteristics": {
+        "soil_type": "loam",
+        "soil_moisture": 0.65,
+        "drainage_class": "well drained",
+        "slope_percent": 3.0,
+        "organic_matter": 3.5
+      },
+      "fertilizer_requirements": {
+        "nitrogen": 20.0,
+        "phosphorus": 70.0,
+        "potassium": 90.0
+      },
+      "expected_timing": {
+        "optimal_date": "2024-05-10",
+        "growth_stage": "pre_plant",
+        "days_after_planting": -5
+      },
+      "weather_conditions": {
+        "precipitation_forecast": "moderate",
+        "temperature_range": [62, 72],
+        "wind_conditions": "calm"
+      }
+    },
+    {
+      "id": "wheat_topdress",
+      "name": "Winter Wheat - Spring Topdress",
+      "description": "Spring nitrogen topdress for winter wheat",
+      "crop_type": "wheat",
+      "planting_date": "2023-10-15",
+      "field_characteristics": {
+        "soil_type": "silt loam",
+        "soil_moisture": 0.70,
+        "drainage_class": "well drained",
+        "slope_percent": 2.0,
+        "organic_matter": 2.8
+      },
+      "fertilizer_requirements": {
+        "nitrogen": 100.0,
+        "phosphorus": 0.0,
+        "potassium": 0.0
+      },
+      "expected_timing": {
+        "optimal_date": "2024-03-25",
+        "growth_stage": "green_up",
+        "days_after_planting": 162
+      },
+      "weather_conditions": {
+        "precipitation_forecast": "low",
+        "temperature_range": [45, 58],
+        "wind_conditions": "calm"
+      }
+    },
+    {
+      "id": "corn_split_application",
+      "name": "Corn - Split Nitrogen Application",
+      "description": "High nitrogen requirement with split application strategy",
+      "crop_type": "corn",
+      "planting_date": "2024-05-05",
+      "field_characteristics": {
+        "soil_type": "sandy loam",
+        "soil_moisture": 0.55,
+        "drainage_class": "well drained",
+        "slope_percent": 4.0,
+        "organic_matter": 2.5
+      },
+      "fertilizer_requirements": {
+        "nitrogen": 220.0,
+        "phosphorus": 60.0,
+        "potassium": 80.0
+      },
+      "expected_timing": {
+        "split_applications": [
+          {
+            "application_number": 1,
+            "optimal_date": "2024-05-05",
+            "growth_stage": "planting",
+            "nitrogen_rate": 50.0,
+            "application_method": "starter"
+          },
+          {
+            "application_number": 2,
+            "optimal_date": "2024-05-30",
+            "growth_stage": "v6",
+            "nitrogen_rate": 120.0,
+            "application_method": "sidedress"
+          },
+          {
+            "application_number": 3,
+            "optimal_date": "2024-06-20",
+            "growth_stage": "v10",
+            "nitrogen_rate": 50.0,
+            "application_method": "fertigation"
+          }
+        ]
+      },
+      "weather_conditions": {
+        "precipitation_forecast": "scattered",
+        "temperature_range": [68, 78],
+        "wind_conditions": "variable"
+      },
+      "constraints": {
+        "leaching_risk": "high",
+        "application_method": "multiple_required"
+      }
+    },
+    {
+      "id": "high_slope_runoff_risk",
+      "name": "High Slope - Runoff Risk Management",
+      "description": "Steep field requiring timing to minimize runoff",
+      "crop_type": "corn",
+      "planting_date": "2024-05-08",
+      "field_characteristics": {
+        "soil_type": "silt loam",
+        "soil_moisture": 0.68,
+        "drainage_class": "well drained",
+        "slope_percent": 9.0,
+        "organic_matter": 3.0
+      },
+      "fertilizer_requirements": {
+        "nitrogen": 160.0,
+        "phosphorus": 55.0,
+        "potassium": 70.0
+      },
+      "expected_timing": {
+        "optimal_date": "2024-06-02",
+        "growth_stage": "v6",
+        "days_after_planting": 25
+      },
+      "weather_conditions": {
+        "precipitation_forecast": "monitored_closely",
+        "temperature_range": [64, 74],
+        "wind_conditions": "moderate"
+      },
+      "constraints": {
+        "runoff_risk": "high",
+        "environmental_concerns": "critical",
+        "application_method": "incorporation_required"
+      }
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "created": "2024-10-19",
+    "description": "Sample timing scenarios for comprehensive testing",
+    "use_case": "Agricultural validation and edge case testing"
+  }
+}

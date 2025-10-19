@@ -1,0 +1,426 @@
+{
+  "weather_patterns": [
+    {
+      "id": "ideal_spring",
+      "name": "Ideal Spring Application Window",
+      "description": "Perfect conditions for fertilizer application",
+      "forecast_days": 7,
+      "daily_conditions": [
+        {
+          "date": "2024-05-20",
+          "high_temp_f": 72,
+          "low_temp_f": 54,
+          "precipitation_chance": 0.05,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 5,
+          "humidity_percent": 55,
+          "conditions": "Clear"
+        },
+        {
+          "date": "2024-05-21",
+          "high_temp_f": 74,
+          "low_temp_f": 56,
+          "precipitation_chance": 0.10,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 6,
+          "humidity_percent": 58,
+          "conditions": "Partly Cloudy"
+        },
+        {
+          "date": "2024-05-22",
+          "high_temp_f": 75,
+          "low_temp_f": 57,
+          "precipitation_chance": 0.15,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 7,
+          "humidity_percent": 60,
+          "conditions": "Partly Cloudy"
+        },
+        {
+          "date": "2024-05-23",
+          "high_temp_f": 73,
+          "low_temp_f": 55,
+          "precipitation_chance": 0.20,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 8,
+          "humidity_percent": 62,
+          "conditions": "Mostly Sunny"
+        },
+        {
+          "date": "2024-05-24",
+          "high_temp_f": 76,
+          "low_temp_f": 58,
+          "precipitation_chance": 0.10,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 6,
+          "humidity_percent": 57,
+          "conditions": "Sunny"
+        },
+        {
+          "date": "2024-05-25",
+          "high_temp_f": 77,
+          "low_temp_f": 59,
+          "precipitation_chance": 0.05,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 5,
+          "humidity_percent": 55,
+          "conditions": "Sunny"
+        },
+        {
+          "date": "2024-05-26",
+          "high_temp_f": 78,
+          "low_temp_f": 60,
+          "precipitation_chance": 0.15,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 7,
+          "humidity_percent": 58,
+          "conditions": "Mostly Sunny"
+        }
+      ],
+      "suitability": "optimal",
+      "notes": [
+        "Excellent application window",
+        "Low wind speeds favor broadcast applications",
+        "Minimal precipitation risk"
+      ]
+    },
+    {
+      "id": "wet_period",
+      "name": "Wet Spring Period",
+      "description": "Extended wet period with frequent rainfall",
+      "forecast_days": 10,
+      "daily_conditions": [
+        {
+          "date": "2024-05-15",
+          "high_temp_f": 62,
+          "low_temp_f": 50,
+          "precipitation_chance": 0.70,
+          "precipitation_amount": 0.8,
+          "wind_speed_mph": 12,
+          "humidity_percent": 80,
+          "conditions": "Rain"
+        },
+        {
+          "date": "2024-05-16",
+          "high_temp_f": 60,
+          "low_temp_f": 48,
+          "precipitation_chance": 0.80,
+          "precipitation_amount": 1.2,
+          "wind_speed_mph": 15,
+          "humidity_percent": 85,
+          "conditions": "Heavy Rain"
+        },
+        {
+          "date": "2024-05-17",
+          "high_temp_f": 63,
+          "low_temp_f": 51,
+          "precipitation_chance": 0.60,
+          "precipitation_amount": 0.5,
+          "wind_speed_mph": 10,
+          "humidity_percent": 78,
+          "conditions": "Showers"
+        },
+        {
+          "date": "2024-05-18",
+          "high_temp_f": 65,
+          "low_temp_f": 53,
+          "precipitation_chance": 0.50,
+          "precipitation_amount": 0.3,
+          "wind_speed_mph": 9,
+          "humidity_percent": 75,
+          "conditions": "Scattered Showers"
+        },
+        {
+          "date": "2024-05-19",
+          "high_temp_f": 67,
+          "low_temp_f": 54,
+          "precipitation_chance": 0.65,
+          "precipitation_amount": 0.6,
+          "wind_speed_mph": 11,
+          "humidity_percent": 77,
+          "conditions": "Rain"
+        },
+        {
+          "date": "2024-05-20",
+          "high_temp_f": 68,
+          "low_temp_f": 55,
+          "precipitation_chance": 0.70,
+          "precipitation_amount": 0.9,
+          "wind_speed_mph": 13,
+          "humidity_percent": 82,
+          "conditions": "Rain"
+        },
+        {
+          "date": "2024-05-21",
+          "high_temp_f": 66,
+          "low_temp_f": 52,
+          "precipitation_chance": 0.55,
+          "precipitation_amount": 0.4,
+          "wind_speed_mph": 10,
+          "humidity_percent": 76,
+          "conditions": "Showers"
+        },
+        {
+          "date": "2024-05-22",
+          "high_temp_f": 69,
+          "low_temp_f": 56,
+          "precipitation_chance": 0.40,
+          "precipitation_amount": 0.2,
+          "wind_speed_mph": 8,
+          "humidity_percent": 70,
+          "conditions": "Partly Cloudy"
+        },
+        {
+          "date": "2024-05-23",
+          "high_temp_f": 71,
+          "low_temp_f": 57,
+          "precipitation_chance": 0.25,
+          "precipitation_amount": 0.1,
+          "wind_speed_mph": 7,
+          "humidity_percent": 65,
+          "conditions": "Mostly Cloudy"
+        },
+        {
+          "date": "2024-05-24",
+          "high_temp_f": 73,
+          "low_temp_f": 58,
+          "precipitation_chance": 0.15,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 6,
+          "humidity_percent": 60,
+          "conditions": "Partly Cloudy"
+        }
+      ],
+      "suitability": "poor",
+      "notes": [
+        "Extended wet period delays field operations",
+        "High soil moisture increases compaction risk",
+        "Wait for drying period before application"
+      ]
+    },
+    {
+      "id": "windy_period",
+      "name": "High Wind Period",
+      "description": "Period with sustained high winds",
+      "forecast_days": 5,
+      "daily_conditions": [
+        {
+          "date": "2024-06-01",
+          "high_temp_f": 78,
+          "low_temp_f": 62,
+          "precipitation_chance": 0.10,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 22,
+          "humidity_percent": 45,
+          "conditions": "Windy"
+        },
+        {
+          "date": "2024-06-02",
+          "high_temp_f": 80,
+          "low_temp_f": 64,
+          "precipitation_chance": 0.15,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 25,
+          "humidity_percent": 42,
+          "conditions": "Very Windy"
+        },
+        {
+          "date": "2024-06-03",
+          "high_temp_f": 79,
+          "low_temp_f": 63,
+          "precipitation_chance": 0.20,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 28,
+          "humidity_percent": 40,
+          "conditions": "Very Windy"
+        },
+        {
+          "date": "2024-06-04",
+          "high_temp_f": 77,
+          "low_temp_f": 61,
+          "precipitation_chance": 0.15,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 20,
+          "humidity_percent": 43,
+          "conditions": "Windy"
+        },
+        {
+          "date": "2024-06-05",
+          "high_temp_f": 75,
+          "low_temp_f": 59,
+          "precipitation_chance": 0.10,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 15,
+          "humidity_percent": 48,
+          "conditions": "Breezy"
+        }
+      ],
+      "suitability": "poor_for_broadcast",
+      "notes": [
+        "High winds increase drift risk",
+        "Avoid broadcast or foliar applications",
+        "Consider incorporation methods or delay"
+      ]
+    },
+    {
+      "id": "drought_conditions",
+      "name": "Drought Conditions",
+      "description": "Extended dry period with low soil moisture",
+      "forecast_days": 14,
+      "daily_conditions": [
+        {
+          "date": "2024-07-01",
+          "high_temp_f": 88,
+          "low_temp_f": 68,
+          "precipitation_chance": 0.05,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 8,
+          "humidity_percent": 35,
+          "conditions": "Sunny"
+        },
+        {
+          "date": "2024-07-02",
+          "high_temp_f": 90,
+          "low_temp_f": 70,
+          "precipitation_chance": 0.05,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 9,
+          "humidity_percent": 32,
+          "conditions": "Sunny"
+        },
+        {
+          "date": "2024-07-03",
+          "high_temp_f": 92,
+          "low_temp_f": 72,
+          "precipitation_chance": 0.10,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 7,
+          "humidity_percent": 30,
+          "conditions": "Hot"
+        },
+        {
+          "date": "2024-07-04",
+          "high_temp_f": 91,
+          "low_temp_f": 71,
+          "precipitation_chance": 0.15,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 8,
+          "humidity_percent": 33,
+          "conditions": "Sunny"
+        },
+        {
+          "date": "2024-07-05",
+          "high_temp_f": 89,
+          "low_temp_f": 69,
+          "precipitation_chance": 0.10,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 10,
+          "humidity_percent": 35,
+          "conditions": "Sunny"
+        },
+        {
+          "date": "2024-07-06",
+          "high_temp_f": 93,
+          "low_temp_f": 73,
+          "precipitation_chance": 0.05,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 6,
+          "humidity_percent": 28,
+          "conditions": "Very Hot"
+        },
+        {
+          "date": "2024-07-07",
+          "high_temp_f": 94,
+          "low_temp_f": 74,
+          "precipitation_chance": 0.05,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 7,
+          "humidity_percent": 27,
+          "conditions": "Very Hot"
+        },
+        {
+          "date": "2024-07-08",
+          "high_temp_f": 92,
+          "low_temp_f": 72,
+          "precipitation_chance": 0.10,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 9,
+          "humidity_percent": 30,
+          "conditions": "Hot"
+        },
+        {
+          "date": "2024-07-09",
+          "high_temp_f": 90,
+          "low_temp_f": 70,
+          "precipitation_chance": 0.15,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 8,
+          "humidity_percent": 32,
+          "conditions": "Sunny"
+        },
+        {
+          "date": "2024-07-10",
+          "high_temp_f": 91,
+          "low_temp_f": 71,
+          "precipitation_chance": 0.10,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 7,
+          "humidity_percent": 31,
+          "conditions": "Hot"
+        },
+        {
+          "date": "2024-07-11",
+          "high_temp_f": 89,
+          "low_temp_f": 69,
+          "precipitation_chance": 0.05,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 8,
+          "humidity_percent": 33,
+          "conditions": "Sunny"
+        },
+        {
+          "date": "2024-07-12",
+          "high_temp_f": 88,
+          "low_temp_f": 68,
+          "precipitation_chance": 0.20,
+          "precipitation_amount": 0.0,
+          "wind_speed_mph": 10,
+          "humidity_percent": 35,
+          "conditions": "Partly Cloudy"
+        },
+        {
+          "date": "2024-07-13",
+          "high_temp_f": 87,
+          "low_temp_f": 67,
+          "precipitation_chance": 0.25,
+          "precipitation_amount": 0.1,
+          "wind_speed_mph": 9,
+          "humidity_percent": 38,
+          "conditions": "Partly Cloudy"
+        },
+        {
+          "date": "2024-07-14",
+          "high_temp_f": 85,
+          "low_temp_f": 65,
+          "precipitation_chance": 0.30,
+          "precipitation_amount": 0.2,
+          "wind_speed_mph": 8,
+          "humidity_percent": 42,
+          "conditions": "Mostly Cloudy"
+        }
+      ],
+      "suitability": "requires_irrigation",
+      "notes": [
+        "Extended drought reduces nutrient uptake",
+        "Consider irrigation before or with application",
+        "Dry soil limits effectiveness of fertilizer"
+      ]
+    }
+  ],
+  "metadata": {
+    "version": "1.0",
+    "created": "2024-10-19",
+    "description": "Weather pattern samples for timing optimization testing",
+    "use_case": "Weather integration and timing adjustment testing"
+  }
+}
