@@ -29,6 +29,13 @@ from ..models.timing_optimization_models import (
     TimingOptimizationSummary
 )
 
+# Import advanced optimization algorithms
+from ..algorithms.dynamic_programming_optimizer import DynamicProgrammingOptimizer
+from ..algorithms.genetic_algorithm_optimizer import GeneticAlgorithmOptimizer
+from ..algorithms.ml_optimizer import MLOptimizer
+from ..algorithms.multi_objective_optimizer import MultiObjectiveOptimizer
+from ..algorithms.uncertainty_handler import UncertaintyHandler
+
 logger = logging.getLogger(__name__)
 
 
@@ -49,7 +56,41 @@ class FertilizerTimingOptimizer:
         self.weather_service = None  # Will be integrated with weather service
         self.crop_growth_service = None  # Will be integrated with crop growth models
         self.equipment_service = None  # Will be integrated with equipment management
-        
+
+        # Initialize advanced optimization algorithms
+        self.dp_optimizer = DynamicProgrammingOptimizer(
+            discount_factor=0.98,
+            max_horizon_days=365,
+            state_discretization=10
+        )
+
+        self.ga_optimizer = GeneticAlgorithmOptimizer(
+            population_size=100,
+            max_generations=200,
+            crossover_rate=0.8,
+            mutation_rate=0.1,
+            elitism_count=5
+        )
+
+        self.ml_optimizer = MLOptimizer(
+            learning_rate=0.01,
+            exploration_rate=0.1,
+            discount_factor=0.95
+        )
+
+        self.mo_optimizer = MultiObjectiveOptimizer(
+            population_size=100,
+            max_generations=150,
+            crossover_rate=0.9,
+            mutation_rate=0.1
+        )
+
+        self.uncertainty_handler = UncertaintyHandler(
+            num_scenarios=1000,
+            confidence_level=0.95,
+            risk_aversion=0.5
+        )
+
         # Crop-specific timing parameters
         self.crop_timing_params = {
             "corn": {
@@ -155,10 +196,423 @@ class FertilizerTimingOptimizer:
             
             logger.info(f"Timing optimization completed for request {request.request_id}")
             return result
-            
+
         except Exception as e:
             logger.error(f"Error in timing optimization: {e}")
             raise
+
+    async def optimize_with_advanced_algorithms(
+        self,
+        request: TimingOptimizationRequest,
+        algorithm: str = "auto",
+        historical_data: Optional[List[Dict[str, Any]]] = None
+    ) -> TimingOptimizationResult:
+        """
+        Optimize fertilizer timing using advanced algorithms.
+
+        Args:
+            request: Timing optimization request
+            algorithm: Algorithm to use ('dp', 'ga', 'ml', 'mo', 'auto')
+            historical_data: Optional historical data for ML optimizer
+
+        Returns:
+            TimingOptimizationResult with optimal timings
+        """
+        start_time = time.time()
+        logger.info(f"Starting advanced optimization with algorithm: {algorithm}")
+
+        try:
+            # Prepare common data
+            weather_windows = await self._analyze_weather_windows(request)
+            crop_stages = await self._determine_crop_growth_stages(request)
+
+            # Select algorithm based on problem characteristics
+            if algorithm == "auto":
+                algorithm = self._select_optimal_algorithm(request, historical_data)
+                logger.info(f"Auto-selected algorithm: {algorithm}")
+
+            # Run optimization with selected algorithm
+            if algorithm == "dp":
+                result = await self._optimize_with_dp(request, weather_windows, crop_stages)
+            elif algorithm == "ga":
+                result = await self._optimize_with_ga(request, weather_windows, crop_stages)
+            elif algorithm == "ml":
+                result = await self._optimize_with_ml(request, weather_windows, crop_stages, historical_data)
+            elif algorithm == "mo":
+                result = await self._optimize_with_mo(request, weather_windows, crop_stages)
+            else:
+                # Fall back to default optimization
+                logger.warning(f"Unknown algorithm '{algorithm}', using default")
+                return await self.optimize_timing(request)
+
+            # Add uncertainty analysis to result
+            uncertainty_analysis = await self._add_uncertainty_analysis(
+                result, request, weather_windows, crop_stages
+            )
+
+            # Update result with uncertainty metrics
+            result.recommendations.extend(uncertainty_analysis.get("recommendations", []))
+
+            processing_time = (time.time() - start_time) * 1000
+            result.processing_time_ms = processing_time
+
+            logger.info(f"Advanced optimization completed in {processing_time:.2f}ms")
+            return result
+
+        except Exception as e:
+            logger.error(f"Error in advanced optimization: {e}")
+            raise
+
+    def _select_optimal_algorithm(
+        self,
+        request: TimingOptimizationRequest,
+        historical_data: Optional[List[Dict[str, Any]]]
+    ) -> str:
+        """
+        Select optimal algorithm based on problem characteristics.
+
+        Decision criteria:
+        - Use ML if sufficient historical data available
+        - Use DP for smaller problems with clear state transitions
+        - Use GA for medium-complexity problems
+        - Use MO for explicit multi-objective requirements
+        """
+        # Check for historical data (ML preferred)
+        if historical_data and len(historical_data) >= 50:
+            return "ml"
+
+        # Check problem size
+        num_fertilizers = len(request.fertilizer_requirements)
+        horizon_days = request.optimization_horizon_days
+
+        # DP works well for smaller problems
+        if num_fertilizers <= 2 and horizon_days <= 120:
+            return "dp"
+
+        # Use MO if explicit multi-objective preferences
+        if request.prioritize_yield and request.prioritize_cost:
+            return "mo"
+
+        # Default to GA for general problems
+        return "ga"
+
+    async def _optimize_with_dp(
+        self,
+        request: TimingOptimizationRequest,
+        weather_windows: List[WeatherWindow],
+        crop_stages: Dict[date, CropGrowthStage]
+    ) -> TimingOptimizationResult:
+        """Optimize using dynamic programming."""
+        logger.info("Running DP optimization")
+
+        # Run DP optimizer
+        dp_result = self.dp_optimizer.optimize(request, weather_windows, crop_stages)
+
+        # Convert DP result to standard format
+        optimal_timings = []
+        for app_date, action in dp_result.optimal_schedule:
+            if action.apply:
+                # Find best weather window for this date
+                weather_window = await self._find_best_weather_window(
+                    app_date, weather_windows, request
+                )
+
+                # Get crop stage for this date
+                crop_stage = self._get_crop_stage_for_date(app_date, crop_stages)
+
+                timing = ApplicationTiming(
+                    fertilizer_type=action.fertilizer_type,
+                    application_method=action.method,
+                    recommended_date=app_date,
+                    application_window=weather_window,
+                    crop_stage=crop_stage,
+                    amount_lbs_per_acre=action.amount,
+                    timing_score=0.85,
+                    weather_score=weather_window.suitability_score if weather_window else 0.5,
+                    crop_score=0.90,
+                    soil_score=0.85,
+                    weather_risk=0.2,
+                    timing_risk=0.15,
+                    equipment_risk=0.1,
+                    estimated_cost_per_acre=action.amount * 0.6,
+                    yield_impact_percent=5.0
+                )
+                optimal_timings.append(timing)
+
+        # Create result
+        result = await self._create_result_from_timings(
+            request, optimal_timings, weather_windows, "dynamic_programming",
+            dp_result.confidence_score
+        )
+
+        return result
+
+    async def _optimize_with_ga(
+        self,
+        request: TimingOptimizationRequest,
+        weather_windows: List[WeatherWindow],
+        crop_stages: Dict[date, CropGrowthStage]
+    ) -> TimingOptimizationResult:
+        """Optimize using genetic algorithm."""
+        logger.info("Running GA optimization")
+
+        # Run GA optimizer
+        ga_result = self.ga_optimizer.optimize(request, weather_windows, crop_stages)
+
+        # Convert GA result to standard format
+        optimal_timings = []
+        for app_date, fertilizer_type, amount, method in ga_result.best_schedule.schedule:
+            weather_window = await self._find_best_weather_window(
+                app_date, weather_windows, request
+            )
+            crop_stage = self._get_crop_stage_for_date(app_date, crop_stages)
+
+            timing = ApplicationTiming(
+                fertilizer_type=fertilizer_type,
+                application_method=method,
+                recommended_date=app_date,
+                application_window=weather_window,
+                crop_stage=crop_stage,
+                amount_lbs_per_acre=amount,
+                timing_score=ga_result.best_schedule.fitness / 100.0,
+                weather_score=weather_window.suitability_score if weather_window else 0.5,
+                crop_score=0.88,
+                soil_score=0.85,
+                weather_risk=0.18,
+                timing_risk=0.15,
+                equipment_risk=0.12,
+                estimated_cost_per_acre=amount * 0.6,
+                yield_impact_percent=4.5
+            )
+            optimal_timings.append(timing)
+
+        # Create result
+        result = await self._create_result_from_timings(
+            request, optimal_timings, weather_windows, "genetic_algorithm", 0.85
+        )
+
+        return result
+
+    async def _optimize_with_ml(
+        self,
+        request: TimingOptimizationRequest,
+        weather_windows: List[WeatherWindow],
+        crop_stages: Dict[date, CropGrowthStage],
+        historical_data: Optional[List[Dict[str, Any]]]
+    ) -> TimingOptimizationResult:
+        """Optimize using machine learning."""
+        logger.info("Running ML optimization")
+
+        # Run ML optimizer
+        ml_result = self.ml_optimizer.optimize(
+            request, weather_windows, crop_stages, historical_data
+        )
+
+        # Convert ML result to standard format
+        optimal_timings = []
+        for app_date, fertilizer_type, amount, method in ml_result.recommended_schedule:
+            weather_window = await self._find_best_weather_window(
+                app_date, weather_windows, request
+            )
+            crop_stage = self._get_crop_stage_for_date(app_date, crop_stages)
+
+            timing = ApplicationTiming(
+                fertilizer_type=fertilizer_type,
+                application_method=method,
+                recommended_date=app_date,
+                application_window=weather_window,
+                crop_stage=crop_stage,
+                amount_lbs_per_acre=amount,
+                timing_score=ml_result.model_confidence,
+                weather_score=weather_window.suitability_score if weather_window else 0.5,
+                crop_score=0.90,
+                soil_score=0.87,
+                weather_risk=0.15,
+                timing_risk=0.12,
+                equipment_risk=0.10,
+                estimated_cost_per_acre=amount * 0.6,
+                yield_impact_percent=ml_result.predicted_yield / 40.0
+            )
+            optimal_timings.append(timing)
+
+        # Create result
+        result = await self._create_result_from_timings(
+            request, optimal_timings, weather_windows, "machine_learning",
+            ml_result.model_confidence
+        )
+
+        return result
+
+    async def _optimize_with_mo(
+        self,
+        request: TimingOptimizationRequest,
+        weather_windows: List[WeatherWindow],
+        crop_stages: Dict[date, CropGrowthStage]
+    ) -> TimingOptimizationResult:
+        """Optimize using multi-objective optimization."""
+        logger.info("Running MO optimization")
+
+        # Set preference weights based on request
+        preference_weights = {
+            "yield": 0.40 if request.prioritize_yield else 0.30,
+            "cost": 0.30 if request.prioritize_cost else 0.20,
+            "environment": 0.20,
+            "risk": 0.10
+        }
+
+        # Run MO optimizer
+        mo_result = self.mo_optimizer.optimize(
+            request, weather_windows, crop_stages, preference_weights
+        )
+
+        # Convert MO result to standard format
+        optimal_timings = []
+        for app_date, fertilizer_type, amount, method in mo_result.recommended_solution.schedule:
+            weather_window = await self._find_best_weather_window(
+                app_date, weather_windows, request
+            )
+            crop_stage = self._get_crop_stage_for_date(app_date, crop_stages)
+
+            timing = ApplicationTiming(
+                fertilizer_type=fertilizer_type,
+                application_method=method,
+                recommended_date=app_date,
+                application_window=weather_window,
+                crop_stage=crop_stage,
+                amount_lbs_per_acre=amount,
+                timing_score=mo_result.recommended_solution.objectives.yield_score / 100.0,
+                weather_score=weather_window.suitability_score if weather_window else 0.5,
+                crop_score=0.89,
+                soil_score=0.86,
+                weather_risk=0.16,
+                timing_risk=0.14,
+                equipment_risk=0.11,
+                estimated_cost_per_acre=amount * 0.6,
+                yield_impact_percent=4.8
+            )
+            optimal_timings.append(timing)
+
+        # Create result
+        result = await self._create_result_from_timings(
+            request, optimal_timings, weather_windows, "multi_objective", 0.88
+        )
+
+        return result
+
+    async def _add_uncertainty_analysis(
+        self,
+        result: TimingOptimizationResult,
+        request: TimingOptimizationRequest,
+        weather_windows: List[WeatherWindow],
+        crop_stages: Dict[date, CropGrowthStage]
+    ) -> Dict[str, Any]:
+        """Add uncertainty analysis to optimization result."""
+        logger.info("Adding uncertainty analysis")
+
+        # Extract schedule from result
+        schedule = []
+        for timing in result.optimal_timings:
+            schedule.append((
+                timing.recommended_date,
+                timing.fertilizer_type,
+                timing.amount_lbs_per_acre,
+                timing.application_method
+            ))
+
+        # Run uncertainty analysis
+        uncertainty_result = self.uncertainty_handler.analyze_uncertainty(
+            request, schedule, weather_windows, crop_stages
+        )
+
+        # Generate uncertainty-based recommendations
+        recommendations = []
+
+        # Check risk metrics
+        if uncertainty_result.risk_metrics["value_at_risk_5"] < 50:
+            recommendations.append(
+                "High downside risk detected. Consider more conservative timing strategy."
+            )
+
+        if uncertainty_result.risk_metrics["volatility"] > 20:
+            recommendations.append(
+                "High outcome volatility. Implement risk mitigation strategies."
+            )
+
+        # Check confidence intervals
+        for metric, outcome in uncertainty_result.confidence_intervals.items():
+            if outcome.probability_success < 0.7:
+                recommendations.append(
+                    f"Low success probability for {metric}. Consider alternative timing."
+                )
+
+        return {
+            "recommendations": recommendations,
+            "risk_metrics": uncertainty_result.risk_metrics,
+            "confidence_intervals": uncertainty_result.confidence_intervals
+        }
+
+    async def _create_result_from_timings(
+        self,
+        request: TimingOptimizationRequest,
+        timings: List[ApplicationTiming],
+        weather_windows: List[WeatherWindow],
+        method: str,
+        confidence: float
+    ) -> TimingOptimizationResult:
+        """Create TimingOptimizationResult from timings."""
+        # Generate split plans
+        split_plans = await self._generate_split_plans(request, timings)
+
+        # Calculate metrics
+        metrics = await self._calculate_optimization_metrics(request, timings, weather_windows)
+
+        # Generate recommendations
+        recommendations = await self._generate_recommendations(
+            request, timings, split_plans, metrics
+        )
+
+        # Calculate economic analysis
+        economic_analysis = await self._calculate_economic_analysis(
+            request, timings, split_plans
+        )
+
+        result = TimingOptimizationResult(
+            request_id=request.request_id,
+            optimal_timings=timings,
+            split_plans=split_plans,
+            weather_windows=weather_windows,
+            overall_timing_score=metrics["overall_score"],
+            weather_suitability_score=metrics["weather_score"],
+            crop_stage_alignment_score=metrics["crop_score"],
+            risk_score=metrics["risk_score"],
+            total_estimated_cost=economic_analysis["total_cost"],
+            cost_per_acre=economic_analysis["cost_per_acre"],
+            expected_yield_impact=economic_analysis["yield_impact"],
+            roi_estimate=economic_analysis["roi"],
+            recommendations=recommendations,
+            optimization_method=method,
+            confidence_score=confidence,
+            processing_time_ms=0.0
+        )
+
+        return result
+
+    def _get_crop_stage_for_date(
+        self,
+        target_date: date,
+        crop_stages: Dict[date, CropGrowthStage]
+    ) -> CropGrowthStage:
+        """Get crop growth stage for a specific date."""
+        closest_stage = CropGrowthStage.PLANTING
+        min_diff = float('inf')
+
+        for stage_date, stage in crop_stages.items():
+            diff = abs((target_date - stage_date).days)
+            if diff < min_diff:
+                min_diff = diff
+                closest_stage = stage
+
+        return closest_stage
     
     async def _analyze_weather_windows(
         self, request: TimingOptimizationRequest
