@@ -16,9 +16,12 @@ from src.models.application_models import (
 from src.models.equipment_models import (
     Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel,
     EquipmentInventory, EquipmentCompatibility, EquipmentEfficiency,
-    EquipmentUpgrade, EquipmentAssessment, EquipmentMaintenance
+    EquipmentUpgrade, EquipmentAssessment, EquipmentMaintenance,
+    FertilizerFormulation, ApplicationMethodType, CompatibilityMatrix,
+    EquipmentRecommendation
 )
 from src.services.equipment_assessment_service import EquipmentAssessmentService
+from src.services.equipment_compatibility_service import EquipmentCompatibilityService
 from src.database.fertilizer_db import get_db_session, EquipmentAssessmentRecord
 
 logger = logging.getLogger(__name__)
@@ -30,6 +33,11 @@ router = APIRouter(prefix="/api/v1/equipment", tags=["equipment-assessment"])
 async def get_equipment_service() -> EquipmentAssessmentService:
     """Get equipment assessment service instance."""
     return EquipmentAssessmentService()
+
+
+async def get_compatibility_service() -> EquipmentCompatibilityService:
+    """Get equipment compatibility service instance."""
+    return EquipmentCompatibilityService()
 
 
 @router.post("/assess-farm", response_model=EquipmentAssessmentResponse)
@@ -502,13 +510,13 @@ async def compare_equipment_performance(
 
 
 async def _store_assessment_record(
-    request: EquipmentAssessmentRequest, 
+    request: EquipmentAssessmentRequest,
     response: EquipmentAssessmentResponse
 ):
     """Store equipment assessment record in database."""
     try:
         db_session = await get_db_session()
-        
+
         assessment_record = EquipmentAssessmentRecord(
             request_id=response.request_id,
             farm_id="current_farm",  # Would be passed from request in real implementation
@@ -525,10 +533,273 @@ async def _store_assessment_record(
             overall_score=response.metadata.get("overall_score", 0.0),
             processing_time_ms=response.processing_time_ms
         )
-        
+
         db_session.add(assessment_record)
         await db_session.commit()
-        
+
     except Exception as e:
         logger.warning(f"Failed to store assessment record: {e}")
         # Don't raise exception as this is not critical for the main functionality
+
+
+# ============================================================================
+# EQUIPMENT COMPATIBILITY ENGINE ENDPOINTS
+# ============================================================================
+
+@router.post("/compatibility/assess", response_model=CompatibilityMatrix)
+async def assess_equipment_compatibility(
+    equipment_id: str,
+    fertilizer_type: FertilizerFormulation,
+    application_method: ApplicationMethodType,
+    field_size_acres: float = Query(..., ge=0.1, le=10000.0),
+    soil_type: str = Query(..., description="Soil type (clay, loam, sandy, silt)"),
+    wind_speed_mph: Optional[float] = Query(None, ge=0, le=50),
+    temperature_f: Optional[float] = Query(None, ge=-20, le=120),
+    humidity_percent: Optional[float] = Query(None, ge=0, le=100),
+    cost_constraints: Optional[float] = Query(None, ge=0),
+    service: EquipmentCompatibilityService = Depends(get_compatibility_service)
+):
+    """
+    Assess compatibility for specific fertilizer and equipment combination.
+
+    This endpoint performs comprehensive multi-factor compatibility assessment including:
+    - Fertilizer type compatibility with equipment
+    - Field size suitability analysis
+    - Soil type compatibility evaluation
+    - Application rate capability assessment
+    - Weather condition resilience
+    - Cost effectiveness analysis
+    - Labor requirement evaluation
+    - Equipment availability status
+
+    **Scoring Factors:**
+    - Fertilizer Type Compatibility (25% weight)
+    - Field Size Suitability (20% weight)
+    - Application Rate Capability (15% weight)
+    - Soil Type Compatibility (10% weight)
+    - Weather Resilience (10% weight)
+    - Cost Effectiveness (10% weight)
+    - Labor Requirements (5% weight)
+    - Equipment Availability (5% weight)
+
+    **Returns:** Detailed compatibility matrix with overall score and individual factor scores
+    """
+    try:
+        logger.info(f"Assessing compatibility for equipment {equipment_id}")
+
+        # Create equipment object (in production, would fetch from database)
+        equipment = Equipment(
+            equipment_id=equipment_id,
+            name=f"Equipment {equipment_id}",
+            category=EquipmentCategory.SPREADING,  # Would be from database
+            capacity=500.0,  # Would be from database
+            status=EquipmentStatus.OPERATIONAL
+        )
+
+        # Prepare weather conditions
+        weather_conditions = {}
+        if wind_speed_mph is not None:
+            weather_conditions["wind_speed_mph"] = wind_speed_mph
+        if temperature_f is not None:
+            weather_conditions["temperature_f"] = temperature_f
+        if humidity_percent is not None:
+            weather_conditions["humidity_percent"] = humidity_percent
+
+        # Assess compatibility
+        compatibility_matrix = await service.assess_compatibility(
+            equipment=equipment,
+            fertilizer_type=fertilizer_type,
+            application_method=application_method,
+            field_size_acres=field_size_acres,
+            soil_type=soil_type,
+            weather_conditions=weather_conditions if weather_conditions else None,
+            cost_constraints=cost_constraints
+        )
+
+        logger.info(f"Compatibility assessment completed: score={compatibility_matrix.overall_compatibility_score:.2f}")
+        return compatibility_matrix
+
+    except Exception as e:
+        logger.error(f"Error in compatibility assessment: {e}")
+        raise HTTPException(status_code=500, detail=f"Compatibility assessment failed: {str(e)}")
+
+
+@router.post("/compatibility/recommend", response_model=List[EquipmentRecommendation])
+async def get_equipment_recommendations(
+    fertilizer_type: FertilizerFormulation,
+    application_method: ApplicationMethodType,
+    field_size_acres: float = Query(..., ge=0.1, le=10000.0),
+    soil_type: str = Query(..., description="Soil type (clay, loam, sandy, silt)"),
+    wind_speed_mph: Optional[float] = Query(None, ge=0, le=50),
+    temperature_f: Optional[float] = Query(None, ge=-20, le=120),
+    humidity_percent: Optional[float] = Query(None, ge=0, le=100),
+    cost_constraints: Optional[float] = Query(None, ge=0),
+    top_n: int = Query(5, ge=1, le=20, description="Number of recommendations to return"),
+    service: EquipmentCompatibilityService = Depends(get_compatibility_service)
+):
+    """
+    Get equipment recommendations for fertilizer plan.
+
+    Returns ranked equipment recommendations based on multi-factor analysis.
+    Each recommendation includes:
+    - Detailed compatibility assessment
+    - Cost-benefit analysis with ROI and payback period
+    - Comprehensive justification
+    - Advantages and disadvantages
+    - Implementation considerations
+    - Training requirements
+    - Maintenance impact assessment
+
+    Recommendations are ranked by overall compatibility score and include
+    confidence levels for each suggestion.
+
+    **Use Cases:**
+    - Planning new equipment purchases
+    - Evaluating equipment for specific crops
+    - Optimizing existing equipment allocation
+    - Budget-constrained equipment selection
+    """
+    try:
+        logger.info(f"Generating equipment recommendations for {fertilizer_type}")
+
+        # Prepare weather conditions
+        weather_conditions = {}
+        if wind_speed_mph is not None:
+            weather_conditions["wind_speed_mph"] = wind_speed_mph
+        if temperature_f is not None:
+            weather_conditions["temperature_f"] = temperature_f
+        if humidity_percent is not None:
+            weather_conditions["humidity_percent"] = humidity_percent
+
+        # Get recommendations
+        recommendations = await service.recommend_equipment(
+            fertilizer_type=fertilizer_type,
+            application_method=application_method,
+            field_size_acres=field_size_acres,
+            soil_type=soil_type,
+            weather_conditions=weather_conditions if weather_conditions else None,
+            cost_constraints=cost_constraints,
+            available_equipment=None,  # Use all available equipment
+            top_n=top_n
+        )
+
+        logger.info(f"Generated {len(recommendations)} equipment recommendations")
+        return recommendations
+
+    except Exception as e:
+        logger.error(f"Error generating recommendations: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate recommendations: {str(e)}")
+
+
+@router.get("/compatibility/matrix", response_model=Dict[str, Any])
+async def get_full_compatibility_matrix(
+    fertilizer_types: Optional[List[FertilizerFormulation]] = Query(None),
+    equipment_categories: Optional[List[EquipmentCategory]] = Query(None),
+    service: EquipmentCompatibilityService = Depends(get_compatibility_service)
+):
+    """
+    Get full compatibility matrix for fertilizer-equipment combinations.
+
+    This endpoint provides a comprehensive compatibility matrix showing
+    how different fertilizer types match with various equipment categories.
+
+    **Matrix Information:**
+    - Compatibility levels (highly compatible, compatible, incompatible, etc.)
+    - Compatibility scores (0.0 to 1.0)
+    - Special requirements for each combination
+    - Known limitations and constraints
+    - Best practices for successful application
+    - Flow rate and pressure requirements
+    - Particle size compatibility ranges
+
+    **Use Cases:**
+    - Educational reference for equipment selection
+    - Planning fertilizer program equipment needs
+    - Identifying compatible equipment-fertilizer combinations
+    - Understanding equipment limitations and requirements
+    """
+    try:
+        logger.info("Generating full compatibility matrix")
+
+        matrix_data = await service.get_compatibility_matrix_full(
+            fertilizer_types=fertilizer_types,
+            equipment_categories=equipment_categories
+        )
+
+        logger.info("Compatibility matrix generated successfully")
+        return matrix_data
+
+    except Exception as e:
+        logger.error(f"Error generating compatibility matrix: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to generate matrix: {str(e)}")
+
+
+@router.post("/compatibility/optimize", response_model=Dict[str, Any])
+async def optimize_equipment_selection(
+    fields: List[Dict[str, Any]],
+    budget_constraint: Optional[float] = Query(None, ge=0),
+    service: EquipmentCompatibilityService = Depends(get_compatibility_service)
+):
+    """
+    Optimize equipment selection for multiple fields.
+
+    This advanced endpoint analyzes multiple fields with varying requirements
+    and recommends an optimized equipment portfolio that:
+    - Meets all field requirements
+    - Maximizes operational efficiency
+    - Stays within budget constraints
+    - Minimizes equipment redundancy
+    - Balances workload across equipment
+
+    **Input Field Specification:**
+    Each field should include:
+    - size_acres: Field size in acres
+    - fertilizer_type: Fertilizer formulation type
+    - application_method: Desired application method
+    - soil_type: Soil classification
+    - priority: Field priority (high, medium, low)
+
+    **Returns:**
+    - Optimized equipment selection
+    - Field requirement analysis
+    - Implementation plan with phases
+    - Total cost and budget utilization
+    - Equipment coverage analysis
+    - Timeline and scheduling recommendations
+
+    **Use Cases:**
+    - Whole-farm equipment planning
+    - Multi-field fertilizer program optimization
+    - Budget-constrained equipment procurement
+    - Equipment fleet modernization planning
+    """
+    try:
+        logger.info(f"Optimizing equipment selection for {len(fields)} fields")
+
+        if not fields:
+            raise HTTPException(status_code=400, detail="At least one field is required")
+
+        # Validate field specifications
+        for i, field in enumerate(fields):
+            if "size_acres" not in field:
+                raise HTTPException(status_code=400, detail=f"Field {i}: size_acres is required")
+            if "fertilizer_type" not in field:
+                raise HTTPException(status_code=400, detail=f"Field {i}: fertilizer_type is required")
+            if "application_method" not in field:
+                raise HTTPException(status_code=400, detail=f"Field {i}: application_method is required")
+
+        # Optimize selection
+        optimization_result = await service.optimize_equipment_selection(
+            fields=fields,
+            budget_constraint=budget_constraint,
+            existing_equipment=None  # Could pass existing equipment inventory
+        )
+
+        logger.info(f"Equipment optimization completed: {len(optimization_result['recommended_equipment'])} equipment recommended")
+        return optimization_result
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error in equipment optimization: {e}")
+        raise HTTPException(status_code=500, detail=f"Equipment optimization failed: {str(e)}")

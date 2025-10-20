@@ -261,3 +261,139 @@ class ComprehensiveFarmAssessment(BaseModel):
     operational_efficiency_score: float = Field(..., ge=0, le=1, description="Overall operational efficiency score")
     optimization_recommendations: List[str] = Field(default_factory=list, description="Optimization recommendations")
     implementation_priorities: List[str] = Field(default_factory=list, description="Implementation priorities")
+
+
+# Equipment Compatibility Engine Models
+
+class FertilizerFormulation(str, Enum):
+    """Fertilizer formulation types."""
+    LIQUID = "liquid"
+    GRANULAR = "granular"
+    PELLET = "pellet"
+    SLOW_RELEASE = "slow_release"
+    ORGANIC = "organic"
+    SYNTHETIC = "synthetic"
+    SUSPENSION = "suspension"
+    SOLUTION = "solution"
+
+
+class ApplicationMethodType(str, Enum):
+    """Application method types."""
+    BROADCAST = "broadcast"
+    BAND = "band"
+    FOLIAR = "foliar"
+    DRIP = "drip"
+    INJECTION = "injection"
+    SIDEDRESS = "sidedress"
+    FERTIGATION = "fertigation"
+    TOPDRESS = "topdress"
+
+
+class CompatibilityLevel(str, Enum):
+    """Compatibility level classifications."""
+    HIGHLY_COMPATIBLE = "highly_compatible"
+    COMPATIBLE = "compatible"
+    MODERATELY_COMPATIBLE = "moderately_compatible"
+    POORLY_COMPATIBLE = "poorly_compatible"
+    INCOMPATIBLE = "incompatible"
+
+
+class FertilizerEquipmentMapping(BaseModel):
+    """Detailed fertilizer-equipment compatibility mapping."""
+    mapping_id: str = Field(..., description="Unique mapping identifier")
+    fertilizer_type: FertilizerFormulation = Field(..., description="Fertilizer formulation type")
+    equipment_category: EquipmentCategory = Field(..., description="Equipment category")
+    compatibility_level: CompatibilityLevel = Field(..., description="Compatibility level")
+    flow_rate_requirements: Optional[Dict[str, float]] = Field(None, description="Required flow rate range")
+    particle_size_compatibility: Optional[Dict[str, float]] = Field(None, description="Compatible particle size range (mm)")
+    chemical_resistance_required: bool = Field(False, description="Chemical resistance requirement")
+    pressure_requirements: Optional[Dict[str, float]] = Field(None, description="Pressure requirements (psi)")
+    temperature_range: Optional[Dict[str, float]] = Field(None, description="Operating temperature range (°F)")
+    special_requirements: List[str] = Field(default_factory=list, description="Special handling requirements")
+    limitations: List[str] = Field(default_factory=list, description="Known limitations")
+    best_practices: List[str] = Field(default_factory=list, description="Best practices for this combination")
+
+
+class EquipmentRequirements(BaseModel):
+    """Equipment requirements for specific fertilizer type."""
+    fertilizer_type: FertilizerFormulation = Field(..., description="Fertilizer type")
+    application_method: ApplicationMethodType = Field(..., description="Application method")
+    minimum_flow_rate: Optional[float] = Field(None, ge=0, description="Minimum flow rate")
+    maximum_flow_rate: Optional[float] = Field(None, ge=0, description="Maximum flow rate")
+    flow_rate_unit: str = Field("gpm", description="Flow rate unit")
+    particle_size_range: Optional[Dict[str, float]] = Field(None, description="Particle size range (mm)")
+    chemical_compatibility: List[str] = Field(default_factory=list, description="Required chemical compatibility")
+    precision_level: str = Field("medium", description="Required precision level (low/medium/high)")
+    coverage_uniformity: float = Field(0.85, ge=0, le=1, description="Required coverage uniformity")
+    field_size_suitability: Dict[str, float] = Field(default_factory=dict, description="Suitable field size range")
+
+
+class CompatibilityFactor(BaseModel):
+    """Individual compatibility factor assessment."""
+    factor_name: str = Field(..., description="Factor name")
+    factor_weight: float = Field(..., ge=0, le=1, description="Factor weight in overall scoring")
+    score: float = Field(..., ge=0, le=1, description="Factor score")
+    justification: str = Field(..., description="Justification for score")
+    improvement_suggestions: List[str] = Field(default_factory=list, description="Suggestions for improvement")
+
+
+class CompatibilityMatrix(BaseModel):
+    """Multi-factor compatibility matrix for equipment-fertilizer matching."""
+    matrix_id: str = Field(..., description="Unique matrix identifier")
+    equipment_id: str = Field(..., description="Equipment identifier")
+    fertilizer_type: FertilizerFormulation = Field(..., description="Fertilizer type")
+    application_method: ApplicationMethodType = Field(..., description="Application method")
+    compatibility_factors: List[CompatibilityFactor] = Field(default_factory=list, description="Individual compatibility factors")
+    overall_compatibility_score: float = Field(..., ge=0, le=1, description="Overall weighted compatibility score")
+    compatibility_level: CompatibilityLevel = Field(..., description="Compatibility classification")
+    field_size_score: float = Field(..., ge=0, le=1, description="Field size compatibility score")
+    soil_type_score: float = Field(..., ge=0, le=1, description="Soil type compatibility score")
+    weather_score: float = Field(..., ge=0, le=1, description="Weather conditions score")
+    cost_efficiency_score: float = Field(..., ge=0, le=1, description="Cost efficiency score")
+    labor_requirement_score: float = Field(..., ge=0, le=1, description="Labor requirement score")
+    constraints: List[str] = Field(default_factory=list, description="Compatibility constraints")
+    warnings: List[str] = Field(default_factory=list, description="Important warnings")
+
+
+class CostBenefit(BaseModel):
+    """Cost-benefit analysis for equipment recommendation."""
+    initial_investment: float = Field(..., ge=0, description="Initial equipment investment")
+    annual_operating_cost: float = Field(..., ge=0, description="Annual operating cost")
+    annual_savings: float = Field(..., ge=0, description="Estimated annual savings")
+    payback_period_years: float = Field(..., ge=0, description="Payback period in years")
+    roi_percentage: float = Field(..., description="Return on investment percentage")
+    net_present_value: Optional[float] = Field(None, description="Net present value over equipment lifetime")
+    break_even_acres: float = Field(..., ge=0, description="Break-even acreage per year")
+    cost_per_acre: float = Field(..., ge=0, description="Cost per acre")
+
+
+class EquipmentRecommendation(BaseModel):
+    """Equipment recommendation with scoring and detailed justification."""
+    recommendation_id: str = Field(..., description="Unique recommendation identifier")
+    equipment: Equipment = Field(..., description="Recommended equipment")
+    compatibility_matrix: CompatibilityMatrix = Field(..., description="Compatibility assessment")
+    overall_score: float = Field(..., ge=0, le=1, description="Overall recommendation score")
+    ranking: int = Field(..., ge=1, description="Ranking among alternatives")
+    justification: str = Field(..., description="Detailed justification for recommendation")
+    advantages: List[str] = Field(default_factory=list, description="Key advantages")
+    disadvantages: List[str] = Field(default_factory=list, description="Potential disadvantages")
+    cost_benefit: CostBenefit = Field(..., description="Cost-benefit analysis")
+    implementation_considerations: List[str] = Field(default_factory=list, description="Implementation considerations")
+    training_requirements: List[str] = Field(default_factory=list, description="Required training")
+    maintenance_impact: str = Field(..., description="Impact on maintenance requirements")
+    confidence_level: float = Field(..., ge=0, le=1, description="Recommendation confidence level")
+
+
+class EquipmentCapabilities(BaseModel):
+    """Detailed equipment capabilities."""
+    equipment_id: str = Field(..., description="Equipment identifier")
+    supported_fertilizer_types: List[FertilizerFormulation] = Field(default_factory=list, description="Supported fertilizer types")
+    supported_application_methods: List[ApplicationMethodType] = Field(default_factory=list, description="Supported application methods")
+    flow_rate_capacity: Dict[str, float] = Field(default_factory=dict, description="Flow rate capacity range")
+    particle_size_compatibility: Dict[str, float] = Field(default_factory=dict, description="Compatible particle sizes (mm)")
+    chemical_resistance: List[str] = Field(default_factory=list, description="Chemical resistance properties")
+    precision_capabilities: str = Field("medium", description="Precision capability level")
+    coverage_area_per_hour: Optional[float] = Field(None, ge=0, description="Coverage area per hour (acres)")
+    operational_speed_range: Optional[Dict[str, float]] = Field(None, description="Operational speed range (mph)")
+    automation_level: str = Field("manual", description="Automation level (manual/semi-auto/automatic)")
+    gps_compatibility: bool = Field(False, description="GPS/precision ag compatibility")
