@@ -24,7 +24,7 @@ logging.basicConfig(
 logger = logging.getLogger("fertilizer-timing-main")
 
 SERVICE_NAME = "fertilizer-timing-optimization"
-SERVICE_PORT = int(os.getenv("FERTILIZER_TIMING_SERVICE_PORT", "8009"))
+SERVICE_PORT = int(os.getenv("FERTILIZER_TIMING_SERVICE_PORT", "8010"))
 
 
 @asynccontextmanager
