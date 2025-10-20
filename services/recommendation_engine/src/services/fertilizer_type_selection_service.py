@@ -9,6 +9,8 @@ from typing import List, Dict, Any, Optional, Tuple
 import logging
 from ..models.fertilizer_models import FarmerPriorities
 from .environmental_service import EnvironmentalAssessmentService
+from .soil_health_service import SoilHealthIntegrationService
+from .fertilizer_explanation_service import FertilizerExplanationService
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,9 @@ class FertilizerTypeSelectionService:
         """Initialize the fertilizer type selection service."""
         self.logger = logging.getLogger(__name__)
         self.environmental_service = EnvironmentalAssessmentService()
-        self.logger.info("FertilizerTypeSelectionService initialized with environmental assessment")
+        self.soil_health_service = SoilHealthIntegrationService()
+        self.explanation_service = FertilizerExplanationService()
+        self.logger.info("FertilizerTypeSelectionService initialized with environmental assessment, soil health integration, and explanation generation")
     
     async def get_fertilizer_type_recommendations(
         self,
@@ -95,6 +99,163 @@ class FertilizerTypeSelectionService:
         except Exception as e:
             self.logger.error(f"Error generating fertilizer recommendations: {str(e)}")
             raise
+    
+    async def assess_fertilizer_soil_health_impact(
+        self,
+        fertilizer_type: str,
+        fertilizer_name: str,
+        application_rate_lbs_per_acre: float,
+        soil_data: Optional[Dict[str, Any]] = None,
+        application_frequency_per_year: int = 1,
+        soil_texture: Optional[str] = None,
+        field_conditions: Optional[Dict[str, Any]] = None
+    ) -> Dict[str, Any]:
+        """
+        Assess comprehensive soil health impact of a specific fertilizer.
+
+        This method integrates with the SoilHealthIntegrationService to provide
+        detailed analysis of how a fertilizer choice will affect soil health
+        across multiple factors and time horizons.
+
+        Args:
+            fertilizer_type: Type of fertilizer (organic, synthetic, etc.)
+            fertilizer_name: Specific fertilizer name
+            application_rate_lbs_per_acre: Application rate in lbs/acre
+            soil_data: Soil test data and conditions
+            application_frequency_per_year: Number of applications per year
+            soil_texture: Soil texture classification
+            field_conditions: Additional field conditions
+
+        Returns:
+            Comprehensive soil health impact assessment
+        """
+        try:
+            # Convert soil_data dict to SoilTestData if provided
+            if soil_data:
+                from ..models.agricultural_models import SoilTestData
+                from datetime import date
+                
+                # Create SoilTestData object with required fields
+                soil_test_data = SoilTestData(
+                    ph=soil_data.get('ph', 6.5),
+                    organic_matter_percent=soil_data.get('organic_matter_percent', 3.0),
+                    phosphorus_ppm=soil_data.get('phosphorus_ppm', 25.0),
+                    potassium_ppm=soil_data.get('potassium_ppm', 150.0),
+                    nitrogen_ppm=soil_data.get('nitrogen_ppm'),
+                    cec_meq_per_100g=soil_data.get('cec_meq_per_100g'),
+                    soil_texture=soil_data.get('soil_texture'),
+                    drainage_class=soil_data.get('drainage_class'),
+                    test_date=soil_data.get('test_date', date.today()),
+                    lab_name=soil_data.get('lab_name')
+                )
+            else:
+                # Use default soil data
+                from ..models.agricultural_models import SoilTestData
+                from datetime import date
+                
+                soil_test_data = SoilTestData(
+                    ph=6.5,
+                    organic_matter_percent=3.0,
+                    phosphorus_ppm=25.0,
+                    potassium_ppm=150.0,
+                    test_date=date.today()
+                )
+
+            # Convert soil texture string to SoilTexture enum if provided
+            soil_texture_enum = None
+            if soil_texture:
+                try:
+                    from .soil_ph_management_service import SoilTexture
+                    soil_texture_enum = SoilTexture(soil_texture.lower())
+                except (ValueError, AttributeError):
+                    self.logger.warning(f"Invalid soil texture '{soil_texture}', using default")
+
+            # Get comprehensive soil health assessment
+            assessment = await self.soil_health_service.assess_soil_health_impact(
+                fertilizer_type=fertilizer_type,
+                fertilizer_name=fertilizer_name,
+                application_rate_lbs_per_acre=application_rate_lbs_per_acre,
+                soil_data=soil_test_data,
+                application_frequency_per_year=application_frequency_per_year,
+                soil_texture=soil_texture_enum,
+                field_conditions=field_conditions
+            )
+
+            # Convert assessment to dictionary format for API compatibility
+            return {
+                "assessment_id": assessment.assessment_id,
+                "fertilizer_name": assessment.fertilizer_name,
+                "fertilizer_type": assessment.fertilizer_type,
+                "assessment_date": assessment.assessment_date.isoformat(),
+                "overall_soil_health_score": assessment.overall_soil_health_score,
+                "soil_health_rating": assessment.soil_health_rating.value,
+                "organic_matter_impact": {
+                    "organic_matter_contribution_percent": assessment.organic_matter_impact.organic_matter_contribution_percent,
+                    "carbon_input_lbs_per_acre": assessment.organic_matter_impact.carbon_input_lbs_per_acre,
+                    "short_term_om_change_percent": assessment.organic_matter_impact.short_term_om_change_percent,
+                    "long_term_om_change_percent": assessment.organic_matter_impact.long_term_om_change_percent,
+                    "short_term_rating": assessment.organic_matter_impact.short_term_rating.value,
+                    "long_term_rating": assessment.organic_matter_impact.long_term_rating.value,
+                    "carbon_sequestration_potential": assessment.organic_matter_impact.carbon_sequestration_potential,
+                    "monitoring_frequency": assessment.organic_matter_impact.monitoring_frequency
+                },
+                "ph_effects": {
+                    "immediate_ph_change": assessment.ph_effects.immediate_ph_change,
+                    "cumulative_ph_change_5yr": assessment.ph_effects.cumulative_ph_change_5yr,
+                    "acidification_potential": assessment.ph_effects.acidification_potential,
+                    "alkalinization_potential": assessment.ph_effects.alkalinization_potential,
+                    "ph_risk_level": assessment.ph_effects.ph_risk_level,
+                    "requires_ph_management": assessment.ph_effects.requires_ph_management,
+                    "ph_monitoring_frequency": assessment.ph_effects.ph_monitoring_frequency
+                },
+                "microbial_assessment": {
+                    "bacterial_population_impact": assessment.microbial_assessment.bacterial_population_impact,
+                    "fungal_population_impact": assessment.microbial_assessment.fungal_population_impact,
+                    "mycorrhizal_impact": assessment.microbial_assessment.mycorrhizal_impact,
+                    "microbial_diversity_score": assessment.microbial_assessment.microbial_diversity_score,
+                    "soil_food_web_health": assessment.microbial_assessment.soil_food_web_health,
+                    "short_term_microbiome_impact": assessment.microbial_assessment.short_term_microbiome_impact.value,
+                    "long_term_microbiome_impact": assessment.microbial_assessment.long_term_microbiome_impact.value
+                },
+                "structure_evaluation": {
+                    "aggregate_stability_impact": assessment.structure_evaluation.aggregate_stability_impact,
+                    "bulk_density_change": assessment.structure_evaluation.bulk_density_change,
+                    "infiltration_rate_change": assessment.structure_evaluation.infiltration_rate_change,
+                    "water_holding_capacity_change": assessment.structure_evaluation.water_holding_capacity_change,
+                    "structural_stability": assessment.structure_evaluation.structural_stability,
+                    "long_term_structure_rating": assessment.structure_evaluation.long_term_structure_rating.value
+                },
+                "temporal_analysis": {
+                    "short_term_overall_rating": assessment.temporal_analysis.short_term_overall_rating.value,
+                    "medium_term_overall_rating": assessment.temporal_analysis.medium_term_overall_rating.value,
+                    "long_term_overall_rating": assessment.temporal_analysis.long_term_overall_rating.value,
+                    "medium_term_trajectory": assessment.temporal_analysis.medium_term_trajectory,
+                    "long_term_sustainability": assessment.temporal_analysis.long_term_sustainability,
+                    "cumulative_impact_score": assessment.temporal_analysis.cumulative_impact_score,
+                    "impact_reversibility": assessment.temporal_analysis.impact_reversibility
+                },
+                "positive_impacts": assessment.positive_impacts,
+                "negative_impacts": assessment.negative_impacts,
+                "neutral_aspects": assessment.neutral_aspects,
+                "overall_risk_level": assessment.overall_risk_level,
+                "critical_concerns": assessment.critical_concerns,
+                "mitigation_priorities": assessment.mitigation_priorities,
+                "preventive_practices": assessment.preventive_practices,
+                "monitoring_frequency": assessment.monitoring_frequency,
+                "key_indicators_to_monitor": assessment.key_indicators_to_monitor,
+                "assessment_confidence": assessment.assessment_confidence,
+                "limitations": assessment.limitations
+            }
+
+        except Exception as e:
+            self.logger.error(f"Error assessing soil health impact for {fertilizer_name}: {str(e)}")
+            # Return default response on error
+            return {
+                "error": str(e),
+                "overall_soil_health_score": 0.0,
+                "soil_health_rating": "unknown",
+                "message": "Soil health assessment failed"
+            }
     
     async def get_available_fertilizer_types(
         self,
@@ -363,6 +524,42 @@ class FertilizerTypeSelectionService:
             return {
                 "error": str(e),
                 "overall_environmental_performance": "Assessment failed"
+            }
+    
+    async def generate_recommendation_explanation(
+        self,
+        recommendation: Dict[str, Any],
+        priorities: Dict[str, Any],
+        constraints: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+        language: str = "en"
+    ) -> Dict[str, Any]:
+        """
+        Generate comprehensive explanation for a fertilizer recommendation.
+        
+        Args:
+            recommendation: Fertilizer recommendation data
+            priorities: Farmer priorities
+            constraints: Farmer constraints
+            context: Additional context (soil, crop, farm data)
+            language: Language for explanation
+            
+        Returns:
+            Comprehensive explanation with multiple sections
+        """
+        try:
+            return self.explanation_service.generate_recommendation_explanation(
+                recommendation=recommendation,
+                priorities=priorities,
+                constraints=constraints,
+                context=context,
+                language=language
+            )
+        except Exception as e:
+            self.logger.error(f"Error generating explanation: {str(e)}")
+            return {
+                "error": str(e),
+                "fallback_summary": "Unable to generate detailed explanation"
             }
     
     def generate_implementation_guidance(self, recommendations: List) -> List[str]:
