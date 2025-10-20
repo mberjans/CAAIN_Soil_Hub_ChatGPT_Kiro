@@ -526,7 +526,7 @@ class FertilizerTypeSelectionService:
                 "overall_environmental_performance": "Assessment failed"
             }
     
-    async def generate_recommendation_explanation(
+    def generate_recommendation_explanation(
         self,
         recommendation: Dict[str, Any],
         priorities: Dict[str, Any],

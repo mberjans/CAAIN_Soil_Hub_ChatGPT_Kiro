@@ -111,7 +111,8 @@ class FertilizerExplanationService:
         
         if priorities.get("soil_health", 0) > 0.6:
             soil_score = recommendation.get("soil_health_score", 0)
-            reasons.append(f"Provides soil health benefits (score: {int(soil_score * 100)}%)")
+            if isinstance(soil_score, (int, float)):
+                reasons.append(f"Provides soil health benefits (score: {int(soil_score * 100)}%)")
         
         return {
             "heading": templates["why_heading"],
