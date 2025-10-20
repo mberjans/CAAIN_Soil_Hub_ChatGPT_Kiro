@@ -55,6 +55,7 @@ DATA_INTEGRATION_URL = os.getenv("DATA_INTEGRATION_URL", "http://localhost:8003"
 CROP_TAXONOMY_URL = os.getenv("CROP_TAXONOMY_URL", "http://localhost:8003")  # This should point to the crop-taxonomy service
 LOCATION_VALIDATION_URL = os.getenv("LOCATION_VALIDATION_URL", "http://localhost:8006")
 FERTILIZER_APPLICATION_URL = os.getenv("FERTILIZER_APPLICATION_URL", "http://localhost:8007")
+FERTILIZER_TIMING_URL = os.getenv("FERTILIZER_TIMING_URL", "http://localhost:8007")
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request):
@@ -275,6 +276,17 @@ async def field_management_page(request: Request):
         })
     else:
         return HTMLResponse("<h1>Field Management - Coming Soon</h1>")
+
+@app.get("/fertilizer-timing", response_class=HTMLResponse)
+async def fertilizer_timing_page(request: Request):
+    """Fertilizer timing optimization interface page"""
+    if templates:
+        return templates.TemplateResponse("fertilizer_timing.html", {
+            "request": request,
+            "title": "Fertilizer Timing Optimization"
+        })
+    else:
+        return HTMLResponse("<h1>Fertilizer Timing Optimization - Coming Soon</h1>")
 
 @app.post("/api/ask-question")
 async def ask_question(
@@ -1884,6 +1896,140 @@ async def proxy_fertilizer_application_api(path: str, request: Request):
         raise HTTPException(status_code=503, detail="Fertilizer application service temporarily unavailable")
     except Exception as e:
         logger.error(f"Fertilizer application API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# Fertilizer Timing Optimization API Proxy Routes
+@app.api_route("/api/v1/fertilizer-timing/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_fertilizer_timing_api(path: str, request: Request):
+    """Proxy requests to the fertilizer timing optimization API"""
+    try:
+        method = request.method
+
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+
+        # Forward the request to the fertilizer timing service
+        async with httpx.AsyncClient() as client:
+            url = f"{FERTILIZER_TIMING_URL}/api/v1/fertilizer-timing/{path}"
+
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+
+    except httpx.RequestError as e:
+        logger.error(f"Fertilizer timing API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Fertilizer timing service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Fertilizer timing API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.api_route("/api/v1/fertilizer-calendar/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_fertilizer_calendar_api(path: str, request: Request):
+    """Proxy requests to the fertilizer calendar API"""
+    try:
+        method = request.method
+
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+
+        # Forward the request to the fertilizer timing service
+        async with httpx.AsyncClient() as client:
+            url = f"{FERTILIZER_TIMING_URL}/api/v1/fertilizer-calendar/{path}"
+
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+
+    except httpx.RequestError as e:
+        logger.error(f"Fertilizer calendar API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Fertilizer calendar service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Fertilizer calendar API proxy error: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+@app.api_route("/api/v1/fertilizer-alerts/{path:path}", methods=["GET", "POST", "PUT", "DELETE"])
+async def proxy_fertilizer_alerts_api(path: str, request: Request):
+    """Proxy requests to the fertilizer alerts API"""
+    try:
+        method = request.method
+
+        # Get request data based on content type
+        body = None
+        if method in ["POST", "PUT"]:
+            content_type = request.headers.get("content-type", "")
+            if "application/json" in content_type:
+                body = await request.json()
+            elif "application/x-www-form-urlencoded" in content_type:
+                form_data = await request.form()
+                body = dict(form_data)
+
+        # Forward the request to the fertilizer timing service
+        async with httpx.AsyncClient() as client:
+            url = f"{FERTILIZER_TIMING_URL}/api/v1/fertilizer-alerts/{path}"
+
+            if method == "GET":
+                response = await client.get(url, params=request.query_params, timeout=60.0)
+            elif method == "POST":
+                response = await client.post(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "PUT":
+                response = await client.put(url, json=body, params=request.query_params, timeout=60.0)
+            elif method == "DELETE":
+                response = await client.delete(url, params=request.query_params, timeout=60.0)
+            else:
+                raise HTTPException(status_code=405, detail="Method not allowed")
+
+            # Return the response from the backend
+            return JSONResponse(
+                content=response.json() if response.content else {},
+                status_code=response.status_code
+            )
+
+    except httpx.RequestError as e:
+        logger.error(f"Fertilizer alerts API proxy error: {e}")
+        raise HTTPException(status_code=503, detail="Fertilizer alerts service temporarily unavailable")
+    except Exception as e:
+        logger.error(f"Fertilizer alerts API proxy error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

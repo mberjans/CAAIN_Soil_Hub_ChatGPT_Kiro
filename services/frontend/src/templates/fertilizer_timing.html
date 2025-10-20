@@ -1,0 +1,2042 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fertilizer Timing Optimization - CAAIN Soil Hub</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- FullCalendar CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+    <style>
+        :root {
+            --primary-green: #28a745;
+            --secondary-blue: #007bff;
+            --warning-yellow: #ffc107;
+            --danger-red: #dc3545;
+            --info-cyan: #17a2b8;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        /* Navigation Bar */
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+        }
+
+        /* Page Header */
+        .page-header {
+            background: linear-gradient(135deg, var(--primary-green), #20c997);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.95;
+        }
+
+        /* Control Panel Cards */
+        .control-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-left: 4px solid var(--primary-green);
+        }
+
+        .control-panel h5 {
+            color: var(--primary-green);
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Interactive Calendar Styles */
+        #timingCalendar {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .fc-event {
+            border-radius: 4px;
+            padding: 2px 4px;
+            font-size: 0.85rem;
+        }
+
+        .fc-event-optimal {
+            background-color: var(--primary-green);
+            border-color: #1e7e34;
+        }
+
+        .fc-event-acceptable {
+            background-color: var(--warning-yellow);
+            border-color: #d39e00;
+            color: #000;
+        }
+
+        .fc-event-avoid {
+            background-color: var(--danger-red);
+            border-color: #bd2130;
+        }
+
+        /* Weather Integration Styles */
+        .weather-card {
+            background: linear-gradient(135deg, #56ccf2, #2f80ed);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .weather-forecast {
+            display: flex;
+            overflow-x: auto;
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        .weather-day {
+            min-width: 100px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .weather-day .day-name {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .weather-day .weather-icon {
+            font-size: 2rem;
+            margin: 0.5rem 0;
+        }
+
+        .weather-day .temperature {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .weather-alert {
+            background: rgba(255,193,7,0.15);
+            border-left: 4px solid var(--warning-yellow);
+            padding: 1rem;
+            border-radius: 4px;
+            margin-top: 1rem;
+            color: #856404;
+            background-color: #fff3cd;
+        }
+
+        /* Timing Window Cards */
+        .timing-window {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-green);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .timing-window:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .timing-window.optimal {
+            border-left-color: var(--primary-green);
+        }
+
+        .timing-window.acceptable {
+            border-left-color: var(--warning-yellow);
+        }
+
+        .timing-window.avoid {
+            border-left-color: var(--danger-red);
+        }
+
+        .window-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .window-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .window-status.optimal {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .window-status.acceptable {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .window-status.avoid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Chart Containers */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .chart-container h5 {
+            color: var(--primary-green);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Alert Management Styles */
+        .alert-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-left: 4px solid var(--info-cyan);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .alert-card.active {
+            border-left-color: var(--primary-green);
+        }
+
+        .alert-card.snoozed {
+            opacity: 0.7;
+            border-left-color: #6c757d;
+        }
+
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .alert-actions button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary-green);
+            margin: 0.5rem 0;
+        }
+
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-icon {
+            font-size: 2rem;
+            color: var(--primary-green);
+            opacity: 0.7;
+        }
+
+        /* Recommendation Panel */
+        .recommendation-panel {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border-left: 4px solid var(--secondary-blue);
+        }
+
+        .recommendation-panel h5 {
+            color: var(--secondary-blue);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .recommendation-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .recommendation-item strong {
+            color: var(--primary-green);
+        }
+
+        /* Loading States */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255,255,255,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .loading-spinner {
+            text-align: center;
+        }
+
+        .loading-spinner .spinner-border {
+            width: 3rem;
+            height: 3rem;
+            color: var(--primary-green);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .page-header h1 {
+                font-size: 1.75rem;
+            }
+
+            .page-header p {
+                font-size: 0.95rem;
+            }
+
+            .metric-value {
+                font-size: 1.75rem;
+            }
+
+            .weather-forecast {
+                padding: 0.5rem 0;
+            }
+
+            .chart-wrapper {
+                height: 250px;
+            }
+        }
+
+        /* Error States */
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Success States */
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Button Styles */
+        .btn-optimize {
+            background: var(--primary-green);
+            color: white;
+            padding: 0.75rem 2rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            transition: all 0.3s;
+        }
+
+        .btn-optimize:hover {
+            background: #1e7e34;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.3);
+        }
+
+        /* Nutrient Uptake Curve */
+        .nutrient-curve-legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+        }
+
+        /* Notification Preferences */
+        .notification-option {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border: 2px solid var(--border-color);
+            transition: all 0.2s;
+        }
+
+        .notification-option:hover {
+            border-color: var(--primary-green);
+        }
+
+        .notification-option.selected {
+            border-color: var(--primary-green);
+            background: #d4edda;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-seedling"></i> CAAIN Soil Hub
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/crop-selection">Crop Selection</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/fertilizer-strategy">Fertilizer Strategy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/fertilizer-timing">Timing Optimization</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="container">
+            <h1><i class="fas fa-calendar-check"></i> Fertilizer Timing Optimization</h1>
+            <p>Optimize fertilizer application timing based on weather, crop stages, and soil conditions</p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Alert Messages -->
+        <div id="messageContainer"></div>
+
+        <!-- Quick Metrics Row -->
+        <div class="row mb-4">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <i class="fas fa-calendar-day metric-icon"></i>
+                    <div class="metric-value" id="optimalDaysCount">--</div>
+                    <div class="metric-label">Optimal Days Ahead</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <i class="fas fa-percentage metric-icon"></i>
+                    <div class="metric-value" id="utilizationRate">--</div>
+                    <div class="metric-label">Utilization Rate</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <i class="fas fa-tint-slash metric-icon"></i>
+                    <div class="metric-value" id="lossReduction">--</div>
+                    <div class="metric-label">Loss Reduction</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="metric-card">
+                    <i class="fas fa-dollar-sign metric-icon"></i>
+                    <div class="metric-value" id="costBenefit">--</div>
+                    <div class="metric-label">Cost Benefit</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <!-- Left Column - Controls and Calendar -->
+            <div class="col-lg-8">
+                <!-- Timing Optimization Controls -->
+                <div class="control-panel">
+                    <h5><i class="fas fa-sliders-h"></i> Optimization Parameters</h5>
+                    <form id="timingOptimizationForm">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Field Selection</label>
+                                <select class="form-select" id="fieldSelect" required>
+                                    <option value="">Select field...</option>
+                                    <option value="field_1">North Field (250 acres)</option>
+                                    <option value="field_2">South Field (180 acres)</option>
+                                    <option value="field_3">East Field (320 acres)</option>
+                                    <option value="field_4">West Field (200 acres)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Crop Type</label>
+                                <select class="form-select" id="cropType" required>
+                                    <option value="">Select crop...</option>
+                                    <option value="corn">Corn</option>
+                                    <option value="soybean">Soybean</option>
+                                    <option value="wheat">Wheat</option>
+                                    <option value="cotton">Cotton</option>
+                                    <option value="rice">Rice</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Fertilizer Type</label>
+                                <select class="form-select" id="fertilizerType" required>
+                                    <option value="">Select fertilizer...</option>
+                                    <option value="nitrogen">Nitrogen (N)</option>
+                                    <option value="phosphorus">Phosphorus (P)</option>
+                                    <option value="potassium">Potassium (K)</option>
+                                    <option value="npk_blend">NPK Blend</option>
+                                    <option value="micronutrients">Micronutrients</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Application Method</label>
+                                <select class="form-select" id="applicationMethod" required>
+                                    <option value="">Select method...</option>
+                                    <option value="broadcast">Broadcast</option>
+                                    <option value="side_dress">Side-dress</option>
+                                    <option value="fertigation">Fertigation</option>
+                                    <option value="foliar">Foliar</option>
+                                    <option value="injection">Injection</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Target Yield (bushels/acre)</label>
+                                <input type="number" class="form-control" id="targetYield"
+                                    placeholder="180" min="50" max="500" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Optimization Algorithm</label>
+                                <select class="form-select" id="optimizationAlgorithm">
+                                    <option value="weather_based">Weather-Based</option>
+                                    <option value="crop_stage">Crop Stage Optimization</option>
+                                    <option value="cost_benefit">Cost-Benefit Analysis</option>
+                                    <option value="environmental">Environmental Impact</option>
+                                    <option value="comprehensive">Comprehensive (All Factors)</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Constraint Inputs -->
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <label class="form-label fw-bold">Constraints</label>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Equipment Availability</label>
+                                <select class="form-select" id="equipmentConstraint">
+                                    <option value="unlimited">Unlimited</option>
+                                    <option value="limited">Limited (2-3 days/week)</option>
+                                    <option value="restricted">Restricted (weekends only)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Labor Availability</label>
+                                <select class="form-select" id="laborConstraint">
+                                    <option value="abundant">Abundant</option>
+                                    <option value="moderate">Moderate</option>
+                                    <option value="limited">Limited</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Budget Limit ($/acre)</label>
+                                <input type="number" class="form-control" id="budgetConstraint"
+                                    placeholder="150" min="0" step="10">
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-3">
+                            <button type="submit" class="btn btn-optimize">
+                                <i class="fas fa-magic"></i> Optimize Timing
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Interactive Timing Calendar -->
+                <div class="chart-container">
+                    <h5><i class="fas fa-calendar-alt"></i> Application Timing Calendar</h5>
+                    <div id="timingCalendar"></div>
+                </div>
+
+                <!-- Timing Recommendation Timeline -->
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-bar"></i> Timing Recommendation Timeline</h5>
+                    <div class="chart-wrapper">
+                        <canvas id="timingTimelineChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Nutrient Uptake Curves -->
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-line"></i> Nutrient Uptake by Growth Stage</h5>
+                    <div class="chart-wrapper">
+                        <canvas id="nutrientUptakeChart"></canvas>
+                    </div>
+                    <div class="nutrient-curve-legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #28a745;"></div>
+                            <span>Nitrogen</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #ffc107;"></div>
+                            <span>Phosphorus</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background: #17a2b8;"></div>
+                            <span>Potassium</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Weather, Alerts, and Recommendations -->
+            <div class="col-lg-4">
+                <!-- Weather Integration -->
+                <div class="weather-card">
+                    <h5 class="text-white mb-3">
+                        <i class="fas fa-cloud-sun"></i> 14-Day Weather Forecast
+                    </h5>
+                    <div class="weather-forecast" id="weatherForecast">
+                        <!-- Weather forecast items will be populated dynamically -->
+                    </div>
+                    <div id="weatherAlerts">
+                        <!-- Weather alerts will appear here -->
+                    </div>
+                </div>
+
+                <!-- Timing Windows -->
+                <div class="control-panel">
+                    <h5><i class="fas fa-window-maximize"></i> Application Windows</h5>
+                    <div id="timingWindows">
+                        <p class="text-muted text-center">Run optimization to see available timing windows</p>
+                    </div>
+                </div>
+
+                <!-- Recommendations Panel -->
+                <div class="recommendation-panel">
+                    <h5><i class="fas fa-lightbulb"></i> Timing Recommendations</h5>
+                    <div id="timingRecommendations">
+                        <p class="text-muted text-center">Run optimization to receive recommendations</p>
+                    </div>
+                </div>
+
+                <!-- Alert Management -->
+                <div class="control-panel">
+                    <h5><i class="fas fa-bell"></i> Timing Alerts</h5>
+                    <div class="mb-3">
+                        <button class="btn btn-sm btn-success w-100" onclick="createNewAlert()">
+                            <i class="fas fa-plus"></i> Create New Alert
+                        </button>
+                    </div>
+                    <div id="alertsList">
+                        <p class="text-muted text-center">No active alerts</p>
+                    </div>
+                </div>
+
+                <!-- Notification Preferences -->
+                <div class="control-panel">
+                    <h5><i class="fas fa-cog"></i> Notification Preferences</h5>
+                    <div class="notification-option" onclick="toggleNotification('email')">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notifyEmail" checked>
+                            <label class="form-check-label" for="notifyEmail">
+                                <i class="fas fa-envelope"></i> Email Notifications
+                            </label>
+                        </div>
+                    </div>
+                    <div class="notification-option" onclick="toggleNotification('sms')">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notifySMS">
+                            <label class="form-check-label" for="notifySMS">
+                                <i class="fas fa-sms"></i> SMS Notifications
+                            </label>
+                        </div>
+                    </div>
+                    <div class="notification-option" onclick="toggleNotification('push')">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="notifyPush">
+                            <label class="form-check-label" for="notifyPush">
+                                <i class="fas fa-mobile-alt"></i> Push Notifications
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Efficiency Metrics Dashboard -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="chart-container">
+                    <h5><i class="fas fa-chart-pie"></i> Efficiency Metrics Dashboard</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="chart-wrapper">
+                                <canvas id="utilizationChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="chart-wrapper">
+                                <canvas id="costBenefitChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner">
+            <div class="spinner-border" role="status"></div>
+            <p class="mt-3">Optimizing fertilizer timing...</p>
+        </div>
+    </div>
+
+    <!-- Create Alert Modal -->
+    <div class="modal fade" id="createAlertModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-bell"></i> Create Timing Alert</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="createAlertForm">
+                        <div class="mb-3">
+                            <label class="form-label">Alert Name</label>
+                            <input type="text" class="form-control" id="alertName"
+                                placeholder="e.g., Optimal Nitrogen Application" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Alert Type</label>
+                            <select class="form-select" id="alertType" required>
+                                <option value="">Select type...</option>
+                                <option value="optimal_window">Optimal Window Opening</option>
+                                <option value="weather_change">Weather Change Alert</option>
+                                <option value="crop_stage">Crop Stage Alert</option>
+                                <option value="custom">Custom Alert</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Trigger Date</label>
+                            <input type="date" class="form-control" id="alertDate" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notification Methods</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="alertNotifyEmail" checked>
+                                <label class="form-check-label" for="alertNotifyEmail">Email</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="alertNotifySMS">
+                                <label class="form-check-label" for="alertNotifySMS">SMS</label>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-success" onclick="saveAlert()">
+                        <i class="fas fa-save"></i> Create Alert
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.js"></script>
+
+    <script>
+        // Global variables
+        let calendar;
+        let optimizationResults = null;
+        let charts = {};
+        let userAlerts = [];
+        let weatherData = [];
+        let offlineMode = false;
+
+        // API base URL - adjust based on your deployment
+        const API_BASE_URL = '/api/v1';
+
+        // Offline storage key
+        const OFFLINE_STORAGE_KEY = 'fertilizer_timing_offline_data';
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            checkOfflineMode();
+            initializeCalendar();
+            loadWeatherForecast();
+            loadUserPreferences();
+            setupEventListeners();
+            loadRecentOptimizations();
+            checkForActiveAlerts();
+        });
+
+        // Initialize FullCalendar
+        function initializeCalendar() {
+            const calendarEl = document.getElementById('timingCalendar');
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,dayGridWeek'
+                },
+                events: [],
+                eventClick: function(info) {
+                    showEventDetails(info.event);
+                },
+                dateClick: function(info) {
+                    showDateWeather(info.date);
+                },
+                dayCellDidMount: function(info) {
+                    addWeatherOverlay(info);
+                },
+                height: 'auto',
+                eventContent: function(arg) {
+                    return {
+                        html: `<div style="padding: 2px 4px;">
+                            <div style="font-weight: 600;">${arg.event.title}</div>
+                            <div style="font-size: 0.75rem; opacity: 0.9;">
+                                <i class="fas fa-chart-line"></i> ${(arg.event.extendedProps.efficiency * 100).toFixed(0)}%
+                            </div>
+                        </div>`
+                    };
+                }
+            });
+            calendar.render();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('timingOptimizationForm').addEventListener('submit', handleOptimization);
+        }
+
+        // Handle timing optimization
+        async function handleOptimization(event) {
+            event.preventDefault();
+
+            // Show loading overlay
+            showLoading(true);
+
+            // Collect form data
+            const formData = {
+                field_id: document.getElementById('fieldSelect').value,
+                crop_type: document.getElementById('cropType').value,
+                fertilizer_type: document.getElementById('fertilizerType').value,
+                application_method: document.getElementById('applicationMethod').value,
+                target_yield: parseFloat(document.getElementById('targetYield').value),
+                optimization_algorithm: document.getElementById('optimizationAlgorithm').value,
+                constraints: {
+                    equipment: document.getElementById('equipmentConstraint').value,
+                    labor: document.getElementById('laborConstraint').value,
+                    budget: parseFloat(document.getElementById('budgetConstraint').value) || null
+                }
+            };
+
+            try {
+                // Call timing optimization API
+                const response = await fetch(`${API_BASE_URL}/fertilizer-timing/optimize`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Optimization failed: ${response.status}`);
+                }
+
+                optimizationResults = await response.json();
+
+                // Display results
+                displayOptimizationResults(optimizationResults);
+
+                // Show success message
+                showMessage('Timing optimization completed successfully!', 'success');
+
+            } catch (error) {
+                console.error('Optimization error:', error);
+                showMessage('Optimization failed. Using demo data.', 'warning');
+
+                // Use demo data for testing
+                optimizationResults = generateDemoResults(formData);
+                displayOptimizationResults(optimizationResults);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Display optimization results
+        function displayOptimizationResults(results) {
+            // Update metrics
+            updateMetrics(results);
+
+            // Update calendar with timing windows
+            updateCalendarEvents(results);
+
+            // Update timing windows panel
+            updateTimingWindows(results);
+
+            // Update recommendations
+            updateRecommendations(results);
+
+            // Update charts
+            updateCharts(results);
+        }
+
+        // Update metric cards
+        function updateMetrics(results) {
+            document.getElementById('optimalDaysCount').textContent = results.optimal_days || 7;
+            document.getElementById('utilizationRate').textContent =
+                (results.utilization_rate || 0.85).toFixed(0) + '%';
+            document.getElementById('lossReduction').textContent =
+                (results.loss_reduction || 0.25).toFixed(0) + '%';
+            document.getElementById('costBenefit').textContent =
+                '$' + (results.cost_benefit || 45).toFixed(0);
+        }
+
+        // Update calendar events
+        function updateCalendarEvents(results) {
+            // Clear existing events
+            calendar.removeAllEvents();
+
+            // Add timing window events
+            if (results.timing_windows) {
+                results.timing_windows.forEach(window => {
+                    calendar.addEvent({
+                        title: window.title || 'Application Window',
+                        start: window.start_date,
+                        end: window.end_date,
+                        className: 'fc-event-' + window.quality,
+                        extendedProps: {
+                            quality: window.quality,
+                            efficiency: window.efficiency,
+                            weather_conditions: window.weather_conditions
+                        }
+                    });
+                });
+            }
+        }
+
+        // Update timing windows panel
+        function updateTimingWindows(results) {
+            const container = document.getElementById('timingWindows');
+
+            if (!results.timing_windows || results.timing_windows.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No timing windows available</p>';
+                return;
+            }
+
+            let html = '';
+            results.timing_windows.forEach(window => {
+                html += `
+                    <div class="timing-window ${window.quality}">
+                        <div class="window-header">
+                            <strong>${window.title || 'Application Window'}</strong>
+                            <span class="window-status ${window.quality}">
+                                ${window.quality.toUpperCase()}
+                            </span>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            ${formatDate(window.start_date)} - ${formatDate(window.end_date)}
+                        </div>
+                        <div class="small">
+                            <i class="fas fa-chart-line"></i> Efficiency: ${(window.efficiency * 100).toFixed(0)}%
+                        </div>
+                        <div class="small">
+                            <i class="fas fa-cloud-sun"></i> ${window.weather_conditions || 'Good conditions'}
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Update recommendations
+        function updateRecommendations(results) {
+            const container = document.getElementById('timingRecommendations');
+
+            if (!results.recommendations || results.recommendations.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No recommendations available</p>';
+                return;
+            }
+
+            let html = '';
+            results.recommendations.forEach(rec => {
+                html += `
+                    <div class="recommendation-item">
+                        <strong>${rec.title}</strong>
+                        <p class="mb-0 small text-muted">${rec.description}</p>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Update charts
+        function updateCharts(results) {
+            updateTimingTimelineChart(results);
+            updateNutrientUptakeChart(results);
+            updateUtilizationChart(results);
+            updateCostBenefitChart(results);
+        }
+
+        // Update timing timeline chart
+        function updateTimingTimelineChart(results) {
+            const ctx = document.getElementById('timingTimelineChart').getContext('2d');
+
+            if (charts.timingTimeline) {
+                charts.timingTimeline.destroy();
+            }
+
+            charts.timingTimeline = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: results.timeline_labels || ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [{
+                        label: 'Optimal Timing Score',
+                        data: results.timeline_scores || [85, 92, 78, 88],
+                        backgroundColor: '#28a745',
+                        borderColor: '#1e7e34',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update nutrient uptake chart
+        function updateNutrientUptakeChart(results) {
+            const ctx = document.getElementById('nutrientUptakeChart').getContext('2d');
+
+            if (charts.nutrientUptake) {
+                charts.nutrientUptake.destroy();
+            }
+
+            // Get crop type from form or results
+            const cropType = document.getElementById('cropType').value || 'corn';
+            const cropData = getCropNutrientData(cropType);
+
+            charts.nutrientUptake = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: cropData.stages,
+                    datasets: [
+                        {
+                            label: 'Nitrogen (N)',
+                            data: cropData.nitrogen,
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Phosphorus (P)',
+                            data: cropData.phosphorus,
+                            borderColor: '#ffc107',
+                            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Potassium (K)',
+                            data: cropData.potassium,
+                            borderColor: '#17a2b8',
+                            backgroundColor: 'rgba(23, 162, 184, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: `Nutrient Uptake Pattern for ${cropType.charAt(0).toUpperCase() + cropType.slice(1)}`,
+                            font: {
+                                size: 14
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '% uptake';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Nutrient Uptake Rate (%)',
+                                font: {
+                                    size: 12
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Growth Stage',
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update utilization chart
+        function updateUtilizationChart(results) {
+            const ctx = document.getElementById('utilizationChart').getContext('2d');
+
+            if (charts.utilization) {
+                charts.utilization.destroy();
+            }
+
+            // Calculate utilization breakdown
+            const utilizationRate = (results.utilization_rate || 0.85) * 100;
+            const totalLoss = 100 - utilizationRate;
+            const leachingLoss = totalLoss * 0.53; // ~53% of losses to leaching
+            const volatilizationLoss = totalLoss * 0.33; // ~33% to volatilization
+            const otherLoss = totalLoss * 0.14; // ~14% to other losses
+
+            charts.utilization = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [
+                        'Utilized by Crop',
+                        'Lost to Leaching',
+                        'Lost to Volatilization',
+                        'Other Losses'
+                    ],
+                    datasets: [{
+                        data: [
+                            utilizationRate.toFixed(1),
+                            leachingLoss.toFixed(1),
+                            volatilizationLoss.toFixed(1),
+                            otherLoss.toFixed(1)
+                        ],
+                        backgroundColor: [
+                            '#28a745',  // Green for utilized
+                            '#dc3545',  // Red for leaching
+                            '#ffc107',  // Yellow for volatilization
+                            '#6c757d'   // Gray for other
+                        ],
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Fertilizer Utilization Rate',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    return label + ': ' + value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update cost-benefit chart
+        function updateCostBenefitChart(results) {
+            const ctx = document.getElementById('costBenefitChart').getContext('2d');
+
+            if (charts.costBenefit) {
+                charts.costBenefit.destroy();
+            }
+
+            // Calculate costs and benefits based on optimization results
+            const baseCost = 150; // Base fertilizer cost per acre
+            const optimalCost = baseCost * 0.97; // Optimal timing reduces waste
+            const poorCost = baseCost * 1.10; // Poor timing may require reapplication
+
+            const costBenefit = results.cost_benefit || 52;
+            const utilizationRate = results.utilization_rate || 0.87;
+
+            // Calculate benefits based on utilization rate
+            const optimalBenefit = baseCost + costBenefit;
+            const standardBenefit = baseCost + (costBenefit * 0.75);
+            const poorBenefit = baseCost + (costBenefit * 0.45);
+
+            // Calculate net benefit (benefit - cost)
+            const optimalNet = optimalBenefit - optimalCost;
+            const standardNet = standardBenefit - baseCost;
+            const poorNet = poorBenefit - poorCost;
+
+            charts.costBenefit = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Optimal Timing', 'Standard Timing', 'Poor Timing'],
+                    datasets: [
+                        {
+                            label: 'Cost ($/acre)',
+                            data: [optimalCost.toFixed(0), baseCost, poorCost.toFixed(0)],
+                            backgroundColor: '#dc3545',
+                            borderWidth: 2,
+                            borderColor: '#bd2130'
+                        },
+                        {
+                            label: 'Benefit ($/acre)',
+                            data: [optimalBenefit.toFixed(0), standardBenefit.toFixed(0), poorBenefit.toFixed(0)],
+                            backgroundColor: '#28a745',
+                            borderWidth: 2,
+                            borderColor: '#1e7e34'
+                        },
+                        {
+                            label: 'Net Benefit ($/acre)',
+                            data: [optimalNet.toFixed(0), standardNet.toFixed(0), poorNet.toFixed(0)],
+                            backgroundColor: '#17a2b8',
+                            borderWidth: 2,
+                            borderColor: '#117a8b',
+                            type: 'line'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'USD per Acre',
+                                font: {
+                                    size: 12,
+                                    weight: 'bold'
+                                }
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value;
+                                }
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Timing Strategy'
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Cost-Benefit Analysis by Timing Strategy',
+                            font: {
+                                size: 14,
+                                weight: 'bold'
+                            }
+                        },
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 10,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': $' + context.parsed.y;
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load weather forecast
+        async function loadWeatherForecast() {
+            const container = document.getElementById('weatherForecast');
+
+            try {
+                // Try to fetch real weather data from the API
+                const fieldId = document.getElementById('fieldSelect').value || 'field_1';
+                const response = await fetch(`${API_BASE_URL}/weather/forecast?field_id=${fieldId}&days=14`);
+
+                if (response.ok) {
+                    const forecast = await response.json();
+                    weatherData = processForecastData(forecast);
+                } else {
+                    throw new Error('Weather API unavailable');
+                }
+            } catch (error) {
+                console.warn('Using demo weather data:', error);
+                // Use demo weather data as fallback
+                weatherData = generateDemoWeatherData();
+            }
+
+            displayWeatherForecast(weatherData);
+            calendar.render(); // Re-render calendar to show weather overlays
+        }
+
+        // Generate demo weather data
+        function generateDemoWeatherData() {
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const icons = ['fa-sun', 'fa-cloud-sun', 'fa-cloud-rain', 'fa-cloud', 'fa-sun', 'fa-sun', 'fa-cloud-sun'];
+            const temps = [72, 68, 65, 70, 75, 78, 73, 71, 69, 66, 72, 76, 79, 74];
+            const rainChances = [0, 20, 80, 40, 0, 0, 10, 15, 30, 85, 50, 5, 0, 20];
+
+            const today = new Date();
+            return days.map((day, index) => {
+                const date = new Date(today);
+                date.setDate(date.getDate() + index);
+                return {
+                    date: date.toISOString().split('T')[0],
+                    day: day,
+                    icon: icons[index % icons.length],
+                    temp: temps[index],
+                    rain: rainChances[index],
+                    wind: Math.floor(Math.random() * 20) + 5,
+                    humidity: Math.floor(Math.random() * 30) + 50
+                };
+            });
+        }
+
+        // Process forecast data from API
+        function processForecastData(forecast) {
+            if (!forecast || !forecast.daily) return generateDemoWeatherData();
+
+            return forecast.daily.map(day => ({
+                date: day.date,
+                day: new Date(day.date).toLocaleDateString('en-US', { weekday: 'short' }),
+                icon: getWeatherIcon(day.condition),
+                temp: Math.round(day.temperature),
+                rain: Math.round(day.precipitation_chance * 100),
+                wind: Math.round(day.wind_speed),
+                humidity: Math.round(day.humidity)
+            }));
+        }
+
+        // Get weather icon based on condition
+        function getWeatherIcon(condition) {
+            const iconMap = {
+                'clear': 'fa-sun',
+                'sunny': 'fa-sun',
+                'partly_cloudy': 'fa-cloud-sun',
+                'cloudy': 'fa-cloud',
+                'rain': 'fa-cloud-rain',
+                'heavy_rain': 'fa-cloud-showers-heavy',
+                'storm': 'fa-bolt',
+                'snow': 'fa-snowflake'
+            };
+            return iconMap[condition] || 'fa-cloud-sun';
+        }
+
+        // Display weather forecast
+        function displayWeatherForecast(data) {
+            const container = document.getElementById('weatherForecast');
+            let html = '';
+
+            data.slice(0, 7).forEach(day => {
+                html += `
+                    <div class="weather-day" title="Wind: ${day.wind}mph, Humidity: ${day.humidity}%">
+                        <div class="day-name">${day.day}</div>
+                        <i class="fas ${day.icon} weather-icon"></i>
+                        <div class="temperature">${day.temp}°F</div>
+                        <div class="small">${day.rain}% rain</div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // Add weather alert if needed
+            const highRainDays = data.filter(d => d.rain > 50);
+            if (highRainDays.length > 0) {
+                const alertDay = new Date(highRainDays[0].date).toLocaleDateString('en-US', { weekday: 'long' });
+                document.getElementById('weatherAlerts').innerHTML = `
+                    <div class="weather-alert">
+                        <strong><i class="fas fa-exclamation-triangle"></i> Weather Alert</strong>
+                        <p class="mb-0 small">Heavy rain expected ${alertDay}. Avoid fertilizer application 24-48 hours before to prevent nutrient loss.</p>
+                    </div>
+                `;
+            } else {
+                document.getElementById('weatherAlerts').innerHTML = '';
+            }
+        }
+
+        // Add weather overlay to calendar cells
+        function addWeatherOverlay(info) {
+            const dateStr = info.date.toISOString().split('T')[0];
+            const weather = weatherData.find(w => w.date === dateStr);
+
+            if (weather) {
+                const cell = info.el;
+                const overlay = document.createElement('div');
+                overlay.style.cssText = 'font-size: 0.7rem; opacity: 0.7; display: flex; justify-content: space-between; padding: 2px;';
+
+                // Weather icon and temp
+                overlay.innerHTML = `
+                    <span><i class="fas ${weather.icon}" style="font-size: 0.6rem;"></i> ${weather.temp}°</span>
+                    <span>${weather.rain > 0 ? weather.rain + '%' : ''}</span>
+                `;
+
+                // Color code based on rain chance
+                if (weather.rain > 60) {
+                    cell.style.backgroundColor = 'rgba(220, 53, 69, 0.1)';
+                } else if (weather.rain > 30) {
+                    cell.style.backgroundColor = 'rgba(255, 193, 7, 0.1)';
+                } else if (weather.rain < 10) {
+                    cell.style.backgroundColor = 'rgba(40, 167, 69, 0.05)';
+                }
+
+                cell.querySelector('.fc-daygrid-day-top').appendChild(overlay);
+            }
+        }
+
+        // Show date weather details
+        function showDateWeather(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            const weather = weatherData.find(w => w.date === dateStr);
+
+            if (weather) {
+                alert(`Weather for ${date.toLocaleDateString()}:\n\n` +
+                    `Temperature: ${weather.temp}°F\n` +
+                    `Rain Chance: ${weather.rain}%\n` +
+                    `Wind: ${weather.wind} mph\n` +
+                    `Humidity: ${weather.humidity}%\n\n` +
+                    `${weather.rain > 50 ? '⚠️ Not recommended for fertilizer application' :
+                      weather.rain < 20 ? '✅ Good conditions for application' :
+                      '⚡ Monitor conditions closely'}`
+                );
+            }
+        }
+
+        // Create new alert
+        function createNewAlert() {
+            const modal = new bootstrap.Modal(document.getElementById('createAlertModal'));
+            modal.show();
+        }
+
+        // Save alert
+        async function saveAlert() {
+            const alertData = {
+                name: document.getElementById('alertName').value,
+                type: document.getElementById('alertType').value,
+                date: document.getElementById('alertDate').value,
+                notifications: {
+                    email: document.getElementById('alertNotifyEmail').checked,
+                    sms: document.getElementById('alertNotifySMS').checked
+                }
+            };
+
+            try {
+                let savedAlert = null;
+
+                // Try to call alert creation API if online
+                if (!offlineMode) {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/fertilizer-alerts/generate`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                ...alertData,
+                                field_id: document.getElementById('fieldSelect').value,
+                                crop_type: document.getElementById('cropType').value
+                            })
+                        });
+
+                        if (response.ok) {
+                            const result = await response.json();
+                            savedAlert = result;
+                        }
+                    } catch (apiError) {
+                        console.warn('API unavailable, saving locally:', apiError);
+                    }
+                }
+
+                // Add to local alerts
+                const newAlert = {
+                    id: savedAlert?.id || Date.now(),
+                    ...alertData,
+                    status: 'active',
+                    created_at: new Date().toISOString()
+                };
+
+                userAlerts.push(newAlert);
+
+                // Persist to localStorage
+                localStorage.setItem('active_timing_alerts', JSON.stringify(userAlerts));
+
+                // Update alerts display
+                displayAlerts();
+
+                // Close modal
+                bootstrap.Modal.getInstance(document.getElementById('createAlertModal')).hide();
+
+                // Reset form
+                document.getElementById('createAlertForm').reset();
+
+                showMessage('Alert created successfully!', 'success');
+
+            } catch (error) {
+                console.error('Alert creation error:', error);
+                showMessage('Alert creation failed. Please try again.', 'error');
+            }
+        }
+
+        // Display alerts
+        function displayAlerts() {
+            const container = document.getElementById('alertsList');
+
+            if (userAlerts.length === 0) {
+                container.innerHTML = '<p class="text-muted text-center">No active alerts</p>';
+                return;
+            }
+
+            let html = '';
+            userAlerts.forEach(alert => {
+                html += `
+                    <div class="alert-card ${alert.status}">
+                        <div class="alert-header">
+                            <strong>${alert.name}</strong>
+                            <span class="badge bg-success">${alert.type}</span>
+                        </div>
+                        <div class="small text-muted mb-2">
+                            <i class="fas fa-calendar"></i> ${formatDate(alert.date)}
+                        </div>
+                        <div class="alert-actions">
+                            <button class="btn btn-sm btn-outline-warning" onclick="snoozeAlert(${alert.id})">
+                                <i class="fas fa-clock"></i> Snooze
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger" onclick="dismissAlert(${alert.id})">
+                                <i class="fas fa-times"></i> Dismiss
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        // Snooze alert
+        function snoozeAlert(alertId) {
+            const alert = userAlerts.find(a => a.id === alertId);
+            if (alert) {
+                alert.status = 'snoozed';
+                alert.snoozed_until = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+                // Persist to localStorage
+                localStorage.setItem('active_timing_alerts', JSON.stringify(userAlerts));
+
+                displayAlerts();
+                showMessage('Alert snoozed for 24 hours', 'info');
+            }
+        }
+
+        // Dismiss alert
+        function dismissAlert(alertId) {
+            userAlerts = userAlerts.filter(a => a.id !== alertId);
+
+            // Persist to localStorage
+            localStorage.setItem('active_timing_alerts', JSON.stringify(userAlerts));
+
+            displayAlerts();
+            showMessage('Alert dismissed', 'info');
+        }
+
+        // Toggle notification preference
+        function toggleNotification(type) {
+            const checkbox = document.getElementById(`notify${type.charAt(0).toUpperCase() + type.slice(1)}`);
+            checkbox.checked = !checkbox.checked;
+
+            // Save to localStorage
+            localStorage.setItem(`notify_${type}`, checkbox.checked);
+
+            showMessage(`${type.toUpperCase()} notifications ${checkbox.checked ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        // Load user preferences
+        function loadUserPreferences() {
+            const emailPref = localStorage.getItem('notify_email');
+            const smsPref = localStorage.getItem('notify_sms');
+            const pushPref = localStorage.getItem('notify_push');
+
+            if (emailPref !== null) {
+                document.getElementById('notifyEmail').checked = emailPref === 'true';
+            }
+            if (smsPref !== null) {
+                document.getElementById('notifySMS').checked = smsPref === 'true';
+            }
+            if (pushPref !== null) {
+                document.getElementById('notifyPush').checked = pushPref === 'true';
+            }
+        }
+
+        // Show event details
+        function showEventDetails(event) {
+            const props = event.extendedProps;
+            alert(`
+Application Window Details:
+- Quality: ${props.quality || 'N/A'}
+- Efficiency: ${props.efficiency ? (props.efficiency * 100).toFixed(0) + '%' : 'N/A'}
+- Weather: ${props.weather_conditions || 'N/A'}
+- Period: ${formatDate(event.start)} to ${formatDate(event.end)}
+            `);
+        }
+
+        // Show message
+        function showMessage(message, type) {
+            const container = document.getElementById('messageContainer');
+            const alertClass = type === 'success' ? 'success-message' :
+                              type === 'error' ? 'error-message' : 'alert alert-info';
+
+            const messageEl = document.createElement('div');
+            messageEl.className = alertClass;
+            messageEl.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 'info-circle'}"></i>
+                ${message}
+            `;
+
+            container.appendChild(messageEl);
+
+            setTimeout(() => {
+                messageEl.remove();
+            }, 5000);
+        }
+
+        // Show/hide loading overlay
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.add('active');
+            } else {
+                overlay.classList.remove('active');
+            }
+        }
+
+        // Format date helper
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+
+        // Generate demo results for testing
+        function generateDemoResults(formData) {
+            const today = new Date();
+            const addDays = (date, days) => {
+                const result = new Date(date);
+                result.setDate(result.getDate() + days);
+                return result;
+            };
+
+            return {
+                request_id: 'demo_' + Date.now(),
+                optimal_days: 7,
+                utilization_rate: 0.87,
+                loss_reduction: 0.28,
+                cost_benefit: 52,
+                timing_windows: [
+                    {
+                        title: 'Optimal Pre-plant Application',
+                        start_date: addDays(today, 3).toISOString().split('T')[0],
+                        end_date: addDays(today, 7).toISOString().split('T')[0],
+                        quality: 'optimal',
+                        efficiency: 0.92,
+                        weather_conditions: 'Clear skies, low wind'
+                    },
+                    {
+                        title: 'Side-dress Application',
+                        start_date: addDays(today, 21).toISOString().split('T')[0],
+                        end_date: addDays(today, 25).toISOString().split('T')[0],
+                        quality: 'acceptable',
+                        efficiency: 0.78,
+                        weather_conditions: 'Partly cloudy, moderate conditions'
+                    },
+                    {
+                        title: 'Avoid - Heavy Rain Expected',
+                        start_date: addDays(today, 14).toISOString().split('T')[0],
+                        end_date: addDays(today, 16).toISOString().split('T')[0],
+                        quality: 'avoid',
+                        efficiency: 0.45,
+                        weather_conditions: 'Heavy rain forecasted'
+                    }
+                ],
+                recommendations: [
+                    {
+                        title: 'Apply fertilizer 3-7 days from now',
+                        description: 'Weather conditions are optimal with no rain expected and ideal soil temperatures for nutrient uptake.'
+                    },
+                    {
+                        title: 'Split application recommended',
+                        description: 'Consider applying 60% of nitrogen pre-plant and 40% at V8 growth stage for maximum efficiency.'
+                    },
+                    {
+                        title: 'Avoid application on days 14-16',
+                        description: 'Heavy rainfall is forecasted which could lead to significant nutrient loss through leaching.'
+                    }
+                ],
+                timeline_labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                timeline_scores: [92, 78, 65, 88]
+            };
+        }
+
+        // Check offline mode
+        function checkOfflineMode() {
+            if (!navigator.onLine) {
+                offlineMode = true;
+                showMessage('You are offline. Using cached data.', 'warning');
+                loadOfflineData();
+            }
+
+            // Monitor online/offline status
+            window.addEventListener('online', function() {
+                offlineMode = false;
+                showMessage('Back online! Data will be synced.', 'success');
+                location.reload();
+            });
+
+            window.addEventListener('offline', function() {
+                offlineMode = true;
+                showMessage('You are now offline. Changes will be saved locally.', 'warning');
+            });
+        }
+
+        // Save data offline
+        function saveOfflineData(data) {
+            try {
+                const offlineData = {
+                    optimizationResults: optimizationResults,
+                    userAlerts: userAlerts,
+                    weatherData: weatherData,
+                    timestamp: new Date().toISOString()
+                };
+                localStorage.setItem(OFFLINE_STORAGE_KEY, JSON.stringify(offlineData));
+            } catch (error) {
+                console.error('Failed to save offline data:', error);
+            }
+        }
+
+        // Load offline data
+        function loadOfflineData() {
+            try {
+                const stored = localStorage.getItem(OFFLINE_STORAGE_KEY);
+                if (stored) {
+                    const offlineData = JSON.parse(stored);
+                    optimizationResults = offlineData.optimizationResults;
+                    userAlerts = offlineData.userAlerts || [];
+                    weatherData = offlineData.weatherData || generateDemoWeatherData();
+
+                    if (optimizationResults) {
+                        displayOptimizationResults(optimizationResults);
+                    }
+                    if (userAlerts.length > 0) {
+                        displayAlerts();
+                    }
+                    displayWeatherForecast(weatherData);
+
+                    const age = Math.floor((Date.now() - new Date(offlineData.timestamp)) / (1000 * 60));
+                    showMessage(`Using cached data from ${age} minutes ago`, 'info');
+                }
+            } catch (error) {
+                console.error('Failed to load offline data:', error);
+            }
+        }
+
+        // Load recent optimizations
+        async function loadRecentOptimizations() {
+            if (offlineMode) return;
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/fertilizer-calendar/recent?limit=5`);
+                if (response.ok) {
+                    const recent = await response.json();
+                    console.log('Recent optimizations loaded:', recent.length);
+                    // Could display these in a sidebar or dropdown for quick access
+                }
+            } catch (error) {
+                console.warn('Could not load recent optimizations:', error);
+            }
+        }
+
+        // Check for active alerts
+        async function checkForActiveAlerts() {
+            if (offlineMode) return;
+
+            try {
+                // In a real implementation, this would call an alert retrieval endpoint
+                // For now, we check localStorage
+                const storedAlerts = localStorage.getItem('active_timing_alerts');
+                if (storedAlerts) {
+                    const alerts = JSON.parse(storedAlerts);
+                    const today = new Date();
+                    const activeAlerts = alerts.filter(alert => {
+                        const alertDate = new Date(alert.date);
+                        const daysDiff = Math.floor((alertDate - today) / (1000 * 60 * 60 * 24));
+                        return daysDiff >= 0 && daysDiff <= 3; // Alerts for next 3 days
+                    });
+
+                    if (activeAlerts.length > 0) {
+                        showMessage(`You have ${activeAlerts.length} upcoming timing alert(s)`, 'info');
+                    }
+                }
+            } catch (error) {
+                console.warn('Could not check alerts:', error);
+            }
+        }
+
+        // Enhanced nutrient uptake chart with crop-specific data
+        function getCropNutrientData(cropType) {
+            const cropData = {
+                corn: {
+                    stages: ['Planting', 'V4', 'V8', 'V12', 'Tasseling', 'R1', 'R3', 'R5'],
+                    nitrogen: [10, 25, 45, 70, 90, 85, 65, 40],
+                    phosphorus: [15, 30, 50, 65, 75, 70, 55, 35],
+                    potassium: [12, 28, 48, 68, 85, 80, 60, 38]
+                },
+                soybean: {
+                    stages: ['Planting', 'V2', 'V4', 'V6', 'R1', 'R3', 'R5', 'R7'],
+                    nitrogen: [8, 18, 32, 48, 65, 75, 60, 35],
+                    phosphorus: [12, 25, 38, 52, 68, 72, 58, 32],
+                    potassium: [10, 22, 38, 55, 70, 78, 62, 38]
+                },
+                wheat: {
+                    stages: ['Planting', 'Tillering', 'Jointing', 'Booting', 'Heading', 'Flowering', 'Milk', 'Dough'],
+                    nitrogen: [12, 28, 50, 72, 88, 80, 60, 35],
+                    phosphorus: [18, 32, 48, 62, 70, 65, 50, 30],
+                    potassium: [15, 30, 45, 62, 75, 72, 55, 32]
+                },
+                cotton: {
+                    stages: ['Planting', 'Squaring', 'Flowering', 'Peak Bloom', 'Boll Fill', 'Open Boll', 'Harvest'],
+                    nitrogen: [10, 30, 55, 75, 85, 70, 45],
+                    phosphorus: [14, 28, 45, 60, 68, 55, 35],
+                    potassium: [12, 32, 52, 70, 82, 68, 40]
+                },
+                rice: {
+                    stages: ['Planting', 'Tillering', 'Stem Elongation', 'Panicle', 'Heading', 'Milk', 'Dough', 'Mature'],
+                    nitrogen: [8, 22, 42, 65, 82, 75, 55, 30],
+                    phosphorus: [12, 26, 40, 56, 68, 62, 48, 28],
+                    potassium: [10, 24, 40, 58, 72, 68, 52, 32]
+                }
+            };
+
+            return cropData[cropType] || cropData.corn;
+        }
+
+        // Auto-refresh weather data periodically
+        setInterval(function() {
+            if (!offlineMode && document.visibilityState === 'visible') {
+                loadWeatherForecast();
+            }
+        }, 30 * 60 * 1000); // Refresh every 30 minutes
+
+        // Save state before page unload
+        window.addEventListener('beforeunload', function() {
+            if (optimizationResults || userAlerts.length > 0) {
+                saveOfflineData();
+            }
+        });
+
+        // Touch-friendly enhancements for mobile
+        if ('ontouchstart' in window) {
+            document.body.classList.add('touch-device');
+
+            // Add custom CSS for touch devices
+            const style = document.createElement('style');
+            style.textContent = `
+                .touch-device .btn {
+                    min-height: 44px;
+                    padding: 0.75rem 1.5rem;
+                }
+                .touch-device .form-control,
+                .touch-device .form-select {
+                    min-height: 44px;
+                    font-size: 16px; /* Prevents zoom on iOS */
+                }
+                .touch-device .weather-day {
+                    min-width: 120px;
+                    padding: 1.25rem;
+                }
+                .touch-device .fc-event {
+                    min-height: 32px;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Service Worker registration for offline support (optional - requires service-worker.js file)
+        if ('serviceWorker' in navigator && !offlineMode) {
+            navigator.serviceWorker.register('/service-worker.js')
+                .then(registration => {
+                    console.log('Service Worker registered:', registration.scope);
+                })
+                .catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+        }
+    </script>
+</body>
+</html>
