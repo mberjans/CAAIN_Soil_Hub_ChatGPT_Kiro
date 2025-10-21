@@ -291,12 +291,12 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB1-005.1.test** - Create test file for main app
+- [x] **JOB1-005.1.test** - Create test file for main app
   - Path: `services/crop-taxonomy/tests/test_main.py`
   - Create empty test file with imports
   - Verify: `ls services/crop-taxonomy/tests/test_main.py`
 
-- [ ] **JOB1-005.2.test** - Write test for health endpoint
+- [x] **JOB1-005.2.test** - Write test for health endpoint
   - Path: `services/crop-taxonomy/tests/test_main.py`
   - Add `test_health_endpoint()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_main.py --collect-only`

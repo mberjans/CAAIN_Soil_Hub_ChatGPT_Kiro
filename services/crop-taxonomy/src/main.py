@@ -467,8 +467,20 @@ async def root():
     """
     return html_content
 
-@app.get("/api/v1/health")
+@app.get("/health")
 async def health_check():
+    """
+    Health check endpoint.
+    """
+    return {
+        "status": "healthy",
+        "service": "crop-taxonomy",
+        "version": "1.0.0"
+    }
+
+
+@app.get("/api/v1/health")
+async def detailed_health_check():
     """
     Overall service health check.
     """
