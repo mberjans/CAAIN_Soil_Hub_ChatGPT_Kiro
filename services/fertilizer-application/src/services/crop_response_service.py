@@ -527,9 +527,23 @@ class CropResponseService:
             
             for method_type in available_methods:
                 # Get response data
+                # Convert growth stage string to GrowthStage enum if possible, otherwise use the string value directly
+                try:
+                    growth_stage_enum = GrowthStage(crop_requirements.growth_stage)
+                except ValueError:
+                    # If the string is not a valid GrowthStage enum, default to V6 for corn or a reasonable default
+                    if crop_type == CropType.CORN:
+                        growth_stage_enum = GrowthStage.V6
+                    elif crop_type == CropType.SOYBEAN:
+                        growth_stage_enum = GrowthStage.R1_SOY
+                    elif crop_type == CropType.WHEAT:
+                        growth_stage_enum = GrowthStage.TILLERING
+                    else:
+                        growth_stage_enum = GrowthStage.V6  # Default
+                
                 response_data = await self.analyze_crop_response(
                     crop_type, method_type, 
-                    GrowthStage(crop_requirements.growth_stage),
+                    growth_stage_enum,
                     crop_requirements.nutrient_requirements.get("nitrogen", 0),
                     field_conditions
                 )
@@ -672,15 +686,15 @@ class CropResponseService:
             return None
         return crop_data.get(method_type)
     
-    def _calculate_growth_stage_adjustment(self, crop_type: CropType, method_type: ApplicationMethodType, growth_stage: GrowthStage) -> Dict[str, float]:
+    def _calculate_growth_stage_adjustment(self, crop_type: CropType, method_type: ApplicationMethodType, growth_stage_str: str) -> Dict[str, float]:
         """Calculate adjustment factors based on growth stage."""
         # Get crop preferences
-        preferences = self.crop_integration_service.get_crop_preferences(crop_type)
+        preferences = self.crop_integration_service.get_application_preferences(crop_type)
         if not preferences:
             return {"yield": 1.0, "efficiency": 1.0, "growth": 1.0, "stress": 1.0, "quality": 1.0, "confidence": 1.0}
         
         # Check if current stage is critical for this method
-        is_critical_stage = growth_stage.value in preferences.application_timing_critical_stages
+        is_critical_stage = growth_stage_str in preferences.application_timing_critical_stages
         
         if is_critical_stage:
             return {"yield": 1.1, "efficiency": 1.05, "growth": 1.1, "stress": 1.0, "quality": 1.05, "confidence": 1.05}
