@@ -167,7 +167,7 @@
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && uvicorn src.main:app --port 8008 &`
   - Verify: `curl http://localhost:8008/health`
 
-- [ ] **JOB2-005.5.verify** - Stop service
+- [x] **JOB2-005.5.verify** - Stop service
   - Command: `pkill -f "uvicorn src.main:app --port 8008"`
   - Verify: Service stopped
 
