@@ -125,7 +125,7 @@
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/test_analysis_schemas.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB3-004.99** - Commit schemas
+- [x] **JOB3-004.99** - Commit schemas
   - Command: `git add services/image-analysis/src/schemas/ services/image-analysis/tests/test_analysis_schemas.py && git commit -m "JOB3-004: Create Pydantic schemas"`
   - Verify: `git log -1 --oneline`
 
