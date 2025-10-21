@@ -1,7 +1,7 @@
 import logging
 from typing import Dict, Any
 
-from ..models.micronutrient_models import YieldPredictionRequest, YieldPredictionResponse
+from ..schemas.micronutrient_schemas import YieldPredictionRequest, YieldPredictionResponse
 
 logger = logging.getLogger(__name__)
 
