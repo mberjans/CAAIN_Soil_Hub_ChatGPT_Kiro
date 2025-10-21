@@ -178,7 +178,7 @@
   - Add `test_quality_assessment()` test
   - Verify: `pytest services/image-analysis/tests/test_preprocessor.py --collect-only`
 
-- [ ] **JOB3-006.3.test** - Write test for color correction
+- [x] **JOB3-006.3.test** - Write test for color correction
   - Path: `services/image-analysis/tests/test_preprocessor.py`
   - Add `test_color_correction()` test
   - Verify: `pytest services/image-analysis/tests/test_preprocessor.py --collect-only`
