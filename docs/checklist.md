@@ -96,7 +96,7 @@
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/test_image_models.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB3-003.99** - Commit database schema
+- [x] **JOB3-003.99** - Commit database schema
   - Command: `git add services/image-analysis/src/models/ services/image-analysis/migrations/ services/image-analysis/tests/test_image_models.py && git commit -m "JOB3-003: Create database schema for image metadata"`
   - Verify: `git log -1 --oneline`
 
