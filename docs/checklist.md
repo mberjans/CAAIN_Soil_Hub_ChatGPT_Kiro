@@ -19,7 +19,7 @@
   - Command: `mkdir -p services/crop-taxonomy/src/{models,services,api,schemas}`
   - Verify: `ls -la services/crop-taxonomy/src/`
 
-- [ ] **JOB1-001.3** - Create tests directory
+- [x] **JOB1-001.3** - Create tests directory
   - Command: `mkdir -p services/crop-taxonomy/tests`
   - Verify: `ls -ld services/crop-taxonomy/tests`
 
