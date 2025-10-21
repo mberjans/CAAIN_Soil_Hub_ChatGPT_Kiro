@@ -1,38 +1,14 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
+from fastapi import FastAPI
+from .api.image_analysis_routes import router as image_analysis_router
 
 app = FastAPI(
-    title="AFAS image-analysis",
-    description="Computer vision for crop deficiency detection service",
-    version="1.0.0"
+    title="Image Analysis Service",
+    description="Service for analyzing crop photos for nutrient deficiencies.",
+    version="1.0.0",
 )
 
-# CORS middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # Configure appropriately for production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.include_router(image_analysis_router)
 
-@app.get("/health")
+@app.get("/health", tags=["Monitoring"])
 async def health_check():
-    return {
-        "service": "image-analysis",
-        "status": "healthy",
-        "version": "1.0.0"
-    }
-
-@app.get("/")
-async def root():
-    return {"message": "AFAS image-analysis is running"}
-
-if __name__ == "__main__":
-    port = int(os.getenv("IMAGE_ANALYSIS_PORT", 8004))
-    uvicorn.run(app, host="0.0.0.0", port=port, reload=True)
+    return {"status": "healthy", "service": "image-analysis"}

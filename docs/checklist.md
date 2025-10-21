@@ -2996,7 +2996,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
 ### TICKET-007_nutrient-deficiency-detection-1. Comprehensive Nutrient Analysis System
 - [x] TICKET-007_nutrient-deficiency-detection-1.1 Expand soil test nutrient analysis
 - [x] TICKET-007_nutrient-deficiency-detection-1.2 Implement tissue test integration
-- [ ] TICKET-007_nutrient-deficiency-detection-1.3 Create nutrient deficiency scoring system
+- [x] TICKET-007_nutrient-deficiency-detection-1.3 Create nutrient deficiency scoring system
 
 ### TICKET-007_nutrient-deficiency-detection-2. Visual Symptom Analysis System
 - [ ] TICKET-007_nutrient-deficiency-detection-2.1 Implement crop photo analysis
