@@ -121,7 +121,7 @@
   - Create empty file with imports
   - Verify: `ls services/crop-taxonomy/src/models/filtering_models.py`
 
-- [ ] **JOB1-003.6.impl** - Implement CropFilteringAttributes model
+- [x] **JOB1-003.6.impl** - Implement CropFilteringAttributes model
   - Path: `services/crop-taxonomy/src/models/filtering_models.py`
   - Add CropFilteringAttributes class with JSONB columns
   - Verify: `python -c "from src.models.filtering_models import CropFilteringAttributes; print('OK')"`

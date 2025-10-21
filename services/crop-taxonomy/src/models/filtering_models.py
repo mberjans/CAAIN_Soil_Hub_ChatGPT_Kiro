@@ -38,6 +38,12 @@ class CropFilteringAttributes(Base):
     # Seed availability
     seed_availability_filters = Column(JSONB, default={})
     
+    # Agricultural characteristics (from plan.md)
+    drought_tolerance = Column(String(20))  # low, moderate, high
+    heat_tolerance = Column(String(20))     # low, moderate, high
+    cold_tolerance = Column(String(20))     # low, moderate, high
+    management_complexity = Column(String(20))  # low, moderate, high
+    
     # Performance metrics
     yield_stability_score = Column(Integer)
     drought_tolerance_score = Column(Integer)
