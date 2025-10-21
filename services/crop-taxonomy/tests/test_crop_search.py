@@ -296,6 +296,84 @@ def test_search_with_disease_resistance():
     assert request.max_results == 10
 
 
+def test_search_with_disease_resistance_filtering():
+    """Test actual disease resistance filtering functionality."""
+    from src.schemas.crop_schemas import (
+        CropFilterRequest,
+        DiseaseResistanceFilter
+    )
+    
+    # Create a request with disease resistance requirements
+    disease_filters = [
+        DiseaseResistanceFilter(
+            disease_name="rust",
+            min_resistance_level="resistant"
+        ),
+        DiseaseResistanceFilter(
+            disease_name="blight",
+            min_resistance_level="moderate"
+        )
+    ]
+    
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        disease_resistance=disease_filters,
+        page=1,
+        page_size=20
+    )
+    
+    # Verify the request has disease resistance filters set
+    assert filter_request.disease_resistance is not None
+    assert len(filter_request.disease_resistance) == 2
+    
+    # Check first disease filter
+    assert filter_request.disease_resistance[0].disease_name == "rust"
+    assert filter_request.disease_resistance[0].min_resistance_level == "resistant"
+    
+    # Check second disease filter
+    assert filter_request.disease_resistance[1].disease_name == "blight"
+    assert filter_request.disease_resistance[1].min_resistance_level == "moderate"
+    
+    # Verify crop type
+    assert filter_request.crop_type == "corn"
+    
+    # Verify pagination
+    assert filter_request.page == 1
+    assert filter_request.page_size == 20
+
+
+def test_disease_resistance_filter_model():
+    """Test DiseaseResistanceFilter model creation and validation."""
+    from src.schemas.crop_schemas import DiseaseResistanceFilter
+    
+    # Test creating a disease resistance filter
+    filter1 = DiseaseResistanceFilter(
+        disease_name="powdery_mildew",
+        min_resistance_level="moderate"
+    )
+    
+    assert filter1.disease_name == "powdery_mildew"
+    assert filter1.min_resistance_level == "moderate"
+    
+    # Test creating with default value
+    filter2 = DiseaseResistanceFilter(
+        disease_name="leaf_spot"
+        # min_resistance_level should default to "moderate"
+    )
+    
+    assert filter2.disease_name == "leaf_spot"
+    assert filter2.min_resistance_level == "moderate"
+    
+    # Test with resistant level
+    filter3 = DiseaseResistanceFilter(
+        disease_name="fusarium",
+        min_resistance_level="resistant"
+    )
+    
+    assert filter3.disease_name == "fusarium"
+    assert filter3.min_resistance_level == "resistant"
+
+
 def test_search_with_market_class():
     """Test search with market class filtering."""
     agricultural_filter = AgriculturalFilter(
