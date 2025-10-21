@@ -336,7 +336,7 @@
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/test_api_integration.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB2-010.4** - Generate coverage report
+- [x] **JOB2-010.4** - Generate coverage report
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/ --cov=src --cov-report=html`
   - Verify: Coverage >80%
 

@@ -12,7 +12,9 @@ def test_optimization_request_valid():
         "available_fertilizers": [
             {"name": "Urea 46-0-0", "price_per_ton": 450, "nutrients": {"N": 46}},
             {"name": "DAP 18-46-0", "price_per_ton": 550, "nutrients": {"P": 46, "N": 18}}
-        ]
+        ],
+        "budget_per_acre": 200,
+        "crop_price_per_bu": 5.50
     }
     
     request = OptimizationRequest(**request_data)
