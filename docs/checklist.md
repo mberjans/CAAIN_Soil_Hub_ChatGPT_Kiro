@@ -172,7 +172,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -c "\d filter_combinations"`
   - Verify: Table structure matches model
 
-- [ ] **JOB1-003.17.verify** - Verify GIN indexes created
+- [x] **JOB1-003.17.verify** - Verify GIN indexes created
   - Command: `psql -U postgres -d caain_soil_hub -c "\di idx_pest_resistance_gin"`
   - Verify: Index exists with GIN method
 
