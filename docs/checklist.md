@@ -235,7 +235,7 @@
   - Implement GET /api/v1/prices/fertilizer-current endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB2-007.4.impl** - Include router in main app
+- [x] **JOB2-007.4.impl** - Include router in main app
   - Path: `services/fertilizer-optimization/src/main.py`
   - Add app.include_router(price_routes.router)
   - Verify: Check router inclusion
