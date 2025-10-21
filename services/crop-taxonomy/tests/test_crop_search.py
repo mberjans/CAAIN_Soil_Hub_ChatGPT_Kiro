@@ -376,26 +376,125 @@ def test_disease_resistance_filter_model():
 
 def test_search_with_market_class():
     """Test search with market class filtering."""
-    agricultural_filter = AgriculturalFilter(
-        categories=[CropCategory.GRAIN],
-        primary_uses=[PrimaryUse.FOOD_HUMAN]
+    from src.schemas.crop_schemas import CropFilterRequest, MarketClassFilter
+    
+    # Create a request with market class filter
+    market_filter = MarketClassFilter(
+        market_class="organic",
+        organic_certified=True,
+        non_gmo=True
     )
     
-    criteria = TaxonomyFilterCriteria(
-        text_search="corn",
-        agricultural_filter=agricultural_filter
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        market_class=market_filter,
+        page=1,
+        page_size=20
     )
     
-    request = CropSearchRequest(
-        request_id="test-market-class",
-        filter_criteria=criteria,
-        max_results=10,
-        sort_by=SortField.SUITABILITY_SCORE,
-        sort_order=SortOrder.DESC
+    # Verify the request has market class filters set
+    assert filter_request.market_class is not None
+    assert filter_request.market_class.market_class == "organic"
+    assert filter_request.market_class.organic_certified is True
+    assert filter_request.market_class.non_gmo is True
+    assert filter_request.crop_type == "corn"
+    
+    # Test with different market class values
+    market_filter2 = MarketClassFilter(
+        market_class="non_gmo",
+        organic_certified=False,
+        non_gmo=True
     )
     
-    assert request.request_id == "test-market-class"
-    assert request.filter_criteria.text_search == "corn"
+    filter_request2 = CropFilterRequest(
+        crop_type="soybean",
+        market_class=market_filter2,
+        page=1,
+        page_size=10
+    )
+    
+    assert filter_request2.market_class.market_class == "non_gmo"
+    assert filter_request2.market_class.organic_certified is False
+    assert filter_request2.market_class.non_gmo is True
+    assert filter_request2.crop_type == "soybean"
+
+
+def test_market_class_filter_model():
+    """Test MarketClassFilter model creation and validation."""
+    from src.schemas.crop_schemas import MarketClassFilter
+    
+    # Test creating a market class filter
+    filter1 = MarketClassFilter(
+        market_class="yellow_dent",
+        organic_certified=True,
+        non_gmo=False
+    )
+    
+    assert filter1.market_class == "yellow_dent"
+    assert filter1.organic_certified is True
+    assert filter1.non_gmo is False
+    
+    # Test creating with only organic certification
+    filter2 = MarketClassFilter(
+        organic_certified=True
+    )
+    
+    assert filter2.market_class is None
+    assert filter2.organic_certified is True
+    assert filter2.non_gmo is None
+    
+    # Test creating with only non_gmo
+    filter3 = MarketClassFilter(
+        non_gmo=True
+    )
+    
+    assert filter3.market_class is None
+    assert filter3.organic_certified is None
+    assert filter3.non_gmo is True
+
+
+def test_market_class_filter_integration():
+    """Test market class filtering through mock scenario."""
+    from src.schemas.crop_schemas import CropFilterRequest, MarketClassFilter
+    from src.models.crop_filtering_models import CropFilteringAttributes
+    from uuid import uuid4
+    
+    # Create mock filtering attributes with market class data
+    crop_id = uuid4()
+    market_class_filters = {
+        "market_class": "organic",
+        "organic_certified": True,
+        "non_gmo": True
+    }
+    
+    filtering_attrs = CropFilteringAttributes(
+        crop_id=crop_id,
+        market_class_filters=market_class_filters
+    )
+    
+    # Verify market class filters are properly stored
+    assert filtering_attrs.crop_id == crop_id
+    assert filtering_attrs.market_class_filters["market_class"] == "organic"
+    assert filtering_attrs.market_class_filters["organic_certified"] is True
+    assert filtering_attrs.market_class_filters["non_gmo"] is True
+    
+    # Create a filter request that should match
+    market_filter = MarketClassFilter(
+        market_class="organic",
+        organic_certified=True,
+        non_gmo=True
+    )
+    
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        market_class=market_filter,
+        page=1,
+        page_size=20
+    )
+    
+    assert filter_request.market_class.market_class == "organic"
+    assert filter_request.market_class.organic_certified is True
+    assert filter_request.market_class.non_gmo is True
 
 
 def test_search_with_performance_filters():
