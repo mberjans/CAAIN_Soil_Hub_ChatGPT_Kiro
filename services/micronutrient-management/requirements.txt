@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+sqlalchemy
 pydantic
-pytest
-pytest-asyncio
+numpy
+pandas
