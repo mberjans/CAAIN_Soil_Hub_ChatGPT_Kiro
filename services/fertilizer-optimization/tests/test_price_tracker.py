@@ -16,16 +16,16 @@ async def test_mock_price_provider():
     assert "unit" in price_data
     assert "region" in price_data
     assert "currency" in price_data
-    assert price_data["unit"] == "ton"
+    assert price_data["unit"] == "kg"
     assert price_data["region"] == "US"
     assert price_data["currency"] == "USD"
     assert isinstance(price_data["price"], (int, float))
-    assert 400 <= price_data["price"] <= 500  # Based on base price 450 with ±10% variation
+    assert 0.45 <= price_data["price"] <= 0.55  # Based on base price 0.50 with ±10% variation
     
     # Test with another fertilizer
     price_data_dap = await provider.get_current_price("DAP")
     assert price_data_dap is not None
-    assert 580 <= price_data_dap["price"] <= 720  # Base 650 with ±10%
+    assert 0.54 <= price_data_dap["price"] <= 0.66  # Base 0.60 with ±10%
     
     # Test with non-existent fertilizer
     none_data = await provider.get_current_price("NonExistent")

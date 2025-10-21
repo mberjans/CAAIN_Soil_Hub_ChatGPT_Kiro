@@ -32,10 +32,14 @@ class FertilizerPriceTracker:
         if not fertilizer_names:
             return {}
 
-        try:
-            prices = await self.price_provider.get_prices(fertilizer_names)
-            return prices
-        except Exception as e:
-            # Handle provider failures gracefully
-            print(f"Error fetching prices for {fertilizer_names}: {str(e)}")
-            return {}
+        prices = {}
+        for name in fertilizer_names:
+            try:
+                price_data = await self.price_provider.get_current_price(name)
+                prices[name] = price_data
+            except Exception as e:
+                # Handle provider failures gracefully for individual fertilizers
+                print(f"Error fetching price for {name}: {str(e)}")
+                prices[name] = None
+
+        return prices

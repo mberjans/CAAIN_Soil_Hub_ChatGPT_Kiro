@@ -22,7 +22,7 @@ class MockPriceProvider:
             'Magnesium Sulfate': 0.30,
         }
 
-    async def get_current_price(self, fertilizer_name: str) -> Optional[float]:
+    async def get_current_price(self, fertilizer_name: str) -> Optional[dict]:
         """
         Get the current price for a given fertilizer with ±10% random variation.
 
@@ -30,7 +30,7 @@ class MockPriceProvider:
             fertilizer_name (str): Name of the fertilizer.
 
         Returns:
-            Optional[float]: Current price per kg if fertilizer exists, None otherwise.
+            Optional[dict]: Price data dict if fertilizer exists, None otherwise.
         """
         if fertilizer_name not in self.base_prices:
             return None
@@ -43,4 +43,9 @@ class MockPriceProvider:
         # Simulate async operation (e.g., API call delay)
         await asyncio.sleep(0.01)
 
-        return round(current_price, 2)  # Round to 2 decimal places for currency
+        return {
+            "price": round(current_price, 2),
+            "unit": "kg",
+            "region": "US",
+            "currency": "USD"
+        }
