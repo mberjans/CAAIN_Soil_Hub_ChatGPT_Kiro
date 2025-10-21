@@ -188,7 +188,7 @@
   - Add `test_image_resize()` test
   - Verify: `pytest services/image-analysis/tests/test_preprocessor.py --collect-only`
 
-- [x!] **JOB3-006.5.impl** - Create preprocessor.py
+- [x] **JOB3-006.5.impl** - Create preprocessor.py
   - Path: `services/image-analysis/src/services/image_preprocessor.py`
   - Create ImagePreprocessor class
   - Verify: `python -c "from src.services.image_preprocessor import ImagePreprocessor; print('OK')"`
