@@ -78,7 +78,7 @@
   - Command: `python -c "import pydantic; print(f'Pydantic: {pydantic.__version__}')"`
   - Verify: Output shows version 2.5.0
 
-- [ ] **JOB1-002.7** - Verify pytest installation
+- [x] **JOB1-002.7** - Verify pytest installation
   - Command: `python -c "import pytest; print(f'Pytest: {pytest.__version__}')"`
   - Verify: Output shows version 7.4.3
 
