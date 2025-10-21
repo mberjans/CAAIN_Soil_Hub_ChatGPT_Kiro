@@ -96,12 +96,12 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB1-003.1.test** - Create test file for filtering models
+- [x] **JOB1-003.1.test** - Create test file for filtering models
   - Path: `services/crop-taxonomy/tests/test_filtering_models.py`
   - Create empty test file with imports
   - Verify: `ls services/crop-taxonomy/tests/test_filtering_models.py`
 
-- [ ] **JOB1-003.2.test** - Write test for CropFilteringAttributes model creation
+- [x] **JOB1-003.2.test** - Write test for CropFilteringAttributes model creation
   - Path: `services/crop-taxonomy/tests/test_filtering_models.py`
   - Add `test_crop_filtering_attributes_creation()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_filtering_models.py --collect-only`
