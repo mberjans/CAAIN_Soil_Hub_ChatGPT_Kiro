@@ -86,7 +86,7 @@
   - Command: `pip list`
   - Verify: All required packages present
 
-- [ ] **JOB1-002.99** - Commit requirements file
+- [x] **JOB1-002.99** - Commit requirements file
   - Command: `git add services/crop-taxonomy/requirements.txt && git commit -m "JOB1-002: Add requirements.txt with dependencies"`
   - Verify: `git log -1 --oneline`
 
