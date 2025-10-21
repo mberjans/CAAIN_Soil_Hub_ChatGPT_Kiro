@@ -312,7 +312,7 @@
   - Command: `curl -X POST http://localhost:8008/api/v1/optimization/optimize-strategy -H "Content-Type: application/json" -d '{"field_acres": 100, "nutrient_requirements": {"N": 150}, "yield_goal_bu_acre": 180}'`
   - Verify: Returns optimization results
 
-- [ ] **JOB2-009.99** - Commit optimization routes
+- [x] **JOB2-009.99** - Commit optimization routes
   - Command: `git add services/fertilizer-optimization/src/api/optimization_routes.py services/fertilizer-optimization/tests/test_optimization_routes.py && git commit -m "JOB2-009: Create optimization API routes"`
   - Verify: `git log -1 --oneline`
 
