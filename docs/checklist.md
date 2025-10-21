@@ -69,7 +69,7 @@
   - Create test file
   - Verify: `ls services/fertilizer-optimization/tests/test_price_models.py`
 
-- [ ] **JOB2-003.2.test** - Write test for FertilizerType model
+- [x] **JOB2-003.2.test** - Write test for FertilizerType model
   - Path: `services/fertilizer-optimization/tests/test_price_models.py`
   - Add `test_fertilizer_type_creation()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_price_models.py --collect-only`
