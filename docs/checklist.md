@@ -134,7 +134,7 @@
   - Implement OptimizationRequest, OptimizationResponse, PriceData schemas
   - Verify: `python -c "from src.schemas.optimization_schemas import OptimizationRequest; print('OK')"`
 
-- [ ] **JOB2-004.4.verify** - Run schema tests
+- [x] **JOB2-004.4.verify** - Run schema tests
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/test_optimization_schemas.py -v`
   - Verify: All tests pass
 
