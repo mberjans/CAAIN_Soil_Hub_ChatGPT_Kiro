@@ -1,6 +1,6 @@
 import pytest
 from fastapi.testclient import TestClient
-from services.fertilizer_application.main import app
+from src.main import app
 
 def test_get_fertilizer_current_prices():
     """Test GET /prices/fertilizer-current endpoint returns current fertilizer prices."""
@@ -8,11 +8,13 @@ def test_get_fertilizer_current_prices():
     response = client.get("/prices/fertilizer-current")
     assert response.status_code == 200
     data = response.json()
-    assert isinstance(data, list)
-    assert len(data) > 0  # Assuming at least one price entry
-    for item in data:
-        assert "fertilizer_type" in item
-        assert "price" in item
-        assert "unit" in item
-        assert isinstance(item["price"], (int, float))
-        assert item["price"] > 0
+    assert "prices" in data
+    assert isinstance(data["prices"], dict)
+    assert len(data["prices"]) > 0  # Assuming at least one price entry
+    for fertilizer_name, price_data in data["prices"].items():
+        assert "fertilizer_name" in price_data
+        assert "price" in price_data
+        assert "date" in price_data
+        assert "source" in price_data
+        assert isinstance(price_data["price"], (int, float))
+        assert price_data["price"] > 0

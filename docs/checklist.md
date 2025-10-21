@@ -240,7 +240,7 @@
   - Add app.include_router(price_routes.router)
   - Verify: Check router inclusion
 
-- [ ] **JOB2-007.5.verify** - Test price endpoint
+- [x] **JOB2-007.5.verify** - Test price endpoint
   - Command: `curl http://localhost:8008/api/v1/prices/fertilizer-current`
   - Verify: Returns price data
 
