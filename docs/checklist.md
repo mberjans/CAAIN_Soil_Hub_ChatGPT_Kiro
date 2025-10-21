@@ -42,7 +42,7 @@
   - Content: fastapi, uvicorn, sqlalchemy, psycopg2-binary, pydantic, tensorflow==2.14.0, opencv-python, Pillow, numpy, pytest, pytest-asyncio, pytest-cov, httpx, python-multipart
   - Verify: `cat services/image-analysis/requirements.txt`
 
-- [ ] **JOB3-002.2** - Install dependencies
+- [x] **JOB3-002.2** - Install dependencies
   - Command: `cd services/image-analysis && source venv/bin/activate && pip install -r requirements.txt`
   - Verify: `pip list | grep tensorflow`
 
