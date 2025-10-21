@@ -38,6 +38,9 @@ CREATE TABLE IF NOT EXISTS farmer_preferences (
 
 CREATE INDEX IF NOT EXISTS idx_farmer_pref_user ON farmer_preferences(user_id);
 CREATE INDEX IF NOT EXISTS idx_preferred_filters_gin ON farmer_preferences USING GIN(preferred_filters);
+CREATE INDEX IF NOT EXISTS idx_filter_weights_gin ON farmer_preferences USING GIN(filter_weights);
+CREATE INDEX IF NOT EXISTS idx_selected_varieties_gin ON farmer_preferences USING GIN(selected_varieties);
+CREATE INDEX IF NOT EXISTS idx_rejected_varieties_gin ON farmer_preferences USING GIN(rejected_varieties);
 
 -- Create filter_combinations table
 CREATE TABLE IF NOT EXISTS filter_combinations (

@@ -146,7 +146,7 @@
   - Write CREATE TABLE statements for all three tables
   - Verify: `cat services/crop-taxonomy/migrations/001_filtering_schema.sql`
 
-- [ ] **JOB1-003.11.impl** - Add GIN indexes to migration SQL
+- [x] **JOB1-003.11.impl** - Add GIN indexes to migration SQL
   - Path: `services/crop-taxonomy/migrations/001_filtering_schema.sql`
   - Add CREATE INDEX statements for JSONB columns
   - Verify: `grep "CREATE INDEX" services/crop-taxonomy/migrations/001_filtering_schema.sql | wc -l`
