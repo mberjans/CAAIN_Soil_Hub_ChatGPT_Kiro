@@ -66,7 +66,7 @@
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && pip install -r requirements.txt`
   - Verify: `pip list | grep fastapi`
 
-- [ ] **JOB1-002.4** - Verify FastAPI installation
+- [x] **JOB1-002.4** - Verify FastAPI installation
   - Command: `python -c "import fastapi; print(f'FastAPI: {fastapi.__version__}')"`
   - Verify: Output shows version 0.104.1
 
