@@ -1,17 +1,30 @@
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
 
-SQLALCHEMY_DATABASE_URL = "postgresql://user:password@host:port/dbname"
+from ..models.micronutrient_models import Base
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+DATABASE_URL = "postgresql+asyncpg://user:password@localhost/micronutrients_db"
 
-Base = declarative_base()
+async_engine = create_async_engine(
+    DATABASE_URL,
+    echo=True,
+    poolclass=NullPool, # Use NullPool for FastAPI to manage connections per request
+    future=True
+)
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+AsyncSessionLocal = sessionmaker(
+    autocommit=False,
+    autoflush=False,
+    bind=async_engine,
+    class_=AsyncSession,
+    expire_on_commit=False
+)
+
+async def init_db():
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+async def get_db():
+    async with AsyncSessionLocal() as session:
+        yield session
