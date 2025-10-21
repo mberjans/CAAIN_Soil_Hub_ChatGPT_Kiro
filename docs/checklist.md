@@ -154,7 +154,7 @@
   - Command: `cd services/image-analysis && source venv/bin/activate && uvicorn src.main:app --port 8004 &`
   - Verify: `curl http://localhost:8004/health`
 
-- [ ] **JOB3-005.5.verify** - Stop service
+- [x] **JOB3-005.5.verify** - Stop service
   - Command: `pkill -f "uvicorn src.main:app --port 8004"`
   - Verify: Service stopped
 
