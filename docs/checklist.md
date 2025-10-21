@@ -199,89 +199,89 @@
   - Create empty test file with imports
   - Verify: `ls services/crop-taxonomy/tests/test_crop_schemas.py`
 
-- [ ] **JOB1-004.2.test** - Write test for CropFilterRequest schema validation
+- [x] **JOB1-004.2.test** - Write test for CropFilterRequest schema validation
   - Path: `services/crop-taxonomy/tests/test_crop_schemas.py`
   - Add `test_crop_filter_request_valid()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_schemas.py --collect-only`
 
-- [ ] **JOB1-004.3.test** - Write test for CropFilterRequest validation errors
+- [x] **JOB1-004.3.test** - Write test for CropFilterRequest validation errors
   - Path: `services/crop-taxonomy/tests/test_crop_schemas.py`
   - Add `test_crop_filter_request_invalid_crop_type()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_schemas.py --collect-only`
 
-- [ ] **JOB1-004.4.test** - Write test for CropSearchResponse schema
+- [x] **JOB1-004.4.test** - Write test for CropSearchResponse schema
   - Path: `services/crop-taxonomy/tests/test_crop_schemas.py`
   - Add `test_crop_search_response()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_schemas.py --collect-only`
 
-- [ ] **JOB1-004.5.impl** - Create crop_schemas.py file
+- [x] **JOB1-004.5.impl** - Create crop_schemas.py file
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Create empty file with Pydantic imports
   - Verify: `ls services/crop-taxonomy/src/schemas/crop_schemas.py`
 
-- [ ] **JOB1-004.6.impl** - Implement PestResistanceFilter schema
+- [x] **JOB1-004.6.impl** - Implement PestResistanceFilter schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add PestResistanceFilter class
   - Verify: `python -c "from src.schemas.crop_schemas import PestResistanceFilter; print('OK')"`
 
-- [ ] **JOB1-004.7.impl** - Implement DiseaseResistanceFilter schema
+- [x] **JOB1-004.7.impl** - Implement DiseaseResistanceFilter schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add DiseaseResistanceFilter class
   - Verify: `python -c "from src.schemas.crop_schemas import DiseaseResistanceFilter; print('OK')"`
 
-- [ ] **JOB1-004.8.impl** - Implement MarketClassFilter schema
+- [x] **JOB1-004.8.impl** - Implement MarketClassFilter schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add MarketClassFilter class
   - Verify: `python -c "from src.schemas.crop_schemas import MarketClassFilter; print('OK')"`
 
-- [ ] **JOB1-004.9.impl** - Implement CropFilterRequest schema
+- [x] **JOB1-004.9.impl** - Implement CropFilterRequest schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add CropFilterRequest class with all filter fields
   - Verify: `python -c "from src.schemas.crop_schemas import CropFilterRequest; print('OK')"`
 
-- [ ] **JOB1-004.10.impl** - Add crop_type validator to CropFilterRequest
+- [x] **JOB1-004.10.impl** - Add crop_type validator to CropFilterRequest
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add @field_validator for crop_type
   - Verify: Check validator in schema definition
 
-- [ ] **JOB1-004.11.impl** - Add example to CropFilterRequest schema
+- [x] **JOB1-004.11.impl** - Add example to CropFilterRequest schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add Config class with json_schema_extra
   - Verify: Check Config in schema definition
 
-- [ ] **JOB1-004.12.impl** - Implement VarietyResult schema
+- [x] **JOB1-004.12.impl** - Implement VarietyResult schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add VarietyResult class
   - Verify: `python -c "from src.schemas.crop_schemas import VarietyResult; print('OK')"`
 
-- [ ] **JOB1-004.13.impl** - Implement CropSearchResponse schema
+- [x] **JOB1-004.13.impl** - Implement CropSearchResponse schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add CropSearchResponse class
   - Verify: `python -c "from src.schemas.crop_schemas import CropSearchResponse; print('OK')"`
 
-- [ ] **JOB1-004.14.impl** - Implement PreferenceUpdate schema
+- [x] **JOB1-004.14.impl** - Implement PreferenceUpdate schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add PreferenceUpdate class
   - Verify: `python -c "from src.schemas.crop_schemas import PreferenceUpdate; print('OK')"`
 
-- [ ] **JOB1-004.15.impl** - Implement PreferenceResponse schema
+- [x] **JOB1-004.15.impl** - Implement PreferenceResponse schema
   - Path: `services/crop-taxonomy/src/schemas/crop_schemas.py`
   - Add PreferenceResponse class
   - Verify: `python -c "from src.schemas.crop_schemas import PreferenceResponse; print('OK')"`
 
-- [ ] **JOB1-004.16.verify** - Test valid CropFilterRequest creation
+- [x] **JOB1-004.16.verify** - Test valid CropFilterRequest creation
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && python -c "from src.schemas.crop_schemas import CropFilterRequest; req = CropFilterRequest(crop_type='corn', maturity_days_min=90); print('Valid')"`
   - Verify: No validation errors
 
-- [ ] **JOB1-004.17.verify** - Test invalid crop_type validation
+- [x] **JOB1-004.17.verify** - Test invalid crop_type validation
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && python -c "from src.schemas.crop_schemas import CropFilterRequest; try: req = CropFilterRequest(crop_type='invalid'); except Exception as e: print('Validation working')"`
   - Verify: Validation error raised
 
-- [ ] **JOB1-004.18.verify** - Run unit tests for schemas
+- [x] **JOB1-004.18.verify** - Run unit tests for schemas
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && pytest tests/test_crop_schemas.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB1-004.99** - Commit Pydantic schemas
+- [x] **JOB1-004.99** - Commit Pydantic schemas
   - Command: `git add services/crop-taxonomy/src/schemas/crop_schemas.py services/crop-taxonomy/tests/test_crop_schemas.py && git commit -m "JOB1-004: Create Pydantic schemas for API validation"`
   - Verify: `git log -1 --oneline`
 
