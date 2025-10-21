@@ -395,17 +395,17 @@
   - Add `test_crop_search_service_init()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
 
-- [ ] **JOB1-006.3.test** - Write test for basic variety search
+- [x] **JOB1-006.3.test** - Write test for basic variety search
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
   - Add `test_search_varieties_basic()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
 
-- [ ] **JOB1-006.4.test** - Write test for pest resistance filtering
+- [x] **JOB1-006.4.test** - Write test for pest resistance filtering
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
   - Add `test_search_with_pest_resistance()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
 
-- [ ] **JOB1-006.5.test** - Write test for disease resistance filtering
+- [x] **JOB1-006.5.test** - Write test for disease resistance filtering
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
   - Add `test_search_with_disease_resistance()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
