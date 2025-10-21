@@ -116,7 +116,7 @@
   - Add `test_image_analysis_request()` test
   - Verify: `pytest services/image-analysis/tests/test_analysis_schemas.py --collect-only`
 
-- [ ] **JOB3-004.3.impl** - Create analysis_schemas.py
+- [x] **JOB3-004.3.impl** - Create analysis_schemas.py
   - Path: `services/image-analysis/src/schemas/analysis_schemas.py`
   - Implement ImageAnalysisRequest, DeficiencyResult, AnalysisResponse schemas
   - Verify: `python -c "from src.schemas.analysis_schemas import ImageAnalysisRequest; print('OK')"`
