@@ -306,7 +306,7 @@
   - Add `test_root_endpoint()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_main.py --collect-only`
 
-- [ ] **JOB1-005.4.impl** - Create main.py file
+- [x] **JOB1-005.4.impl** - Create main.py file
   - Path: `services/crop-taxonomy/src/main.py`
   - Create empty file with FastAPI imports
   - Verify: `ls services/crop-taxonomy/src/main.py`
