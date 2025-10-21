@@ -84,7 +84,7 @@
   - Implement FertilizerType and FertilizerPrice models
   - Verify: `python -c "from src.models.price_models import FertilizerType, FertilizerPrice; print('OK')"`
 
-- [ ] **JOB2-003.5.impl** - Create migration SQL
+- [x] **JOB2-003.5.impl** - Create migration SQL
   - Path: `services/fertilizer-optimization/migrations/002_fertilizer_prices_schema.sql`
   - Write CREATE TABLE statements
   - Verify: `cat services/fertilizer-optimization/migrations/002_fertilizer_prices_schema.sql`
