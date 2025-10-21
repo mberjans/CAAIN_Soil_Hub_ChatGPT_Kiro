@@ -354,7 +354,7 @@
   - Review N-P-K calculations with agricultural knowledge
   - Verify: Calculations are accurate
 
-- [ ] **JOB2-011.2** - Document ROI assumptions
+- [x] **JOB2-011.2** - Document ROI assumptions
   - Path: `services/fertilizer-optimization/docs/roi_assumptions.md`
   - Document assumptions used in ROI calculations
   - Verify: `cat services/fertilizer-optimization/docs/roi_assumptions.md`
