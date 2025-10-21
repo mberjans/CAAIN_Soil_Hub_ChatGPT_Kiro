@@ -194,7 +194,7 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB1-004.1.test** - Create test file for schemas
+- [x] **JOB1-004.1.test** - Create test file for schemas
   - Path: `services/crop-taxonomy/tests/test_crop_schemas.py`
   - Create empty test file with imports
   - Verify: `ls services/crop-taxonomy/tests/test_crop_schemas.py`
