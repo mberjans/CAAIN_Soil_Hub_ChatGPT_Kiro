@@ -27,7 +27,7 @@
   - Command: `mkdir -p services/crop-taxonomy/migrations`
   - Verify: `ls -ld services/crop-taxonomy/migrations`
 
-- [ ] **JOB1-001.5** - Create all __init__.py files
+- [x] **JOB1-001.5** - Create all __init__.py files
   - Command: `touch services/crop-taxonomy/src/__init__.py services/crop-taxonomy/src/models/__init__.py services/crop-taxonomy/src/services/__init__.py services/crop-taxonomy/src/api/__init__.py services/crop-taxonomy/src/schemas/__init__.py services/crop-taxonomy/tests/__init__.py`
   - Verify: `find services/crop-taxonomy -name "__init__.py" | wc -l` (should be 6)
 
