@@ -2972,7 +2972,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Output**: Application method recommendations, timing schedules, compatibility matrices
 
 ### TICKET-016_micronutrient-management-7. Advanced Toxicity Risk and Over-Application Warning System
-- [ ] TICKET-016_micronutrient-management-7.1 Build comprehensive toxicity risk and over-application warning system
+- [x] TICKET-016_micronutrient-management-7.1 Build comprehensive toxicity risk and over-application warning system
   **Implementation**: Create `ToxicityRiskService` in `src/services/toxicity_service.py`
   **Features**: Toxicity risk assessment, over-application prevention, safety recommendations
   **Risk Factors**: Soil pH, organic matter, application method, crop sensitivity, cumulative applications
