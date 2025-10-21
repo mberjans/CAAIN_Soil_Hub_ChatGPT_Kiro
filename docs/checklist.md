@@ -415,7 +415,7 @@
   - Add `test_search_with_market_class()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
 
-- [ ] **JOB1-006.7.test** - Write test for performance score filtering
+- [x] **JOB1-006.7.test** - Write test for performance score filtering
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
   - Add `test_search_with_performance_filters()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`

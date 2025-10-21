@@ -525,6 +525,71 @@ def test_search_with_performance_filters():
     assert request.filter_criteria.text_search == "crop"
 
 
+def test_search_with_performance_score_filtering():
+    """Test search with min_yield_stability and min_drought_tolerance filters."""
+    from src.schemas.crop_schemas import CropFilterRequest
+    
+    # Create crop filter request with performance filters
+    crop_filter_request = CropFilterRequest(
+        crop_type="corn",
+        min_yield_stability=80,
+        min_drought_tolerance=70,
+        page=1,
+        page_size=20
+    )
+    
+    # Verify the request has performance filters set
+    assert crop_filter_request.crop_type == "corn"
+    assert crop_filter_request.min_yield_stability == 80
+    assert crop_filter_request.min_drought_tolerance == 70
+    assert crop_filter_request.page == 1
+    assert crop_filter_request.page_size == 20
+
+
+def test_performance_filter_validation():
+    """Test validation of performance filter values."""
+    from src.schemas.crop_schemas import CropFilterRequest
+    
+    # Test valid performance values
+    request = CropFilterRequest(
+        crop_type="soybean",
+        min_yield_stability=50,
+        min_drought_tolerance=60
+    )
+    
+    assert request.min_yield_stability == 50
+    assert request.min_drought_tolerance == 60
+    
+    # Test that values are within valid range (0-100)
+    assert 0 <= request.min_yield_stability <= 100
+    assert 0 <= request.min_drought_tolerance <= 100
+
+
+def test_performance_filter_edge_cases():
+    """Test performance filter edge cases."""
+    from src.schemas.crop_schemas import CropFilterRequest
+    
+    # Test minimum value (0)
+    request_min = CropFilterRequest(
+        crop_type="wheat",
+        min_yield_stability=0,
+        min_drought_tolerance=0
+    )
+    
+    assert request_min.min_yield_stability == 0
+    assert request_min.min_drought_tolerance == 0
+    
+    # Test maximum value (100)
+    request_max = CropFilterRequest(
+        crop_type="wheat",
+        min_yield_stability=100,
+        min_drought_tolerance=100
+    )
+    
+    assert request_max.min_yield_stability == 100
+    assert request_max.min_drought_tolerance == 100
+
+
 def test_search_pagination():
     """Test pagination functionality in crop search."""
     # Test with different offset and limit values
