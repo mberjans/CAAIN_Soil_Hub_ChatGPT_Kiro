@@ -1,6 +1,6 @@
 import logging
 
-from ..models.micronutrient_models import EconomicReturnPredictionRequest, EconomicReturnPredictionResponse
+from ..schemas.micronutrient_schemas import EconomicReturnPredictionRequest, EconomicReturnPredictionResponse
 
 logger = logging.getLogger(__name__)
 
