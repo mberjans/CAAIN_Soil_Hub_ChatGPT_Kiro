@@ -24,6 +24,7 @@ from src.api.advanced_application_routes import router as advanced_application_r
 from src.api.integration_routes import router as integration_router
 from src.api.analytics_routes import router as analytics_router
 from src.api.priority_constraint_routes import router as priority_constraint_router
+from src.api.goal_based_routes import router as goal_based_router
 from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -94,6 +95,7 @@ app.include_router(advanced_application_router, prefix="/api/v1", tags=["advance
 app.include_router(integration_router, tags=["caain-integration"])
 app.include_router(analytics_router, tags=["analytics"])
 app.include_router(priority_constraint_router, prefix="/api/v1", tags=["priority-constraints"])
+app.include_router(goal_based_router, prefix="/api/v1", tags=["goal-based-recommendations"])
 
 @app.get("/health")
 async def health_check():
@@ -175,7 +177,12 @@ async def health_check():
             "agricultural_impact_assessment",
             "system_performance_analytics",
             "usage_pattern_analysis",
-            "comprehensive_reporting"
+            "comprehensive_reporting",
+            "goal_based_recommendations",
+            "multi_objective_optimization",
+            "pareto_optimization",
+            "constraint_satisfaction",
+            "goal_prioritization"
         ]
     }
 

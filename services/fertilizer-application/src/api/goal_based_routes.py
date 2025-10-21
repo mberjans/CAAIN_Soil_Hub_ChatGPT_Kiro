@@ -4,6 +4,7 @@ API routes for goal-based fertilizer application method recommendations.
 
 import logging
 from typing import List, Dict, Any, Optional
+from uuid import uuid4
 from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
 
