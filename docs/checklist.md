@@ -124,7 +124,7 @@
   - Create test file
   - Verify: `ls services/fertilizer-optimization/tests/test_optimization_schemas.py`
 
-- [ ] **JOB2-004.2.test** - Write test for OptimizationRequest schema
+- [x] **JOB2-004.2.test** - Write test for OptimizationRequest schema
   - Path: `services/fertilizer-optimization/tests/test_optimization_schemas.py`
   - Add `test_optimization_request_valid()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_optimization_schemas.py --collect-only`
