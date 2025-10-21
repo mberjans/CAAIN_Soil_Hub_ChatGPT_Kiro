@@ -164,7 +164,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -c "\d crop_filtering_attributes"`
   - Verify: Table structure matches model
 
-- [ ] **JOB1-003.15.verify** - Verify farmer_preferences table created
+- [x] **JOB1-003.15.verify** - Verify farmer_preferences table created
   - Command: `psql -U postgres -d caain_soil_hub -c "\d farmer_preferences"`
   - Verify: Table structure matches model
 
