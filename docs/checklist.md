@@ -54,7 +54,7 @@
   - Command: `python -c "import cv2; print(f'OpenCV: {cv2.__version__}')"`
   - Verify: OpenCV version displayed
 
-- [ ] **JOB3-002.5** - Verify Pillow installation
+- [x] **JOB3-002.5** - Verify Pillow installation
   - Command: `python -c "from PIL import Image; print('Pillow OK')"`
   - Verify: Pillow working
 
