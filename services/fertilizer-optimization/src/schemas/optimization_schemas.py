@@ -16,12 +16,14 @@ class OptimizationRequest(BaseModel):
     nutrient_requirements: Dict[str, float]  # e.g., {"N": 100.0, "P": 50.0, "K": 80.0}
     yield_goal_bu_acre: float
     available_fertilizers: List[FertilizerInfo]
+    budget_per_acre: float
+    crop_price_per_bu: float
 
 
 class FertilizerRecommendation(BaseModel):
     """Model for a single fertilizer recommendation."""
     fertilizer_name: str
-    amount_tons: float
+    application_rate: float
     cost: float
     nutrients_applied: Dict[str, float]  # e.g., {"N": 50.0, "P": 25.0, "K": 40.0}
 

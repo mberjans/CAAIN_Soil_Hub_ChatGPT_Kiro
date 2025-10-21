@@ -303,7 +303,7 @@
   - Add `test_optimize_strategy_endpoint()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_optimization_routes.py --collect-only`
 
-- [ ] **JOB2-009.2.impl** - Create optimization_routes.py
+- [x] **JOB2-009.2.impl** - Create optimization_routes.py
   - Path: `services/fertilizer-optimization/src/api/optimization_routes.py`
   - Implement POST /api/v1/optimization/optimize-strategy endpoint
   - Verify: Check endpoint in file
