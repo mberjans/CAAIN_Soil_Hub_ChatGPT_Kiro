@@ -264,7 +264,7 @@
   - Add `test_optimize_fertilizer_strategy()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_economic_optimizer.py --collect-only`
 
-- [ ] **JOB2-008.3.test** - Write test for ROI calculation
+- [x] **JOB2-008.3.test** - Write test for ROI calculation
   - Path: `services/fertilizer-optimization/tests/test_economic_optimizer.py`
   - Add `test_calculate_roi()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_economic_optimizer.py --collect-only`

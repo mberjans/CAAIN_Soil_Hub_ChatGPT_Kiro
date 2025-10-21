@@ -58,3 +58,49 @@ def test_optimization_algorithm():
     assert total_nutrients["N"] >= 150 * 0.9  # 90% of requirement
     assert total_nutrients["P"] >= 60 * 0.9
     assert total_nutrients["K"] >= 40 * 0.9
+
+
+def test_roi_calculation():
+    """Test EconomicOptimizer can calculate ROI for fertilizer recommendations."""
+    optimizer = EconomicOptimizer()
+    
+    # Sample fertilizer recommendations
+    recommendations = [
+        {
+            "fertilizer_name": "Urea 46-0-0",
+            "application_rate": 200,  # lbs per acre
+            "cost": 90.0,  # $ per acre
+            "nutrients_provided": {"N": 92}
+        },
+        {
+            "fertilizer_name": "DAP 18-46-0",
+            "application_rate": 150,  # lbs per acre
+            "cost": 120.0,  # $ per acre
+            "nutrients_provided": {"P": 69, "N": 27}
+        }
+    ]
+    
+    # Sample field data
+    field_data = {
+        "field_acres": 100,
+        "current_yield": 160,  # bu/acre
+        "expected_yield_improvement": 20  # bu/acre
+    }
+    
+    # Sample crop price
+    crop_price_per_bu = 5.50
+    
+    # Calculate ROI
+    roi = optimizer.calculate_roi(
+        recommendations=recommendations,
+        field_data=field_data,
+        crop_price_per_bu=crop_price_per_bu
+    )
+    
+    # Verify ROI calculation
+    total_cost = sum(rec["cost"] for rec in recommendations)
+    expected_revenue_increase = field_data["expected_yield_improvement"] * crop_price_per_bu * field_data["field_acres"]
+    expected_roi = (expected_revenue_increase - total_cost) / total_cost * 100
+    
+    assert abs(roi - expected_roi) < 0.01  # Allow for small floating point differences
+    assert roi > 0  # Should be positive ROI
