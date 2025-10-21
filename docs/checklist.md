@@ -284,7 +284,7 @@
   - Add calculate_roi method
   - Verify: Check method in file
 
-- [ ] **JOB2-008.7.verify** - Run optimizer tests
+- [x] **JOB2-008.7.verify** - Run optimizer tests
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/test_economic_optimizer.py -v`
   - Verify: All tests pass
 

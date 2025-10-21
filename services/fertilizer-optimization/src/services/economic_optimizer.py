@@ -47,26 +47,26 @@ class EconomicOptimizer:
             num_fertilizers = len(available_fertilizers)
 
             # Objective function: minimize total cost
-            c = np.array([f['cost_per_unit'] for f in available_fertilizers])
+            # Handle different cost field names for compatibility
+            c = np.array([f.get('cost_per_unit', f.get('price_per_ton', 0)) for f in available_fertilizers])
 
-            # Constraint matrix for nutrient requirements
-            A = []
-            b = []
+            # Equality constraints for nutrient requirements (A_eq for = constraints)
+            A_eq = []
+            b_eq = []
             for nut in nutrients:
                 row = np.array([f['nutrients'].get(nut, 0) for f in available_fertilizers])
-                A.append(row)
-                b.append(field_requirements[nut])
+                A_eq.append(row)
+                b_eq.append(field_requirements[nut])
 
-            # Budget constraint
-            budget_row = np.array([f['cost_per_unit'] for f in available_fertilizers])
-            A.append(budget_row)
-            b.append(budget_per_acre)
+            # Budget constraint (cost <= budget)
+            A_ub = np.array([[f.get('cost_per_unit', f.get('price_per_ton', 0)) for f in available_fertilizers]])
+            b_ub = np.array([budget_per_acre])
 
             # Bounds: non-negative amounts
             bounds = [(0, None) for _ in range(num_fertilizers)]
 
-            # Solve linear programming problem
-            res = linprog(c, A_ub=A, b_ub=b, bounds=bounds, method='highs')
+            # Solve linear programming problem (minimize cost with equality constraints)
+            res = linprog(c, A_eq=A_eq, b_eq=b_eq, A_ub=A_ub, b_ub=b_ub, bounds=bounds, method='highs')
 
             if res.success:
                 recommendations = {f['name']: res.x[i] for i, f in enumerate(available_fertilizers)}
@@ -98,15 +98,25 @@ class EconomicOptimizer:
         """
         try:
             # Input validation
-            if not isinstance(recommendations, dict):
-                raise ValueError("recommendations must be a dictionary")
-            if not isinstance(field_data, dict) or 'yield_bu_per_acre' not in field_data or 'total_fertilizer_cost' not in field_data:
-                raise ValueError("field_data must be a dictionary with 'yield_bu_per_acre' and 'total_fertilizer_cost'")
+            if not isinstance(recommendations, (dict, list)):
+                raise ValueError("recommendations must be a dictionary or list")
+            if not isinstance(field_data, dict):
+                raise ValueError("field_data must be a dictionary")
             if not isinstance(crop_price_per_bu, (int, float)) or crop_price_per_bu <= 0:
                 raise ValueError("crop_price_per_bu must be a positive number")
 
-            yield_bu = field_data['yield_bu_per_acre']
-            total_cost = field_data['total_fertilizer_cost']
+            # Handle different field data formats
+            if isinstance(recommendations, list):
+                # Calculate total cost from recommendations list
+                total_cost = sum(rec.get('cost', 0) for rec in recommendations)
+                # Get yield from field_data
+                yield_bu = field_data.get('expected_yield_improvement', 0) * field_data.get('field_acres', 1)
+            else:
+                # Original dict format
+                if 'yield_bu_per_acre' not in field_data or 'total_fertilizer_cost' not in field_data:
+                    raise ValueError("field_data must contain 'yield_bu_per_acre' and 'total_fertilizer_cost' for dict format")
+                yield_bu = field_data['yield_bu_per_acre']
+                total_cost = field_data['total_fertilizer_cost']
 
             if not isinstance(yield_bu, (int, float)) or yield_bu < 0:
                 raise ValueError("yield_bu_per_acre must be a non-negative number")
