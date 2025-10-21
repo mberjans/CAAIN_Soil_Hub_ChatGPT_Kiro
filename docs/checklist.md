@@ -105,7 +105,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -c "\d fertilizer_prices"`
   - Verify: Table structure correct
 
-- [ ] **JOB2-003.10.verify** - Run unit tests
+- [x] **JOB2-003.10.verify** - Run unit tests
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/test_price_models.py -v`
   - Verify: All tests pass
 
