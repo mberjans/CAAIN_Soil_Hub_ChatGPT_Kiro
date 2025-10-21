@@ -279,7 +279,7 @@
   - Add optimize_fertilizer_strategy method
   - Verify: Check method in file
 
-- [ ] **JOB2-008.6.impl** - Implement ROI calculation
+- [x] **JOB2-008.6.impl** - Implement ROI calculation
   - Path: `services/fertilizer-optimization/src/services/economic_optimizer.py`
   - Add calculate_roi method
   - Verify: Check method in file
