@@ -19,3 +19,9 @@ class SoilTest(BaseModel):
     lab_name: str
     report_date: str
     micronutrient_levels: List[MicronutrientLevel]
+
+class CropMicronutrientRequirement(BaseModel):
+    crop_name: str
+    micronutrient: Micronutrient
+    sufficient_range: tuple[float, float]
+    unit: str

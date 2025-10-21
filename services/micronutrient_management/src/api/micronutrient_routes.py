@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from ..models.micronutrient_models import SoilTest, MicronutrientRecommendation
 from ..services.micronutrient_service import MicronutrientService
 
@@ -17,6 +17,7 @@ async def get_micronutrients():
 @router.post("/soil-test", response_model=list[MicronutrientRecommendation])
 async def process_soil_test(
     soil_test: SoilTest,
+    crop_name: str = Query(..., description="The name of the crop"),
     service: MicronutrientService = Depends(get_micronutrient_service)
 ):
-    return service.process_soil_test(soil_test)
+    return service.process_soil_test(soil_test, crop_name)
