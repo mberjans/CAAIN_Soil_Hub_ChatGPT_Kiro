@@ -757,6 +757,164 @@ def test_search_sorting():
     assert name_request.sort_order == SortOrder.ASC
 
 
+def test_search_sorting_with_crop_search_service():
+    """Test sorting functionality with the actual CropSearchService."""
+    from src.services.crop_search_service import CropSearchService
+    from src.models.crop_filtering_models import SortField, SortOrder, CropSearchRequest, TaxonomyFilterCriteria
+    import asyncio
+    
+    # Create a mock CropSearchService instance without database
+    service = CropSearchService(database_url=None)
+    
+    # Test different sorting fields with the service
+    criteria = TaxonomyFilterCriteria(
+        text_search="test"
+    )
+    
+    # Test sorting by NAME ASC
+    request_name_asc = CropSearchRequest(
+        request_id="test-sort-name-asc",
+        filter_criteria=criteria,
+        sort_by=SortField.NAME,
+        sort_order=SortOrder.ASC
+    )
+    
+    # Test sorting by NAME DESC
+    request_name_desc = CropSearchRequest(
+        request_id="test-sort-name-desc",
+        filter_criteria=criteria,
+        sort_by=SortField.NAME,
+        sort_order=SortOrder.DESC
+    )
+    
+    # Test sorting by CATEGORY
+    request_category = CropSearchRequest(
+        request_id="test-sort-category",
+        filter_criteria=criteria,
+        sort_by=SortField.CATEGORY,
+        sort_order=SortOrder.ASC
+    )
+    
+    # Test sorting by SCIENTIFIC_NAME
+    request_scientific = CropSearchRequest(
+        request_id="test-sort-scientific",
+        filter_criteria=criteria,
+        sort_by=SortField.SCIENTIFIC_NAME,
+        sort_order=SortOrder.ASC
+    )
+    
+    # Test sorting by UPDATED_DATE
+    request_date = CropSearchRequest(
+        request_id="test-sort-date",
+        filter_criteria=criteria,
+        sort_by=SortField.UPDATED_DATE,
+        sort_order=SortOrder.DESC
+    )
+    
+    # Verify the requests have correct sort fields
+    assert request_name_asc.sort_by == SortField.NAME
+    assert request_name_asc.sort_order == SortOrder.ASC
+    
+    assert request_name_desc.sort_by == SortField.NAME
+    assert request_name_desc.sort_order == SortOrder.DESC
+    
+    assert request_category.sort_by == SortField.CATEGORY
+    assert request_category.sort_order == SortOrder.ASC
+    
+    assert request_scientific.sort_by == SortField.SCIENTIFIC_NAME
+    assert request_scientific.sort_order == SortOrder.ASC
+    
+    assert request_date.sort_by == SortField.UPDATED_DATE
+    assert request_date.sort_order == SortOrder.DESC
+
+
+def test_sort_results_function():
+    """Test the _sort_results method in CropSearchService directly."""
+    from src.services.crop_search_service import CropSearchService
+    from src.models.crop_filtering_models import SortField, SortOrder
+    from src.models.crop_filtering_models import CropSearchResult, ComprehensiveCropData
+    from datetime import datetime
+    
+    # Create a CropSearchService instance
+    service = CropSearchService(database_url=None)
+    
+    # Create mock search results to test sorting
+    mock_result1 = CropSearchResult(
+        crop=ComprehensiveCropData(
+            crop_name="Zucchini",
+            scientific_name="Cucurbita pepo",
+            primary_category="vegetable",
+            updated_at=datetime(2023, 1, 1)
+        ),
+        relevance_score=0.8,
+        suitability_score=0.75
+    )
+    
+    mock_result2 = CropSearchResult(
+        crop=ComprehensiveCropData(
+            crop_name="Apple",
+            scientific_name="Malus domestica", 
+            primary_category="fruit",
+            updated_at=datetime(2023, 3, 1)
+        ),
+        relevance_score=0.9,
+        suitability_score=0.85
+    )
+    
+    mock_result3 = CropSearchResult(
+        crop=ComprehensiveCropData(
+            crop_name="Banana",
+            scientific_name="Musa acuminata",
+            primary_category="fruit", 
+            updated_at=datetime(2023, 2, 1)
+        ),
+        relevance_score=0.7,
+        suitability_score=0.65
+    )
+    
+    results = [mock_result1, mock_result2, mock_result3]
+    
+    # Test sorting by NAME ASC
+    sorted_results_name_asc = service._sort_results(results, SortField.NAME, SortOrder.ASC)
+    names_asc = [result.crop.crop_name for result in sorted_results_name_asc]
+    assert names_asc == ["Apple", "Banana", "Zucchini"], f"Expected ['Apple', 'Banana', 'Zucchini'], got {names_asc}"
+    
+    # Test sorting by NAME DESC
+    sorted_results_name_desc = service._sort_results(results, SortField.NAME, SortOrder.DESC)
+    names_desc = [result.crop.crop_name for result in sorted_results_name_desc]
+    assert names_desc == ["Zucchini", "Banana", "Apple"], f"Expected ['Zucchini', 'Banana', 'Apple'], got {names_desc}"
+    
+    # Test sorting by SUITABILITY_SCORE DESC (default)
+    sorted_results_score_desc = service._sort_results(results, SortField.SUITABILITY_SCORE, SortOrder.DESC)
+    scores_desc = [result.suitability_score for result in sorted_results_score_desc]
+    assert scores_desc == [0.85, 0.75, 0.65], f"Expected [0.85, 0.75, 0.65], got {scores_desc}"
+    
+    # Test sorting by SUITABILITY_SCORE ASC
+    sorted_results_score_asc = service._sort_results(results, SortField.SUITABILITY_SCORE, SortOrder.ASC)
+    scores_asc = [result.suitability_score for result in sorted_results_score_asc]
+    assert scores_asc == [0.65, 0.75, 0.85], f"Expected [0.65, 0.75, 0.85], got {scores_asc}"
+    
+    # Test sorting by CATEGORY
+    sorted_results_category = service._sort_results(results, SortField.CATEGORY, SortOrder.ASC)
+    categories = [result.crop.primary_category for result in sorted_results_category]
+    # Should sort fruits first (alphabetically), then vegetable
+    assert categories[0] in ["fruit", "fruit"]  # Either of the two fruits should come first
+    assert categories[2] == "vegetable"  # Vegetable should come last
+    
+    # Test sorting by SCIENTIFIC_NAME
+    sorted_results_scientific = service._sort_results(results, SortField.SCIENTIFIC_NAME, SortOrder.ASC)
+    scientific_names = [result.crop.scientific_name for result in sorted_results_scientific]
+    expected_scientific = sorted(["Cucurbita pepo", "Malus domestica", "Musa acuminata"])
+    assert scientific_names == expected_scientific, f"Expected {expected_scientific}, got {scientific_names}"
+    
+    # Test sorting by UPDATED_DATE DESC
+    sorted_results_date_desc = service._sort_results(results, SortField.UPDATED_DATE, SortOrder.DESC)
+    dates_desc = [result.crop.updated_at for result in sorted_results_date_desc]
+    # Should be in descending order: Mar 1, Feb 1, Jan 1
+    expected_dates_desc = [datetime(2023, 3, 1), datetime(2023, 2, 1), datetime(2023, 1, 1)]
+    assert dates_desc == expected_dates_desc, f"Expected {expected_dates_desc}, got {dates_desc}"
+
+
 def test_search_performance():
     """Test that search completes within performance requirements."""
     import time

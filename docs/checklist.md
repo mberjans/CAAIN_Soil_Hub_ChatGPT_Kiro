@@ -425,7 +425,7 @@
   - Add `test_search_pagination()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
 
-- [ ] **JOB1-006.9.test** - Write test for sorting
+- [x] **JOB1-006.9.test** - Write test for sorting
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
   - Add `test_search_sorting()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
