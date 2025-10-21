@@ -15,6 +15,7 @@ from src.api.monitoring_routes import router as monitoring_router
 from src.api.real_time_monitoring_routes import router as real_time_monitoring_router
 from src.api.iot_sensor_routes import router as iot_sensor_router
 from src.api.crop_response_routes import router as crop_response_router
+from src.api.crop_integration_routes import router as crop_integration_router
 from src.api.decision_support_routes import router as decision_support_router
 from src.api.economic_optimization_routes import router as economic_optimization_router
 from src.api.validation_routes import router as validation_router
@@ -22,6 +23,7 @@ from src.api.fertilizer_routes import router as fertilizer_router
 from src.api.advanced_application_routes import router as advanced_application_router
 from src.api.integration_routes import router as integration_router
 from src.api.analytics_routes import router as analytics_router
+from src.api.priority_constraint_routes import router as priority_constraint_router
 from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -83,6 +85,7 @@ app.include_router(monitoring_router, prefix="/api/v1", tags=["performance-monit
 app.include_router(real_time_monitoring_router, prefix="/api/v1", tags=["real-time-monitoring"])
 app.include_router(iot_sensor_router, prefix="/api/v1", tags=["iot-sensors"])
 app.include_router(crop_response_router, prefix="/api/v1", tags=["crop-response"])
+app.include_router(crop_integration_router, prefix="/api/v1", tags=["crop-integration"])
 app.include_router(decision_support_router, prefix="/api/v1", tags=["decision-support"])
 app.include_router(economic_optimization_router, prefix="/api/v1", tags=["economic-optimization"])
 app.include_router(validation_router, prefix="/api/v1", tags=["algorithm-validation"])
@@ -90,6 +93,7 @@ app.include_router(fertilizer_router, prefix="/api/v1", tags=["fertilizer-applic
 app.include_router(advanced_application_router, prefix="/api/v1", tags=["advanced-application-management"])
 app.include_router(integration_router, tags=["caain-integration"])
 app.include_router(analytics_router, tags=["analytics"])
+app.include_router(priority_constraint_router, prefix="/api/v1", tags=["priority-constraints"])
 
 @app.get("/health")
 async def health_check():
@@ -126,6 +130,10 @@ async def health_check():
             "crop_response_optimization",
             "yield_impact_prediction",
             "method_effectiveness_ranking",
+            "crop_type_integration",
+            "growth_stage_integration",
+            "crop_method_compatibility",
+            "crop_nutrient_requirements",
             "decision_support_system",
             "decision_trees",
             "expert_systems",
