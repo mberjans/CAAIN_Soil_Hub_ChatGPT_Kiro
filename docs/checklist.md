@@ -121,7 +121,7 @@
   - Implement ImageAnalysisRequest, DeficiencyResult, AnalysisResponse schemas
   - Verify: `python -c "from src.schemas.analysis_schemas import ImageAnalysisRequest; print('OK')"`
 
-- [ ] **JOB3-004.4.verify** - Run schema tests
+- [x] **JOB3-004.4.verify** - Run schema tests
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/test_analysis_schemas.py -v`
   - Verify: All tests pass
 
