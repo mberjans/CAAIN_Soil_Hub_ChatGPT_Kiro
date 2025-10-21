@@ -50,7 +50,7 @@
   - Command: `python -c "import tensorflow as tf; print(f'TensorFlow: {tf.__version__}')"`
   - Verify: TensorFlow 2.20.0 installed
 
-- [ ] **JOB3-002.4** - Verify OpenCV installation
+- [x] **JOB3-002.4** - Verify OpenCV installation
   - Command: `python -c "import cv2; print(f'OpenCV: {cv2.__version__}')"`
   - Verify: OpenCV version displayed
 
