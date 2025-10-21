@@ -151,7 +151,7 @@
   - Add CREATE INDEX statements for JSONB columns
   - Verify: `grep "CREATE INDEX" services/crop-taxonomy/migrations/001_filtering_schema.sql | wc -l`
 
-- [ ] **JOB1-003.12.impl** - Add sample data to migration SQL
+- [x] **JOB1-003.12.impl** - Add sample data to migration SQL
   - Path: `services/crop-taxonomy/migrations/001_filtering_schema.sql`
   - Add INSERT statements with sample data
   - Verify: `grep "INSERT INTO" services/crop-taxonomy/migrations/001_filtering_schema.sql`
