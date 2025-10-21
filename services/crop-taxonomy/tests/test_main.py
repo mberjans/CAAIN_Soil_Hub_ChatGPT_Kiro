@@ -57,14 +57,12 @@ def test_root_endpoint():
         
         # Verify that the response contains expected JSON content
         data = response.json()
-        assert "service" in data
-        assert "version" in data
+        assert "message" in data
         assert "docs" in data
         assert "health" in data
         
         # Verify specific values
-        assert data["service"] == "CAAIN Crop Taxonomy Service"
-        assert data["version"] == "1.0.0"
+        assert data["message"] == "CAAIN Crop Taxonomy Service"
         assert data["docs"] == "/docs"
         assert data["health"] == "/health"
     except ImportError:

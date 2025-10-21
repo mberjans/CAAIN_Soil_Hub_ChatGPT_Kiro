@@ -341,37 +341,37 @@
   - Add @app.get("/health") endpoint
   - Verify: Check health endpoint in file
 
-- [ ] **JOB1-005.11.impl** - Implement root endpoint
+- [x]! **JOB1-005.11.impl** - Implement root endpoint
   - Path: `services/crop-taxonomy/src/main.py`
   - Add @app.get("/") endpoint
   - Verify: Check root endpoint in file
 
-- [ ] **JOB1-005.12.impl** - Add main block for uvicorn
+- [x]! **JOB1-005.12.impl** - Add main block for uvicorn
   - Path: `services/crop-taxonomy/src/main.py`
   - Add if __name__ == "__main__" block
   - Verify: Check main block in file
 
-- [ ] **JOB1-005.13.verify** - Start service manually
+- [x]! **JOB1-005.13.verify** - Start service manually
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && python src/main.py &`
   - Verify: Service starts without errors
 
-- [ ] **JOB1-005.14.verify** - Test health endpoint
+- [x]! **JOB1-005.14.verify** - Test health endpoint
   - Command: `curl http://localhost:8007/health`
   - Verify: Returns {"status": "healthy", ...}
 
-- [ ] **JOB1-005.15.verify** - Test root endpoint
+- [x]! **JOB1-005.15.verify** - Test root endpoint
   - Command: `curl http://localhost:8007/`
   - Verify: Returns service information
 
-- [ ] **JOB1-005.16.verify** - Test OpenAPI docs
+- [x]! **JOB1-005.16.verify** - Test OpenAPI docs
   - Command: `curl http://localhost:8007/docs`
   - Verify: Returns HTML for Swagger UI
 
-- [ ] **JOB1-005.17.verify** - Stop service
+- [x]! **JOB1-005.17.verify** - Stop service
   - Command: `pkill -f "uvicorn src.main:app"`
   - Verify: Service stopped
 
-- [ ] **JOB1-005.18.verify** - Run unit tests for main app
+- [x] **JOB1-005.18.verify** - Run unit tests for main app
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && pytest tests/test_main.py -v`
   - Verify: All tests pass
 
