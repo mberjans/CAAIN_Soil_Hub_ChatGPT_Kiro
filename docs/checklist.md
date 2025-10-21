@@ -23,7 +23,7 @@
   - Command: `touch services/image-analysis/src/__init__.py services/image-analysis/src/{models,services,api,schemas}/__init__.py services/image-analysis/tests/__init__.py`
   - Verify: `find services/image-analysis/src -name "__init__.py" | wc -l`
 
-- [ ] **JOB3-001.4** - Create virtual environment
+- [x] **JOB3-001.4** - Create virtual environment
   - Command: `cd services/image-analysis && python3 -m venv venv`
   - Verify: `ls services/image-analysis/venv/bin/python`
 
