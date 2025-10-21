@@ -156,7 +156,7 @@
   - Add INSERT statements with sample data
   - Verify: `grep "INSERT INTO" services/crop-taxonomy/migrations/001_filtering_schema.sql`
 
-- [ ] **JOB1-003.13.impl** - Run database migration
+- [x] **JOB1-003.13.impl** - Run database migration
   - Command: `psql -U postgres -d caain_soil_hub -f services/crop-taxonomy/migrations/001_filtering_schema.sql`
   - Verify: `psql -U postgres -d caain_soil_hub -c "\dt crop_filtering_attributes"`
 
