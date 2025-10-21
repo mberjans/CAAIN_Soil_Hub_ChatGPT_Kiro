@@ -46,9 +46,9 @@
   - Command: `cd services/image-analysis && source venv/bin/activate && pip install -r requirements.txt`
   - Verify: `pip list | grep tensorflow`
 
-- [ ] **JOB3-002.3** - Verify TensorFlow installation
+- [x] **JOB3-002.3** - Verify TensorFlow installation
   - Command: `python -c "import tensorflow as tf; print(f'TensorFlow: {tf.__version__}')"`
-  - Verify: TensorFlow 2.14.0 installed
+  - Verify: TensorFlow 2.20.0 installed
 
 - [ ] **JOB3-002.4** - Verify OpenCV installation
   - Command: `python -c "import cv2; print(f'OpenCV: {cv2.__version__}')"`
