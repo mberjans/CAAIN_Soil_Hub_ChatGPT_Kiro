@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from src.models.filtering_models import Base, CropFilteringAttributes
 from src.services.crop_search_service import CropSearchService
-from src.schemas.crop_schemas import CropFilterRequest, PestResistanceFilter
+from src.schemas.crop_schemas import CropFilterRequest, PestResistanceFilter, DiseaseResistanceFilter
 from uuid import uuid4, UUID
 
 
@@ -112,6 +112,109 @@ def test_apply_pest_resistance_filters_with_various_resistance_levels():
     result_query = service._apply_pest_resistance_filters(mock_query, filter_request)
     
     # Verify that filter was called once
+    assert mock_query.filter.call_count == 1
+
+
+def test_apply_disease_resistance_filters_with_matching_diseases():
+    """Test _apply_disease_resistance_filters method with matching disease traits."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Create disease resistance filters
+    disease_filters = [
+        DiseaseResistanceFilter(disease_name="rust", min_resistance_level="resistant"),
+        DiseaseResistanceFilter(disease_name="blight", min_resistance_level="moderate")
+    ]
+    
+    # Create crop filter request
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        disease_resistance=disease_filters,
+        page=1,
+        page_size=20
+    )
+    
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+    
+    # Call the method under test
+    result_query = service._apply_disease_resistance_filters(mock_query, filter_request)
+    
+    # Verify that filter was called twice (once for each disease)
+    assert mock_query.filter.call_count == 2
+    
+    # Verify the filter calls were made with the correct parameters
+    calls = mock_query.filter.call_args_list
+    
+    # First call should filter for rust with resistant level
+    disease_resistance_call = calls[0][0][0]
+    assert "disease_resistance_traits" in str(disease_resistance_call)
+    
+    # Second call should filter for blight with moderate level
+    blight_resistance_call = calls[1][0][0]
+    assert "disease_resistance_traits" in str(blight_resistance_call)
+
+def test_apply_disease_resistance_filters_with_no_diseases():
+    """Test _apply_disease_resistance_filters method when no disease filters are provided."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Create crop filter request with no disease resistance filters
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        page=1,
+        page_size=20
+    )
+    
+    # Create a mock query object
+    mock_query = Mock()
+    
+    # Call the method under test
+    result_query = service._apply_disease_resistance_filters(mock_query, filter_request)
+    
+    # Verify that filter was not called (no disease filters to apply)
+    mock_query.filter.assert_not_called()
+    
+    # Should return the same query object
+    assert result_query == mock_query
+
+def test_apply_disease_resistance_filters_with_various_resistance_levels():
+    """Test _apply_disease_resistance_filters with different resistance levels."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Test with susceptible level (should match susceptible, moderate, or resistant)
+    disease_filters = [
+        DiseaseResistanceFilter(disease_name="smut", min_resistance_level="susceptible")
+    ]
+    
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        disease_resistance=disease_filters,
+        page=1,
+        page_size=20
+    )
+    
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+    
+    # Call the method under test
+    result_query = service._apply_disease_resistance_filters(mock_query, filter_request)
+    
+    # Verify that filter was called once
+    assert mock_query.filter.call_count == 1
+
     assert mock_query.filter.call_count == 1
 
 

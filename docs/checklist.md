@@ -445,22 +445,22 @@
   - Add class with __init__ method
   - Verify: `python -c "from src.services.crop_search_service import CropSearchService; print('OK')"`
 
-- [ ] **JOB1-006.13.impl** - Implement search_varieties method signature
+- [x] **JOB1-006.13.impl** - Implement search_varieties method signature
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add async search_varieties method
   - Verify: Check method signature in file
 
-- [ ] **JOB1-006.14.impl** - Implement _apply_maturity_filters method
+- [x] **JOB1-006.14.impl** - Implement _apply_maturity_filters method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _apply_maturity_filters helper method
   - Verify: Check method in file
 
-- [ ] **JOB1-006.15.impl** - Implement _apply_pest_resistance_filters method
+- [x] **JOB1-006.15.impl** - Implement _apply_pest_resistance_filters method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _apply_pest_resistance_filters with JSONB queries
   - Verify: Check method in file
 
-- [ ] **JOB1-006.16.impl** - Implement _apply_disease_resistance_filters method
+- [x] **JOB1-006.16.impl** - Implement _apply_disease_resistance_filters method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _apply_disease_resistance_filters with JSONB queries
   - Verify: Check method in file
