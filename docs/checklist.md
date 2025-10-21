@@ -83,7 +83,7 @@
   - Implement ImageAnalysis and DeficiencyDetection models
   - Verify: `python -c "from src.models.image_models import ImageAnalysis; print('OK')"`
 
-- [ ] **JOB3-003.4.impl** - Create migration SQL
+- [x] **JOB3-003.4.impl** - Create migration SQL
   - Path: `services/image-analysis/migrations/003_image_analysis_schema.sql`
   - Write CREATE TABLE statements
   - Verify: `cat services/image-analysis/migrations/003_image_analysis_schema.sql`
