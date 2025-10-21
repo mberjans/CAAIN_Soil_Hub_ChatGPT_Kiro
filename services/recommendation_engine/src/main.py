@@ -8,6 +8,7 @@ import logging
 try:
     from .api.routes import router
     from .api.personalization_routes import router as personalization_router
+    from .api.fertilizer_routes import router as fertilizer_router
     from .database import init_database, get_database_manager
 except ImportError:
     # Fallback for direct execution
@@ -16,6 +17,7 @@ except ImportError:
     sys.path.append(str(Path(__file__).parent))
     from api.routes import router
     from api.personalization_routes import router as personalization_router
+    from api.fertilizer_routes import router as fertilizer_router
     from database import init_database, get_database_manager
 
 load_dotenv()
@@ -57,6 +59,7 @@ app.add_middleware(
 # Include API routes
 app.include_router(router)
 app.include_router(personalization_router)
+app.include_router(fertilizer_router)
 
 @app.get("/health")
 async def health_check():

@@ -288,6 +288,18 @@ async def fertilizer_timing_page(request: Request):
     else:
         return HTMLResponse("<h1>Fertilizer Timing Optimization - Coming Soon</h1>")
 
+@app.get("/fertilizer-selection", response_class=HTMLResponse)
+async def fertilizer_selection_page(request: Request):
+    """Fertilizer selection user interface page"""
+    if templates:
+        return templates.TemplateResponse("fertilizer_selection.html", {
+            "request": request,
+            "title": "Fertilizer Selection"
+        })
+    else:
+        return HTMLResponse("<h1>Fertilizer Selection - Coming Soon</h1>")
+
+
 @app.post("/api/ask-question")
 async def ask_question(
     question: str = Form(...),

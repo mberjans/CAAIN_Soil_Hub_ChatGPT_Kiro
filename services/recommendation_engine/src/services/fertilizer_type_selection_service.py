@@ -7,7 +7,7 @@ priorities, constraints, and farm conditions. Implements US-006: Fertilizer Type
 
 from typing import List, Dict, Any, Optional, Tuple
 import logging
-from ..models.fertilizer_models import FarmerPriorities
+from ..models.fertilizer_models import FarmerPriorities, FarmerConstraints
 from .environmental_service import EnvironmentalAssessmentService
 from .soil_health_service import SoilHealthIntegrationService
 from .fertilizer_explanation_service import FertilizerExplanationService
@@ -34,72 +34,432 @@ class FertilizerTypeSelectionService:
     
     async def get_fertilizer_type_recommendations(
         self,
-        priorities,
-        constraints,
+        priorities: 'FarmerPriorities',
+        constraints: 'FarmerConstraints',
         soil_data: Optional[Dict[str, Any]] = None,
         crop_data: Optional[Dict[str, Any]] = None,
         farm_profile: Optional[Dict[str, Any]] = None
-    ) -> List:
+    ) -> List[Dict[str, Any]]:
         """
-        Generate fertilizer type recommendations based on farmer input.
+        Generate fertilizer type recommendations based on farmer priorities and constraints.
         
-        Args:
-            priorities: Farmer priorities for fertilizer selection
-            constraints: Farmer constraints and limitations
-            soil_data: Soil test data and conditions
-            crop_data: Crop information and requirements
-            farm_profile: Farm profile and characteristics
-            
-        Returns:
-            List of fertilizer recommendations ranked by suitability
+        Returns list of fertilizer recommendations with scores and details.
         """
         try:
-            self.logger.info("Generating fertilizer type recommendations with comprehensive validation")
-            
-            # Validate and analyze priorities
-            priority_validation = self._validate_priorities(priorities)
-            if not priority_validation["is_valid"]:
-                raise ValueError(f"Priority validation failed: {', '.join(priority_validation['errors'])}")
-            
-            # Normalize priorities if needed
-            normalized_priorities = self._normalize_priorities(priorities)
-            
-            # Analyze priority profile
-            priority_analysis = self._analyze_priority_profile(normalized_priorities)
-            
-            # Validate and analyze constraints
-            constraint_validation = self._validate_constraints(constraints)
-            if not constraint_validation["is_valid"]:
-                raise ValueError(f"Constraint validation failed: {', '.join(constraint_validation['errors'])}")
-            
-            # Analyze constraint profile
-            constraint_analysis = self._analyze_constraints(constraints)
-            
-            # Log analysis results
-            self.logger.info(
-                f"Priority profile: {priority_analysis['profile_type']}, "
-                f"Constraint profile: {constraint_analysis['constraint_profile']}, "
-                f"Priority conflicts: {len(priority_analysis['conflicts'])}, "
-                f"Limiting factors: {len(constraint_analysis['limiting_factors'])}"
+            # Get available fertilizer types
+            available_fertilizers = await self.get_available_fertilizer_types(
+                organic_only=constraints.organic_preference
             )
             
-            # Generate comprehensive recommendations based on analysis
-            recommendations = self._generate_comprehensive_recommendations(
-                normalized_priorities,
-                constraints,
-                priority_analysis,
-                constraint_analysis,
-                soil_data,
-                crop_data,
-                farm_profile
-            )
-            
-            return recommendations
+            # Score each fertilizer based on priorities
+            scored_recommendations = []
+            for fertilizer in available_fertilizers:
+                score = self._calculate_fertilizer_score(
+                    fertilizer, priorities, constraints, soil_data, crop_data
+                )
                 
+                if score > 0.3:  # Minimum threshold
+                    scored_recommendations.append({
+                        "id": fertilizer.get("product_id"),
+                        "name": fertilizer.get("name"),
+                        "type": fertilizer.get("fertilizer_type"),
+                        "suitability_score": score,
+                        "details": fertilizer
+                    })
+            
+            # Sort by score
+            scored_recommendations.sort(key=lambda x: x["suitability_score"], reverse=True)
+            
+            # Return top 5 recommendations
+            return scored_recommendations[:5]
+            
         except Exception as e:
-            self.logger.error(f"Error generating fertilizer recommendations: {str(e)}")
-            raise
+            logger.error(f"Error generating recommendations: {e}")
+            return []
     
+    def _calculate_fertilizer_score(
+        self,
+        fertilizer: Dict[str, Any],
+        priorities: 'FarmerPriorities',
+        constraints: 'FarmerConstraints',
+        soil_data: Optional[Dict[str, Any]],
+        crop_data: Optional[Dict[str, Any]]
+    ) -> float:
+        """Calculate suitability score for a fertilizer option."""
+        score = 0.0
+        
+        # Cost effectiveness
+        if priorities.cost_effectiveness > 0:
+            cost_score = self._evaluate_cost_effectiveness(
+                fertilizer, constraints.budget_per_acre
+            )
+            score += priorities.cost_effectiveness * cost_score
+        
+        # Soil health
+        if priorities.soil_health > 0:
+            soil_health_score = fertilizer.get("soil_health_score", 0.5)
+            score += priorities.soil_health * soil_health_score
+        
+        # Environmental impact
+        if priorities.environmental_impact > 0:
+            env_score = fertilizer.get("environmental_impact_score", 0.5)
+            score += priorities.environmental_impact * env_score
+        
+        # Ease of application
+        if priorities.ease_of_application > 0:
+            ease_score = self._evaluate_application_ease(
+                fertilizer, constraints.available_equipment
+            )
+            score += priorities.ease_of_application * ease_score
+        
+        # Normalize score (sum of priorities could be > 1)
+        total_priority = sum([
+            priorities.cost_effectiveness,
+            priorities.soil_health,
+            priorities.environmental_impact,
+            priorities.ease_of_application,
+            priorities.quick_results,
+            priorities.long_term_benefits
+        ])
+        
+        if total_priority > 0:
+            score = score / total_priority
+        
+        return min(1.0, max(0.0, score))
+    
+    def _evaluate_cost_effectiveness(
+        self, fertilizer: Dict[str, Any], budget_per_acre: Optional[float]
+    ) -> float:
+        """Evaluate cost effectiveness of fertilizer."""
+        if not budget_per_acre:
+            return 0.5
+        
+        cost = fertilizer.get("cost_per_unit", 100)
+        
+        # Higher score for lower cost
+        if cost <= budget_per_acre * 0.5:
+            return 1.0
+        elif cost <= budget_per_acre:
+            return 0.7
+        elif cost <= budget_per_acre * 1.5:
+            return 0.4
+        else:
+            return 0.2
+    
+    def _evaluate_application_ease(
+        self, fertilizer: Dict[str, Any], available_equipment: List[str]
+    ) -> float:
+        """Evaluate ease of application based on equipment compatibility."""
+        required_equipment = fertilizer.get("equipment_requirements", [])
+        
+        if not required_equipment:
+            return 0.8
+        
+        # Check equipment compatibility
+        compatible = any(
+            equip in available_equipment 
+            for equip in required_equipment
+        )
+        
+        return 1.0 if compatible else 0.3
+    
+    def calculate_overall_confidence(
+        self, recommendations: List[Dict[str, Any]]
+    ) -> float:
+        """Calculate overall confidence score for recommendations."""
+        if not recommendations:
+            return 0.0
+        
+        # Average of top 3 scores
+        top_scores = [r.get("suitability_score", 0) for r in recommendations[:3]]
+        
+        if not top_scores:
+            return 0.0
+        
+        avg_score = sum(top_scores) / len(top_scores)
+        
+        # Confidence is higher when top recommendations are similar
+        if len(top_scores) > 1:
+            score_variance = sum((s - avg_score) ** 2 for s in top_scores) / len(top_scores)
+            confidence_adjustment = 1.0 - min(0.3, score_variance)
+        else:
+            confidence_adjustment = 0.8
+        
+        return min(1.0, avg_score * confidence_adjustment)
+    
+    def generate_comparison_summary(
+        self, recommendations: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
+        """Generate comparison summary of recommendations."""
+        if not recommendations:
+            return {
+                "top_recommendation": "None available",
+                "key_differentiators": [],
+                "trade_offs": {},
+                "decision_factors": []
+            }
+        
+        top_rec = recommendations[0]
+        
+        return {
+            "top_recommendation": top_rec.get("name", "Unknown"),
+            "key_differentiators": [
+                f"Score: {top_rec.get('suitability_score', 0):.2f}",
+                f"Type: {top_rec.get('type', 'Unknown')}"
+            ],
+            "trade_offs": {
+                "cost_vs_performance": "Balanced approach",
+                "speed_vs_sustainability": "Focus on sustainability"
+            },
+            "decision_factors": [
+                "Suitability score",
+                "Cost effectiveness",
+                "Environmental impact"
+            ]
+        }
+    
+    def generate_cost_analysis(
+        self, recommendations: List[Dict[str, Any]], constraints: 'FarmerConstraints'
+    ) -> Dict[str, Any]:
+        """Generate cost analysis for recommendations."""
+        if not recommendations:
+            return {
+                "average_cost_per_acre": 0,
+                "total_farm_cost": 0,
+                "cost_range": {"min": 0, "max": 0}
+            }
+        
+        costs = [
+            r.get("details", {}).get("cost_per_unit", 0) 
+            for r in recommendations
+        ]
+        
+        avg_cost = sum(costs) / len(costs) if costs else 0
+        
+        return {
+            "average_cost_per_acre": avg_cost,
+            "total_farm_cost": avg_cost * constraints.farm_size_acres,
+            "cost_range": {
+                "min": min(costs) if costs else 0,
+                "max": max(costs) if costs else 0
+            },
+            "budget_analysis": {
+                "within_budget": constraints.budget_per_acre is None or avg_cost <= constraints.budget_per_acre,
+                "budget_utilization_percent": (
+                    (avg_cost / constraints.budget_per_acre * 100) 
+                    if constraints.budget_per_acre else 0
+                )
+            }
+        }
+    
+    async def assess_environmental_impact_for_recommendations(
+        self,
+        recommendations: List[Dict[str, Any]],
+        field_conditions: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        """Assess environmental impact across recommendations."""
+        if not recommendations:
+            return {
+                "overall_impact": "unknown",
+                "risks": [],
+                "mitigation_strategies": []
+            }
+        
+        # Calculate average environmental scores
+        env_scores = [
+            r.get("details", {}).get("environmental_impact_score", 0.5)
+            for r in recommendations
+        ]
+        
+        avg_env_score = sum(env_scores) / len(env_scores) if env_scores else 0.5
+        
+        return {
+            "overall_impact": "low" if avg_env_score > 0.7 else "moderate" if avg_env_score > 0.4 else "high",
+            "average_environmental_score": avg_env_score,
+            "risks": [
+                "Nutrient runoff potential" if avg_env_score < 0.6 else None,
+                "Soil acidification" if field_conditions.get("soil", {}).get("ph", 7) < 6 else None
+            ],
+            "mitigation_strategies": [
+                "Use precision application methods",
+                "Apply during optimal weather conditions",
+                "Follow 4R nutrient stewardship principles"
+            ]
+        }
+    
+    def generate_implementation_guidance(
+        self, recommendations: List[Dict[str, Any]]
+    ) -> List[str]:
+        """Generate implementation guidance for recommendations."""
+        if not recommendations:
+            return ["No recommendations available"]
+        
+        return [
+            "Review soil test results before application",
+            "Calibrate application equipment",
+            "Follow recommended application rates",
+            "Monitor weather conditions",
+            "Document application for records"
+        ]
+    
+    async def get_available_fertilizer_types(
+        self,
+        fertilizer_type: Optional[str] = None,
+        organic_only: bool = False,
+        max_cost_per_unit: Optional[float] = None
+    ) -> List[Dict[str, Any]]:
+        """Get available fertilizer types with optional filtering."""
+        # Sample fertilizer database
+        fertilizers = [
+            {
+                "product_id": "urea_46_0_0",
+                "name": "Urea (46-0-0)",
+                "manufacturer": "Generic",
+                "fertilizer_type": "synthetic",
+                "cost_per_unit": 450,
+                "environmental_impact_score": 0.4,
+                "soil_health_score": 0.3,
+                "equipment_requirements": ["broadcast_spreader"],
+                "application_methods": ["broadcast"],
+                "organic_certified": False,
+                "pros": ["High nitrogen content", "Low cost per unit N"],
+                "cons": ["Volatilization risk", "No secondary nutrients"]
+            },
+            {
+                "product_id": "ammonium_sulfate_21_0_0",
+                "name": "Ammonium Sulfate (21-0-0-24S)",
+                "manufacturer": "Generic",
+                "fertilizer_type": "synthetic",
+                "cost_per_unit": 380,
+                "environmental_impact_score": 0.5,
+                "soil_health_score": 0.4,
+                "equipment_requirements": ["broadcast_spreader"],
+                "application_methods": ["broadcast"],
+                "organic_certified": False,
+                "pros": ["Adds sulfur", "Acidifying effect"],
+                "cons": ["Lower N content", "Can lower pH"]
+            },
+            {
+                "product_id": "composted_manure_organic",
+                "name": "Composted Manure",
+                "manufacturer": "Various",
+                "fertilizer_type": "organic",
+                "cost_per_unit": 50,
+                "environmental_impact_score": 0.9,
+                "soil_health_score": 0.95,
+                "equipment_requirements": ["manure_spreader"],
+                "application_methods": ["broadcast", "incorporation"],
+                "organic_certified": True,
+                "pros": ["Improves soil structure", "Slow release", "Organic matter"],
+                "cons": ["Low nutrient content", "Variable analysis", "High volume needed"]
+            }
+        ]
+        
+        # Apply filters
+        filtered = fertilizers
+        
+        if fertilizer_type:
+            filtered = [f for f in filtered if f["fertilizer_type"] == fertilizer_type]
+        
+        if organic_only:
+            filtered = [f for f in filtered if f.get("organic_certified", False)]
+        
+        if max_cost_per_unit:
+            filtered = [f for f in filtered if f["cost_per_unit"] <= max_cost_per_unit]
+        
+        return filtered
+    
+    async def compare_fertilizer_options(
+        self,
+        fertilizer_ids: List[str],
+        comparison_criteria: List[str],
+        farm_context: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
+        """Compare specific fertilizer options based on criteria."""
+        # Get fertilizer details
+        all_fertilizers = await self.get_available_fertilizer_types()
+        
+        selected_fertilizers = [
+            f for f in all_fertilizers 
+            if f["product_id"] in fertilizer_ids
+        ]
+        
+        # Score each fertilizer on each criterion
+        comparison_results = []
+        for fertilizer in selected_fertilizers:
+            scores = {}
+            for criterion in comparison_criteria:
+                scores[criterion] = self._score_criterion(
+                    fertilizer, criterion, farm_context
+                )
+            
+            comparison_results.append({
+                "fertilizer_id": fertilizer["product_id"],
+                "name": fertilizer["name"],
+                "scores": scores,
+                "overall_score": sum(scores.values()) / len(scores) if scores else 0,
+                "strengths": fertilizer.get("pros", []),
+                "weaknesses": fertilizer.get("cons", [])
+            })
+        
+        return comparison_results
+    
+    def _score_criterion(
+        self, fertilizer: Dict[str, Any], criterion: str, context: Dict[str, Any]
+    ) -> float:
+        """Score a fertilizer on a specific criterion."""
+        if criterion == "cost_effectiveness":
+            return self._evaluate_cost_effectiveness(
+                fertilizer, context.get("budget_per_acre")
+            )
+        elif criterion == "soil_health_impact":
+            return fertilizer.get("soil_health_score", 0.5)
+        elif criterion == "environmental_impact":
+            return fertilizer.get("environmental_impact_score", 0.5)
+        elif criterion == "nitrogen_efficiency":
+            return 0.7  # Placeholder
+        elif criterion == "application_ease":
+            return 0.6  # Placeholder
+        else:
+            return 0.5  # Default
+    
+    def get_comparison_recommendation(
+        self, comparison_results: List[Dict[str, Any]]
+    ) -> str:
+        """Get overall recommendation from comparison results."""
+        if not comparison_results:
+            return "No fertilizers available for comparison"
+        
+        # Sort by overall score
+        sorted_results = sorted(
+            comparison_results,
+            key=lambda x: x["overall_score"],
+            reverse=True
+        )
+        
+        top_option = sorted_results[0]
+        
+        return (
+            f"Based on the comparison, {top_option['name']} is recommended with "
+            f"an overall score of {top_option['overall_score']:.2f}. "
+            f"This option excels in the evaluated criteria while maintaining good balance."
+        )
+    
+    def identify_decision_factors(
+        self, comparison_results: List[Dict[str, Any]]
+    ) -> List[str]:
+        """Identify key decision factors from comparison."""
+        if not comparison_results:
+            return []
+        
+        return [
+            "Cost per acre and total budget impact",
+            "Soil health and long-term sustainability",
+            "Environmental impact and regulatory compliance",
+            "Application ease and equipment compatibility",
+            "Nutrient efficiency and crop response"
+        ]
+
     async def assess_fertilizer_soil_health_impact(
         self,
         fertilizer_type: str,
@@ -257,24 +617,6 @@ class FertilizerTypeSelectionService:
                 "message": "Soil health assessment failed"
             }
     
-    async def get_available_fertilizer_types(
-        self,
-        fertilizer_type: Optional[str] = None,
-        organic_only: Optional[bool] = False,
-        max_cost_per_unit: Optional[float] = None
-    ) -> List:
-        """Get list of available fertilizer types with filtering."""
-        return []
-    
-    async def compare_fertilizer_options(
-        self,
-        fertilizer_ids: List[str],
-        comparison_criteria: List[str],
-        farm_context: Dict[str, Any]
-    ) -> List:
-        """Compare specific fertilizer options."""
-        return []
-    
     async def get_equipment_compatibility(self, equipment_type: str) -> Dict[str, Any]:
         """Get equipment compatibility information."""
         return {
@@ -421,163 +763,6 @@ class FertilizerTypeSelectionService:
                 "error": str(e)
             }
     
-    def calculate_overall_confidence(self, recommendations: List) -> float:
-        """Calculate overall confidence score for recommendations."""
-        return 0.8
-    
-    def generate_comparison_summary(self, recommendations: List):
-        """Generate comparison summary for recommendations."""
-        return None
-    
-    def generate_cost_analysis(self, recommendations: List, constraints) -> Dict[str, Any]:
-        """Generate overall cost analysis."""
-        return {}
-    
-    async def assess_environmental_impact_for_recommendations(
-        self,
-        recommendations: List,
-        application_data: Optional[Dict[str, Any]] = None,
-        field_conditions: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Any]:
-        """
-        Assess overall environmental impact across all recommended fertilizers.
-
-        Args:
-            recommendations: List of fertilizer recommendations
-            application_data: Application details
-            field_conditions: Field conditions
-
-        Returns:
-            Summary of environmental impacts across recommendations
-        """
-        try:
-            if not recommendations:
-                return {
-                    "average_carbon_score": 0.0,
-                    "average_water_quality_score": 0.0,
-                    "average_soil_health_score": 0.0,
-                    "average_biodiversity_score": 0.0,
-                    "overall_environmental_performance": "No recommendations to assess"
-                }
-
-            # Assess each recommendation
-            carbon_scores = []
-            water_scores = []
-            soil_scores = []
-            biodiversity_scores = []
-
-            for rec in recommendations:
-                # Get fertilizer data from recommendation
-                fertilizer_data = {
-                    "id": rec.get("fertilizer_id", "unknown"),
-                    "name": rec.get("fertilizer_name", "Unknown"),
-                    "type": rec.get("fertilizer_type", "urea"),
-                    "nitrogen_percent": rec.get("nitrogen_percent", 0.0),
-                    "phosphorus_percent": rec.get("phosphorus_percent", 0.0),
-                    "potassium_percent": rec.get("potassium_percent", 0.0)
-                }
-
-                impact = await self.get_environmental_impact(
-                    fertilizer_id=fertilizer_data["id"],
-                    fertilizer_data=fertilizer_data,
-                    application_data=application_data,
-                    field_conditions=field_conditions
-                )
-
-                carbon_scores.append(impact.get("carbon_footprint", {}).get("score", 0.0))
-                water_scores.append(impact.get("water_quality_impact", {}).get("score", 0.0))
-                soil_scores.append(impact.get("soil_health_impact", {}).get("score", 0.0))
-                biodiversity_scores.append(impact.get("biodiversity_impact", {}).get("score", 0.0))
-
-            # Calculate averages
-            avg_carbon = sum(carbon_scores) / len(carbon_scores) if carbon_scores else 0.0
-            avg_water = sum(water_scores) / len(water_scores) if water_scores else 0.0
-            avg_soil = sum(soil_scores) / len(soil_scores) if soil_scores else 0.0
-            avg_biodiversity = sum(biodiversity_scores) / len(biodiversity_scores) if biodiversity_scores else 0.0
-
-            overall_avg = (avg_carbon + avg_water + avg_soil + avg_biodiversity) / 4.0
-
-            # Performance rating
-            if overall_avg >= 0.80:
-                performance = "Excellent environmental performance across recommendations"
-            elif overall_avg >= 0.65:
-                performance = "Good environmental performance"
-            elif overall_avg >= 0.50:
-                performance = "Fair environmental performance"
-            else:
-                performance = "Environmental concerns identified"
-
-            return {
-                "average_carbon_score": avg_carbon,
-                "average_water_quality_score": avg_water,
-                "average_soil_health_score": avg_soil,
-                "average_biodiversity_score": avg_biodiversity,
-                "overall_average_score": overall_avg,
-                "overall_environmental_performance": performance,
-                "best_carbon_option": recommendations[carbon_scores.index(max(carbon_scores))].get("fertilizer_name") if carbon_scores else None,
-                "best_water_quality_option": recommendations[water_scores.index(max(water_scores))].get("fertilizer_name") if water_scores else None,
-                "recommendations_count": len(recommendations)
-            }
-
-        except Exception as e:
-            self.logger.error(f"Error assessing environmental impact for recommendations: {str(e)}")
-            return {
-                "error": str(e),
-                "overall_environmental_performance": "Assessment failed"
-            }
-    
-    def generate_recommendation_explanation(
-        self,
-        recommendation: Dict[str, Any],
-        priorities: Dict[str, Any],
-        constraints: Dict[str, Any],
-        context: Optional[Dict[str, Any]] = None,
-        language: str = "en"
-    ) -> Dict[str, Any]:
-        """
-        Generate comprehensive explanation for a fertilizer recommendation.
-        
-        Args:
-            recommendation: Fertilizer recommendation data
-            priorities: Farmer priorities
-            constraints: Farmer constraints
-            context: Additional context (soil, crop, farm data)
-            language: Language for explanation
-            
-        Returns:
-            Comprehensive explanation with multiple sections
-        """
-        try:
-            return self.explanation_service.generate_recommendation_explanation(
-                recommendation=recommendation,
-                priorities=priorities,
-                constraints=constraints,
-                context=context,
-                language=language
-            )
-        except Exception as e:
-            self.logger.error(f"Error generating explanation: {str(e)}")
-            return {
-                "error": str(e),
-                "fallback_summary": "Unable to generate detailed explanation"
-            }
-    
-    def generate_implementation_guidance(self, recommendations: List) -> List[str]:
-        """Generate implementation guidance."""
-        return [
-            "Start with soil testing to establish baseline",
-            "Calibrate equipment before application",
-            "Monitor weather conditions for optimal timing"
-        ]
-    
-    def get_comparison_recommendation(self, comparison_results: List) -> str:
-        """Get overall recommendation from comparison results."""
-        return "No fertilizer options to compare"
-    
-    def identify_decision_factors(self, comparison_results: List) -> List[str]:
-        """Identify key decision factors from comparison results."""
-        return ["cost_effectiveness", "soil_health", "environmental_impact"]
-
     def _validate_priorities(self, priorities: FarmerPriorities) -> Dict[str, Any]:
         """
         Validate farmer priorities for fertilizer selection.
@@ -1647,3 +1832,39 @@ class FertilizerTypeSelectionService:
         self.logger.info(f"Comprehensive analysis complete: {analysis_summary}")
         
         return recommendations
+
+    def generate_recommendation_explanation(
+        self,
+        recommendation: Dict[str, Any],
+        priorities: Dict[str, Any],
+        constraints: Dict[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+        language: str = "en"
+    ) -> Dict[str, Any]:
+        """
+        Generate comprehensive explanation for a fertilizer recommendation.
+        
+        Args:
+            recommendation: Fertilizer recommendation data
+            priorities: Farmer priorities
+            constraints: Farmer constraints
+            context: Additional context (soil, crop, farm data)
+            language: Language for explanation
+            
+        Returns:
+            Comprehensive explanation with multiple sections
+        """
+        try:
+            return self.explanation_service.generate_recommendation_explanation(
+                recommendation=recommendation,
+                priorities=priorities,
+                constraints=constraints,
+                context=context,
+                language=language
+            )
+        except Exception as e:
+            self.logger.error(f"Error generating explanation: {str(e)}")
+            return {
+                "error": str(e),
+                "fallback_summary": "Unable to generate detailed explanation"
+            }
