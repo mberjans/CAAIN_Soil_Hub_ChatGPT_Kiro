@@ -410,7 +410,7 @@
   - Add `test_search_with_disease_resistance()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
 
-- [ ] **JOB1-006.6.test** - Write test for market class filtering
+- [x] **JOB1-006.6.test** - Write test for market class filtering
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
   - Add `test_search_with_market_class()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
