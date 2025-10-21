@@ -237,7 +237,7 @@
   - Add `test_load_models()` test
   - Verify: `pytest services/image-analysis/tests/test_detector.py --collect-only`
 
-- [ ] **JOB3-007.3.test** - Write test for deficiency detection
+- [x] **JOB3-007.3.test** - Write test for deficiency detection
   - Path: `services/image-analysis/tests/test_detector.py`
   - Add `test_detect_deficiency()` test
   - Verify: `pytest services/image-analysis/tests/test_detector.py --collect-only`
