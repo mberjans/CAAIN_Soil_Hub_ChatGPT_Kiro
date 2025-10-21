@@ -359,7 +359,7 @@
   - Document assumptions used in ROI calculations
   - Verify: `cat services/fertilizer-optimization/docs/roi_assumptions.md`
 
-- [ ] **JOB2-011.3** - Create README
+- [x] **JOB2-011.3** - Create README
   - Path: `services/fertilizer-optimization/README.md`
   - Add service overview and API documentation
   - Verify: `cat services/fertilizer-optimization/README.md`
