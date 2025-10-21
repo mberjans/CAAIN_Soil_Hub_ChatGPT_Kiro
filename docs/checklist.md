@@ -274,7 +274,7 @@
   - Implement optimizer with scipy.optimize
   - Verify: `python -c "from src.services.economic_optimizer import EconomicOptimizer; print('OK')"`
 
-- [ ] **JOB2-008.5.impl** - Implement multi-objective optimization
+- [x] **JOB2-008.5.impl** - Implement multi-objective optimization
   - Path: `services/fertilizer-optimization/src/services/economic_optimizer.py`
   - Add optimize_fertilizer_strategy method
   - Verify: Check method in file
