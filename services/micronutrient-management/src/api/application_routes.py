@@ -1,65 +1,50 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, Depends
 from typing import List
-from uuid import UUID
+import logging
 
-from ..database.micronutrient_db import get_db
-from ..schemas.application_schemas import MicronutrientApplicationMethodCreate, MicronutrientApplicationMethodUpdate, MicronutrientApplicationMethodResponse
-from ..services.application_method_service import ApplicationMethodService
+from ..models.micronutrient_models import (
+    MicronutrientApplicationRequest,
+    MicronutrientApplicationResponse
+)
+from ..services.micronutrient_application_service import MicronutrientApplicationService
 
-router = APIRouter(prefix="/application-methods", tags=["Application Methods"])
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api/v1/micronutrients", tags=["micronutrients"])
 
-@router.post("/", response_model=MicronutrientApplicationMethodResponse, status_code=status.HTTP_201_CREATED)
-def create_application_method(
-    method: MicronutrientApplicationMethodCreate,
-    db: Session = Depends(get_db),
-    service: ApplicationMethodService = Depends(ApplicationMethodService)
+# Dependency injection
+async def get_micronutrient_service() -> MicronutrientApplicationService:
+    return MicronutrientApplicationService()
+
+@router.post("/recommend-application", response_model=MicronutrientApplicationResponse)
+async def recommend_micronutrient_application(
+    request: MicronutrientApplicationRequest,
+    service: MicronutrientApplicationService = Depends(get_micronutrient_service)
 ):
-    db_method = service.get_method_by_name(db, name=method.name)
-    if db_method:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Application method with this name already exists")
-    return service.create_method(db=db, method=method)
+    """
+    Provides comprehensive recommendations for micronutrient application methods and timing.
 
-@router.get("/", response_model=List[MicronutrientApplicationMethodResponse])
-def read_application_methods(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-    service: ApplicationMethodService = Depends(ApplicationMethodService)
-):
-    methods = service.get_methods(db, skip=skip, limit=limit)
-    return methods
+    This endpoint takes into account crop type, growth stage, soil conditions, current and target
+    micronutrient levels, application goals, and available equipment to suggest optimal
+    application strategies.
 
-@router.get("/{method_id}", response_model=MicronutrientApplicationMethodResponse)
-def read_application_method(
-    method_id: UUID,
-    db: Session = Depends(get_db),
-    service: ApplicationMethodService = Depends(ApplicationMethodService)
-):
-    db_method = service.get_method(db, method_id=method_id)
-    if db_method is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application method not found")
-    return db_method
+    Agricultural Use Cases:
+    - Optimize micronutrient delivery for specific crop needs.
+    - Improve nutrient use efficiency and reduce waste.
+    - Address micronutrient deficiencies effectively at critical growth stages.
+    - Tailor recommendations based on farm-specific equipment and goals.
+    """
+    try:
+        logger.info(f"Received request for micronutrient application: {request.crop_type} at {request.growth_stage}")
+        response = await service.get_application_recommendations(request)
+        return response
+    except ValueError as e:
+        logger.error(f"Validation error in recommend_micronutrient_application: {e}")
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        logger.error(f"Error in recommend_micronutrient_application: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to generate micronutrient application recommendations.")
 
-@router.put("/{method_id}", response_model=MicronutrientApplicationMethodResponse)
-def update_application_method(
-    method_id: UUID,
-    method: MicronutrientApplicationMethodUpdate,
-    db: Session = Depends(get_db),
-    service: ApplicationMethodService = Depends(ApplicationMethodService)
-):
-    db_method = service.update_method(db, method_id=method_id, method=method)
-    if db_method is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application method not found")
-    return db_method
-
-@router.delete("/{method_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_application_method(
-    method_id: UUID,
-    db: Session = Depends(get_db),
-    service: ApplicationMethodService = Depends(ApplicationMethodService)
-):
-    db_method = service.delete_method(db, method_id=method_id)
-    if db_method is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Application method not found")
-    return
+@router.get("/health")
+async def health_check():
+    """Health check endpoint for the micronutrient application service."""
+    return {"status": "healthy", "service": "micronutrient-application"}
