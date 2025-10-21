@@ -390,7 +390,7 @@
   - Create test file with imports and basic tests
   - Verify: `ls services/crop-taxonomy/tests/test_crop_search.py`
 
-- [ ] **JOB1-006.2.test** - Write test for CropSearchService initialization
+- [x] **JOB1-006.2.test** - Write test for CropSearchService initialization
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
   - Add `test_crop_search_service_init()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
