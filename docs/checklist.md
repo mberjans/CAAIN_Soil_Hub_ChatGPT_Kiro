@@ -11,7 +11,7 @@
 
 ### Tasks
 
-- [ ] **JOB1-001.1** - Create main service directory
+- [x] **JOB1-001.1** - Create main service directory
   - Command: `mkdir -p services/crop-taxonomy`
   - Verify: `ls -ld services/crop-taxonomy`
 
