@@ -1,0 +1,155 @@
+{
+  "fallback_system": {
+    "enabled": true,
+    "description": "Optional AI coder fallback system that automatically switches to next available AI coder when rate limits are hit",
+    "api_test_timeout": 60,
+    "api_test_interval": 30,
+    "max_fallback_attempts": 3,
+    "reset_to_primary_after_hours": 24
+  },
+  "ai_coder_priority_order": [
+    {
+      "name": "codex",
+      "display_name": "Codex",
+      "command": "codex",
+      "description": "Primary AI coder - OpenAI Codex",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "claude",
+      "display_name": "Claude Code",
+      "command": "claude",
+      "description": "Secondary AI coder - Anthropic Claude",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "rovodev",
+      "display_name": "Rovodev",
+      "command": "acli rovodev",
+      "description": "Tertiary AI coder - Rovodev",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "gemini",
+      "display_name": "Google Gemini",
+      "command": "gemini",
+      "description": "Quaternary AI coder - Google Gemini",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "qwen",
+      "display_name": "Qwen Coder",
+      "command": "qwen",
+      "description": "Quinary AI coder - Qwen",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "ccr",
+      "display_name": "Claude Code Router (CCR)",
+      "command": "ccr",
+      "description": "Senary AI coder - Claude Code Router",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "opencode",
+      "display_name": "OpenCode",
+      "command": "opencode",
+      "description": "Septenary AI coder - OpenCode",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "cursor",
+      "display_name": "Cursor AI",
+      "command": "cursor-agent",
+      "description": "Octonary AI coder - Cursor",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "crush",
+      "display_name": "Crush",
+      "command": "crush",
+      "description": "Nonary AI coder - Crush",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "droid",
+      "display_name": "Droid AI",
+      "command": "droid",
+      "description": "Denary AI coder - Droid AI",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "amp",
+      "display_name": "Amp AI",
+      "command": "amp",
+      "description": "Undenary AI coder - Amp AI",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "cline",
+      "display_name": "Cline",
+      "command": "cline",
+      "description": "Duodenary AI coder - Cline",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "copilot",
+      "display_name": "Copilot",
+      "command": "copilot",
+      "description": "Tredenary AI coder - Copilot",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "iflow",
+      "display_name": "iFlow AI",
+      "command": "iflow",
+      "description": "Quattuordenary AI coder - iFlow AI",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "auggie",
+      "display_name": "Auggie",
+      "command": "auggie",
+      "description": "Quindenary AI coder - Auggie (Last Fallback)",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    }
+  ],
+  "fallback_state": {
+    "current_ai_coder": null,
+    "fallback_active": false,
+    "failed_ai_coders": [],
+    "last_fallback_time": null,
+    "fallback_count": 0,
+    "primary_ai_coder": "ccr"
+  }
+}

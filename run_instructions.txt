@@ -5,46 +5,31 @@ If task has already been completed previously or have existinal codeg functional
 For unchecked tasks on the checklists, write the program one task of one ticket at a time. Once task is finshed, check it on the docs/checklist.md, add all changed files to the git using a separate git add command, commit changes with commit message that you generate yourself using individual git commit command, push changes to the git repository with indvidual git push command, and switch to the next task. Once you complete tasks on one ticket, add all changed files to the git using a separate git add command, commit changes with commit message that you generate yourself using individual git commit command, push changes to the git repository with indvidual git push command, switch to the next ticket. After the push, update the momety bank if it exists. Never chain multiple shell command together with & sign. Never use list comprehension in python. Avoid using regular expression for pattern matching. Instead create special pattern matching function to pattern matching. Work until all bugs are fixed. Please do not ask me for conformation whether I want you to proceedto the next ticket. Just keep working until completing the last ticket.
 
 CURRENT TASK TO COMPLETE:
-TICKET-023_fertilizer-application-method-7.1 Build comprehensive application guidance and support system
+**JOB3-001.2** - Create tests, migrations, and sample_images directories
 
-CONTEXT:
-- Project directory: /Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro
-- You are working through a checklist systematically
-- Focus on completing the current task above
-- IMPORTANT: After completing the task, update docs/checklist.md to mark the task as complete by changing [ ] to [x]
+PROJECT DIRECTORY: /Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro_worktrees/job-3-deficiency-detection
 
-REMAINING UNCHECKED TASKS (259 total):
-→ CURRENT TICKET-023_fertilizer-application-method-7.1 Build comprehensive application guidance and support system
-  2. TICKET-023_fertilizer-application-method-7.2 Implement real-time application monitoring and adjustment
-  3. TICKET-023_fertilizer-application-method-8.1 Implement sophisticated method selection algorithms
-  4. TICKET-023_fertilizer-application-method-8.2 Create algorithm validation and improvement system
-  5. TICKET-023_fertilizer-application-method-9.1 Create extensive educational content and training system - COMPLETED
-  6. TICKET-023_fertilizer-application-method-9.2 Implement knowledge assessment and certification system
-  7. TICKET-023_fertilizer-application-method-10.1 Implement core application method API endpoints
-  8. TICKET-023_fertilizer-application-method-10.1.1 Create POST `/api/v1/fertilizer/application-method/recommend` - Method recommendations
-  9. TICKET-023_fertilizer-application-method-10.1.2 Implement GET `/api/v1/fertilizer/application-options` - Available methods and options
-  10. TICKET-023_fertilizer-application-method-10.1.3 Add POST `/api/v1/fertilizer/method-comparison` - Method comparison analysis
-  ... and 249 more tasks
-
-CRITICAL INSTRUCTIONS:
+STEP-BY-STEP INSTRUCTIONS:
 1. Read docs/checklist.md, docs/plan.md, and docs/tickets.md for context
-2. Focus ONLY on completing the current task: TICKET-023_fertilizer-application-method-7.1 Build comprehensive application guidance and support system
-4. Create to-do list of smaller subtasks
-5. Assign task to software-engeneer subagent. Give subagent only information it needs for the task. You can also give subagent ticket-specific information extracted from docs/tickets.md as well as task specific information extracted from docs/checklist.md 
-6. Ask software-engeneer subagent to design unit tests for the subtask if appropriate
-7. Ask software-engeneer subagent to implement the code for the subtask
-8. Ask software-engeneer subagent to refactor the code for the subtask if necessary
-9. Ask software-engeneer subagent to test the code for the subtask  if appropriate
-10. If software-engeneer subagent reports failure, ask software-engeneer subagent to create a to-do list of sub-subtasks and try again. Do this up-to 5 times.
-10a. If software-engeneer subagent reports success, add all changed files to git: git add [files], then commit changes: git commit -m "descriptive message" and then push changes: git push
-10b. If software-engeneer subagent reports failure on the fifth attempt, mark the sub-task as failed and move on to the next sub-task. 
-11. Repeat steps 5-10 for each subtask
-12. Test your implementation for the whole task if applicable
-13. Add all changed files to git: git add [files]
-14. Commit changes: git commit -m "descriptive message"
-15. Push changes: git push
-16a. IMPORTANT: If all subtasks have been completed, update docs/checklist.md to mark the current task as complete: change [ ] to [x] for the current task
-16b. IMPORTANT: If some subtasks have been completed, update docs/checklist.md to append "PARTIALLY COMPLETED" to the current task description.
-16b. IMPORTANT: If all subtasks have failed, update docs/checklist.md to append "FAILED" to the current task description.
-17. Provide a summary of what you accomplished
-18. IMPORTANT: Avoid using regular expressions for pattern matching - create special pattern matching functions instead
+2. Complete the task: **JOB3-001.2** - Create tests, migrations, and sample_images directories
+3. Create any necessary files and write the required code
+4. Test your implementation to ensure it works correctly
+5. CRITICAL: Update docs/checklist.md to mark this task as complete by changing [ ] to [x]
+6. Add all changed files to git: git add <files>
+7. Commit changes with a descriptive message: git commit -m "Completed: **JOB3-001.2** - Create tests, migrations, and sample_images directories"
+8. Push changes to the repository: git push
+
+REMAINING UNCHECKED TASKS (83 total):
+→ CURRENT **JOB3-001.2** - Create tests, migrations, and sample_images directories
+  2. **JOB3-001.3** - Create __init__.py files
+  3. **JOB3-001.4** - Create virtual environment
+  4. **JOB3-001.99** - Commit directory structure
+  5. **JOB3-002.1** - Create requirements.txt with ML/CV libraries
+  ... and 78 more tasks
+
+IMPORTANT REMINDERS:
+- Execute these steps NOW - do not just plan, actually complete the task
+- You MUST update docs/checklist.md to change [ ] to [x] after completing the task
+- Focus ONLY on the current task: **JOB3-001.2** - Create tests, migrations, and sample_images directories
+- Provide a summary of what you accomplished when done
+- Avoid using regular expressions for pattern matching - create special pattern matching functions instead
