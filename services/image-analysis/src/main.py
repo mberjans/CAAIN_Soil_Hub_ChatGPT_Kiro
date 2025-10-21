@@ -7,6 +7,12 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Configure middleware for file upload support
+@app.middleware("http")
+async def add_file_upload_support(request, call_next):
+    """Add multipart form support for file uploads"""
+    return await call_next(request)
+
 app.include_router(image_analysis_router)
 
 @app.get("/health", tags=["Monitoring"])

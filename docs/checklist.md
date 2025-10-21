@@ -145,7 +145,7 @@
   - Add `test_health_endpoint()` test
   - Verify: `pytest services/image-analysis/tests/test_main.py --collect-only`
 
-- [ ] **JOB3-005.3.impl** - Create main.py with file upload support
+- [x] **JOB3-005.3.impl** - Create main.py with file upload support
   - Path: `services/image-analysis/src/main.py`
   - Create FastAPI app with multipart form support
   - Verify: `python -c "from src.main import app; print(app.title)"`
