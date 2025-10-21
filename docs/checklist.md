@@ -89,7 +89,7 @@
   - Write CREATE TABLE statements
   - Verify: `cat services/fertilizer-optimization/migrations/002_fertilizer_prices_schema.sql`
 
-- [ ] **JOB2-003.6.impl** - Enable TimescaleDB extension
+- [x] **JOB2-003.6.impl** - Enable TimescaleDB extension
   - Command: `psql -U postgres -d caain_soil_hub -c "CREATE EXTENSION IF NOT EXISTS timescaledb;"`
   - Verify: `psql -U postgres -d caain_soil_hub -c "SELECT * FROM pg_extension WHERE extname='timescaledb';"`
 
