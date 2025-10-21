@@ -301,7 +301,7 @@
   - Add `test_health_endpoint()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_main.py --collect-only`
 
-- [ ] **JOB1-005.3.test** - Write test for root endpoint
+- [x] **JOB1-005.3.test** - Write test for root endpoint
   - Path: `services/crop-taxonomy/tests/test_main.py`
   - Add `test_root_endpoint()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_main.py --collect-only`

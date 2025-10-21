@@ -43,7 +43,7 @@ def test_root_endpoint():
     """
     Test the root endpoint.
     
-    Verifies that the root endpoint returns an HTML response.
+    Verifies that the root endpoint returns the expected JSON response.
     """
     # Import here to avoid module-level import issues
     try:
@@ -53,14 +53,20 @@ def test_root_endpoint():
         response = client.get("/")
         # Only test if the app can be imported
         assert response.status_code == 200
-        assert "text/html" in response.headers["content-type"]
+        assert response.headers["content-type"].startswith("application/json")
         
-        # Verify that the response contains expected content
-        content = response.text
-        assert "CAAIN Soil Hub" in content
-        assert "Crop Taxonomy" in content
-        assert "/docs" in content
-        assert "/redoc" in content
+        # Verify that the response contains expected JSON content
+        data = response.json()
+        assert "service" in data
+        assert "version" in data
+        assert "docs" in data
+        assert "health" in data
+        
+        # Verify specific values
+        assert data["service"] == "CAAIN Crop Taxonomy Service"
+        assert data["version"] == "1.0.0"
+        assert data["docs"] == "/docs"
+        assert data["health"] == "/health"
     except ImportError:
         # If the app can't be imported due to circular dependencies, 
         # at least we have the test structure ready
