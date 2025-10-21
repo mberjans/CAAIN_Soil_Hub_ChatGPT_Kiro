@@ -322,7 +322,7 @@
 
 ### Tasks
 
-- [ ] **JOB2-010.1** - Create integration test file
+- [x] **JOB2-010.1** - Create integration test file
   - Path: `services/fertilizer-optimization/tests/test_api_integration.py`
   - Create test file
   - Verify: `ls services/fertilizer-optimization/tests/test_api_integration.py`
