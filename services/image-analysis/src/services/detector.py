@@ -15,22 +15,83 @@ class DeficiencyDetector:
             "soybean": ["healthy", "nitrogen", "phosphorus", "potassium", "iron", "manganese"],
             "wheat": ["healthy", "nitrogen", "phosphorus", "potassium", "sulfur"]
         }
-        self._load_models()
+        self.load_models()
+
+    def load_models(self):
+        """Load pre-trained models for deficiency detection
+
+        This method handles model loading with the following priority:
+        1. Try to load actual trained models from disk
+        2. Fall back to placeholder models for development
+        3. Handle errors gracefully and ensure all crop types have models
+
+        Models are stored in self.models dictionary with crop type as key.
+        """
+        logger.info("Starting to load deficiency detection models...")
+
+        for crop in self.deficiency_classes.keys():
+            model_loaded = False
+
+            # Try multiple possible model paths
+            possible_paths = [
+                f"src/ml_models/{crop}_deficiency_v1.h5",
+                f"ml_models/{crop}_deficiency_v1.h5",
+                f"services/image-analysis/src/ml_models/{crop}_deficiency_v1.h5",
+                f"./{crop}_deficiency_v1.h5"
+            ]
+
+            for model_path in possible_paths:
+                try:
+                    logger.debug(f"Attempting to load model from: {model_path}")
+                    self.models[crop] = tf.keras.models.load_model(model_path)
+                    logger.info(f"Successfully loaded trained model for {crop} from {model_path}")
+                    model_loaded = True
+                    break
+                except (OSError, IOError, ImportError) as e:
+                    logger.debug(f"Could not load model from {model_path}: {str(e)}")
+                    continue
+                except Exception as e:
+                    logger.warning(f"Unexpected error loading model from {model_path}: {str(e)}")
+                    continue
+
+            # If no model file was found, create a placeholder model
+            if not model_loaded:
+                logger.warning(f"No trained model found for {crop}, creating placeholder model")
+                try:
+                    self.models[crop] = self._create_placeholder_model(len(self.deficiency_classes[crop]))
+                    logger.info(f"Successfully created placeholder model for {crop}")
+                except Exception as e:
+                    logger.error(f"Failed to create placeholder model for {crop}: {str(e)}")
+                    raise RuntimeError(f"Could not load or create model for {crop}: {str(e)}")
+
+        # Verify all models are loaded
+        loaded_crops = list(self.models.keys())
+        expected_crops = list(self.deficiency_classes.keys())
+
+        if set(loaded_crops) != set(expected_crops):
+            missing_crops = set(expected_crops) - set(loaded_crops)
+            logger.error(f"Failed to load models for crops: {missing_crops}")
+            raise RuntimeError(f"Could not load models for: {missing_crops}")
+
+        logger.info(f"Successfully loaded {len(self.models)} models for crops: {list(self.models.keys())}")
+
+        # Log model information for debugging
+        for crop, model in self.models.items():
+            try:
+                input_shape = model.input_shape if hasattr(model, 'input_shape') else 'Unknown'
+                output_shape = model.output_shape if hasattr(model, 'output_shape') else 'Unknown'
+                logger.debug(f"{crop} model - Input: {input_shape}, Output: {output_shape}")
+            except Exception as e:
+                logger.debug(f"Could not get shape info for {crop} model: {str(e)}")
 
     def _load_models(self):
-        """Load pre-trained models"""
-        # For development, create simple models
-        # In production, load actual trained models
-        for crop in ["corn", "soybean", "wheat"]:
-            try:
-                # Try to load existing model
-                model_path = f"src/ml_models/{crop}_deficiency_v1.h5"
-                self.models[crop] = tf.keras.models.load_model(model_path)
-                logger.info(f"Loaded model for {crop}")
-            except:
-                # Create simple placeholder model for development
-                self.models[crop] = self._create_placeholder_model(len(self.deficiency_classes[crop]))
-                logger.warning(f"Using placeholder model for {crop}")
+        """Private method to maintain backward compatibility
+
+        This method calls the public load_models() method to ensure
+        compatibility with existing tests and code that might call
+        the private method directly.
+        """
+        self.load_models()
 
     def _create_placeholder_model(self, num_classes: int):
         """Create placeholder model for development"""
