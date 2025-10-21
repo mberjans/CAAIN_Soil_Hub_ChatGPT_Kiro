@@ -35,7 +35,7 @@
   - Command: `cd services/crop-taxonomy && python3 -m venv venv`
   - Verify: `ls services/crop-taxonomy/venv/bin/python`
 
-- [ ] **JOB1-001.7** - Activate virtual environment
+- [x] **JOB1-001.7** - Activate virtual environment
   - Command: `cd services/crop-taxonomy && source venv/bin/activate`
   - Verify: `which python | grep crop-taxonomy`
 
