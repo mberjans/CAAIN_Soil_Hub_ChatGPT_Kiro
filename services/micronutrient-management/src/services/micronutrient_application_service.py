@@ -115,18 +115,11 @@ class MicronutrientApplicationService:
                 best_efficiency = -1.0
                 best_timing: Optional[TimingStage] = None
 
-                # Filter methods by available equipment first
-                available_methods_for_micro = []
                 for method, method_data in micro_rules["methods"].items():
+                    # Check if equipment is available for this method
                     if request.equipment_available is not None and method not in request.equipment_available:
                         continue
-                    available_methods_for_micro.append((method, method_data))
 
-                if not available_methods_for_micro:
-                    notes.append(f"No suitable equipment available for {micro}.")
-                    continue
-
-                for method, method_data in available_methods_for_micro:
                     # Check if timing is appropriate for current growth stage
                     if request.growth_stage not in method_data["timing"]:
                         continue
@@ -134,14 +127,17 @@ class MicronutrientApplicationService:
                     # Simple efficiency scoring for now, can be expanded
                     efficiency = method_data["efficiency"]
 
-                    # Prioritize methods based on efficiency (assuming maximize_yield implies higher efficiency)
-                    if efficiency > best_efficiency:
+                    # Prioritize methods based on efficiency and goals
+                    if "maximize_yield" in request.application_goals and efficiency > best_efficiency:
                         best_efficiency = efficiency
                         best_method = method
                         best_timing = request.growth_stage # Or select best timing from method_data["timing"]
-                    # Add more complex goal-based prioritization here if needed (e.g., minimize_cost)
-                    # For now, if multiple methods have same max efficiency, the first one encountered is chosen.
-
+                    elif "minimize_cost" in request.application_goals: # Placeholder for cost logic
+                        # For now, just pick the first available if cost is a goal and no efficiency preference
+                        if best_method is None:
+                            best_efficiency = efficiency
+                            best_method = method
+                            best_timing = request.growth_stage
 
                 if best_method and best_timing:
                     rate = deficiency_amount * micro_rules["methods"][best_method]["rate_per_unit"]
