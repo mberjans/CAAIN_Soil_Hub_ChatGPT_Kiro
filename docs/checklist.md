@@ -203,8 +203,8 @@
   - Add color_correct method
   - Verify: Check method in file
 
-- [ ] **JOB3-006.8.impl** - Implement image resizing
-  - Path: `services/image-analysis/src/services/preprocessor.py`
+- [x] **JOB3-006.8.impl** - Implement image resizing
+  - Path: `services/image-analysis/src/services/image_preprocessor.py`
   - Add resize_image method
   - Verify: Check method in file
 
