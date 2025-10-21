@@ -225,7 +225,7 @@
   - Create test file
   - Verify: `ls services/fertilizer-optimization/tests/test_price_routes.py`
 
-- [ ] **JOB2-007.2.test** - Write test for GET /prices/fertilizer-current
+- [x] **JOB2-007.2.test** - Write test for GET /prices/fertilizer-current
   - Path: `services/fertilizer-optimization/tests/test_price_routes.py`
   - Add `test_get_current_prices()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_price_routes.py --collect-only`
