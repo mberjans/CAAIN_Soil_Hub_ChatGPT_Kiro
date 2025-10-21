@@ -58,7 +58,7 @@
   - Command: `python -c "from PIL import Image; print('Pillow OK')"`
   - Verify: Pillow working
 
-- [ ] **JOB3-002.99** - Commit requirements
+- [x] **JOB3-002.99** - Commit requirements
   - Command: `git add services/image-analysis/requirements.txt && git commit -m "JOB3-002: Add ML/CV dependencies"`
   - Verify: `git log -1 --oneline`
 
