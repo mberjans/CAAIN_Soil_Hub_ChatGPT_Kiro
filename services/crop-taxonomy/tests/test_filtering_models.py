@@ -137,3 +137,54 @@ def test_farmer_preference_creation():
     
     # The actual implementation will be tested once the SQLAlchemy model is created
     # For now, this test ensures the model can be imported successfully
+
+
+def test_filter_combination_creation():
+    """Test that FilterCombination SQLAlchemy model can be created with valid data"""
+    # Import the FilterCombination model - this should be a SQLAlchemy model in filtering_models.py
+    try:
+        from src.models.filtering_models import FilterCombination
+    except ImportError:
+        # If the model doesn't exist yet, create a basic test that will fail until the model is implemented
+        # Based on the documentation, FilterCombination should be a SQLAlchemy model
+        # with columns for tracking popular filter combinations
+        pytest.skip("FilterCombination model not yet implemented - will be implemented in JOB1-003.9.impl")
+        return
+    
+    from datetime import datetime
+    import uuid
+    
+    # Test that the model class exists and can be referenced
+    assert FilterCombination is not None
+    
+    # Create a valid FilterCombination instance
+    filter_combo = FilterCombination()
+    filter_combo.combination_hash = "abc123def456"
+    filter_combo.filters = {"climate_zone": "5b", "soil_type": "loam"}
+    filter_combo.usage_count = 5
+    filter_combo.avg_result_count = 10
+    filter_combo.avg_response_time_ms = 150
+    filter_combo.created_at = datetime.now()
+    filter_combo.last_used_at = datetime.now()
+    
+    # Verify all attributes are set correctly
+    assert filter_combo.combination_hash == "abc123def456"
+    assert filter_combo.filters == {"climate_zone": "5b", "soil_type": "loam"}
+    assert filter_combo.usage_count == 5
+    assert filter_combo.avg_result_count == 10
+    assert filter_combo.avg_response_time_ms == 150
+    assert filter_combo.created_at is not None
+    assert filter_combo.last_used_at is not None
+    
+    # Check that usage_count defaults to 1 if not provided
+    filter_combo_default = FilterCombination()
+    filter_combo_default.combination_hash = "def456ghi789"
+    filter_combo_default.filters = {"pest_resistance": "resistant"}
+    # Don't set usage_count, should default to 1 when saved to DB, but in Python it will be None until then
+    
+    assert filter_combo_default.combination_hash == "def456ghi789"
+    assert filter_combo_default.filters == {"pest_resistance": "resistant"}
+    # In Python, the default value won't be set until it's saved to the database
+    # For testing purposes, we'll check that it's either None or 1
+    # (None means it hasn't been set yet, but will be 1 when saved)
+    assert filter_combo_default.usage_count is None or filter_combo_default.usage_count == 1

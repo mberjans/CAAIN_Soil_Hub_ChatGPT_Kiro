@@ -106,12 +106,12 @@
   - Add `test_crop_filtering_attributes_creation()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_filtering_models.py --collect-only`
 
-- [ ] **JOB1-003.3.test** - Write test for FarmerPreference model creation
+- [x] **JOB1-003.3.test** - Write test for FarmerPreference model creation
   - Path: `services/crop-taxonomy/tests/test_filtering_models.py`
   - Add `test_farmer_preference_creation()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_filtering_models.py --collect-only`
 
-- [ ] **JOB1-003.4.test** - Write test for FilterCombination model creation
+- [x] **JOB1-003.4.test** - Write test for FilterCombination model creation
   - Path: `services/crop-taxonomy/tests/test_filtering_models.py`
   - Add `test_filter_combination_creation()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_filtering_models.py --collect-only`

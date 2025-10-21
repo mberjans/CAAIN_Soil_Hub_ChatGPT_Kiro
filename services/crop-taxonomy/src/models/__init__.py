@@ -19,6 +19,7 @@ from .growing_season_models import *
 from .pest_resistance_models import *
 from .resistance_explanation_models import *
 from .trial_data_models import *
+from .filtering_models import *
 
 __all__ = [
     # Core taxonomy models
