@@ -208,9 +208,9 @@
   - Add resize_image method
   - Verify: Check method in file
 
-- [ ] **JOB3-006.9.impl** - Implement preprocess_image main method
-  - Path: `services/image-analysis/src/services/preprocessor.py`
-  - Add preprocess_image method that combines all steps
+- [x] **JOB3-006.9.impl** - Implement preprocess_image main method
+  - Path: `services/image-analysis/src/services/image_preprocessor.py`
+  - Add preprocess_image method that combines all steps and returns both image and quality
   - Verify: Check method in file
 
 - [ ] **JOB3-006.10.verify** - Run preprocessor tests

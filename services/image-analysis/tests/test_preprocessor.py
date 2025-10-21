@@ -55,13 +55,18 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check result properties
-        assert isinstance(result, np.ndarray)
-        assert result.shape == (1, 224, 224, 3)  # Batch dimension + target size + RGB
-        assert result.dtype == np.float32
-        assert np.all(result >= 0.0) and np.all(result <= 1.0)  # Normalized values
+        assert isinstance(img_array, np.ndarray)
+        assert img_array.shape == (1, 224, 224, 3)  # Batch dimension + target size + RGB
+        assert img_array.dtype == np.float32
+        assert np.all(img_array >= 0.0) and np.all(img_array <= 1.0)  # Normalized values
+
+        # Check quality assessment
+        assert isinstance(quality, dict)
+        assert 'score' in quality
+        assert 'issues' in quality
 
     def test_preprocess_image_invalid_input(self):
         """
@@ -178,12 +183,12 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check that output has correct dimensions
-        assert result.shape[1] == 224  # Height
-        assert result.shape[2] == 224  # Width
-        assert result.shape[3] == 3    # RGB channels
+        assert img_array.shape[1] == 224  # Height
+        assert img_array.shape[2] == 224  # Width
+        assert img_array.shape[3] == 3    # RGB channels
 
     def test_image_color_correction_rgb_conversion(self):
         """
@@ -198,12 +203,12 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # The result should maintain RGB order after conversion
         # Note: Due to JPEG compression and normalization, exact values may vary
-        assert result.shape == (1, 224, 224, 3)
-        assert result.dtype == np.float32
+        assert img_array.shape == (1, 224, 224, 3)
+        assert img_array.dtype == np.float32
 
     def test_color_correction_dark_image(self):
         """
@@ -218,17 +223,17 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the dark image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check that color correction was applied
         # Result should be a properly processed numpy array
-        assert isinstance(result, np.ndarray)
-        assert result.shape == (1, 224, 224, 3)
-        assert result.dtype == np.float32
-        assert np.all(result >= 0.0) and np.all(result <= 1.0)
+        assert isinstance(img_array, np.ndarray)
+        assert img_array.shape == (1, 224, 224, 3)
+        assert img_array.dtype == np.float32
+        assert np.all(img_array >= 0.0) and np.all(img_array <= 1.0)
 
         # The mean brightness should be improved from the original dark image
-        mean_brightness = np.mean(result)
+        mean_brightness = np.mean(img_array)
         # Should be higher than the original dark image (after normalization)
         assert mean_brightness > 0.05  # Original would be ~0.08 after normalization
 
@@ -245,13 +250,13 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the washed out image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check that processing completed successfully
-        assert isinstance(result, np.ndarray)
-        assert result.shape == (1, 224, 224, 3)
-        assert result.dtype == np.float32
-        assert np.all(result >= 0.0) and np.all(result <= 1.0)
+        assert isinstance(img_array, np.ndarray)
+        assert img_array.shape == (1, 224, 224, 3)
+        assert img_array.dtype == np.float32
+        assert np.all(img_array >= 0.0) and np.all(img_array <= 1.0)
 
     def test_color_correction_color_cast(self):
         """
@@ -266,18 +271,18 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the image with color cast
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check that processing completed
-        assert isinstance(result, np.ndarray)
-        assert result.shape == (1, 224, 224, 3)
-        assert result.dtype == np.float32
+        assert isinstance(img_array, np.ndarray)
+        assert img_array.shape == (1, 224, 224, 3)
+        assert img_array.dtype == np.float32
 
         # Color correction should attempt to balance the RGB channels
         # The exact result depends on the correction algorithm used
-        red_mean = np.mean(result[0, :, :, 0])
-        green_mean = np.mean(result[0, :, :, 1])
-        blue_mean = np.mean(result[0, :, :, 2])
+        red_mean = np.mean(img_array[0, :, :, 0])
+        green_mean = np.mean(img_array[0, :, :, 1])
+        blue_mean = np.mean(img_array[0, :, :, 2])
 
         # All channels should have some reasonable values after correction
         assert red_mean > 0.0 and green_mean > 0.0 and blue_mean > 0.0
@@ -296,18 +301,18 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the balanced image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check that processing completed successfully
-        assert isinstance(result, np.ndarray)
-        assert result.shape == (1, 224, 224, 3)
-        assert result.dtype == np.float32
-        assert np.all(result >= 0.0) and np.all(result <= 1.0)
+        assert isinstance(img_array, np.ndarray)
+        assert img_array.shape == (1, 224, 224, 3)
+        assert img_array.dtype == np.float32
+        assert np.all(img_array >= 0.0) and np.all(img_array <= 1.0)
 
         # For a balanced image, the correction should maintain reasonable color balance
-        red_mean = np.mean(result[0, :, :, 0])
-        green_mean = np.mean(result[0, :, :, 1])
-        blue_mean = np.mean(result[0, :, :, 2])
+        red_mean = np.mean(img_array[0, :, :, 0])
+        green_mean = np.mean(img_array[0, :, :, 1])
+        blue_mean = np.mean(img_array[0, :, :, 2])
 
         # Channel means should be relatively close for a gray image
         channel_diff = max(red_mean, green_mean, blue_mean) - min(red_mean, green_mean, blue_mean)
@@ -325,8 +330,8 @@ class TestImagePreprocessor:
         jpeg_image.save(jpeg_buffer, format='JPEG')
         jpeg_bytes = jpeg_buffer.getvalue()
 
-        result_jpeg = self.preprocessor.preprocess_image(jpeg_bytes)
-        assert result_jpeg.shape == (1, 224, 224, 3)
+        img_array_jpeg, quality_jpeg = self.preprocessor.preprocess_image(jpeg_bytes)
+        assert img_array_jpeg.shape == (1, 224, 224, 3)
 
         # Test PNG
         png_image = Image.new('RGB', (100, 100), color='magenta')
@@ -334,8 +339,8 @@ class TestImagePreprocessor:
         png_image.save(png_buffer, format='PNG')
         png_bytes = png_buffer.getvalue()
 
-        result_png = self.preprocessor.preprocess_image(png_bytes)
-        assert result_png.shape == (1, 224, 224, 3)
+        img_array_png, quality_png = self.preprocessor.preprocess_image(png_bytes)
+        assert img_array_png.shape == (1, 224, 224, 3)
 
     def test_custom_target_size(self):
         """
@@ -353,10 +358,10 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the image
-        result = custom_preprocessor.preprocess_image(img_bytes)
+        img_array, quality = custom_preprocessor.preprocess_image(img_bytes)
 
         # Check custom dimensions
-        assert result.shape == (1, 64, 128, 3)  # Batch dim, height, width, RGB
+        assert img_array.shape == (1, 64, 128, 3)  # Batch dim, height, width, RGB
 
     def test_image_normalization_range(self):
         """
@@ -371,12 +376,12 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check normalization
-        assert np.all(result >= 0.0)
-        assert np.all(result <= 1.0)
-        assert result.dtype == np.float32
+        assert np.all(img_array >= 0.0)
+        assert np.all(img_array <= 1.0)
+        assert img_array.dtype == np.float32
 
     def test_image_resizing_aspect_ratio_changes(self):
         """
@@ -401,12 +406,12 @@ class TestImagePreprocessor:
             img_bytes = img_buffer.getvalue()
 
             # Process the image
-            result = self.preprocessor.preprocess_image(img_bytes)
+            img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
             # All should resize to target dimensions regardless of input aspect ratio
-            assert result.shape == (1, 224, 224, 3)
-            assert result.dtype == np.float32
-            assert np.all(result >= 0.0) and np.all(result <= 1.0)
+            assert img_array.shape == (1, 224, 224, 3)
+            assert img_array.dtype == np.float32
+            assert np.all(img_array >= 0.0) and np.all(img_array <= 1.0)
 
     def test_image_resizing_edge_cases(self):
         """
@@ -420,8 +425,8 @@ class TestImagePreprocessor:
         tiny_image.save(img_buffer, format='PNG')
         tiny_bytes = img_buffer.getvalue()
 
-        result = self.preprocessor.preprocess_image(tiny_bytes)
-        assert result.shape == (1, 224, 224, 3)
+        img_array, quality = self.preprocessor.preprocess_image(tiny_bytes)
+        assert img_array.shape == (1, 224, 224, 3)
 
         # Test very large image (but not too large to avoid memory issues)
         large_image = Image.new('RGB', (1000, 1000), color='green')
@@ -429,8 +434,8 @@ class TestImagePreprocessor:
         large_image.save(img_buffer, format='PNG')
         large_bytes = img_buffer.getvalue()
 
-        result = self.preprocessor.preprocess_image(large_bytes)
-        assert result.shape == (1, 224, 224, 3)
+        img_array, quality = self.preprocessor.preprocess_image(large_bytes)
+        assert img_array.shape == (1, 224, 224, 3)
 
     def test_image_resizing_maintains_color_channels(self):
         """
@@ -445,15 +450,15 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check that we have 3 color channels
-        assert result.shape[3] == 3  # RGB channels
+        assert img_array.shape[3] == 3  # RGB channels
 
         # Check that all channels have some data (not empty or zero)
-        red_channel = result[0, :, :, 0]
-        green_channel = result[0, :, :, 1]
-        blue_channel = result[0, :, :, 2]
+        red_channel = img_array[0, :, :, 0]
+        green_channel = img_array[0, :, :, 1]
+        blue_channel = img_array[0, :, :, 2]
 
         assert np.mean(red_channel) > 0.0
         assert np.mean(green_channel) > 0.0
@@ -481,15 +486,15 @@ class TestImagePreprocessor:
         img_bytes = img_buffer.getvalue()
 
         # Process the image
-        result = self.preprocessor.preprocess_image(img_bytes)
+        img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
         # Check that the result maintains some variation (not completely uniform)
         # The pattern will be blurred but should still create variation
-        std_deviation = np.std(result)
+        std_deviation = np.std(img_array)
         assert std_deviation > 0.01  # Should have some variation
 
         # Check that we still have a mix of colors (not all same value)
-        assert np.max(result) > np.min(result)
+        assert np.max(img_array) > np.min(img_array)
 
     def test_image_resizing_different_interpolation(self):
         """
@@ -511,12 +516,12 @@ class TestImagePreprocessor:
             img_bytes = img_buffer.getvalue()
 
             # Process the image
-            result = self.preprocessor.preprocess_image(img_bytes)
+            img_array, quality = self.preprocessor.preprocess_image(img_bytes)
 
             # Basic checks
-            assert result.shape == (1, 224, 224, 3)
-            assert result.dtype == np.float32
-            assert np.all(result >= 0.0) and np.all(result <= 1.0)
+            assert img_array.shape == (1, 224, 224, 3)
+            assert img_array.dtype == np.float32
+            assert np.all(img_array >= 0.0) and np.all(img_array <= 1.0)
 
     def _create_gradient_image(self):
         """Create a simple gradient image for testing"""

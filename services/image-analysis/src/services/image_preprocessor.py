@@ -15,7 +15,7 @@ class ImagePreprocessor:
         self.target_size = target_size
         self.min_quality_score = 0.5
 
-    def preprocess_image(self, image_data: bytes) -> np.ndarray:
+    def preprocess_image(self, image_data: bytes) -> Tuple[np.ndarray, Dict[str, Any]]:
         """
         Loads, resizes, and normalizes an image from bytes.
         Enhanced version with color correction and feature enhancement.
@@ -24,7 +24,9 @@ class ImagePreprocessor:
             image_data: Raw image bytes.
 
         Returns:
-            A preprocessed NumPy array ready for model input.
+            Tuple containing:
+            - A preprocessed NumPy array ready for model input
+            - Quality assessment dictionary
         """
         try:
             # Load image using PIL for better format support
@@ -56,7 +58,7 @@ class ImagePreprocessor:
             # Add batch dimension (expected by most deep learning models)
             img_array = np.expand_dims(img_array, axis=0)
 
-            return img_array
+            return img_array, quality
 
         except Exception as e:
             raise ValueError(f"Could not decode image: {str(e)}")
