@@ -316,12 +316,12 @@
   - Add logging configuration
   - Verify: Check logging setup in file
 
-- [ ] **JOB1-005.6.impl** - Create FastAPI app instance
+- [x]! **JOB1-005.6.impl** - Create FastAPI app instance
   - Path: `services/crop-taxonomy/src/main.py`
   - Add FastAPI app with title, description, version
   - Verify: `python -c "from src.main import app; print(app.title)"`
 
-- [ ] **JOB1-005.7.impl** - Add CORS middleware
+- [x] **JOB1-005.7.impl** - Add CORS middleware
   - Path: `services/crop-taxonomy/src/main.py`
   - Add CORSMiddleware configuration
   - Verify: Check middleware in app
