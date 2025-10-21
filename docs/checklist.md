@@ -93,7 +93,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -c "CREATE EXTENSION IF NOT EXISTS timescaledb;"`
   - Verify: `psql -U postgres -d caain_soil_hub -c "SELECT * FROM pg_extension WHERE extname='timescaledb';"`
 
-- [ ] **JOB2-003.7.impl** - Run migration to create tables
+- [x] **JOB2-003.7.impl** - Run migration to create tables
   - Command: `psql -U postgres -d caain_soil_hub -f services/fertilizer-optimization/migrations/002_fertilizer_prices_schema.sql`
   - Verify: `psql -U postgres -d caain_soil_hub -c "\dt fertilizer_types"`
 
