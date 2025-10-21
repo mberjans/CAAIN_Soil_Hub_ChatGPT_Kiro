@@ -609,6 +609,125 @@ def test_search_pagination():
     assert request.offset == 10
 
 
+def test_search_pagination_schema():
+    """Test pagination functionality using the schema-based CropFilterRequest."""
+    from src.schemas.crop_schemas import CropFilterRequest, CropSearchResponse, VarietyResult
+    from uuid import UUID
+    import uuid
+    
+    # Test default pagination values
+    default_request = CropFilterRequest(crop_type="corn")
+    assert default_request.page == 1
+    assert default_request.page_size == 20
+    
+    # Test custom pagination values
+    custom_request = CropFilterRequest(
+        crop_type="corn",
+        page=2,
+        page_size=10
+    )
+    assert custom_request.page == 2
+    assert custom_request.page_size == 10
+    assert custom_request.crop_type == "corn"
+    
+    # Test page validation (must be >= 1)
+    try:
+        invalid_request = CropFilterRequest(
+            crop_type="corn",
+            page=0,  # Should fail
+            page_size=10
+        )
+        assert False, "Should raise validation error for page < 1"
+    except Exception:
+        pass  # Expected validation error
+    
+    # Test page_size validation (must be 1-100)
+    try:
+        invalid_request = CropFilterRequest(
+            crop_type="corn",
+            page=1,
+            page_size=0  # Should fail
+        )
+        assert False, "Should raise validation error for page_size < 1"
+    except Exception:
+        pass  # Expected validation error
+    
+    try:
+        invalid_request = CropFilterRequest(
+            crop_type="corn",
+            page=1,
+            page_size=101  # Should fail
+        )
+        assert False, "Should raise validation error for page_size > 100"
+    except Exception:
+        pass  # Expected validation error
+
+
+def test_search_pagination_response():
+    """Test paginated response structure."""
+    from src.schemas.crop_schemas import CropFilterRequest, CropSearchResponse, VarietyResult
+    from uuid import UUID
+    import uuid
+    
+    # Create a mock response with pagination data
+    variety1 = VarietyResult(
+        variety_id=uuid.uuid4(),
+        variety_name="Test Variety 1",
+        maturity_days=100,
+        yield_potential=150.0,
+        pest_resistance_summary={"corn_borer": "resistant"},
+        disease_resistance_summary={"rust": "moderate"},
+        market_class="grain",
+        relevance_score=0.8
+    )
+    
+    variety2 = VarietyResult(
+        variety_id=uuid.uuid4(),
+        variety_name="Test Variety 2", 
+        maturity_days=110,
+        yield_potential=160.0,
+        pest_resistance_summary={"aphids": "moderate"},
+        disease_resistance_summary={"blight": "resistant"},
+        market_class="sweet",
+        relevance_score=0.7
+    )
+    
+    # Create a paginated response
+    response = CropSearchResponse(
+        varieties=[variety1, variety2],
+        total_count=100,
+        page=2,
+        page_size=10,
+        total_pages=10,
+        filters_applied={"crop_type": "corn"},
+        search_time_ms=150
+    )
+    
+    # Test response structure
+    assert len(response.varieties) == 2
+    assert response.total_count == 100
+    assert response.page == 2
+    assert response.page_size == 10
+    assert response.total_pages == 10
+    assert response.filters_applied["crop_type"] == "corn"
+    assert response.search_time_ms == 150
+    
+    # Verify pagination calculation: total_pages should be ceil(total_count / page_size)
+    assert response.total_pages == 10  # 100 total / 10 per page = 10 pages
+    
+    # Validate first variety
+    assert response.varieties[0].variety_name == "Test Variety 1"
+    assert response.varieties[0].maturity_days == 100
+    assert response.varieties[0].relevance_score == 0.8
+    assert response.varieties[0].pest_resistance_summary["corn_borer"] == "resistant"
+    
+    # Validate second variety
+    assert response.varieties[1].variety_name == "Test Variety 2"
+    assert response.varieties[1].maturity_days == 110
+    assert response.varieties[1].relevance_score == 0.7
+    assert response.varieties[1].disease_resistance_summary["blight"] == "resistant"
+
+
 def test_search_sorting():
     """Test sorting functionality in crop search."""
     # Test different sort options
