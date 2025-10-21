@@ -336,7 +336,7 @@
   - Add @app.on_event("shutdown") function
   - Verify: Check shutdown handler in file
 
-- [ ] **JOB1-005.10.impl** - Implement health check endpoint
+- [x]! **JOB1-005.10.impl** - Implement health check endpoint
   - Path: `services/crop-taxonomy/src/main.py`
   - Add @app.get("/health") endpoint
   - Verify: Check health endpoint in file
