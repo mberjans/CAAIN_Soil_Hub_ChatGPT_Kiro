@@ -15,7 +15,7 @@
   - Command: `mkdir -p services/crop-taxonomy`
   - Verify: `ls -ld services/crop-taxonomy`
 
-- [ ] **JOB1-001.2** - Create source code directories
+- [x] **JOB1-001.2** - Create source code directories
   - Command: `mkdir -p services/crop-taxonomy/src/{models,services,api,schemas}`
   - Verify: `ls -la services/crop-taxonomy/src/`
 
