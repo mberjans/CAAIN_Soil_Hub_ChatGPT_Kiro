@@ -82,7 +82,7 @@
   - Command: `python -c "import pytest; print(f'Pytest: {pytest.__version__}')"`
   - Verify: Output shows version 7.4.3
 
-- [ ] **JOB1-002.8** - List all installed packages
+- [x] **JOB1-002.8** - List all installed packages
   - Command: `pip list`
   - Verify: All required packages present
 
