@@ -1998,6 +1998,23 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Cost Components**: Equipment costs, fuel costs, labor costs, fertilizer costs, opportunity costs
   **Labor Analysis**: Time requirements, skill requirements, labor availability, seasonal constraints
   **Economic Analysis**: Cost-benefit analysis, break-even analysis, sensitivity analysis
+
+## Micronutrient Management
+
+### TICKET-016_micronutrient-management-1. Micronutrient Assessment and Management System
+- [ ] TICKET-016_micronutrient-management-1.1 Implement micronutrient deficiency assessment and management
+  **Status**: [ ]
+  **Implementation**: Develop `MicronutrientManager` service in `services/micronutrient-management/src/services/micronutrient_manager.py`
+  **Features**: Assess deficiency risk, recommend supplementation strategy
+  **Dependencies**: Soil testing integration, crop response models, micronutrient database
+  **Acceptance Criteria**: Identifies micronutrient deficiency risks, recommends soil and tissue testing protocols, provides micronutrient application recommendations, calculates cost-benefit of micronutrient supplementation, integrates with main fertilizer recommendations.
+
+- [ ] TICKET-016_micronutrient-management-6.1 Develop comprehensive application method and timing system
+  **Status**: [ ]
+  **Implementation**: Extend `MicronutrientManager` service with methods for application method and timing recommendations.
+  **Features**: Determine suitable application methods (foliar, soil, fertigation), identify optimal application timings (growth stage, season, weather).
+  **Integration**: Crop taxonomy, soil management, weather services.
+  **Acceptance Criteria**: Recommends appropriate application methods for specific micronutrients and crops, provides optimal timing windows based on growth stage and environmental factors, considers equipment availability and cost-effectiveness.
   **Integration**: Connect with equipment databases, labor markets, fuel prices, fertilizer prices
 - [x] TICKET-023_fertilizer-application-method-6.2 Implement economic optimization and scenario modeling
   **Implementation**: Create economic optimization system for application methods
@@ -2945,7 +2962,7 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Output**: Prioritized recommendation lists, application schedules, monitoring plans
 
 ### TICKET-016_micronutrient-management-6. Advanced Application Method and Timing System
-- [ ] TICKET-016_micronutrient-management-6.1 Develop comprehensive application method and timing system
+- [x] TICKET-016_micronutrient-management-6.1 Develop comprehensive application method and timing system
   **Implementation**: Create `ApplicationMethodService` in `src/services/application_service.py`
   **Features**: Method optimization, timing recommendations, compatibility analysis
   **Methods**: Soil application, foliar application, seed treatment, fertigation, broadcast, banded
