@@ -74,7 +74,7 @@
   - Add `test_fertilizer_type_creation()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_price_models.py --collect-only`
 
-- [ ] **JOB2-003.3.test** - Write test for FertilizerPrice model
+- [x] **JOB2-003.3.test** - Write test for FertilizerPrice model
   - Path: `services/fertilizer-optimization/tests/test_price_models.py`
   - Add `test_fertilizer_price_creation()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_price_models.py --collect-only`
