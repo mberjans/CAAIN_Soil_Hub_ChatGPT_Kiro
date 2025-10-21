@@ -92,7 +92,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -f services/image-analysis/migrations/003_image_analysis_schema.sql`
   - Verify: `psql -U postgres -d caain_soil_hub -c "\dt image_analyses"`
 
-- [ ] **JOB3-003.6.verify** - Run model tests
+- [x] **JOB3-003.6.verify** - Run model tests
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/test_image_models.py -v`
   - Verify: All tests pass
 
