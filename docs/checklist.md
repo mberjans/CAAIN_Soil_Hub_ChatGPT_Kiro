@@ -242,7 +242,7 @@
   - Add `test_detect_deficiency()` test
   - Verify: `pytest services/image-analysis/tests/test_detector.py --collect-only`
 
-- [ ] **JOB3-007.4.impl** - Create detector.py
+- [x] **JOB3-007.4.impl** - Create detector.py
   - Path: `services/image-analysis/src/services/detector.py`
   - Create DeficiencyDetector class
   - Verify: `python -c "from src.services.detector import DeficiencyDetector; print('OK')"`
