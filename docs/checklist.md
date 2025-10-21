@@ -79,7 +79,7 @@
   - Add `test_fertilizer_price_creation()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_price_models.py --collect-only`
 
-- [ ] **JOB2-003.4.impl** - Create price_models.py
+- [x] **JOB2-003.4.impl** - Create price_models.py
   - Path: `services/fertilizer-optimization/src/models/price_models.py`
   - Implement FertilizerType and FertilizerPrice models
   - Verify: `python -c "from src.models.price_models import FertilizerType, FertilizerPrice; print('OK')"`
