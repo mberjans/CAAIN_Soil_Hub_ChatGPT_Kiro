@@ -136,7 +136,7 @@
   - Add FarmerPreference class with JSONB columns
   - Verify: `python -c "from src.models.filtering_models import FarmerPreference; print('OK')"`
 
-- [ ] **JOB1-003.9.impl** - Implement FilterCombination model
+- [x] **JOB1-003.9.impl** - Implement FilterCombination model
   - Path: `services/crop-taxonomy/src/models/filtering_models.py`
   - Add FilterCombination class
   - Verify: `python -c "from src.models.filtering_models import FilterCombination; print('OK')"`
