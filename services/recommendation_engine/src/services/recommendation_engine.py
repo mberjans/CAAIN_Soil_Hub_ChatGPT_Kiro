@@ -23,6 +23,7 @@ try:
     )
     from ..services.enhanced_crop_recommendation_service import EnhancedCropRecommendationService
     from ..services.fertilizer_recommendation_service import FertilizerRecommendationService
+    from ..services.fertilizer_type_selection_service import FertilizerTypeSelectionService
     from ..services.soil_management_service import SoilManagementService
     from ..services.nutrient_deficiency_service import NutrientDeficiencyService
     from ..services.crop_rotation_service import CropRotationService
@@ -45,6 +46,7 @@ except ImportError:
     )
     from services.enhanced_crop_recommendation_service import EnhancedCropRecommendationService
     from services.fertilizer_recommendation_service import FertilizerRecommendationService
+    from services.fertilizer_type_selection_service import FertilizerTypeSelectionService
     from services.soil_management_service import SoilManagementService
     from services.nutrient_deficiency_service import NutrientDeficiencyService
     from services.crop_rotation_service import CropRotationService
@@ -69,7 +71,7 @@ class RecommendationEngine:
         """Initialize recommendation engine with all service components."""
         self.crop_service = CropRecommendationService()
         self.enhanced_crop_service = EnhancedCropRecommendationService()
-        self.fertilizer_service = FertilizerRecommendationService()
+        self.fertilizer_service = FertilizerTypeSelectionService()
         self.soil_service = SoilManagementService()
         self.nutrient_service = NutrientDeficiencyService()
         self.rotation_service = CropRotationService()
