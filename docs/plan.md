@@ -1,999 +1,1315 @@
-# CAAIN Soil Hub - Detailed Implementation Plan
+# Parallel Job 1: Crop Type Filtering Enhancement
+
+**TICKET-005: Enhanced Crop Classification and Filtering System**  
+**Estimated Timeline**: 3-4 weeks  
+**Priority**: High  
+**Can Start**: Immediately (No blocking dependencies)
 
 ## Executive Summary
 
-The Autonomous Farm Advisory System (AFAS) is a comprehensive agricultural decision support platform designed to answer 20 critical farmer questions through intelligent data integration, rule-based processing, and AI-powered explanations. This plan outlines the systematic implementation approach for building a production-ready system that serves farmers, agricultural consultants, and extension services.
-
-## Project Overview
-
-**Duration**: 12 months
-**Team Size**: 8-12 developers (including AI coding agents)
-**Budget**: $800K - $1.2M
-**Architecture**: Python microservices with FastAPI
-**Target Users**: 10,000+ farmers in first year
-**AI Integration**: AI coding agents supported with comprehensive documentation
-
-## Current Status Assessment
-
-Based on the implementation plan and checklist analysis:
-
-### ✅ **Completed Components** (Phase 1 - Foundation)
-- [x] Native development environment setup
-- [x] CI/CD pipeline configuration  
-- [x] Basic microservices skeleton (Python/FastAPI)
-- [x] Database schema design (PostgreSQL, MongoDB, Redis)
-- [x] Weather API integration (NOAA, local services)
-- [x] Soil database connections (USDA Web Soil Survey + SoilGrids)
-- [x] Data ingestion service framework
-- [x] Question intent classification service
-- [x] Basic recommendation engine architecture
-- [x] Questions 1-5 implementation (Crop Selection, Soil Fertility, Crop Rotation, Nutrient Deficiency, Fertilizer Type)
-- [x] OpenRouter LLM integration (GPT-4, Claude, Llama)
-
-### 🔄 **In Progress Components**
-- [-] Context management system (partially implemented)
-- [ ] Questions 6-20 implementation
-- [ ] Advanced AI capabilities
-- [ ] User interface development
-
-### ⏳ **Pending Components**
-- [ ] Image analysis capabilities
-- [ ] Mobile interface
-- [ ] Performance optimization
-- [ ] Production deployment
-
-## Implementation Strategy
-
-### Phase 1: Foundation Consolidation (Months 1-3) - 75% Complete
-
-**Objective**: Solidify core infrastructure and complete remaining foundation components
-
-#### Sprint 1.1: Infrastructure Completion (Weeks 1-2)
-**Focus**: Complete remaining infrastructure gaps
-
-**Priority Tickets**:
-- **TICKET-011**: Comprehensive Testing Framework (Critical)
-  - Implement pytest framework with >80% coverage
-  - Set up agricultural validation tests
-  - Configure CI/CD test automation
-  - **Deliverable**: Full test suite for existing components
-
-**Team Allocation**:
-- QA Engineer (2 weeks)
-- DevOps Engineer (1 week)
-
-#### Sprint 1.2: Core Services Enhancement (Weeks 3-4)
-**Focus**: Enhance existing services with missing capabilities
-
-**Priority Tickets**:
-- **TICKET-001**: Climate Zone Data Service Implementation (Critical)
-  - Complete USDA Plant Hardiness Zone integration
-  - Add Köppen climate classification
-  - Implement caching and validation
-  - **Deliverable**: Production-ready climate zone service
-
-- **TICKET-002**: Coordinate-Based Climate Zone Detection (Critical)
-  - GPS coordinate validation and processing
-  - Confidence scoring for zone detection
-  - Edge case handling (ocean, polar regions)
-  - **Deliverable**: Robust coordinate-based detection
-
-**Team Allocation**:
-- Senior Python Developer (2 weeks)
-- Data Engineer (2 weeks)
-
-#### Sprint 1.3: Location and Farm Management (Weeks 5-6)
-**Focus**: Complete farm location input capabilities
-
-**Priority Tickets**:
-- **TICKET-008**: Location Management API Endpoints (Critical)
-  - CRUD operations for farm locations
-  - PostGIS integration for geospatial data
-  - Geocoding with multiple providers
-  - **Deliverable**: Complete location management system
-
-**Team Allocation**:
-- Python Backend Developer (2 weeks)
-- GIS Specialist (1 week)
-
-### Phase 2: Service Expansion (Months 4-6)
-
-**Objective**: Implement Questions 6-15 with enhanced AI capabilities
-
-#### Sprint 2.1: Fertilizer Management Suite (Weeks 7-10)
-**Focus**: Complete fertilizer-related questions (6-9)
-
-**User Stories Addressed**:
-- **US-005**: Soil pH Management - pH optimization for nutrient availability
-- **US-006**: Fertilizer Type Selection - Organic vs synthetic vs slow-release
-- **US-007**: Fertilizer Application Method - Liquid vs granular decisions
-- **US-008**: Fertilizer Timing Optimization - Optimal application timing
-- **US-010**: Runoff Prevention - Environmental impact reduction
-
-**Priority Tickets**:
-- **TICKET-006**: Market Price Integration System (High)
-  - Real-time fertilizer price tracking
-  - Multiple data source integration
-  - Price trend analysis
-  - **Deliverable**: Dynamic pricing system
-
-- **TICKET-003**: pH Management Service Structure (Critical)
-- **TICKET-004**: pH adjustment calculation engine (Critical)
-  - Lime and sulfur requirement calculations
-  - Soil buffer capacity modeling
-  - Application timing recommendations
-  - **Deliverable**: Complete pH management system
-
-**Questions Implemented**:
-- Q6: Fertilizer Application Method (liquid vs granular)
-- Q7: Fertilizer Timing Optimization
-- Q8: Environmental Impact/Runoff Prevention
-- Q9: Cover Crop Selection
-- Q10: Soil pH Management
-
-**Acceptance Criteria Validation**:
-- [ ] US-005: pH adjustment recommendations with timing and cost estimates
-- [ ] US-006: Fertilizer type comparison with pros/cons and cost analysis
-- [ ] US-007: Application method recommendations based on equipment and goals
-- [ ] US-008: Seasonal fertilizer calendar with weather integration
-- [ ] US-010: Environmental impact assessment with mitigation strategies
-
-**Team Allocation**:
-- Python Backend Developers (2 × 4 weeks)
-- Agricultural Expert (2 weeks)
-- Data Engineer (4 weeks)
-
-#### Sprint 2.2: Advanced Analysis Capabilities (Weeks 11-14)
-**Focus**: Implement Questions 11-15 with ML/AI features
-
-**User Stories Addressed**:
-- **US-004**: Nutrient Deficiency Detection - Multi-source deficiency identification
-- **US-011**: Cover Crop Selection - Goal-based cover crop recommendations
-- **US-012**: Drought Management - Moisture conservation and resilience practices
-- **US-016**: Weather Impact Analysis (foundation) - Weather data integration
-
-**Priority Tickets**:
-- **TICKET-007**: Visual Symptom Analysis System (High)
-  - CNN models for deficiency detection
-  - Image preprocessing pipeline
-  - Confidence scoring system
-  - **Deliverable**: Crop photo analysis capability
-
-- **TICKET-009**: Weather Data Integration System (High)
-  - Multi-source weather data integration
-  - Agricultural weather metrics
-  - Impact assessment algorithms
-  - **Deliverable**: Weather-aware recommendations
-
-**Questions Implemented**:
-- Q11: Micronutrient Management
-- Q12: Precision Agriculture ROI Assessment
-- Q13: Drought Management
-- Q14: Early Deficiency Detection (with image analysis)
-- Q15: Tillage Practice Recommendations
-
-**Acceptance Criteria Validation**:
-- [ ] US-004: Image analysis with >85% accuracy, symptom description processing
-- [ ] US-011: Cover crop species recommendations with timing and benefits
-- [ ] US-012: Moisture conservation practices with water savings estimates
-- [ ] US-016: Weather impact assessment with adaptation recommendations
-
-**Team Allocation**:
-- Python ML Engineer (4 weeks)
-- Computer Vision Specialist (4 weeks)
-- Python Backend Developer (4 weeks)
-
-### Phase 3: Advanced Features & UI (Months 7-9)
-
-**Objective**: Complete all 20 questions and develop user interface
-
-#### Sprint 3.1: Final Questions Implementation (Weeks 15-18)
-**Focus**: Implement Questions 16-20
-
-**User Stories Addressed**:
-- **US-002**: Crop Rotation Planning - Multi-year rotation optimization
-- **US-009**: Cost-Effective Fertilizer Strategy - Economic optimization and ROI
-- **US-013**: Precision Agriculture ROI Assessment - Technology investment analysis
-- **US-016**: Weather Impact Analysis (complete) - Advanced weather adaptation
-- **US-020**: Government Program Integration - Policy and incentive programs
-
-**Priority Tickets**:
-- Economic optimization algorithms (Q16: Cost-effective fertilizer strategy)
-- Weather pattern analysis (Q17: Weather impact analysis)
-- Testing integration (Q18: Soil/tissue test integration)
-- Sustainable practices (Q19: Yield optimization without soil harm)
-- Policy integration (Q20: Government programs and regulations)
-
-**Acceptance Criteria Validation**:
-- [ ] US-002: Multi-year rotation plans with economic and sustainability analysis
-- [ ] US-009: Cost-optimized fertilizer strategies with ROI and break-even analysis
-- [ ] US-013: Technology ROI assessment with payback period calculations
-- [ ] US-016: Weather pattern analysis with climate adaptation strategies
-- [ ] US-020: Government program integration with compliance and incentive guidance
-
-**Team Allocation**:
-- Python Backend Developers (2 × 4 weeks)
-- Policy Research Specialist (2 weeks)
-- Agricultural Expert (3 weeks)
-
-#### Sprint 3.2: User Interface Development (Weeks 19-22)
-**Focus**: Complete web dashboard and mobile interface
-
-**User Stories Addressed**:
-- **US-014**: Early Deficiency Detection (advanced) - Enhanced ML models and UI
-- **US-015**: Soil and Tissue Test Integration - Laboratory data integration
-- **US-017**: Tillage Practice Recommendations - No-till vs conventional analysis
-- **US-018**: Sustainable Intensification - Integrated optimization interface
-- **US-019**: Micronutrient Management - Micronutrient assessment tools
-- **US-022**: Recommendation History and Tracking - Historical tracking dashboard
-- **US-023**: Mobile Field Access - Mobile-responsive interface and offline capability
-
-**Priority Tickets**:
-- **TICKET-010**: Farm Profile Management Interface (High)
-  - Interactive maps with Leaflet.js
-  - Responsive design with Bootstrap 5
-  - Real-time validation and feedback
-  - **Deliverable**: Complete farm management UI
-
-**UI Components**:
-- Farm profile and field management
-- Interactive recommendation dashboard
-- Mobile-responsive design
-- Data visualization and charts
-
-**Acceptance Criteria Validation**:
-- [ ] US-014: Advanced deficiency detection with real-time monitoring interface
-- [ ] US-015: Laboratory test result integration with recommendation adjustments
-- [ ] US-017: Tillage practice comparison with transition planning tools
-- [ ] US-018: Integrated sustainability and yield optimization dashboard
-- [ ] US-019: Micronutrient assessment with supplementation recommendations
-- [ ] US-022: Historical recommendation tracking with outcome analysis
-- [ ] US-023: Mobile interface with offline capability and GPS integration
-
-**Team Allocation**:
-- Python Frontend Developers (2 × 4 weeks)
-- UI/UX Designer (4 weeks)
-
-### Phase 4: Optimization & Launch (Months 10-12)
-
-**Objective**: Production readiness and user validation
-
-#### Sprint 4.1: Performance Optimization (Weeks 23-26)
-**Focus**: System performance and scalability
-
-**Optimization Areas**:
-- Database query optimization
-- Caching layer enhancements
-- Load balancing configuration
-- Response time improvements (<3 seconds)
-
-#### Sprint 4.2: User Acceptance Testing (Weeks 27-30)
-**Focus**: Real-world validation with farmers
-
-**Testing Approach**:
-- 50+ farmer beta testing program
-- Agricultural expert validation
-- Performance benchmarking
-- Security audit and hardening
-
-## AI Coding Agent Integration
-
-### Agent-Ready Documentation
-The project includes comprehensive documentation specifically designed for AI coding agents:
-
-- **docs/ai-agent-integration-guide.md**: Complete workflow guide for AI agents
-- **docs/tickets.md**: Detailed technical specifications with acceptance criteria
-- **docs/checklist.md**: Granular task breakdown with ticket mapping (TICKET-XXX_task-id format)
-- **services/ai-agent/**: Reference implementation showing established patterns
-
-### AI Agent Workflow
-1. **Task Selection**: AI agents select tickets from current sprint priorities
-2. **Context Analysis**: Review ticket specifications and existing codebase patterns
-3. **Implementation**: Follow established service patterns and API conventions
-4. **Integration**: Connect with existing services (AI Agent, Context Management)
-5. **Testing**: Implement comprehensive tests including agricultural validation
-6. **Human Handoff**: Flag complex agricultural logic for expert review
-
-### Existing Codebase Foundation
-AI agents can leverage the existing implementation:
-- ✅ **AI Agent Service**: OpenRouter LLM integration with agricultural context
-- ✅ **Context Management**: Conversation and agricultural context handling
-- ✅ **Service Patterns**: Established FastAPI microservice architecture
-- ✅ **Testing Framework**: pytest with agricultural validation patterns
-
-### Quality Assurance for AI Agents
-- **Code Standards**: >80% test coverage, full type hints, comprehensive documentation
-- **Agricultural Validation**: Expert review required for domain-specific logic
-- **Integration Testing**: Validation against existing services and APIs
-- **Performance Requirements**: <3 second response time for all endpoints
-
-## Technical Implementation Details
-
-### Architecture Stack
-```
-Frontend Layer:
-├── FastAPI + Jinja2 Templates (Primary)
-├── Streamlit (Alternative/Prototyping)
-├── Bootstrap 5 (Responsive Design)
-├── Leaflet.js (Interactive Maps)
-└── Chart.js (Data Visualization)
-
-Backend Services:
-├── Python 3.11+ (All Services)
-├── FastAPI (API Framework)
-├── SQLAlchemy (ORM)
-├── Pydantic (Data Validation)
-└── AsyncIO (Async Operations)
-
-Data Layer:
-├── PostgreSQL (Structured Data)
-├── PostGIS (Geospatial Extension)
-├── TimescaleDB (Time Series)
-├── MongoDB (Document Storage)
-├── Redis (Caching)
-└── Vector DB (AI Embeddings)
-
-AI/ML Stack:
-├── OpenRouter (LLM Integration)
-├── TensorFlow/PyTorch (Deep Learning)
-├── OpenCV (Image Processing)
-├── scikit-learn (ML Algorithms)
-└── spaCy/NLTK (NLP)
-
-External Integrations:
-├── NOAA Weather API
-├── USDA Soil Survey
-├── Plant Hardiness Zones
-├── Market Price APIs
-└── Government Program DBs
+This job implements advanced crop filtering capabilities including comprehensive taxonomy, multi-criteria filtering, farmer preference learning, and intelligent result ranking. This work is **completely independent** of other parallel jobs and can proceed without blocking.
+
+## Related Tickets from Checklist
+
+- **TICKET-005_crop-type-filtering-1.1**: Develop comprehensive crop taxonomy ✅ (Validate existing)
+- **TICKET-005_crop-type-filtering-1.2**: Extend crop filtering attributes model ✅ (Validate existing)
+- **TICKET-005_crop-type-filtering-1.3**: Implement advanced crop attribute tagging system ✅ (Validate existing)
+- **TICKET-005_crop-type-filtering-1.4**: Create crop preference profiles system ✅ (Validate existing)
+- **TICKET-005_crop-type-filtering-2.1**: Enhance existing crop search service with advanced filtering
+- **TICKET-005_crop-type-filtering-2.2**: Implement dynamic filter combination engine
+- **TICKET-005_crop-type-filtering-2.3**: Create intelligent filter result ranking and visualization
+- **TICKET-005_crop-type-filtering-3.1**: Implement comprehensive farmer preference storage
+- **TICKET-005_crop-type-filtering-3.2**: Develop preference learning and adaptation system
+- **TICKET-005_crop-type-filtering-3.3**: Create preference-based recommendation enhancement engine
+- **TICKET-005_crop-type-filtering-4.1**: Extend existing crop taxonomy API with advanced filtering endpoints
+
+## Technical Stack
+
+```yaml
+Languages: Python 3.11+
+Framework: FastAPI
+Database: PostgreSQL with JSONB, GIN indexes
+ORM: SQLAlchemy 2.0+
+Validation: Pydantic v2
+Testing: pytest, pytest-asyncio, pytest-cov
+Caching: Redis (optional for this phase)
 ```
 
-### Service Architecture
+## Service Architecture
+
+**Service Location**: `services/crop-taxonomy/`  
+**Port**: 8007 (new service) or extend existing recommendation-engine  
+**Reference Pattern**: Follow `services/recommendation-engine/` structure
+
 ```
-services/
-├── question-router/        # Port 8000 - Route questions to processors
-├── recommendation-engine/  # Port 8001 - Core agricultural logic
-├── ai-agent/              # Port 8002 - LLM integration & explanations
-├── data-integration/      # Port 8003 - External data sources
-├── image-analysis/        # Port 8004 - Computer vision for crops
-├── user-management/       # Port 8005 - User profiles & auth
-└── frontend/              # Port 3000 - Web interface
-```
-
-### Database Design Strategy
-
-**PostgreSQL (Primary)**:
-- User profiles and farm data
-- Crop varieties and characteristics
-- Soil test results and recommendations
-- Weather data (with TimescaleDB)
-- Geospatial data (with PostGIS)
-
-**MongoDB (Secondary)**:
-- Flexible recommendation responses
-- External API cache data
-- User interaction logs
-- ML model predictions
-
-**Redis (Caching)**:
-- Session management
-- Frequently accessed recommendations
-- API response caching
-- Real-time data temporary storage
-
-## Quality Assurance Strategy
-
-### Testing Framework
-```
-tests/
-├── unit/                  # >80% code coverage
-├── integration/           # API endpoint testing
-├── e2e/                   # User workflow testing
-├── performance/           # Load and response time testing
-├── agricultural/          # Expert validation testing
-└── security/              # Security and penetration testing
+services/crop-taxonomy/
+├── src/
+│   ├── __init__.py
+│   ├── main.py                    # FastAPI application
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── crop_filtering_models.py
+│   │   ├── preference_models.py
+│   │   └── taxonomy_models.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── crop_search_service.py
+│   │   ├── filter_engine.py
+│   │   ├── result_processor.py
+│   │   ├── preference_manager.py
+│   │   ├── preference_learning.py
+│   │   └── crop_attribute_service.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── search_routes.py
+│   │   ├── filter_routes.py
+│   │   └── preference_routes.py
+│   └── schemas/
+│       ├── __init__.py
+│       ├── search_schemas.py
+│       ├── filter_schemas.py
+│       └── preference_schemas.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_crop_search.py
+│   ├── test_filter_engine.py
+│   ├── test_preference_learning.py
+│   └── test_api_endpoints.py
+├── requirements.txt
+└── README.md
 ```
 
-### Agricultural Validation Process
-1. **Expert Review**: Agricultural consultants validate recommendations
-2. **Field Testing**: Real-world validation with partner farms
-3. **Accuracy Metrics**: >85% farmer satisfaction with recommendations
-4. **Continuous Learning**: Feedback integration and model improvement
+## Week 1: Foundation & Data Models (Days 1-5)
 
-## Risk Management
+### Day 1-2: Service Structure Setup
 
-### Technical Risks
-- **Data Quality**: Multiple source validation and expert review
-- **API Dependencies**: Fallback providers and graceful degradation
-- **Performance**: Regular load testing and optimization
-- **Security**: Comprehensive security audits and monitoring
+**Step 1: Create Service Directory**
+```bash
+# Execute from repository root
+mkdir -p services/crop-taxonomy/src/{models,services,api,schemas}
+mkdir -p services/crop-taxonomy/tests
+touch services/crop-taxonomy/src/__init__.py
+touch services/crop-taxonomy/src/main.py
+touch services/crop-taxonomy/requirements.txt
+```
 
-### Business Risks
-- **User Adoption**: Early farmer engagement and feedback integration
-- **Competition**: Focus on unique agricultural expertise and validation
-- **Regulatory**: Stay current with agricultural regulations and policies
+**Step 2: Create requirements.txt**
+```txt
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+pydantic==2.5.0
+pydantic-settings==2.1.0
+psycopg2-binary==2.9.9
+alembic==1.12.1
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+httpx==0.25.1
+```
 
-## Success Metrics
+**Step 3: Install Dependencies**
+```bash
+cd services/crop-taxonomy
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
 
-### Development KPIs
-- **Code Quality**: >80% test coverage, <5% bug rate
-- **Performance**: <3s response time, 99.5% uptime
-- **Feature Completion**: 100% of 20 questions on schedule
+**Validation Command**:
+```bash
+pip list | grep -E "fastapi|sqlalchemy|pydantic"
+# Should show all packages installed
+```
 
-### User KPIs
-- **Adoption**: 1,000+ users within 6 months
-- **Engagement**: >70% monthly active users
-- **Satisfaction**: >4.5/5 rating, >80% recommendation rate
+### Day 2-3: Database Schema Implementation
 
-### Business KPIs
-- **Revenue**: $100K+ ARR within first year
-- **Market**: 5% target market engagement
-- **Validation**: 3+ university endorsements
+**File**: `services/crop-taxonomy/src/models/crop_filtering_models.py`
 
-## Resource Requirements
-
-### Team Structure (Human + AI Agents)
-- **Technical Lead**: Python/FastAPI architecture oversight and AI agent coordination
-- **Backend Developers**: 2-3 senior Python developers (working with AI agents)
-- **ML Engineers**: 2 specialists for AI/ML features
-- **Frontend Developer**: Python web development
-- **Data Engineer**: Integration and data pipeline specialist
-- **QA Engineer**: Testing and quality assurance (including AI-generated code validation)
-- **DevOps Engineer**: Infrastructure and deployment
-- **Agricultural Expert**: Domain knowledge and validation (0.5 FTE, critical for AI agent output review)
-- **AI Agent Coordinators**: 2-3 AI coding agents following docs/ai-agent-integration-guide.md
-
-### Infrastructure Costs (Monthly)
-- **Development Environment**: $2,000
-- **External APIs**: $2,000-3,000
-- **AI/ML Services**: $3,000-5,000
-- **Monitoring & Tools**: $1,000
-- **Total**: $8,000-11,000/month
-
-## Next Steps (Immediate Actions)
-
-### Week 1-2 Priorities
-1. **Complete Testing Framework** (TICKET-011)
-   - Set up pytest with coverage reporting
-   - Implement agricultural validation tests
-   - Configure CI/CD automation
-
-2. **Finalize Climate Zone Service** (TICKET-001, TICKET-002)
-   - Complete USDA API integration
-   - Add coordinate validation
-   - Implement caching layer
-
-3. **Team Onboarding** (Human + AI Agents)
-   - Review existing codebase and service patterns
-   - Set up development environments
-   - Assign ticket ownership to human developers and AI agents
-   - **AI Agent Setup**: Review docs/ai-agent-integration-guide.md
-   - **Context Familiarization**: Study existing services/ai-agent/ implementation
-
-### Success Criteria for Phase 1 Completion
-- [ ] All foundation services have >80% test coverage
-- [ ] Climate zone detection works for all US coordinates
-- [ ] Location management supports farm and field creation
-- [ ] Performance benchmarks met (<3s response time)
-- [ ] Agricultural expert validation completed
-
-## Detailed Sprint Planning
-
-### Phase 1 Detailed Breakdown
-
-#### Sprint 1.1: Testing Framework Implementation (Weeks 1-2)
-**Sprint Goal**: Establish comprehensive testing foundation
-
-**Daily Breakdown**:
-- **Day 1-2**: Set up pytest framework and coverage reporting
-- **Day 3-4**: Implement unit tests for existing services
-- **Day 5-6**: Create integration test suite
-- **Day 7-8**: Set up agricultural validation framework
-- **Day 9-10**: Configure CI/CD test automation
-
-**Definition of Done**:
-- [ ] >80% test coverage for all existing services
-- [ ] Automated test execution in CI/CD pipeline
-- [ ] Agricultural validation tests with expert review process
-- [ ] Performance benchmarking tests configured
-
-#### Sprint 1.2: Climate Zone Service Completion (Weeks 3-4)
-**Sprint Goal**: Production-ready climate zone detection
-
-**User Stories Addressed**:
-- US-001: Crop Variety Recommendation (climate zone auto-detection)
-
-**Daily Breakdown**:
-- **Day 1-3**: Complete USDA Plant Hardiness Zone API integration
-- **Day 4-5**: Implement Köppen climate classification
-- **Day 6-7**: Add coordinate validation and edge case handling
-- **Day 8-9**: Implement caching layer with Redis
-- **Day 10**: Performance testing and optimization
-
-**Acceptance Criteria**:
-- [ ] Handles all US coordinates with <2s response time
-- [ ] 99.5% uptime with graceful API failure handling
-- [ ] Confidence scoring for all zone detections
-- [ ] 24-hour cache TTL for zone data
-
-#### Sprint 1.3: Location Management System (Weeks 5-6)
-**Sprint Goal**: Complete farm and field management capabilities
-
-**User Stories Addressed**:
-- US-021: User Profile Management
-- Farm location input and field boundary management
-
-**Technical Implementation**:
 ```python
-# Key components to implement
-class LocationService:
-    async def create_farm_location(self, user_id: UUID, location_data: LocationCreate)
-    async def add_field_to_farm(self, farm_id: UUID, field_data: FieldCreate)
-    async def geocode_address(self, address: str) -> GeocodeResult
-    async def validate_agricultural_location(self, coordinates: Coordinates)
+from sqlalchemy import Column, Integer, String, DECIMAL, ARRAY, Text, DateTime, Boolean, ForeignKey
+from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
 
-class GeospatialService:
-    def calculate_field_area(self, boundary: Polygon) -> float
-    def validate_field_boundary(self, boundary: Polygon) -> ValidationResult
-    def find_nearby_farms(self, coordinates: Coordinates, radius_km: float)
+Base = declarative_base()
+
+class Crop(Base):
+    """Main crop entity"""
+    __tablename__ = 'crops'
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False)
+    scientific_name = Column(String(150))
+    category = Column(String(50))  # grain, vegetable, forage, etc.
+    family = Column(String(50))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    varieties = relationship("CropVariety", back_populates="crop")
+    filtering_attributes = relationship("CropFilteringAttributes", back_populates="crop")
+
+class CropVariety(Base):
+    """Crop variety with detailed characteristics"""
+    __tablename__ = 'crop_varieties'
+    
+    id = Column(Integer, primary_key=True)
+    crop_id = Column(Integer, ForeignKey('crops.id'), nullable=False)
+    variety_name = Column(String(150), nullable=False)
+    maturity_days = Column(Integer)
+    yield_potential_min = Column(DECIMAL(8, 2))
+    yield_potential_max = Column(DECIMAL(8, 2))
+    yield_unit = Column(String(20))
+    climate_zones = Column(ARRAY(Text))  # Array of compatible zones
+    soil_ph_min = Column(DECIMAL(3, 1))
+    soil_ph_max = Column(DECIMAL(3, 1))
+    soil_types = Column(ARRAY(Text))  # Array of suitable soil types
+    disease_resistance = Column(JSONB)  # Flexible disease resistance data
+    characteristics = Column(JSONB)  # Additional variety traits
+    seed_companies = Column(JSONB)  # Availability information
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    crop = relationship("Crop", back_populates="varieties")
+
+class CropFilteringAttributes(Base):
+    """Extended filtering attributes for advanced search"""
+    __tablename__ = 'crop_filtering_attributes'
+    
+    id = Column(Integer, primary_key=True)
+    crop_id = Column(Integer, ForeignKey('crops.id'), nullable=False)
+    variety_id = Column(Integer, ForeignKey('crop_varieties.id'))
+    
+    # Advanced filtering fields (from TICKET-005_crop-type-filtering-1.2)
+    pest_resistance_traits = Column(JSONB)  # {"corn_borer": "high", "aphids": "moderate"}
+    market_class_filters = Column(JSONB)  # {"organic_eligible": true, "non_gmo": true}
+    certification_filters = Column(JSONB)  # {"usda_organic": true, "non_gmo_project": false}
+    seed_availability_filters = Column(JSONB)  # {"availability": "high", "lead_time_days": 14}
+    
+    # Agricultural characteristics
+    drought_tolerance = Column(String(20))  # low, moderate, high
+    heat_tolerance = Column(String(20))
+    cold_tolerance = Column(String(20))
+    management_complexity = Column(String(20))  # low, moderate, high
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    crop = relationship("Crop", back_populates="filtering_attributes")
+
+class CropAttributeTag(Base):
+    """Attribute tagging system (TICKET-005_crop-type-filtering-1.3)"""
+    __tablename__ = 'crop_attribute_tags'
+    
+    id = Column(Integer, primary_key=True)
+    tag_name = Column(String(100), nullable=False, unique=True)
+    tag_category = Column(String(50))  # growth_habit, pest_resistance, market_class, etc.
+    parent_tag_id = Column(Integer, ForeignKey('crop_attribute_tags.id'))  # Hierarchical tags
+    description = Column(Text)
+    usage_count = Column(Integer, default=0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Self-referential relationship for hierarchy
+    children = relationship("CropAttributeTag", backref="parent", remote_side=[id])
+
+class CropTagAssociation(Base):
+    """Many-to-many relationship between crops/varieties and tags"""
+    __tablename__ = 'crop_tag_associations'
+    
+    id = Column(Integer, primary_key=True)
+    crop_id = Column(Integer, ForeignKey('crops.id'))
+    variety_id = Column(Integer, ForeignKey('crop_varieties.id'))
+    tag_id = Column(Integer, ForeignKey('crop_attribute_tags.id'), nullable=False)
+    confidence = Column(DECIMAL(3, 2), default=1.0)  # Auto-tagging confidence
+    is_manual = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class FarmerCropPreference(Base):
+    """Farmer preference profiles (TICKET-005_crop-type-filtering-1.4)"""
+    __tablename__ = 'farmer_crop_preferences'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    preference_category = Column(String(50), nullable=False)  # crop_types, management_style, risk_tolerance
+    preference_data = Column(JSONB, nullable=False)
+    weight = Column(DECIMAL(3, 2), default=1.0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 ```
 
-### Phase 2 Detailed Breakdown
+**Database Migration SQL** (save as `migrations/001_crop_filtering_schema.sql`):
+```sql
+-- Create crops table
+CREATE TABLE IF NOT EXISTS crops (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    scientific_name VARCHAR(150),
+    category VARCHAR(50),
+    family VARCHAR(50),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
-#### Sprint 2.1: Fertilizer Management Implementation (Weeks 7-10)
-**Sprint Goal**: Complete Questions 6-10 with economic optimization
+-- Create crop_varieties table
+CREATE TABLE IF NOT EXISTS crop_varieties (
+    id SERIAL PRIMARY KEY,
+    crop_id INTEGER REFERENCES crops(id) ON DELETE CASCADE,
+    variety_name VARCHAR(150) NOT NULL,
+    maturity_days INTEGER,
+    yield_potential_min DECIMAL(8,2),
+    yield_potential_max DECIMAL(8,2),
+    yield_unit VARCHAR(20),
+    climate_zones TEXT[],
+    soil_ph_min DECIMAL(3,1),
+    soil_ph_max DECIMAL(3,1),
+    soil_types TEXT[],
+    disease_resistance JSONB,
+    characteristics JSONB,
+    seed_companies JSONB,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
-**Questions Implementation Priority**:
-1. **Q10: Soil pH Management** (Week 7)
-   - pH adjustment calculations
-   - Lime and sulfur requirement algorithms
-   - Application timing recommendations
+-- Create crop_filtering_attributes table
+CREATE TABLE IF NOT EXISTS crop_filtering_attributes (
+    id SERIAL PRIMARY KEY,
+    crop_id INTEGER REFERENCES crops(id) ON DELETE CASCADE,
+    variety_id INTEGER REFERENCES crop_varieties(id) ON DELETE CASCADE,
+    pest_resistance_traits JSONB,
+    market_class_filters JSONB,
+    certification_filters JSONB,
+    seed_availability_filters JSONB,
+    drought_tolerance VARCHAR(20),
+    heat_tolerance VARCHAR(20),
+    cold_tolerance VARCHAR(20),
+    management_complexity VARCHAR(20),
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
-2. **Q6: Fertilizer Application Method** (Week 8)
-   - Liquid vs granular decision logic
-   - Equipment compatibility assessment
-   - Cost-benefit analysis
+-- Create indexes for performance
+CREATE INDEX idx_varieties_crop_id ON crop_varieties(crop_id);
+CREATE INDEX idx_varieties_climate_zones ON crop_varieties USING GIN(climate_zones);
+CREATE INDEX idx_varieties_soil_types ON crop_varieties USING GIN(soil_types);
+CREATE INDEX idx_filtering_crop_id ON crop_filtering_attributes(crop_id);
+CREATE INDEX idx_filtering_variety_id ON crop_filtering_attributes(variety_id);
 
-3. **Q7: Fertilizer Timing Optimization** (Week 9)
-   - Seasonal application calendars
-   - Weather-based timing adjustments
-   - Nutrient uptake modeling
+-- GIN indexes for JSONB columns
+CREATE INDEX idx_varieties_disease_resistance ON crop_varieties USING GIN(disease_resistance);
+CREATE INDEX idx_filtering_pest_resistance ON crop_filtering_attributes USING GIN(pest_resistance_traits);
+CREATE INDEX idx_filtering_market_class ON crop_filtering_attributes USING GIN(market_class_filters);
 
-4. **Q8: Environmental Impact/Runoff Prevention** (Week 10)
-   - Runoff risk assessment
-   - Buffer strip recommendations
-   - Environmental compliance checking
+-- Create crop_attribute_tags table
+CREATE TABLE IF NOT EXISTS crop_attribute_tags (
+    id SERIAL PRIMARY KEY,
+    tag_name VARCHAR(100) NOT NULL UNIQUE,
+    tag_category VARCHAR(50),
+    parent_tag_id INTEGER REFERENCES crop_attribute_tags(id),
+    description TEXT,
+    usage_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 
-**Technical Deliverables**:
-```python
-# Core services to implement
-class FertilizerOptimizationService:
-    def calculate_application_rates(self, soil_data, crop_requirements)
-    def optimize_timing(self, weather_forecast, crop_stage)
-    def assess_environmental_impact(self, field_characteristics)
-    def calculate_cost_effectiveness(self, fertilizer_prices, application_methods)
+-- Create crop_tag_associations table
+CREATE TABLE IF NOT EXISTS crop_tag_associations (
+    id SERIAL PRIMARY KEY,
+    crop_id INTEGER REFERENCES crops(id) ON DELETE CASCADE,
+    variety_id INTEGER REFERENCES crop_varieties(id) ON DELETE CASCADE,
+    tag_id INTEGER REFERENCES crop_attribute_tags(id) ON DELETE CASCADE,
+    confidence DECIMAL(3,2) DEFAULT 1.0,
+    is_manual BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 
-class PHManagementService:
-    def calculate_lime_requirement(self, current_ph, target_ph, soil_type)
-    def calculate_sulfur_requirement(self, current_ph, target_ph, soil_type)
-    def predict_ph_timeline(self, amendment_type, application_rate)
+-- Create farmer_crop_preferences table
+CREATE TABLE IF NOT EXISTS farmer_crop_preferences (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    preference_category VARCHAR(50) NOT NULL,
+    preference_data JSONB NOT NULL,
+    weight DECIMAL(3,2) DEFAULT 1.0,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_preferences_user_id ON farmer_crop_preferences(user_id);
+CREATE INDEX idx_preferences_category ON farmer_crop_preferences(preference_category);
 ```
 
-#### Sprint 2.2: Advanced Analysis with ML (Weeks 11-14)
-**Sprint Goal**: Implement Questions 11-15 with AI/ML capabilities
+**Validation Command**:
+```bash
+# Apply migration (adjust connection string)
+psql -U postgres -d caain_soil_hub -f migrations/001_crop_filtering_schema.sql
 
-**ML Model Development**:
-1. **Crop Deficiency Detection Model** (Weeks 11-12)
-   - CNN architecture for image analysis
-   - Training data preparation and augmentation
-   - Model validation with agricultural experts
-
-2. **Weather Impact Analysis** (Weeks 13-14)
-   - Weather pattern recognition
-   - Crop stress prediction models
-   - Recommendation adjustment algorithms
-
-**Model Architecture**:
-```python
-class DeficiencyDetectionModel:
-    def __init__(self):
-        self.model = self.load_pretrained_model()
-        self.preprocessor = ImagePreprocessor()
-
-    def predict_deficiency(self, image: np.ndarray, crop_type: str):
-        # Preprocess image
-        processed_image = self.preprocessor.prepare_image(image)
-
-        # Run inference
-        predictions = self.model.predict(processed_image)
-
-        # Post-process results
-        return self.interpret_predictions(predictions, crop_type)
+# Verify tables created
+psql -U postgres -d caain_soil_hub -c "\dt crop*"
+psql -U postgres -d caain_soil_hub -c "\dt farmer_crop_preferences"
 ```
 
-### Phase 3 Detailed Breakdown
+### Day 3-4: Pydantic Schemas
 
-#### Sprint 3.1: Final Questions & Economic Models (Weeks 15-18)
-**Sprint Goal**: Complete all 20 questions with economic optimization
+**File**: `services/crop-taxonomy/src/schemas/search_schemas.py`
 
-**Complex Questions Implementation**:
-- **Q16: Cost-Effective Fertilizer Strategy**
-  - Multi-objective optimization (cost, yield, environment)
-  - Market price integration and forecasting
-  - ROI calculation with uncertainty analysis
-
-- **Q17: Weather Impact Analysis**
-  - Historical weather pattern analysis
-  - Climate change adaptation strategies
-  - Risk assessment and mitigation planning
-
-- **Q20: Government Programs Integration**
-  - Policy database integration
-  - Compliance checking algorithms
-  - Incentive optimization recommendations
-
-**Economic Optimization Engine**:
 ```python
-class EconomicOptimizer:
-    def optimize_fertilizer_strategy(
+from pydantic import BaseModel, Field, validator
+from typing import Optional, List, Dict, Any
+from datetime import datetime
+from enum import Enum
+
+class ToleranceLevel(str, Enum):
+    LOW = "low"
+    MODERATE = "moderate"
+    HIGH = "high"
+
+class ManagementComplexity(str, Enum):
+    LOW = "low"
+    MODERATE = "moderate"
+    HIGH = "high"
+
+class CropFilterRequest(BaseModel):
+    """Advanced multi-criteria filter request"""
+
+    # Climate and location filters
+    climate_zones: Optional[List[str]] = Field(None, description="USDA hardiness zones")
+    latitude: Optional[float] = Field(None, ge=-90, le=90)
+    longitude: Optional[float] = Field(None, ge=-180, le=180)
+
+    # Soil filters
+    soil_ph_range: Optional[Dict[str, float]] = Field(None, description="{'min': 6.0, 'max': 7.5}")
+    soil_types: Optional[List[str]] = Field(None, description="clay, loam, sand, etc.")
+
+    # Crop characteristics
+    maturity_days_range: Optional[Dict[str, int]] = Field(None, description="{'min': 90, 'max': 120}")
+    drought_tolerance: Optional[List[ToleranceLevel]] = None
+    heat_tolerance: Optional[List[ToleranceLevel]] = None
+    cold_tolerance: Optional[List[ToleranceLevel]] = None
+
+    # Pest and disease
+    pest_resistance: Optional[List[str]] = Field(None, description="['corn_borer', 'aphids']")
+    disease_resistance: Optional[List[str]] = Field(None, description="['rust', 'blight']")
+
+    # Market and certification
+    market_class: Optional[List[str]] = Field(None, description="['organic_eligible', 'non_gmo']")
+    certifications: Optional[List[str]] = Field(None, description="['usda_organic', 'non_gmo_project']")
+
+    # Management
+    management_complexity: Optional[List[ManagementComplexity]] = None
+
+    # User preferences
+    user_preferences: Optional[Dict[str, Any]] = Field(None, description="User preference overrides")
+
+    # Pagination and sorting
+    sort_by: str = Field("suitability_score", description="Field to sort by")
+    limit: int = Field(50, ge=1, le=500)
+    offset: int = Field(0, ge=0)
+
+    @validator('soil_ph_range')
+    def validate_ph_range(cls, v):
+        if v and ('min' in v and 'max' in v):
+            if v['min'] > v['max']:
+                raise ValueError('min pH must be less than max pH')
+            if not (0 <= v['min'] <= 14 and 0 <= v['max'] <= 14):
+                raise ValueError('pH values must be between 0 and 14')
+        return v
+
+class CropVarietyResponse(BaseModel):
+    """Crop variety response with filtering metadata"""
+
+    id: int
+    crop_id: int
+    crop_name: str
+    variety_name: str
+    maturity_days: Optional[int]
+    yield_potential_min: Optional[float]
+    yield_potential_max: Optional[float]
+    yield_unit: Optional[str]
+    climate_zones: List[str]
+    soil_ph_min: Optional[float]
+    soil_ph_max: Optional[float]
+    soil_types: List[str]
+
+    # Filtering attributes
+    drought_tolerance: Optional[str]
+    heat_tolerance: Optional[str]
+    pest_resistance_traits: Optional[Dict[str, str]]
+    market_class_filters: Optional[Dict[str, bool]]
+
+    # Scoring
+    suitability_score: float = Field(..., description="Overall suitability score 0-1")
+    confidence: float = Field(..., description="Recommendation confidence 0-1")
+
+    # Metadata
+    match_reasons: List[str] = Field(default_factory=list, description="Why this variety matched")
+    warnings: List[str] = Field(default_factory=list, description="Potential concerns")
+
+    class Config:
+        from_attributes = True
+
+class CropSearchResponse(BaseModel):
+    """Search response with metadata"""
+
+    total_results: int
+    returned_results: int
+    filters_applied: Dict[str, Any]
+    varieties: List[CropVarietyResponse]
+    processing_time_ms: float
+    suggestions: Optional[List[str]] = Field(None, description="Alternative search suggestions")
+```
+
+**File**: `services/crop-taxonomy/src/schemas/preference_schemas.py`
+
+```python
+from pydantic import BaseModel, Field, UUID4
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+
+class PreferenceCreate(BaseModel):
+    """Create farmer preference"""
+
+    user_id: UUID4
+    preference_category: str = Field(..., description="crop_types, management_style, risk_tolerance, market_focus")
+    preference_data: Dict[str, Any] = Field(..., description="Flexible preference data")
+    weight: float = Field(1.0, ge=0.0, le=1.0, description="Preference weight")
+
+class PreferenceUpdate(BaseModel):
+    """Update farmer preference"""
+
+    preference_data: Optional[Dict[str, Any]] = None
+    weight: Optional[float] = Field(None, ge=0.0, le=1.0)
+
+class PreferenceResponse(BaseModel):
+    """Farmer preference response"""
+
+    id: UUID4
+    user_id: UUID4
+    preference_category: str
+    preference_data: Dict[str, Any]
+    weight: float
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+class PreferenceLearningRequest(BaseModel):
+    """Request to learn from user selections"""
+
+    user_id: UUID4
+    selected_varieties: List[int] = Field(..., description="Variety IDs user selected")
+    rejected_varieties: Optional[List[int]] = Field(None, description="Variety IDs user rejected")
+    context: Optional[Dict[str, Any]] = Field(None, description="Selection context")
+
+class PreferenceLearningResponse(BaseModel):
+    """Response from preference learning"""
+
+    preferences_updated: int
+    new_preferences_created: int
+    confidence_improvements: Dict[str, float]
+    learned_patterns: List[str]
+```
+
+**Validation Command**:
+```bash
+# Test schema imports
+cd services/crop-taxonomy
+python -c "from src.schemas.search_schemas import CropFilterRequest, CropSearchResponse; print('Schemas OK')"
+python -c "from src.schemas.preference_schemas import PreferenceCreate; print('Preference schemas OK')"
+```
+
+## Week 2: Core Services Implementation (Days 6-10)
+
+### Day 6-7: Crop Search Service
+
+**File**: `services/crop-taxonomy/src/services/crop_search_service.py`
+
+```python
+from sqlalchemy.orm import Session
+from sqlalchemy import and_, or_, func
+from typing import List, Dict, Any, Optional
+import time
+from ..models.crop_filtering_models import Crop, CropVariety, CropFilteringAttributes
+from ..schemas.search_schemas import CropFilterRequest, CropVarietyResponse, CropSearchResponse
+
+class CropSearchService:
+    """Enhanced crop search with advanced filtering (TICKET-005_crop-type-filtering-2.1)"""
+
+    def __init__(self, db: Session):
+        self.db = db
+
+    async def search_varieties(self, filter_request: CropFilterRequest) -> CropSearchResponse:
+        """
+        Multi-criteria crop variety search with intelligent filtering
+
+        Performance requirement: <2s for complex queries
+        """
+        start_time = time.time()
+
+        # Build base query
+        query = self.db.query(CropVariety, Crop, CropFilteringAttributes).join(
+            Crop, CropVariety.crop_id == Crop.id
+        ).outerjoin(
+            CropFilteringAttributes, CropVariety.id == CropFilteringAttributes.variety_id
+        )
+
+        # Apply filters
+        query = self._apply_climate_filters(query, filter_request)
+        query = self._apply_soil_filters(query, filter_request)
+        query = self._apply_characteristic_filters(query, filter_request)
+        query = self._apply_pest_disease_filters(query, filter_request)
+        query = self._apply_market_filters(query, filter_request)
+
+        # Get total count before pagination
+        total_count = query.count()
+
+        # Apply pagination
+        query = query.offset(filter_request.offset).limit(filter_request.limit)
+
+        # Execute query
+        results = query.all()
+
+        # Score and rank results
+        scored_varieties = []
+        for variety, crop, filtering_attrs in results:
+            score = self._calculate_suitability_score(variety, crop, filtering_attrs, filter_request)
+            variety_response = self._build_variety_response(variety, crop, filtering_attrs, score)
+            scored_varieties.append(variety_response)
+
+        # Sort by score
+        scored_varieties.sort(key=lambda x: x.suitability_score, reverse=True)
+
+        processing_time = (time.time() - start_time) * 1000
+
+        return CropSearchResponse(
+            total_results=total_count,
+            returned_results=len(scored_varieties),
+            filters_applied=filter_request.dict(exclude_none=True),
+            varieties=scored_varieties,
+            processing_time_ms=processing_time,
+            suggestions=self._generate_suggestions(scored_varieties, filter_request) if len(scored_varieties) == 0 else None
+        )
+
+    def _apply_climate_filters(self, query, filter_request: CropFilterRequest):
+        """Apply climate zone filters"""
+        if filter_request.climate_zones:
+            # Use PostgreSQL array overlap operator
+            query = query.filter(CropVariety.climate_zones.overlap(filter_request.climate_zones))
+        return query
+
+    def _apply_soil_filters(self, query, filter_request: CropFilterRequest):
+        """Apply soil-related filters"""
+        if filter_request.soil_ph_range:
+            min_ph = filter_request.soil_ph_range.get('min')
+            max_ph = filter_request.soil_ph_range.get('max')
+            if min_ph is not None and max_ph is not None:
+                query = query.filter(
+                    and_(
+                        CropVariety.soil_ph_min <= max_ph,
+                        CropVariety.soil_ph_max >= min_ph
+                    )
+                )
+
+        if filter_request.soil_types:
+            query = query.filter(CropVariety.soil_types.overlap(filter_request.soil_types))
+
+        return query
+
+    def _apply_characteristic_filters(self, query, filter_request: CropFilterRequest):
+        """Apply crop characteristic filters"""
+        if filter_request.maturity_days_range:
+            min_days = filter_request.maturity_days_range.get('min')
+            max_days = filter_request.maturity_days_range.get('max')
+            if min_days is not None:
+                query = query.filter(CropVariety.maturity_days >= min_days)
+            if max_days is not None:
+                query = query.filter(CropVariety.maturity_days <= max_days)
+
+        if filter_request.drought_tolerance:
+            tolerance_values = [t.value for t in filter_request.drought_tolerance]
+            query = query.filter(CropFilteringAttributes.drought_tolerance.in_(tolerance_values))
+
+        if filter_request.management_complexity:
+            complexity_values = [c.value for c in filter_request.management_complexity]
+            query = query.filter(CropFilteringAttributes.management_complexity.in_(complexity_values))
+
+        return query
+
+    def _apply_pest_disease_filters(self, query, filter_request: CropFilterRequest):
+        """Apply pest and disease resistance filters"""
+        if filter_request.pest_resistance:
+            # JSONB query for pest resistance
+            for pest in filter_request.pest_resistance:
+                query = query.filter(
+                    CropFilteringAttributes.pest_resistance_traits[pest].astext.in_(['moderate', 'high'])
+                )
+
+        if filter_request.disease_resistance:
+            # JSONB query for disease resistance
+            for disease in filter_request.disease_resistance:
+                query = query.filter(
+                    CropVariety.disease_resistance[disease].astext.in_(['moderate', 'high'])
+                )
+
+        return query
+
+    def _apply_market_filters(self, query, filter_request: CropFilterRequest):
+        """Apply market class and certification filters"""
+        if filter_request.market_class:
+            for market_attr in filter_request.market_class:
+                query = query.filter(
+                    CropFilteringAttributes.market_class_filters[market_attr].astext == 'true'
+                )
+
+        if filter_request.certifications:
+            for cert in filter_request.certifications:
+                query = query.filter(
+                    CropFilteringAttributes.certification_filters[cert].astext == 'true'
+                )
+
+        return query
+
+    def _calculate_suitability_score(
         self,
-        field_data: FieldData,
-        market_prices: MarketPrices,
-        yield_goals: YieldGoals,
-        constraints: OptimizationConstraints
-    ) -> OptimizationResult:
+        variety: CropVariety,
+        crop: Crop,
+        filtering_attrs: Optional[CropFilteringAttributes],
+        filter_request: CropFilterRequest
+    ) -> float:
         """
-        Multi-objective optimization considering:
-        - Cost minimization
-        - Yield maximization
-        - Environmental impact minimization
-        - Risk management
+        Calculate suitability score based on how well variety matches filters
+        Score range: 0.0 to 1.0
         """
+        score = 0.5  # Base score
+        max_bonus = 0.5
 
-    def calculate_roi_scenarios(
+        # Climate zone match (20% weight)
+        if filter_request.climate_zones and variety.climate_zones:
+            overlap = set(filter_request.climate_zones) & set(variety.climate_zones)
+            if overlap:
+                score += 0.2 * (len(overlap) / len(filter_request.climate_zones))
+
+        # Soil pH match (15% weight)
+        if filter_request.soil_ph_range and variety.soil_ph_min and variety.soil_ph_max:
+            requested_min = filter_request.soil_ph_range.get('min', 0)
+            requested_max = filter_request.soil_ph_range.get('max', 14)
+            overlap_range = min(variety.soil_ph_max, requested_max) - max(variety.soil_ph_min, requested_min)
+            if overlap_range > 0:
+                score += 0.15 * min(overlap_range / 2.0, 1.0)  # Normalize to 2 pH units
+
+        # Tolerance characteristics (15% weight)
+        if filtering_attrs:
+            tolerance_matches = 0
+            tolerance_checks = 0
+
+            if filter_request.drought_tolerance and filtering_attrs.drought_tolerance:
+                tolerance_checks += 1
+                if filtering_attrs.drought_tolerance in [t.value for t in filter_request.drought_tolerance]:
+                    tolerance_matches += 1
+
+            if tolerance_checks > 0:
+                score += 0.15 * (tolerance_matches / tolerance_checks)
+
+        return min(score, 1.0)
+
+    def _build_variety_response(
         self,
-        investment_options: List[InvestmentOption],
-        farm_characteristics: FarmData
-    ) -> ROIAnalysis:
-        """
-        Calculate ROI for different investment scenarios
-        with sensitivity analysis
-        """
+        variety: CropVariety,
+        crop: Crop,
+        filtering_attrs: Optional[CropFilteringAttributes],
+        score: float
+    ) -> CropVarietyResponse:
+        """Build variety response with all metadata"""
+
+        match_reasons = []
+        warnings = []
+
+        # TODO: Add logic to populate match_reasons and warnings
+
+        return CropVarietyResponse(
+            id=variety.id,
+            crop_id=variety.crop_id,
+            crop_name=crop.name,
+            variety_name=variety.variety_name,
+            maturity_days=variety.maturity_days,
+            yield_potential_min=variety.yield_potential_min,
+            yield_potential_max=variety.yield_potential_max,
+            yield_unit=variety.yield_unit,
+            climate_zones=variety.climate_zones or [],
+            soil_ph_min=variety.soil_ph_min,
+            soil_ph_max=variety.soil_ph_max,
+            soil_types=variety.soil_types or [],
+            drought_tolerance=filtering_attrs.drought_tolerance if filtering_attrs else None,
+            heat_tolerance=filtering_attrs.heat_tolerance if filtering_attrs else None,
+            pest_resistance_traits=filtering_attrs.pest_resistance_traits if filtering_attrs else None,
+            market_class_filters=filtering_attrs.market_class_filters if filtering_attrs else None,
+            suitability_score=score,
+            confidence=0.8,  # TODO: Calculate actual confidence
+            match_reasons=match_reasons,
+            warnings=warnings
+        )
+
+    def _generate_suggestions(self, results: List[CropVarietyResponse], filter_request: CropFilterRequest) -> List[str]:
+        """Generate alternative search suggestions when no results found"""
+        suggestions = []
+
+        if not results:
+            suggestions.append("Try expanding your climate zone range")
+            suggestions.append("Consider relaxing soil pH requirements")
+            suggestions.append("Remove some pest resistance filters")
+
+        return suggestions
 ```
 
-#### Sprint 3.2: User Interface Development (Weeks 19-22)
-**Sprint Goal**: Complete web dashboard and mobile interface
-
-**UI Component Architecture**:
-```html
-<!-- Main Dashboard Layout -->
-<div class="dashboard-container">
-    <nav class="sidebar">
-        <!-- Navigation menu -->
-    </nav>
-
-    <main class="main-content">
-        <div class="farm-overview">
-            <!-- Farm summary cards -->
-        </div>
-
-        <div class="interactive-map">
-            <!-- Leaflet.js map with field overlays -->
-        </div>
-
-        <div class="recommendations-panel">
-            <!-- Active recommendations and alerts -->
-        </div>
-
-        <div class="data-visualization">
-            <!-- Charts and graphs -->
-        </div>
-    </main>
-</div>
+**Validation Command**:
+```bash
+python -c "from src.services.crop_search_service import CropSearchService; print('CropSearchService OK')"
 ```
 
-**Mobile-First Design Principles**:
-- Touch-friendly interface elements
-- Offline capability for field use
-- GPS integration for location services
-- Camera integration for crop photos
-- Push notifications for time-sensitive alerts
+### Day 8-9: Filter Engine and Preference Services
 
-## Data Management Strategy
+**File**: `services/crop-taxonomy/src/services/filter_engine.py`
 
-### Data Sources Integration
 ```python
-# External data source management
-class DataSourceManager:
+from typing import List, Dict, Any, Set
+from ..schemas.search_schemas import CropFilterRequest
+
+class FilterCombinationEngine:
+    """Dynamic filter combination engine (TICKET-005_crop-type-filtering-2.2)"""
+
     def __init__(self):
-        self.sources = {
-            'weather': [NOAAProvider(), OpenWeatherProvider()],
-            'soil': [USDAProvider(), SoilGridsProvider()],
-            'market': [USDANASSProvider(), CMEProvider()],
-            'government': [NRCSProvider(), FSAProvider()]
+        self.filter_dependencies = self._build_filter_dependencies()
+        self.filter_presets = self._build_filter_presets()
+
+    def suggest_filters(self, current_filters: CropFilterRequest, location: Dict[str, float] = None) -> List[Dict[str, Any]]:
+        """Suggest additional filters based on current selection and location"""
+        suggestions = []
+
+        # Location-based suggestions
+        if location and 'latitude' in location:
+            climate_suggestion = self._suggest_climate_filters(location['latitude'], location['longitude'])
+            if climate_suggestion:
+                suggestions.append(climate_suggestion)
+
+        # Dependency-based suggestions
+        if current_filters.drought_tolerance:
+            suggestions.append({
+                "filter": "soil_types",
+                "values": ["sandy_loam", "loam"],
+                "reason": "Sandy soils complement drought-tolerant varieties"
+            })
+
+        return suggestions
+
+    def detect_conflicts(self, filter_request: CropFilterRequest) -> List[Dict[str, str]]:
+        """Detect contradictory filter combinations"""
+        conflicts = []
+
+        # Check pH vs crop type conflicts
+        if filter_request.soil_ph_range:
+            min_ph = filter_request.soil_ph_range.get('min', 0)
+            max_ph = filter_request.soil_ph_range.get('max', 14)
+
+            if min_ph > 7.5 and filter_request.market_class and 'organic_eligible' in filter_request.market_class:
+                conflicts.append({
+                    "conflict": "High pH may limit organic amendment options",
+                    "severity": "warning"
+                })
+
+        return conflicts
+
+    def apply_preset(self, preset_name: str) -> CropFilterRequest:
+        """Apply predefined filter preset"""
+        if preset_name in self.filter_presets:
+            return CropFilterRequest(**self.filter_presets[preset_name])
+        raise ValueError(f"Unknown preset: {preset_name}")
+
+    def _build_filter_dependencies(self) -> Dict[str, List[str]]:
+        """Define filter dependencies"""
+        return {
+            "drought_tolerance": ["soil_types", "climate_zones"],
+            "organic_eligible": ["pest_resistance", "disease_resistance"],
+            "high_yield": ["management_complexity", "soil_ph_range"]
         }
 
-    async def fetch_with_fallback(self, source_type: str, query: dict):
-        """Fetch data with automatic fallback to secondary sources"""
+    def _build_filter_presets(self) -> Dict[str, Dict[str, Any]]:
+        """Define common filter presets"""
+        return {
+            "organic_farming": {
+                "market_class": ["organic_eligible", "non_gmo"],
+                "pest_resistance": ["moderate", "high"],
+                "management_complexity": ["moderate", "high"]
+            },
+            "drought_prone": {
+                "drought_tolerance": ["moderate", "high"],
+                "soil_types": ["sandy_loam", "loam"],
+                "management_complexity": ["low", "moderate"]
+            },
+            "high_value_crops": {
+                "market_class": ["specialty", "organic_eligible"],
+                "management_complexity": ["moderate", "high"]
+            }
+        }
 
-    def validate_data_quality(self, data: dict, source_type: str) -> QualityScore:
-        """Validate data quality and flag inconsistencies"""
+    def _suggest_climate_filters(self, lat: float, lng: float) -> Dict[str, Any]:
+        """Suggest climate filters based on location"""
+        # Simplified climate zone suggestion
+        if 40 <= lat <= 45:
+            return {
+                "filter": "climate_zones",
+                "values": ["5a", "5b", "6a", "6b"],
+                "reason": "Typical zones for your latitude"
+            }
+        return None
 ```
 
-### Data Quality Assurance
-- **Multi-source validation**: Cross-reference data from multiple providers
-- **Expert review**: Agricultural consultants validate recommendations
-- **Farmer feedback**: Continuous improvement based on user outcomes
-- **Automated monitoring**: Real-time data quality alerts
+**File**: `services/crop-taxonomy/src/services/preference_manager.py`
 
-### Privacy and Security
-- **Data encryption**: AES-256 encryption for sensitive farm data
-- **Access control**: Role-based permissions (farmer, consultant, admin)
-- **Audit logging**: Complete audit trail for all data access
-- **GDPR compliance**: User data rights and deletion capabilities
-
-## Deployment and Operations
-
-### Production Environment
-```yaml
-# Docker Compose for production deployment
-version: '3.8'
-services:
-  question-router:
-    image: afas/question-router:latest
-    ports: ["8000:8000"]
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-
-  recommendation-engine:
-    image: afas/recommendation-engine:latest
-    ports: ["8001:8001"]
-    depends_on: [postgresql, redis]
-
-  ai-agent:
-    image: afas/ai-agent:latest
-    ports: ["8002:8002"]
-    environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-
-  postgresql:
-    image: postgis/postgis:15-3.3
-    environment:
-      - POSTGRES_DB=afas
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-```
-
-### Monitoring and Alerting
-- **Application Performance**: Response times, error rates, throughput
-- **Infrastructure Health**: CPU, memory, disk usage
-- **Business Metrics**: User engagement, recommendation accuracy
-- **Agricultural Alerts**: Critical weather events, pest outbreaks
-
-### Backup and Disaster Recovery
-- **Database Backups**: Daily automated backups with 30-day retention
-- **Code Repository**: Git-based version control with multiple remotes
-- **Configuration Management**: Infrastructure as code with Terraform
-- **Recovery Testing**: Monthly disaster recovery drills
-
-## Success Measurement Framework
-
-### Technical Metrics
 ```python
-class MetricsCollector:
-    def track_response_time(self, endpoint: str, duration: float):
-        """Track API response times"""
+from sqlalchemy.orm import Session
+from typing import List, Dict, Any, Optional
+from uuid import UUID
+from ..models.crop_filtering_models import FarmerCropPreference
+from ..schemas.preference_schemas import PreferenceCreate, PreferenceUpdate, PreferenceResponse
 
-    def track_recommendation_accuracy(self, recommendation_id: str, farmer_feedback: float):
-        """Track farmer satisfaction with recommendations"""
+class FarmerPreferenceManager:
+    """Comprehensive farmer preference storage (TICKET-005_crop-type-filtering-3.1)"""
 
-    def track_system_usage(self, user_id: str, feature: str):
-        """Track feature usage patterns"""
+    def __init__(self, db: Session):
+        self.db = db
+
+    async def create_preference(self, preference: PreferenceCreate) -> PreferenceResponse:
+        """Create new farmer preference"""
+        db_preference = FarmerCropPreference(
+            user_id=preference.user_id,
+            preference_category=preference.preference_category,
+            preference_data=preference.preference_data,
+            weight=preference.weight
+        )
+        self.db.add(db_preference)
+        self.db.commit()
+        self.db.refresh(db_preference)
+        return PreferenceResponse.from_orm(db_preference)
+
+    async def get_user_preferences(self, user_id: UUID) -> List[PreferenceResponse]:
+        """Get all preferences for a user"""
+        preferences = self.db.query(FarmerCropPreference).filter(
+            FarmerCropPreference.user_id == user_id
+        ).all()
+        return [PreferenceResponse.from_orm(p) for p in preferences]
+
+    async def update_preference(self, preference_id: UUID, update: PreferenceUpdate) -> PreferenceResponse:
+        """Update existing preference"""
+        db_preference = self.db.query(FarmerCropPreference).filter(
+            FarmerCropPreference.id == preference_id
+        ).first()
+
+        if not db_preference:
+            raise ValueError(f"Preference {preference_id} not found")
+
+        if update.preference_data is not None:
+            db_preference.preference_data = update.preference_data
+        if update.weight is not None:
+            db_preference.weight = update.weight
+
+        self.db.commit()
+        self.db.refresh(db_preference)
+        return PreferenceResponse.from_orm(db_preference)
+
+    async def delete_preference(self, preference_id: UUID) -> bool:
+        """Delete preference"""
+        result = self.db.query(FarmerCropPreference).filter(
+            FarmerCropPreference.id == preference_id
+        ).delete()
+        self.db.commit()
+        return result > 0
 ```
 
-### Agricultural Impact Metrics
-- **Yield Improvements**: Measured yield increases from recommendations
-- **Cost Savings**: Documented fertilizer and input cost reductions
-- **Sustainability**: Soil health improvements and environmental impact
-- **Knowledge Transfer**: Farmer learning and practice adoption
+## Week 3: API Implementation & Testing (Days 11-15)
 
-### User Experience Metrics
-- **Onboarding Success**: Time to first successful recommendation
-- **Feature Adoption**: Usage patterns across different features
-- **Support Requests**: Volume and resolution time for user issues
-- **Retention Rates**: Monthly and annual user retention
+### Day 11-12: API Endpoints
 
-## User Story Coverage Analysis
+**File**: `services/crop-taxonomy/src/api/search_routes.py`
 
-### ✅ **Complete User Story Mapping (23/23 Stories Covered)**
+```python
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from ..schemas.search_schemas import CropFilterRequest, CropSearchResponse
+from ..services.crop_search_service import CropSearchService
+from ..services.filter_engine import FilterCombinationEngine
 
-The plan addresses all 23 user stories across the 4 implementation phases:
+router = APIRouter(prefix="/api/v1/crop-taxonomy", tags=["crop-search"])
 
-#### Phase 1: Foundation (Stories 1, 3, 21) - ✅ Covered
-- **US-001**: Crop Variety Recommendation - Climate zone detection and basic crop database
-- **US-003**: Soil Fertility Assessment - Soil data integration and basic fertility analysis
-- **US-021**: User Profile Management - Farm location and profile management system
+# Dependency to get database session
+def get_db():
+    # TODO: Implement database session dependency
+    pass
 
-#### Phase 2: Core Agricultural Features (Stories 2, 4-12) - ✅ Covered
-- **US-002**: Crop Rotation Planning - Multi-year rotation optimization algorithms
-- **US-004**: Nutrient Deficiency Detection - Image analysis and symptom identification
-- **US-005**: Soil pH Management - pH adjustment calculations and recommendations
-- **US-006**: Fertilizer Type Selection - Fertilizer comparison and selection logic
-- **US-007**: Fertilizer Application Method - Liquid vs granular decision algorithms
-- **US-008**: Fertilizer Timing Optimization - Seasonal timing and weather integration
-- **US-009**: Cost-Effective Fertilizer Strategy - Economic optimization and ROI analysis
-- **US-010**: Runoff Prevention - Environmental impact assessment and mitigation
-- **US-011**: Cover Crop Selection - Cover crop recommendation engine
-- **US-012**: Drought Management - Moisture conservation and drought resilience
+@router.post("/search", response_model=CropSearchResponse)
+async def search_crops(
+    filter_request: CropFilterRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Advanced multi-criteria crop variety search
 
-#### Phase 3: Advanced Features (Stories 13-20, 22-23) - ✅ Covered
-- **US-013**: Precision Agriculture ROI Assessment - Technology investment analysis
-- **US-014**: Early Deficiency Detection - Advanced ML-based deficiency detection
-- **US-015**: Soil and Tissue Test Integration - Laboratory data integration
-- **US-016**: Weather Impact Analysis - Weather pattern analysis and adaptation
-- **US-017**: Tillage Practice Recommendations - Tillage system optimization
-- **US-018**: Sustainable Intensification - Integrated sustainability and yield optimization
-- **US-019**: Micronutrient Management - Micronutrient assessment and recommendations
-- **US-020**: Government Program Integration - Policy and incentive program integration
-- **US-022**: Recommendation History and Tracking - User interaction tracking system
-- **US-023**: Mobile Field Access - Mobile-responsive interface and offline capabilities
+    **Performance**: <2s response time for complex queries
+    **Supports**: 10,000+ crop varieties
 
-### User Story Implementation Schedule
+    Example request:
+    ```json
+    {
+      "climate_zones": ["5a", "5b", "6a"],
+      "soil_ph_range": {"min": 6.0, "max": 7.5},
+      "drought_tolerance": ["moderate", "high"],
+      "market_class": ["organic_eligible"],
+      "limit": 50
+    }
+    ```
+    """
+    try:
+        service = CropSearchService(db)
+        results = await service.search_varieties(filter_request)
+        return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-#### Sprint 1.1-1.3: Foundation Stories (Weeks 1-6)
-**Primary Stories**:
-- **US-021**: User Profile Management
-  - Farm and field profile creation
-  - User preference management
-  - Data privacy controls
+@router.get("/filter-options")
+async def get_filter_options(
+    latitude: Optional[float] = Query(None, ge=-90, le=90),
+    longitude: Optional[float] = Query(None, ge=-180, le=180),
+    db: Session = Depends(get_db)
+):
+    """
+    Get available filter options based on location
 
-**Supporting Stories**:
-- **US-001**: Crop Variety Recommendation (foundation)
-  - Climate zone auto-detection
-  - Basic location-based filtering
-- **US-003**: Soil Fertility Assessment (foundation)
-  - Soil data input and validation
-  - Basic fertility analysis framework
+    Returns dynamic filter values with counts
+    """
+    # TODO: Implement filter options retrieval
+    return {
+        "climate_zones": ["5a", "5b", "6a", "6b"],
+        "soil_types": ["clay", "loam", "sandy_loam", "sand"],
+        "drought_tolerance": ["low", "moderate", "high"]
+    }
 
-#### Sprint 2.1: Fertilizer Management Stories (Weeks 7-10)
-**Primary Stories**:
-- **US-005**: Soil pH Management
-  - pH adjustment calculations
-  - Lime and sulfur recommendations
-  - Application timing guidance
+@router.post("/filter-suggestions")
+async def get_filter_suggestions(
+    current_filters: CropFilterRequest,
+    latitude: Optional[float] = None,
+    longitude: Optional[float] = None
+):
+    """Get intelligent filter suggestions"""
+    engine = FilterCombinationEngine()
+    location = {"latitude": latitude, "longitude": longitude} if latitude and longitude else None
+    suggestions = engine.suggest_filters(current_filters, location)
+    return {"suggestions": suggestions}
 
-- **US-006**: Fertilizer Type Selection
-  - Organic vs synthetic vs slow-release comparison
-  - Cost-effectiveness analysis
-  - Equipment compatibility assessment
+@router.post("/filter-conflicts")
+async def detect_filter_conflicts(filter_request: CropFilterRequest):
+    """Detect contradictory filter combinations"""
+    engine = FilterCombinationEngine()
+    conflicts = engine.detect_conflicts(filter_request)
+    return {"conflicts": conflicts}
+```
 
-- **US-007**: Fertilizer Application Method
-  - Liquid vs granular decision logic
-  - Application method optimization
-  - Labor and cost considerations
+### Day 13-14: Unit Tests
 
-- **US-008**: Fertilizer Timing Optimization
-  - Seasonal application calendars
-  - Weather-based timing adjustments
-  - Nutrient uptake modeling
+**File**: `services/crop-taxonomy/tests/test_crop_search.py`
 
-- **US-010**: Runoff Prevention
-  - Environmental impact assessment
-  - Buffer strip recommendations
-  - Regulatory compliance checking
+```python
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from src.models.crop_filtering_models import Base, Crop, CropVariety, CropFilteringAttributes
+from src.services.crop_search_service import CropSearchService
+from src.schemas.search_schemas import CropFilterRequest
 
-#### Sprint 2.2: Advanced Analysis Stories (Weeks 11-14)
-**Primary Stories**:
-- **US-004**: Nutrient Deficiency Detection
-  - Image analysis for crop photos
-  - Symptom description processing
-  - Multi-source deficiency identification
+# Test database setup
+TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost/test_crop_taxonomy"
 
-- **US-011**: Cover Crop Selection
-  - Goal-based cover crop recommendations
-  - Species selection and timing
-  - Integration with main crop rotation
+@pytest.fixture(scope="function")
+def db_session():
+    """Create test database session"""
+    engine = create_engine(TEST_DATABASE_URL)
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine)
+    session = SessionLocal()
 
-- **US-012**: Drought Management
-  - Moisture conservation practices
-  - Drought-resilient crop selection
-  - Water savings quantification
+    yield session
 
-- **US-016**: Weather Impact Analysis (foundation)
-  - Weather data integration
-  - Basic impact assessment algorithms
+    session.close()
+    Base.metadata.drop_all(engine)
 
-#### Sprint 3.1: Economic and Policy Stories (Weeks 15-18)
-**Primary Stories**:
-- **US-009**: Cost-Effective Fertilizer Strategy
-  - Multi-objective optimization
-  - Market price integration
-  - ROI and break-even analysis
+@pytest.fixture
+def sample_crops(db_session):
+    """Create sample crop data"""
+    # Create corn crop
+    corn = Crop(name="Corn", scientific_name="Zea mays", category="grain", family="Poaceae")
+    db_session.add(corn)
+    db_session.commit()
 
-- **US-013**: Precision Agriculture ROI Assessment
-  - Technology cost-benefit analysis
-  - Payback period calculations
-  - Implementation recommendations
+    # Create corn variety
+    variety = CropVariety(
+        crop_id=corn.id,
+        variety_name="Pioneer 1234",
+        maturity_days=110,
+        yield_potential_min=180.0,
+        yield_potential_max=220.0,
+        yield_unit="bu/acre",
+        climate_zones=["5a", "5b", "6a"],
+        soil_ph_min=6.0,
+        soil_ph_max=7.5,
+        soil_types=["loam", "clay_loam"]
+    )
+    db_session.add(variety)
+    db_session.commit()
 
-- **US-016**: Weather Impact Analysis (complete)
-  - Advanced weather pattern analysis
-  - Climate adaptation strategies
-  - Risk assessment and mitigation
+    # Create filtering attributes
+    attrs = CropFilteringAttributes(
+        crop_id=corn.id,
+        variety_id=variety.id,
+        drought_tolerance="moderate",
+        heat_tolerance="high",
+        management_complexity="moderate",
+        pest_resistance_traits={"corn_borer": "high", "aphids": "moderate"},
+        market_class_filters={"organic_eligible": True, "non_gmo": True}
+    )
+    db_session.add(attrs)
+    db_session.commit()
 
-- **US-020**: Government Program Integration
-  - Policy database integration
-  - Compliance checking
-  - Incentive optimization
+    return {"crop": corn, "variety": variety, "attrs": attrs}
 
-**Supporting Stories**:
-- **US-002**: Crop Rotation Planning
-  - Multi-year rotation optimization
-  - Economic and sustainability integration
-  - Pest and disease management
+@pytest.mark.asyncio
+async def test_basic_search(db_session, sample_crops):
+    """Test basic crop search"""
+    service = CropSearchService(db_session)
 
-#### Sprint 3.2: User Experience Stories (Weeks 19-22)
-**Primary Stories**:
-- **US-022**: Recommendation History and Tracking
-  - Historical recommendation storage
-  - Outcome tracking and analysis
-  - Performance metrics dashboard
+    filter_request = CropFilterRequest(
+        climate_zones=["5a", "6a"],
+        limit=10
+    )
 
-- **US-023**: Mobile Field Access
-  - Mobile-responsive interface
-  - Offline capability
-  - GPS and camera integration
-  - Push notifications
+    result = await service.search_varieties(filter_request)
 
-**Completion Stories**:
-- **US-014**: Early Deficiency Detection (advanced)
-  - Enhanced ML models
-  - Real-time monitoring
-  - Predictive analytics
+    assert result.total_results >= 1
+    assert len(result.varieties) >= 1
+    assert result.varieties[0].crop_name == "Corn"
 
-- **US-015**: Soil and Tissue Test Integration
-  - Laboratory API integrations
-  - Test result interpretation
-  - Recommendation adjustments
+@pytest.mark.asyncio
+async def test_ph_range_filter(db_session, sample_crops):
+    """Test soil pH range filtering"""
+    service = CropSearchService(db_session)
 
-- **US-017**: Tillage Practice Recommendations
-  - No-till vs conventional analysis
-  - Transition planning
-  - Equipment and cost considerations
+    filter_request = CropFilterRequest(
+        soil_ph_range={"min": 6.5, "max": 7.0},
+        limit=10
+    )
 
-- **US-018**: Sustainable Intensification
-  - Integrated yield and sustainability optimization
-  - Long-term soil health modeling
-  - Profitability analysis
+    result = await service.search_varieties(filter_request)
 
-- **US-019**: Micronutrient Management
-  - Micronutrient deficiency assessment
-  - Supplementation recommendations
-  - Cost-benefit analysis
+    assert result.total_results >= 1
+    for variety in result.varieties:
+        assert variety.soil_ph_min <= 7.0
+        assert variety.soil_ph_max >= 6.5
 
-### User Story Acceptance Criteria Tracking
+@pytest.mark.asyncio
+async def test_performance_requirement(db_session, sample_crops):
+    """Test that search completes in <2 seconds"""
+    service = CropSearchService(db_session)
 
-Each sprint includes specific acceptance criteria validation:
+    filter_request = CropFilterRequest(
+        climate_zones=["5a", "5b", "6a"],
+        soil_ph_range={"min": 6.0, "max": 7.5},
+        drought_tolerance=["moderate", "high"],
+        limit=50
+    )
 
-**Sprint Completion Criteria**:
-- [ ] All user story acceptance criteria met
-- [ ] Agricultural expert validation completed
-- [ ] User testing with target farmers
-- [ ] Performance benchmarks achieved
-- [ ] Integration testing passed
+    result = await service.search_varieties(filter_request)
 
-**Quality Gates**:
-- **Functional**: All acceptance criteria implemented and tested
-- **Agricultural**: Expert validation of recommendations
-- **Performance**: <3 second response times
-- **User Experience**: >4.5/5 user satisfaction rating
-- **Integration**: Seamless workflow across user stories
+    assert result.processing_time_ms < 2000, f"Search took {result.processing_time_ms}ms, exceeds 2s requirement"
 
-This comprehensive user story mapping ensures that all 23 user stories are explicitly addressed in the implementation plan, with clear sprint assignments and acceptance criteria tracking. The phased approach allows for iterative development while maintaining focus on user value delivery.
+@pytest.mark.asyncio
+async def test_suitability_scoring(db_session, sample_crops):
+    """Test suitability score calculation"""
+    service = CropSearchService(db_session)
+
+    filter_request = CropFilterRequest(
+        climate_zones=["5a"],
+        soil_ph_range={"min": 6.0, "max": 7.0},
+        limit=10
+    )
+
+    result = await service.search_varieties(filter_request)
+
+    assert len(result.varieties) > 0
+    for variety in result.varieties:
+        assert 0.0 <= variety.suitability_score <= 1.0
+        assert 0.0 <= variety.confidence <= 1.0
+```
+
+**Validation Command**:
+```bash
+cd services/crop-taxonomy
+pytest tests/test_crop_search.py -v --cov=src/services/crop_search_service
+```
+
+## Week 4: Integration & Documentation (Days 16-20)
+
+### Day 16-17: FastAPI Application Setup
+
+**File**: `services/crop-taxonomy/src/main.py`
+
+```python
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from .api import search_routes, preference_routes
+
+app = FastAPI(
+    title="CAAIN Crop Taxonomy Service",
+    description="Advanced crop filtering and preference management",
+    version="1.0.0"
+)
+
+# CORS middleware
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Configure appropriately for production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Include routers
+app.include_router(search_routes.router)
+# app.include_router(preference_routes.router)  # TODO: Implement
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint"""
+    return {"status": "healthy", "service": "crop-taxonomy"}
+
+@app.get("/")
+async def root():
+    """Root endpoint"""
+    return {
+        "service": "CAAIN Crop Taxonomy Service",
+        "version": "1.0.0",
+        "docs": "/docs"
+    }
+```
+
+**Start Service**:
+```bash
+cd services/crop-taxonomy
+uvicorn src.main:app --reload --port 8007
+```
+
+**Validation**:
+```bash
+curl http://localhost:8007/health
+curl http://localhost:8007/docs  # Open in browser
+```
+
+### Day 18-19: Integration Testing
+
+**File**: `services/crop-taxonomy/tests/test_integration.py`
+
+```python
+import pytest
+from fastapi.testclient import TestClient
+from src.main import app
+
+client = TestClient(app)
+
+def test_health_endpoint():
+    """Test health check"""
+    response = client.get("/health")
+    assert response.status_code == 200
+    assert response.json()["status"] == "healthy"
+
+def test_search_endpoint():
+    """Test search API endpoint"""
+    request_data = {
+        "climate_zones": ["5a", "6a"],
+        "soil_ph_range": {"min": 6.0, "max": 7.5},
+        "limit": 10
+    }
+
+    response = client.post("/api/v1/crop-taxonomy/search", json=request_data)
+    assert response.status_code == 200
+
+    data = response.json()
+    assert "total_results" in data
+    assert "varieties" in data
+    assert "processing_time_ms" in data
+
+def test_filter_suggestions():
+    """Test filter suggestions endpoint"""
+    request_data = {
+        "climate_zones": ["5a"],
+        "limit": 10
+    }
+
+    response = client.post(
+        "/api/v1/crop-taxonomy/filter-suggestions",
+        json=request_data,
+        params={"latitude": 41.8781, "longitude": -87.6298}
+    )
+    assert response.status_code == 200
+    assert "suggestions" in response.json()
+```
+
+## Definition of Done
+
+### Functional Requirements
+- [ ] All database tables created and indexed
+- [ ] CropSearchService implements multi-criteria filtering
+- [ ] FilterCombinationEngine provides intelligent suggestions
+- [ ] FarmerPreferenceManager handles CRUD operations
+- [ ] All API endpoints return correct responses
+- [ ] Performance requirement met: <2s for complex queries
+
+### Testing Requirements
+- [ ] Unit test coverage >80%
+- [ ] All integration tests passing
+- [ ] Performance tests validate <2s requirement
+- [ ] Agricultural validation: Test with real crop data
+
+### Documentation
+- [ ] API documentation in /docs endpoint
+- [ ] README with setup instructions
+- [ ] Code comments for complex algorithms
+
+### Integration Points
+- [ ] Mock climate zone service for testing
+- [ ] Mock user management service for preferences
+- [ ] Document API contracts for integration phase
+
+## Agricultural Expert Review Checkpoints
+
+**Flag for Human Review**:
+1. Suitability scoring algorithm accuracy
+2. Filter conflict detection logic
+3. Crop characteristic data validation
+4. Preference learning patterns
+
+## Common Pitfalls
+
+1. **JSONB Query Performance**: Ensure GIN indexes on all JSONB columns
+2. **Array Overlap Queries**: Use PostgreSQL array operators correctly
+3. **Scoring Algorithm**: Validate weights sum to reasonable values
+4. **Null Handling**: Handle missing filtering attributes gracefully
+
+## Next Steps for Integration
+
+This service will integrate with:
+- **Climate Zone Service** (Job 5): For location-based filtering
+- **User Management**: For preference storage
+- **Recommendation Engine**: For enhanced crop recommendations
+
+Mock these services during development using the patterns in `tests/test_integration.py`.
+
