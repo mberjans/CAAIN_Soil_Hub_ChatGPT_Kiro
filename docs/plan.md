@@ -1,999 +1,823 @@
-# CAAIN Soil Hub - Detailed Implementation Plan
+# Parallel Job 2: Fertilizer Strategy Optimization
+
+**TICKET-006: Market Price Integration System**  
+**Estimated Timeline**: 3-4 weeks  
+**Priority**: High  
+**Can Start**: Immediately (No blocking dependencies)
 
 ## Executive Summary
 
-The Autonomous Farm Advisory System (AFAS) is a comprehensive agricultural decision support platform designed to answer 20 critical farmer questions through intelligent data integration, rule-based processing, and AI-powered explanations. This plan outlines the systematic implementation approach for building a production-ready system that serves farmers, agricultural consultants, and extension services.
-
-## Project Overview
-
-**Duration**: 12 months
-**Team Size**: 8-12 developers (including AI coding agents)
-**Budget**: $800K - $1.2M
-**Architecture**: Python microservices with FastAPI
-**Target Users**: 10,000+ farmers in first year
-**AI Integration**: AI coding agents supported with comprehensive documentation
-
-## Current Status Assessment
-
-Based on the implementation plan and checklist analysis:
-
-### ✅ **Completed Components** (Phase 1 - Foundation)
-- [x] Native development environment setup
-- [x] CI/CD pipeline configuration  
-- [x] Basic microservices skeleton (Python/FastAPI)
-- [x] Database schema design (PostgreSQL, MongoDB, Redis)
-- [x] Weather API integration (NOAA, local services)
-- [x] Soil database connections (USDA Web Soil Survey + SoilGrids)
-- [x] Data ingestion service framework
-- [x] Question intent classification service
-- [x] Basic recommendation engine architecture
-- [x] Questions 1-5 implementation (Crop Selection, Soil Fertility, Crop Rotation, Nutrient Deficiency, Fertilizer Type)
-- [x] OpenRouter LLM integration (GPT-4, Claude, Llama)
-
-### 🔄 **In Progress Components**
-- [-] Context management system (partially implemented)
-- [ ] Questions 6-20 implementation
-- [ ] Advanced AI capabilities
-- [ ] User interface development
-
-### ⏳ **Pending Components**
-- [ ] Image analysis capabilities
-- [ ] Mobile interface
-- [ ] Performance optimization
-- [ ] Production deployment
-
-## Implementation Strategy
-
-### Phase 1: Foundation Consolidation (Months 1-3) - 75% Complete
-
-**Objective**: Solidify core infrastructure and complete remaining foundation components
-
-#### Sprint 1.1: Infrastructure Completion (Weeks 1-2)
-**Focus**: Complete remaining infrastructure gaps
-
-**Priority Tickets**:
-- **TICKET-011**: Comprehensive Testing Framework (Critical)
-  - Implement pytest framework with >80% coverage
-  - Set up agricultural validation tests
-  - Configure CI/CD test automation
-  - **Deliverable**: Full test suite for existing components
-
-**Team Allocation**:
-- QA Engineer (2 weeks)
-- DevOps Engineer (1 week)
-
-#### Sprint 1.2: Core Services Enhancement (Weeks 3-4)
-**Focus**: Enhance existing services with missing capabilities
-
-**Priority Tickets**:
-- **TICKET-001**: Climate Zone Data Service Implementation (Critical)
-  - Complete USDA Plant Hardiness Zone integration
-  - Add Köppen climate classification
-  - Implement caching and validation
-  - **Deliverable**: Production-ready climate zone service
-
-- **TICKET-002**: Coordinate-Based Climate Zone Detection (Critical)
-  - GPS coordinate validation and processing
-  - Confidence scoring for zone detection
-  - Edge case handling (ocean, polar regions)
-  - **Deliverable**: Robust coordinate-based detection
-
-**Team Allocation**:
-- Senior Python Developer (2 weeks)
-- Data Engineer (2 weeks)
-
-#### Sprint 1.3: Location and Farm Management (Weeks 5-6)
-**Focus**: Complete farm location input capabilities
-
-**Priority Tickets**:
-- **TICKET-008**: Location Management API Endpoints (Critical)
-  - CRUD operations for farm locations
-  - PostGIS integration for geospatial data
-  - Geocoding with multiple providers
-  - **Deliverable**: Complete location management system
-
-**Team Allocation**:
-- Python Backend Developer (2 weeks)
-- GIS Specialist (1 week)
-
-### Phase 2: Service Expansion (Months 4-6)
-
-**Objective**: Implement Questions 6-15 with enhanced AI capabilities
-
-#### Sprint 2.1: Fertilizer Management Suite (Weeks 7-10)
-**Focus**: Complete fertilizer-related questions (6-9)
-
-**User Stories Addressed**:
-- **US-005**: Soil pH Management - pH optimization for nutrient availability
-- **US-006**: Fertilizer Type Selection - Organic vs synthetic vs slow-release
-- **US-007**: Fertilizer Application Method - Liquid vs granular decisions
-- **US-008**: Fertilizer Timing Optimization - Optimal application timing
-- **US-010**: Runoff Prevention - Environmental impact reduction
-
-**Priority Tickets**:
-- **TICKET-006**: Market Price Integration System (High)
-  - Real-time fertilizer price tracking
-  - Multiple data source integration
-  - Price trend analysis
-  - **Deliverable**: Dynamic pricing system
-
-- **TICKET-003**: pH Management Service Structure (Critical)
-- **TICKET-004**: pH adjustment calculation engine (Critical)
-  - Lime and sulfur requirement calculations
-  - Soil buffer capacity modeling
-  - Application timing recommendations
-  - **Deliverable**: Complete pH management system
-
-**Questions Implemented**:
-- Q6: Fertilizer Application Method (liquid vs granular)
-- Q7: Fertilizer Timing Optimization
-- Q8: Environmental Impact/Runoff Prevention
-- Q9: Cover Crop Selection
-- Q10: Soil pH Management
-
-**Acceptance Criteria Validation**:
-- [ ] US-005: pH adjustment recommendations with timing and cost estimates
-- [ ] US-006: Fertilizer type comparison with pros/cons and cost analysis
-- [ ] US-007: Application method recommendations based on equipment and goals
-- [ ] US-008: Seasonal fertilizer calendar with weather integration
-- [ ] US-010: Environmental impact assessment with mitigation strategies
-
-**Team Allocation**:
-- Python Backend Developers (2 × 4 weeks)
-- Agricultural Expert (2 weeks)
-- Data Engineer (4 weeks)
-
-#### Sprint 2.2: Advanced Analysis Capabilities (Weeks 11-14)
-**Focus**: Implement Questions 11-15 with ML/AI features
-
-**User Stories Addressed**:
-- **US-004**: Nutrient Deficiency Detection - Multi-source deficiency identification
-- **US-011**: Cover Crop Selection - Goal-based cover crop recommendations
-- **US-012**: Drought Management - Moisture conservation and resilience practices
-- **US-016**: Weather Impact Analysis (foundation) - Weather data integration
-
-**Priority Tickets**:
-- **TICKET-007**: Visual Symptom Analysis System (High)
-  - CNN models for deficiency detection
-  - Image preprocessing pipeline
-  - Confidence scoring system
-  - **Deliverable**: Crop photo analysis capability
-
-- **TICKET-009**: Weather Data Integration System (High)
-  - Multi-source weather data integration
-  - Agricultural weather metrics
-  - Impact assessment algorithms
-  - **Deliverable**: Weather-aware recommendations
-
-**Questions Implemented**:
-- Q11: Micronutrient Management
-- Q12: Precision Agriculture ROI Assessment
-- Q13: Drought Management
-- Q14: Early Deficiency Detection (with image analysis)
-- Q15: Tillage Practice Recommendations
-
-**Acceptance Criteria Validation**:
-- [ ] US-004: Image analysis with >85% accuracy, symptom description processing
-- [ ] US-011: Cover crop species recommendations with timing and benefits
-- [ ] US-012: Moisture conservation practices with water savings estimates
-- [ ] US-016: Weather impact assessment with adaptation recommendations
-
-**Team Allocation**:
-- Python ML Engineer (4 weeks)
-- Computer Vision Specialist (4 weeks)
-- Python Backend Developer (4 weeks)
-
-### Phase 3: Advanced Features & UI (Months 7-9)
-
-**Objective**: Complete all 20 questions and develop user interface
-
-#### Sprint 3.1: Final Questions Implementation (Weeks 15-18)
-**Focus**: Implement Questions 16-20
-
-**User Stories Addressed**:
-- **US-002**: Crop Rotation Planning - Multi-year rotation optimization
-- **US-009**: Cost-Effective Fertilizer Strategy - Economic optimization and ROI
-- **US-013**: Precision Agriculture ROI Assessment - Technology investment analysis
-- **US-016**: Weather Impact Analysis (complete) - Advanced weather adaptation
-- **US-020**: Government Program Integration - Policy and incentive programs
-
-**Priority Tickets**:
-- Economic optimization algorithms (Q16: Cost-effective fertilizer strategy)
-- Weather pattern analysis (Q17: Weather impact analysis)
-- Testing integration (Q18: Soil/tissue test integration)
-- Sustainable practices (Q19: Yield optimization without soil harm)
-- Policy integration (Q20: Government programs and regulations)
-
-**Acceptance Criteria Validation**:
-- [ ] US-002: Multi-year rotation plans with economic and sustainability analysis
-- [ ] US-009: Cost-optimized fertilizer strategies with ROI and break-even analysis
-- [ ] US-013: Technology ROI assessment with payback period calculations
-- [ ] US-016: Weather pattern analysis with climate adaptation strategies
-- [ ] US-020: Government program integration with compliance and incentive guidance
-
-**Team Allocation**:
-- Python Backend Developers (2 × 4 weeks)
-- Policy Research Specialist (2 weeks)
-- Agricultural Expert (3 weeks)
-
-#### Sprint 3.2: User Interface Development (Weeks 19-22)
-**Focus**: Complete web dashboard and mobile interface
-
-**User Stories Addressed**:
-- **US-014**: Early Deficiency Detection (advanced) - Enhanced ML models and UI
-- **US-015**: Soil and Tissue Test Integration - Laboratory data integration
-- **US-017**: Tillage Practice Recommendations - No-till vs conventional analysis
-- **US-018**: Sustainable Intensification - Integrated optimization interface
-- **US-019**: Micronutrient Management - Micronutrient assessment tools
-- **US-022**: Recommendation History and Tracking - Historical tracking dashboard
-- **US-023**: Mobile Field Access - Mobile-responsive interface and offline capability
-
-**Priority Tickets**:
-- **TICKET-010**: Farm Profile Management Interface (High)
-  - Interactive maps with Leaflet.js
-  - Responsive design with Bootstrap 5
-  - Real-time validation and feedback
-  - **Deliverable**: Complete farm management UI
-
-**UI Components**:
-- Farm profile and field management
-- Interactive recommendation dashboard
-- Mobile-responsive design
-- Data visualization and charts
-
-**Acceptance Criteria Validation**:
-- [ ] US-014: Advanced deficiency detection with real-time monitoring interface
-- [ ] US-015: Laboratory test result integration with recommendation adjustments
-- [ ] US-017: Tillage practice comparison with transition planning tools
-- [ ] US-018: Integrated sustainability and yield optimization dashboard
-- [ ] US-019: Micronutrient assessment with supplementation recommendations
-- [ ] US-022: Historical recommendation tracking with outcome analysis
-- [ ] US-023: Mobile interface with offline capability and GPS integration
-
-**Team Allocation**:
-- Python Frontend Developers (2 × 4 weeks)
-- UI/UX Designer (4 weeks)
-
-### Phase 4: Optimization & Launch (Months 10-12)
-
-**Objective**: Production readiness and user validation
-
-#### Sprint 4.1: Performance Optimization (Weeks 23-26)
-**Focus**: System performance and scalability
-
-**Optimization Areas**:
-- Database query optimization
-- Caching layer enhancements
-- Load balancing configuration
-- Response time improvements (<3 seconds)
-
-#### Sprint 4.2: User Acceptance Testing (Weeks 27-30)
-**Focus**: Real-world validation with farmers
-
-**Testing Approach**:
-- 50+ farmer beta testing program
-- Agricultural expert validation
-- Performance benchmarking
-- Security audit and hardening
-
-## AI Coding Agent Integration
-
-### Agent-Ready Documentation
-The project includes comprehensive documentation specifically designed for AI coding agents:
-
-- **docs/ai-agent-integration-guide.md**: Complete workflow guide for AI agents
-- **docs/tickets.md**: Detailed technical specifications with acceptance criteria
-- **docs/checklist.md**: Granular task breakdown with ticket mapping (TICKET-XXX_task-id format)
-- **services/ai-agent/**: Reference implementation showing established patterns
-
-### AI Agent Workflow
-1. **Task Selection**: AI agents select tickets from current sprint priorities
-2. **Context Analysis**: Review ticket specifications and existing codebase patterns
-3. **Implementation**: Follow established service patterns and API conventions
-4. **Integration**: Connect with existing services (AI Agent, Context Management)
-5. **Testing**: Implement comprehensive tests including agricultural validation
-6. **Human Handoff**: Flag complex agricultural logic for expert review
-
-### Existing Codebase Foundation
-AI agents can leverage the existing implementation:
-- ✅ **AI Agent Service**: OpenRouter LLM integration with agricultural context
-- ✅ **Context Management**: Conversation and agricultural context handling
-- ✅ **Service Patterns**: Established FastAPI microservice architecture
-- ✅ **Testing Framework**: pytest with agricultural validation patterns
-
-### Quality Assurance for AI Agents
-- **Code Standards**: >80% test coverage, full type hints, comprehensive documentation
-- **Agricultural Validation**: Expert review required for domain-specific logic
-- **Integration Testing**: Validation against existing services and APIs
-- **Performance Requirements**: <3 second response time for all endpoints
-
-## Technical Implementation Details
-
-### Architecture Stack
-```
-Frontend Layer:
-├── FastAPI + Jinja2 Templates (Primary)
-├── Streamlit (Alternative/Prototyping)
-├── Bootstrap 5 (Responsive Design)
-├── Leaflet.js (Interactive Maps)
-└── Chart.js (Data Visualization)
-
-Backend Services:
-├── Python 3.11+ (All Services)
-├── FastAPI (API Framework)
-├── SQLAlchemy (ORM)
-├── Pydantic (Data Validation)
-└── AsyncIO (Async Operations)
-
-Data Layer:
-├── PostgreSQL (Structured Data)
-├── PostGIS (Geospatial Extension)
-├── TimescaleDB (Time Series)
-├── MongoDB (Document Storage)
-├── Redis (Caching)
-└── Vector DB (AI Embeddings)
-
-AI/ML Stack:
-├── OpenRouter (LLM Integration)
-├── TensorFlow/PyTorch (Deep Learning)
-├── OpenCV (Image Processing)
-├── scikit-learn (ML Algorithms)
-└── spaCy/NLTK (NLP)
-
-External Integrations:
-├── NOAA Weather API
-├── USDA Soil Survey
-├── Plant Hardiness Zones
-├── Market Price APIs
-└── Government Program DBs
+This job implements real-time fertilizer price tracking, economic optimization algorithms, and cost-effective fertilizer strategy recommendations. This work is **completely independent** of other parallel jobs and can proceed without blocking.
+
+## Related Tickets from Checklist
+
+- **TICKET-006_fertilizer-strategy-optimization-1.1**: Implement real-time fertilizer price tracking
+- **TICKET-006_fertilizer-strategy-optimization-1.2**: Create price trend analysis system
+- **TICKET-006_fertilizer-strategy-optimization-1.3**: Develop economic optimization engine
+- **TICKET-006_fertilizer-strategy-optimization-2.1**: Implement ROI calculation algorithms
+- **TICKET-006_fertilizer-strategy-optimization-2.2**: Create cost-benefit analysis tools
+- **TICKET-006_fertilizer-strategy-optimization-3.1**: Build fertilizer recommendation optimizer
+
+## Technical Stack
+
+```yaml
+Languages: Python 3.11+
+Framework: FastAPI
+Database: PostgreSQL with TimescaleDB extension
+ORM: SQLAlchemy 2.0+
+Validation: Pydantic v2
+Testing: pytest, pytest-asyncio
+External APIs: USDA NASS, CME Group (mock for development)
+Optimization: scipy, numpy
+Scheduling: APScheduler
 ```
 
-### Service Architecture
+## Service Architecture
+
+**Service Location**: `services/fertilizer-optimization/`  
+**Port**: 8008 (new service)  
+**Reference Pattern**: Follow `services/recommendation-engine/` structure
+
 ```
-services/
-├── question-router/        # Port 8000 - Route questions to processors
-├── recommendation-engine/  # Port 8001 - Core agricultural logic
-├── ai-agent/              # Port 8002 - LLM integration & explanations
-├── data-integration/      # Port 8003 - External data sources
-├── image-analysis/        # Port 8004 - Computer vision for crops
-├── user-management/       # Port 8005 - User profiles & auth
-└── frontend/              # Port 3000 - Web interface
-```
-
-### Database Design Strategy
-
-**PostgreSQL (Primary)**:
-- User profiles and farm data
-- Crop varieties and characteristics
-- Soil test results and recommendations
-- Weather data (with TimescaleDB)
-- Geospatial data (with PostGIS)
-
-**MongoDB (Secondary)**:
-- Flexible recommendation responses
-- External API cache data
-- User interaction logs
-- ML model predictions
-
-**Redis (Caching)**:
-- Session management
-- Frequently accessed recommendations
-- API response caching
-- Real-time data temporary storage
-
-## Quality Assurance Strategy
-
-### Testing Framework
-```
-tests/
-├── unit/                  # >80% code coverage
-├── integration/           # API endpoint testing
-├── e2e/                   # User workflow testing
-├── performance/           # Load and response time testing
-├── agricultural/          # Expert validation testing
-└── security/              # Security and penetration testing
+services/fertilizer-optimization/
+├── src/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── price_models.py
+│   │   ├── optimization_models.py
+│   │   └── recommendation_models.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── price_tracker.py
+│   │   ├── trend_analyzer.py
+│   │   ├── economic_optimizer.py
+│   │   └── recommendation_service.py
+│   ├── providers/
+│   │   ├── __init__.py
+│   │   ├── usda_nass_provider.py
+│   │   ├── cme_provider.py
+│   │   └── mock_provider.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── price_routes.py
+│   │   └── optimization_routes.py
+│   └── schemas/
+│       ├── __init__.py
+│       ├── price_schemas.py
+│       └── optimization_schemas.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_price_tracker.py
+│   ├── test_economic_optimizer.py
+│   └── test_api_endpoints.py
+├── requirements.txt
+└── README.md
 ```
 
-### Agricultural Validation Process
-1. **Expert Review**: Agricultural consultants validate recommendations
-2. **Field Testing**: Real-world validation with partner farms
-3. **Accuracy Metrics**: >85% farmer satisfaction with recommendations
-4. **Continuous Learning**: Feedback integration and model improvement
+## Week 1: Foundation & Price Tracking (Days 1-5)
 
-## Risk Management
+### Day 1: Service Structure Setup
 
-### Technical Risks
-- **Data Quality**: Multiple source validation and expert review
-- **API Dependencies**: Fallback providers and graceful degradation
-- **Performance**: Regular load testing and optimization
-- **Security**: Comprehensive security audits and monitoring
+**Step 1: Create Service Directory**
+```bash
+# Execute from repository root
+mkdir -p services/fertilizer-optimization/src/{models,services,providers,api,schemas}
+mkdir -p services/fertilizer-optimization/tests
+touch services/fertilizer-optimization/src/__init__.py
+touch services/fertilizer-optimization/src/main.py
+```
 
-### Business Risks
-- **User Adoption**: Early farmer engagement and feedback integration
-- **Competition**: Focus on unique agricultural expertise and validation
-- **Regulatory**: Stay current with agricultural regulations and policies
+**Step 2: Create requirements.txt**
+```txt
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+pydantic==2.5.0
+psycopg2-binary==2.9.9
+alembic==1.12.1
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.1
+numpy==1.26.2
+scipy==1.11.4
+pandas==2.1.3
+APScheduler==3.10.4
+```
 
-## Success Metrics
+**Step 3: Install Dependencies**
+```bash
+cd services/fertilizer-optimization
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
-### Development KPIs
-- **Code Quality**: >80% test coverage, <5% bug rate
-- **Performance**: <3s response time, 99.5% uptime
-- **Feature Completion**: 100% of 20 questions on schedule
+### Day 2-3: Database Schema for Price Tracking
 
-### User KPIs
-- **Adoption**: 1,000+ users within 6 months
-- **Engagement**: >70% monthly active users
-- **Satisfaction**: >4.5/5 rating, >80% recommendation rate
+**File**: `services/fertilizer-optimization/src/models/price_models.py`
 
-### Business KPIs
-- **Revenue**: $100K+ ARR within first year
-- **Market**: 5% target market engagement
-- **Validation**: 3+ university endorsements
-
-## Resource Requirements
-
-### Team Structure (Human + AI Agents)
-- **Technical Lead**: Python/FastAPI architecture oversight and AI agent coordination
-- **Backend Developers**: 2-3 senior Python developers (working with AI agents)
-- **ML Engineers**: 2 specialists for AI/ML features
-- **Frontend Developer**: Python web development
-- **Data Engineer**: Integration and data pipeline specialist
-- **QA Engineer**: Testing and quality assurance (including AI-generated code validation)
-- **DevOps Engineer**: Infrastructure and deployment
-- **Agricultural Expert**: Domain knowledge and validation (0.5 FTE, critical for AI agent output review)
-- **AI Agent Coordinators**: 2-3 AI coding agents following docs/ai-agent-integration-guide.md
-
-### Infrastructure Costs (Monthly)
-- **Development Environment**: $2,000
-- **External APIs**: $2,000-3,000
-- **AI/ML Services**: $3,000-5,000
-- **Monitoring & Tools**: $1,000
-- **Total**: $8,000-11,000/month
-
-## Next Steps (Immediate Actions)
-
-### Week 1-2 Priorities
-1. **Complete Testing Framework** (TICKET-011)
-   - Set up pytest with coverage reporting
-   - Implement agricultural validation tests
-   - Configure CI/CD automation
-
-2. **Finalize Climate Zone Service** (TICKET-001, TICKET-002)
-   - Complete USDA API integration
-   - Add coordinate validation
-   - Implement caching layer
-
-3. **Team Onboarding** (Human + AI Agents)
-   - Review existing codebase and service patterns
-   - Set up development environments
-   - Assign ticket ownership to human developers and AI agents
-   - **AI Agent Setup**: Review docs/ai-agent-integration-guide.md
-   - **Context Familiarization**: Study existing services/ai-agent/ implementation
-
-### Success Criteria for Phase 1 Completion
-- [ ] All foundation services have >80% test coverage
-- [ ] Climate zone detection works for all US coordinates
-- [ ] Location management supports farm and field creation
-- [ ] Performance benchmarks met (<3s response time)
-- [ ] Agricultural expert validation completed
-
-## Detailed Sprint Planning
-
-### Phase 1 Detailed Breakdown
-
-#### Sprint 1.1: Testing Framework Implementation (Weeks 1-2)
-**Sprint Goal**: Establish comprehensive testing foundation
-
-**Daily Breakdown**:
-- **Day 1-2**: Set up pytest framework and coverage reporting
-- **Day 3-4**: Implement unit tests for existing services
-- **Day 5-6**: Create integration test suite
-- **Day 7-8**: Set up agricultural validation framework
-- **Day 9-10**: Configure CI/CD test automation
-
-**Definition of Done**:
-- [ ] >80% test coverage for all existing services
-- [ ] Automated test execution in CI/CD pipeline
-- [ ] Agricultural validation tests with expert review process
-- [ ] Performance benchmarking tests configured
-
-#### Sprint 1.2: Climate Zone Service Completion (Weeks 3-4)
-**Sprint Goal**: Production-ready climate zone detection
-
-**User Stories Addressed**:
-- US-001: Crop Variety Recommendation (climate zone auto-detection)
-
-**Daily Breakdown**:
-- **Day 1-3**: Complete USDA Plant Hardiness Zone API integration
-- **Day 4-5**: Implement Köppen climate classification
-- **Day 6-7**: Add coordinate validation and edge case handling
-- **Day 8-9**: Implement caching layer with Redis
-- **Day 10**: Performance testing and optimization
-
-**Acceptance Criteria**:
-- [ ] Handles all US coordinates with <2s response time
-- [ ] 99.5% uptime with graceful API failure handling
-- [ ] Confidence scoring for all zone detections
-- [ ] 24-hour cache TTL for zone data
-
-#### Sprint 1.3: Location Management System (Weeks 5-6)
-**Sprint Goal**: Complete farm and field management capabilities
-
-**User Stories Addressed**:
-- US-021: User Profile Management
-- Farm location input and field boundary management
-
-**Technical Implementation**:
 ```python
-# Key components to implement
-class LocationService:
-    async def create_farm_location(self, user_id: UUID, location_data: LocationCreate)
-    async def add_field_to_farm(self, farm_id: UUID, field_data: FieldCreate)
-    async def geocode_address(self, address: str) -> GeocodeResult
-    async def validate_agricultural_location(self, coordinates: Coordinates)
+from sqlalchemy import Column, Integer, String, DECIMAL, Date, DateTime, ForeignKey, Index
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from datetime import datetime, date
 
-class GeospatialService:
-    def calculate_field_area(self, boundary: Polygon) -> float
-    def validate_field_boundary(self, boundary: Polygon) -> ValidationResult
-    def find_nearby_farms(self, coordinates: Coordinates, radius_km: float)
+Base = declarative_base()
+
+class FertilizerType(Base):
+    """Fertilizer type reference table"""
+    __tablename__ = 'fertilizer_types'
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True)
+    chemical_formula = Column(String(50))
+    nutrient_content = Column(String(20))  # e.g., "46-0-0" for urea
+    category = Column(String(50))  # nitrogen, phosphorus, potassium, blend
+    description = Column(String(500))
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    prices = relationship("FertilizerPrice", back_populates="fertilizer_type")
+
+class FertilizerPrice(Base):
+    """Time series fertilizer price data"""
+    __tablename__ = 'fertilizer_prices'
+    
+    id = Column(Integer, primary_key=True)
+    fertilizer_type_id = Column(Integer, ForeignKey('fertilizer_types.id'), nullable=False)
+    price_per_unit = Column(DECIMAL(10, 2), nullable=False)
+    unit = Column(String(20), nullable=False)  # ton, cwt, lb
+    region = Column(String(100))
+    source = Column(String(50), nullable=False)
+    price_date = Column(Date, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    fertilizer_type = relationship("FertilizerType", back_populates="prices")
+    
+    # Composite index for time series queries
+    __table_args__ = (
+        Index('idx_fertilizer_prices_type_date', 'fertilizer_type_id', 'price_date'),
+        Index('idx_fertilizer_prices_region', 'region'),
+        Index('idx_fertilizer_prices_date', 'price_date'),
+    )
+
+class PriceTrend(Base):
+    """Calculated price trends and statistics"""
+    __tablename__ = 'price_trends'
+    
+    id = Column(Integer, primary_key=True)
+    fertilizer_type_id = Column(Integer, ForeignKey('fertilizer_types.id'), nullable=False)
+    region = Column(String(100))
+    period_days = Column(Integer, nullable=False)  # 7, 30, 90, 365
+    average_price = Column(DECIMAL(10, 2))
+    min_price = Column(DECIMAL(10, 2))
+    max_price = Column(DECIMAL(10, 2))
+    volatility = Column(DECIMAL(5, 4))  # Standard deviation
+    trend_direction = Column(String(20))  # increasing, decreasing, stable
+    price_change_percent = Column(DECIMAL(6, 2))
+    calculation_date = Column(Date, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    __table_args__ = (
+        Index('idx_trends_type_period', 'fertilizer_type_id', 'period_days'),
+    )
 ```
 
-### Phase 2 Detailed Breakdown
+**Database Migration SQL**:
+```sql
+-- Create fertilizer_types table
+CREATE TABLE IF NOT EXISTS fertilizer_types (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    chemical_formula VARCHAR(50),
+    nutrient_content VARCHAR(20),
+    category VARCHAR(50),
+    description VARCHAR(500),
+    created_at TIMESTAMP DEFAULT NOW()
+);
 
-#### Sprint 2.1: Fertilizer Management Implementation (Weeks 7-10)
-**Sprint Goal**: Complete Questions 6-10 with economic optimization
+-- Create fertilizer_prices table with TimescaleDB hypertable
+CREATE TABLE IF NOT EXISTS fertilizer_prices (
+    id SERIAL PRIMARY KEY,
+    fertilizer_type_id INTEGER REFERENCES fertilizer_types(id) ON DELETE CASCADE,
+    price_per_unit DECIMAL(10,2) NOT NULL,
+    unit VARCHAR(20) NOT NULL,
+    region VARCHAR(100),
+    source VARCHAR(50) NOT NULL,
+    price_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 
-**Questions Implementation Priority**:
-1. **Q10: Soil pH Management** (Week 7)
-   - pH adjustment calculations
-   - Lime and sulfur requirement algorithms
-   - Application timing recommendations
+-- Convert to TimescaleDB hypertable for time series optimization
+SELECT create_hypertable('fertilizer_prices', 'price_date', if_not_exists => TRUE);
 
-2. **Q6: Fertilizer Application Method** (Week 8)
-   - Liquid vs granular decision logic
-   - Equipment compatibility assessment
-   - Cost-benefit analysis
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_fertilizer_prices_type_date ON fertilizer_prices(fertilizer_type_id, price_date);
+CREATE INDEX IF NOT EXISTS idx_fertilizer_prices_region ON fertilizer_prices(region);
+CREATE INDEX IF NOT EXISTS idx_fertilizer_prices_date ON fertilizer_prices(price_date);
 
-3. **Q7: Fertilizer Timing Optimization** (Week 9)
-   - Seasonal application calendars
-   - Weather-based timing adjustments
-   - Nutrient uptake modeling
+-- Create price_trends table
+CREATE TABLE IF NOT EXISTS price_trends (
+    id SERIAL PRIMARY KEY,
+    fertilizer_type_id INTEGER REFERENCES fertilizer_types(id) ON DELETE CASCADE,
+    region VARCHAR(100),
+    period_days INTEGER NOT NULL,
+    average_price DECIMAL(10,2),
+    min_price DECIMAL(10,2),
+    max_price DECIMAL(10,2),
+    volatility DECIMAL(5,4),
+    trend_direction VARCHAR(20),
+    price_change_percent DECIMAL(6,2),
+    calculation_date DATE NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 
-4. **Q8: Environmental Impact/Runoff Prevention** (Week 10)
-   - Runoff risk assessment
-   - Buffer strip recommendations
-   - Environmental compliance checking
+CREATE INDEX IF NOT EXISTS idx_trends_type_period ON price_trends(fertilizer_type_id, period_days);
 
-**Technical Deliverables**:
-```python
-# Core services to implement
-class FertilizerOptimizationService:
-    def calculate_application_rates(self, soil_data, crop_requirements)
-    def optimize_timing(self, weather_forecast, crop_stage)
-    def assess_environmental_impact(self, field_characteristics)
-    def calculate_cost_effectiveness(self, fertilizer_prices, application_methods)
-
-class PHManagementService:
-    def calculate_lime_requirement(self, current_ph, target_ph, soil_type)
-    def calculate_sulfur_requirement(self, current_ph, target_ph, soil_type)
-    def predict_ph_timeline(self, amendment_type, application_rate)
+-- Insert sample fertilizer types
+INSERT INTO fertilizer_types (name, chemical_formula, nutrient_content, category, description) VALUES
+('Urea', 'CO(NH2)2', '46-0-0', 'nitrogen', 'High nitrogen fertilizer'),
+('DAP', '(NH4)2HPO4', '18-46-0', 'phosphorus', 'Diammonium phosphate'),
+('Potash', 'KCl', '0-0-60', 'potassium', 'Muriate of potash'),
+('10-10-10', 'Blend', '10-10-10', 'blend', 'Balanced NPK fertilizer'),
+('Anhydrous Ammonia', 'NH3', '82-0-0', 'nitrogen', 'Highest nitrogen content')
+ON CONFLICT (name) DO NOTHING;
 ```
 
-#### Sprint 2.2: Advanced Analysis with ML (Weeks 11-14)
-**Sprint Goal**: Implement Questions 11-15 with AI/ML capabilities
+**Validation Command**:
+```bash
+psql -U postgres -d caain_soil_hub -f migrations/002_fertilizer_prices_schema.sql
+psql -U postgres -d caain_soil_hub -c "SELECT * FROM fertilizer_types;"
+```
 
-**ML Model Development**:
-1. **Crop Deficiency Detection Model** (Weeks 11-12)
-   - CNN architecture for image analysis
-   - Training data preparation and augmentation
-   - Model validation with agricultural experts
+### Day 3-4: Price Tracking Service
 
-2. **Weather Impact Analysis** (Weeks 13-14)
-   - Weather pattern recognition
-   - Crop stress prediction models
-   - Recommendation adjustment algorithms
+**File**: `services/fertilizer-optimization/src/services/price_tracker.py`
 
-**Model Architecture**:
 ```python
-class DeficiencyDetectionModel:
+import asyncio
+import logging
+from sqlalchemy.orm import Session
+from datetime import datetime, date, timedelta
+from typing import List, Dict, Any, Optional
+from ..models.price_models import FertilizerType, FertilizerPrice
+from ..providers.usda_nass_provider import USDANASSProvider
+from ..providers.mock_provider import MockPriceProvider
+
+logger = logging.getLogger(__name__)
+
+class FertilizerPriceTracker:
+    """Real-time fertilizer price tracking (TICKET-006_fertilizer-strategy-optimization-1.1)"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+        self.providers = [
+            MockPriceProvider(),  # Use mock for development
+            # USDANASSProvider(),  # Enable for production
+        ]
+    
+    async def update_prices(self) -> Dict[str, Any]:
+        """
+        Daily price update from all sources
+        
+        Returns summary of updates
+        """
+        logger.info("Starting daily price update")
+        start_time = datetime.utcnow()
+        
+        fertilizer_types = self.db.query(FertilizerType).all()
+        
+        updates = {
+            "total_updates": 0,
+            "successful_updates": 0,
+            "failed_updates": 0,
+            "sources_used": [],
+            "errors": []
+        }
+        
+        for fertilizer_type in fertilizer_types:
+            for provider in self.providers:
+                try:
+                    price_data = await provider.get_current_price(fertilizer_type.name)
+                    
+                    if price_data:
+                        # Store price in database
+                        db_price = FertilizerPrice(
+                            fertilizer_type_id=fertilizer_type.id,
+                            price_per_unit=price_data['price'],
+                            unit=price_data['unit'],
+                            region=price_data.get('region', 'US'),
+                            source=provider.name,
+                            price_date=date.today()
+                        )
+                        self.db.add(db_price)
+                        updates["successful_updates"] += 1
+                        
+                        if provider.name not in updates["sources_used"]:
+                            updates["sources_used"].append(provider.name)
+                    
+                except Exception as e:
+                    logger.error(f"Error fetching price for {fertilizer_type.name} from {provider.name}: {e}")
+                    updates["failed_updates"] += 1
+                    updates["errors"].append(str(e))
+        
+        self.db.commit()
+        updates["total_updates"] = updates["successful_updates"] + updates["failed_updates"]
+        updates["duration_seconds"] = (datetime.utcnow() - start_time).total_seconds()
+        
+        logger.info(f"Price update completed: {updates}")
+        return updates
+    
+    async def get_current_prices(
+        self,
+        region: Optional[str] = None,
+        fertilizer_types: Optional[List[str]] = None
+    ) -> List[Dict[str, Any]]:
+        """Get current prices for specified fertilizers in region"""
+        
+        query = self.db.query(FertilizerPrice, FertilizerType).join(
+            FertilizerType, FertilizerPrice.fertilizer_type_id == FertilizerType.id
+        )
+        
+        # Filter by region
+        if region:
+            query = query.filter(FertilizerPrice.region == region)
+        
+        # Filter by fertilizer types
+        if fertilizer_types:
+            query = query.filter(FertilizerType.name.in_(fertilizer_types))
+        
+        # Get most recent prices (within last 7 days)
+        cutoff_date = date.today() - timedelta(days=7)
+        query = query.filter(FertilizerPrice.price_date >= cutoff_date)
+        
+        # Order by date descending
+        query = query.order_by(FertilizerPrice.price_date.desc())
+        
+        results = query.all()
+        
+        # Group by fertilizer type and get most recent
+        prices_by_type = {}
+        for price, fert_type in results:
+            if fert_type.name not in prices_by_type:
+                prices_by_type[fert_type.name] = {
+                    "fertilizer_type": fert_type.name,
+                    "nutrient_content": fert_type.nutrient_content,
+                    "price_per_unit": float(price.price_per_unit),
+                    "unit": price.unit,
+                    "region": price.region,
+                    "price_date": price.price_date.isoformat(),
+                    "source": price.source
+                }
+        
+        return list(prices_by_type.values())
+```
+
+**File**: `services/fertilizer-optimization/src/providers/mock_provider.py`
+
+```python
+import random
+from typing import Dict, Any, Optional
+
+class MockPriceProvider:
+    """Mock price provider for development and testing"""
+    
     def __init__(self):
-        self.model = self.load_pretrained_model()
-        self.preprocessor = ImagePreprocessor()
-
-    def predict_deficiency(self, image: np.ndarray, crop_type: str):
-        # Preprocess image
-        processed_image = self.preprocessor.prepare_image(image)
-
-        # Run inference
-        predictions = self.model.predict(processed_image)
-
-        # Post-process results
-        return self.interpret_predictions(predictions, crop_type)
+        self.name = "MockProvider"
+        self.base_prices = {
+            "Urea": 450.0,  # $/ton
+            "DAP": 650.0,
+            "Potash": 550.0,
+            "10-10-10": 500.0,
+            "Anhydrous Ammonia": 700.0
+        }
+    
+    async def get_current_price(self, fertilizer_name: str) -> Optional[Dict[str, Any]]:
+        """Get mock price with random variation"""
+        
+        if fertilizer_name not in self.base_prices:
+            return None
+        
+        base_price = self.base_prices[fertilizer_name]
+        # Add ±10% random variation
+        variation = random.uniform(-0.1, 0.1)
+        current_price = base_price * (1 + variation)
+        
+        return {
+            "price": round(current_price, 2),
+            "unit": "ton",
+            "region": "US",
+            "currency": "USD"
+        }
 ```
 
-### Phase 3 Detailed Breakdown
+**Validation Command**:
+```bash
+cd services/fertilizer-optimization
+python -c "from src.services.price_tracker import FertilizerPriceTracker; print('PriceTracker OK')"
+```
 
-#### Sprint 3.1: Final Questions & Economic Models (Weeks 15-18)
-**Sprint Goal**: Complete all 20 questions with economic optimization
+## Week 2: Economic Optimization Engine (Days 6-10)
 
-**Complex Questions Implementation**:
-- **Q16: Cost-Effective Fertilizer Strategy**
-  - Multi-objective optimization (cost, yield, environment)
-  - Market price integration and forecasting
-  - ROI calculation with uncertainty analysis
+### Day 6-8: Optimization Models and Algorithms
 
-- **Q17: Weather Impact Analysis**
-  - Historical weather pattern analysis
-  - Climate change adaptation strategies
-  - Risk assessment and mitigation planning
+**File**: `services/fertilizer-optimization/src/services/economic_optimizer.py`
 
-- **Q20: Government Programs Integration**
-  - Policy database integration
-  - Compliance checking algorithms
-  - Incentive optimization recommendations
-
-**Economic Optimization Engine**:
 ```python
+import numpy as np
+from scipy.optimize import minimize, LinearConstraint
+from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
+
+@dataclass
+class OptimizationConstraints:
+    """Constraints for fertilizer optimization"""
+    max_budget: Optional[float] = None
+    min_nitrogen_lbs: Optional[float] = None
+    min_phosphorus_lbs: Optional[float] = None
+    min_potassium_lbs: Optional[float] = None
+    max_application_rate: Optional[float] = None
+    environmental_limits: Optional[Dict[str, float]] = None
+
+@dataclass
+class FertilizerOption:
+    """Fertilizer option with pricing and nutrients"""
+    name: str
+    price_per_unit: float
+    unit: str
+    nitrogen_percent: float
+    phosphorus_percent: float
+    potassium_percent: float
+    application_efficiency: float = 0.85
+
 class EconomicOptimizer:
+    """Multi-objective fertilizer optimization (TICKET-006_fertilizer-strategy-optimization-1.3)"""
+
     def optimize_fertilizer_strategy(
         self,
-        field_data: FieldData,
-        market_prices: MarketPrices,
-        yield_goals: YieldGoals,
-        constraints: OptimizationConstraints
-    ) -> OptimizationResult:
+        field_acres: float,
+        nutrient_requirements: Dict[str, float],  # N, P, K in lbs/acre
+        available_fertilizers: List[FertilizerOption],
+        constraints: OptimizationConstraints,
+        yield_goal_bu_acre: float
+    ) -> Dict[str, Any]:
         """
-        Multi-objective optimization considering:
-        - Cost minimization
-        - Yield maximization
-        - Environmental impact minimization
-        - Risk management
+        Multi-objective optimization:
+        - Minimize cost
+        - Meet nutrient requirements
+        - Maximize yield potential
+        - Minimize environmental impact
         """
 
-    def calculate_roi_scenarios(
-        self,
-        investment_options: List[InvestmentOption],
-        farm_characteristics: FarmData
-    ) -> ROIAnalysis:
-        """
-        Calculate ROI for different investment scenarios
-        with sensitivity analysis
-        """
-```
+        n_fertilizers = len(available_fertilizers)
 
-#### Sprint 3.2: User Interface Development (Weeks 19-22)
-**Sprint Goal**: Complete web dashboard and mobile interface
+        # Objective function: minimize cost
+        def objective(x):
+            total_cost = sum(
+                x[i] * available_fertilizers[i].price_per_unit * field_acres
+                for i in range(n_fertilizers)
+            )
+            return total_cost
 
-**UI Component Architecture**:
-```html
-<!-- Main Dashboard Layout -->
-<div class="dashboard-container">
-    <nav class="sidebar">
-        <!-- Navigation menu -->
-    </nav>
+        # Constraint: meet nitrogen requirement
+        def nitrogen_constraint(x):
+            total_n = sum(
+                x[i] * available_fertilizers[i].nitrogen_percent / 100 * available_fertilizers[i].application_efficiency
+                for i in range(n_fertilizers)
+            )
+            return total_n - nutrient_requirements.get('N', 0)
 
-    <main class="main-content">
-        <div class="farm-overview">
-            <!-- Farm summary cards -->
-        </div>
+        # Constraint: meet phosphorus requirement
+        def phosphorus_constraint(x):
+            total_p = sum(
+                x[i] * available_fertilizers[i].phosphorus_percent / 100 * available_fertilizers[i].application_efficiency
+                for i in range(n_fertilizers)
+            )
+            return total_p - nutrient_requirements.get('P', 0)
 
-        <div class="interactive-map">
-            <!-- Leaflet.js map with field overlays -->
-        </div>
+        # Constraint: meet potassium requirement
+        def potassium_constraint(x):
+            total_k = sum(
+                x[i] * available_fertilizers[i].potassium_percent / 100 * available_fertilizers[i].application_efficiency
+                for i in range(n_fertilizers)
+            )
+            return total_k - nutrient_requirements.get('K', 0)
 
-        <div class="recommendations-panel">
-            <!-- Active recommendations and alerts -->
-        </div>
+        # Initial guess: equal distribution
+        x0 = np.ones(n_fertilizers) * 100
 
-        <div class="data-visualization">
-            <!-- Charts and graphs -->
-        </div>
-    </main>
-</div>
-```
+        # Bounds: non-negative application rates
+        bounds = [(0, 500) for _ in range(n_fertilizers)]
 
-**Mobile-First Design Principles**:
-- Touch-friendly interface elements
-- Offline capability for field use
-- GPS integration for location services
-- Camera integration for crop photos
-- Push notifications for time-sensitive alerts
+        # Constraints
+        constraints_list = [
+            {'type': 'ineq', 'fun': nitrogen_constraint},
+            {'type': 'ineq', 'fun': phosphorus_constraint},
+            {'type': 'ineq', 'fun': potassium_constraint}
+        ]
 
-## Data Management Strategy
+        # Budget constraint
+        if constraints.max_budget:
+            def budget_constraint(x):
+                total_cost = sum(
+                    x[i] * available_fertilizers[i].price_per_unit * field_acres
+                    for i in range(n_fertilizers)
+                )
+                return constraints.max_budget - total_cost
+            constraints_list.append({'type': 'ineq', 'fun': budget_constraint})
 
-### Data Sources Integration
-```python
-# External data source management
-class DataSourceManager:
-    def __init__(self):
-        self.sources = {
-            'weather': [NOAAProvider(), OpenWeatherProvider()],
-            'soil': [USDAProvider(), SoilGridsProvider()],
-            'market': [USDANASSProvider(), CMEProvider()],
-            'government': [NRCSProvider(), FSAProvider()]
+        # Solve optimization
+        result = minimize(
+            objective,
+            x0,
+            method='SLSQP',
+            bounds=bounds,
+            constraints=constraints_list,
+            options={'maxiter': 1000}
+        )
+
+        if not result.success:
+            return {
+                "success": False,
+                "message": "Optimization failed to converge",
+                "reason": result.message
+            }
+
+        # Build recommendation
+        recommendations = []
+        total_cost = 0
+
+        for i, amount in enumerate(result.x):
+            if amount > 0.1:  # Only include significant amounts
+                fert = available_fertilizers[i]
+                cost = amount * fert.price_per_unit * field_acres
+                total_cost += cost
+
+                recommendations.append({
+                    "fertilizer": fert.name,
+                    "application_rate_per_acre": round(amount, 2),
+                    "total_amount": round(amount * field_acres, 2),
+                    "unit": fert.unit,
+                    "cost_per_acre": round(cost / field_acres, 2),
+                    "total_cost": round(cost, 2),
+                    "nutrients_provided": {
+                        "N": round(amount * fert.nitrogen_percent / 100 * fert.application_efficiency, 2),
+                        "P": round(amount * fert.phosphorus_percent / 100 * fert.application_efficiency, 2),
+                        "K": round(amount * fert.potassium_percent / 100 * fert.application_efficiency, 2)
+                    }
+                })
+
+        return {
+            "success": True,
+            "recommendations": recommendations,
+            "total_cost": round(total_cost, 2),
+            "cost_per_acre": round(total_cost / field_acres, 2),
+            "estimated_roi": self._calculate_roi(total_cost, field_acres, yield_goal_bu_acre),
+            "environmental_impact": self._assess_environmental_impact(recommendations, field_acres)
         }
 
-    async def fetch_with_fallback(self, source_type: str, query: dict):
-        """Fetch data with automatic fallback to secondary sources"""
+    def _calculate_roi(self, total_cost: float, acres: float, yield_goal: float) -> Dict[str, float]:
+        """Calculate ROI based on yield goal and commodity prices"""
+        # Assume corn at $5/bu
+        commodity_price = 5.0
+        expected_revenue = yield_goal * acres * commodity_price
 
-    def validate_data_quality(self, data: dict, source_type: str) -> QualityScore:
-        """Validate data quality and flag inconsistencies"""
+        return {
+            "total_investment": total_cost,
+            "expected_revenue": expected_revenue,
+            "net_profit": expected_revenue - total_cost,
+            "roi_percent": ((expected_revenue - total_cost) / total_cost * 100) if total_cost > 0 else 0,
+            "break_even_yield_bu_acre": (total_cost / acres / commodity_price) if acres > 0 else 0
+        }
+
+    def _assess_environmental_impact(self, recommendations: List[Dict], acres: float) -> Dict[str, Any]:
+        """Assess environmental impact of fertilizer strategy"""
+        total_n = sum(r["nutrients_provided"]["N"] for r in recommendations)
+
+        # Simplified runoff risk assessment
+        runoff_risk = "low"
+        if total_n > 180:
+            runoff_risk = "high"
+        elif total_n > 150:
+            runoff_risk = "moderate"
+
+        return {
+            "total_nitrogen_lbs_acre": round(total_n, 2),
+            "runoff_risk": runoff_risk,
+            "recommendations": [
+                "Consider split applications to reduce runoff risk" if runoff_risk != "low" else "Application rate is environmentally sound",
+                "Use nitrification inhibitors for high nitrogen rates" if total_n > 180 else None
+            ]
+        }
 ```
 
-### Data Quality Assurance
-- **Multi-source validation**: Cross-reference data from multiple providers
-- **Expert review**: Agricultural consultants validate recommendations
-- **Farmer feedback**: Continuous improvement based on user outcomes
-- **Automated monitoring**: Real-time data quality alerts
+## Week 3: API Implementation & Testing (Days 11-15)
 
-### Privacy and Security
-- **Data encryption**: AES-256 encryption for sensitive farm data
-- **Access control**: Role-based permissions (farmer, consultant, admin)
-- **Audit logging**: Complete audit trail for all data access
-- **GDPR compliance**: User data rights and deletion capabilities
+### Day 11-12: API Endpoints
 
-## Deployment and Operations
+**File**: `services/fertilizer-optimization/src/api/price_routes.py`
 
-### Production Environment
-```yaml
-# Docker Compose for production deployment
-version: '3.8'
-services:
-  question-router:
-    image: afas/question-router:latest
-    ports: ["8000:8000"]
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-
-  recommendation-engine:
-    image: afas/recommendation-engine:latest
-    ports: ["8001:8001"]
-    depends_on: [postgresql, redis]
-
-  ai-agent:
-    image: afas/ai-agent:latest
-    ports: ["8002:8002"]
-    environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-
-  postgresql:
-    image: postgis/postgis:15-3.3
-    environment:
-      - POSTGRES_DB=afas
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
-```
-
-### Monitoring and Alerting
-- **Application Performance**: Response times, error rates, throughput
-- **Infrastructure Health**: CPU, memory, disk usage
-- **Business Metrics**: User engagement, recommendation accuracy
-- **Agricultural Alerts**: Critical weather events, pest outbreaks
-
-### Backup and Disaster Recovery
-- **Database Backups**: Daily automated backups with 30-day retention
-- **Code Repository**: Git-based version control with multiple remotes
-- **Configuration Management**: Infrastructure as code with Terraform
-- **Recovery Testing**: Monthly disaster recovery drills
-
-## Success Measurement Framework
-
-### Technical Metrics
 ```python
-class MetricsCollector:
-    def track_response_time(self, endpoint: str, duration: float):
-        """Track API response times"""
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from datetime import date
+from ..services.price_tracker import FertilizerPriceTracker
 
-    def track_recommendation_accuracy(self, recommendation_id: str, farmer_feedback: float):
-        """Track farmer satisfaction with recommendations"""
+router = APIRouter(prefix="/api/v1/prices", tags=["fertilizer-prices"])
 
-    def track_system_usage(self, user_id: str, feature: str):
-        """Track feature usage patterns"""
+def get_db():
+    # TODO: Implement database session dependency
+    pass
+
+@router.get("/fertilizer-current")
+async def get_current_fertilizer_prices(
+    region: Optional[str] = Query(None, description="Region filter"),
+    fertilizer_types: Optional[List[str]] = Query(None, description="Fertilizer type filter"),
+    db: Session = Depends(get_db)
+):
+    """
+    Get current fertilizer prices
+
+    Returns most recent prices from last 7 days
+    """
+    try:
+        tracker = FertilizerPriceTracker(db)
+        prices = await tracker.get_current_prices(region, fertilizer_types)
+        return {"prices": prices, "count": len(prices)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/update-prices")
+async def trigger_price_update(db: Session = Depends(get_db)):
+    """
+    Manually trigger price update (admin endpoint)
+    """
+    try:
+        tracker = FertilizerPriceTracker(db)
+        result = await tracker.update_prices()
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 ```
 
-### Agricultural Impact Metrics
-- **Yield Improvements**: Measured yield increases from recommendations
-- **Cost Savings**: Documented fertilizer and input cost reductions
-- **Sustainability**: Soil health improvements and environmental impact
-- **Knowledge Transfer**: Farmer learning and practice adoption
+**File**: `services/fertilizer-optimization/src/api/optimization_routes.py`
 
-### User Experience Metrics
-- **Onboarding Success**: Time to first successful recommendation
-- **Feature Adoption**: Usage patterns across different features
-- **Support Requests**: Volume and resolution time for user issues
-- **Retention Rates**: Monthly and annual user retention
+```python
+from fastapi import APIRouter, HTTPException
+from pydantic import BaseModel, Field
+from typing import Dict, List, Optional
+from ..services.economic_optimizer import EconomicOptimizer, FertilizerOption, OptimizationConstraints
 
-## User Story Coverage Analysis
+router = APIRouter(prefix="/api/v1/optimization", tags=["fertilizer-optimization"])
 
-### ✅ **Complete User Story Mapping (23/23 Stories Covered)**
+class OptimizationRequest(BaseModel):
+    field_acres: float = Field(..., gt=0, description="Field size in acres")
+    nutrient_requirements: Dict[str, float] = Field(..., description="N, P, K requirements in lbs/acre")
+    yield_goal_bu_acre: float = Field(..., gt=0, description="Target yield in bu/acre")
+    max_budget: Optional[float] = Field(None, description="Maximum budget")
+    available_fertilizers: List[Dict[str, Any]]
 
-The plan addresses all 23 user stories across the 4 implementation phases:
+@router.post("/optimize-strategy")
+async def optimize_fertilizer_strategy(request: OptimizationRequest):
+    """
+    Optimize fertilizer strategy for cost-effectiveness
 
-#### Phase 1: Foundation (Stories 1, 3, 21) - ✅ Covered
-- **US-001**: Crop Variety Recommendation - Climate zone detection and basic crop database
-- **US-003**: Soil Fertility Assessment - Soil data integration and basic fertility analysis
-- **US-021**: User Profile Management - Farm location and profile management system
+    Multi-objective optimization considering:
+    - Cost minimization
+    - Nutrient requirement satisfaction
+    - Yield goal achievement
+    - Environmental impact
+    """
+    try:
+        # Convert request to FertilizerOption objects
+        fertilizer_options = [
+            FertilizerOption(
+                name=f["name"],
+                price_per_unit=f["price_per_unit"],
+                unit=f["unit"],
+                nitrogen_percent=f["nitrogen_percent"],
+                phosphorus_percent=f["phosphorus_percent"],
+                potassium_percent=f["potassium_percent"]
+            )
+            for f in request.available_fertilizers
+        ]
 
-#### Phase 2: Core Agricultural Features (Stories 2, 4-12) - ✅ Covered
-- **US-002**: Crop Rotation Planning - Multi-year rotation optimization algorithms
-- **US-004**: Nutrient Deficiency Detection - Image analysis and symptom identification
-- **US-005**: Soil pH Management - pH adjustment calculations and recommendations
-- **US-006**: Fertilizer Type Selection - Fertilizer comparison and selection logic
-- **US-007**: Fertilizer Application Method - Liquid vs granular decision algorithms
-- **US-008**: Fertilizer Timing Optimization - Seasonal timing and weather integration
-- **US-009**: Cost-Effective Fertilizer Strategy - Economic optimization and ROI analysis
-- **US-010**: Runoff Prevention - Environmental impact assessment and mitigation
-- **US-011**: Cover Crop Selection - Cover crop recommendation engine
-- **US-012**: Drought Management - Moisture conservation and drought resilience
+        constraints = OptimizationConstraints(max_budget=request.max_budget)
 
-#### Phase 3: Advanced Features (Stories 13-20, 22-23) - ✅ Covered
-- **US-013**: Precision Agriculture ROI Assessment - Technology investment analysis
-- **US-014**: Early Deficiency Detection - Advanced ML-based deficiency detection
-- **US-015**: Soil and Tissue Test Integration - Laboratory data integration
-- **US-016**: Weather Impact Analysis - Weather pattern analysis and adaptation
-- **US-017**: Tillage Practice Recommendations - Tillage system optimization
-- **US-018**: Sustainable Intensification - Integrated sustainability and yield optimization
-- **US-019**: Micronutrient Management - Micronutrient assessment and recommendations
-- **US-020**: Government Program Integration - Policy and incentive program integration
-- **US-022**: Recommendation History and Tracking - User interaction tracking system
-- **US-023**: Mobile Field Access - Mobile-responsive interface and offline capabilities
+        optimizer = EconomicOptimizer()
+        result = optimizer.optimize_fertilizer_strategy(
+            field_acres=request.field_acres,
+            nutrient_requirements=request.nutrient_requirements,
+            available_fertilizers=fertilizer_options,
+            constraints=constraints,
+            yield_goal_bu_acre=request.yield_goal_bu_acre
+        )
 
-### User Story Implementation Schedule
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+```
 
-#### Sprint 1.1-1.3: Foundation Stories (Weeks 1-6)
-**Primary Stories**:
-- **US-021**: User Profile Management
-  - Farm and field profile creation
-  - User preference management
-  - Data privacy controls
+## Week 4: Testing & Documentation (Days 16-20)
 
-**Supporting Stories**:
-- **US-001**: Crop Variety Recommendation (foundation)
-  - Climate zone auto-detection
-  - Basic location-based filtering
-- **US-003**: Soil Fertility Assessment (foundation)
-  - Soil data input and validation
-  - Basic fertility analysis framework
+### Day 16-17: Unit Tests
 
-#### Sprint 2.1: Fertilizer Management Stories (Weeks 7-10)
-**Primary Stories**:
-- **US-005**: Soil pH Management
-  - pH adjustment calculations
-  - Lime and sulfur recommendations
-  - Application timing guidance
+**File**: `services/fertilizer-optimization/tests/test_economic_optimizer.py`
 
-- **US-006**: Fertilizer Type Selection
-  - Organic vs synthetic vs slow-release comparison
-  - Cost-effectiveness analysis
-  - Equipment compatibility assessment
+```python
+import pytest
+from src.services.economic_optimizer import EconomicOptimizer, FertilizerOption, OptimizationConstraints
 
-- **US-007**: Fertilizer Application Method
-  - Liquid vs granular decision logic
-  - Application method optimization
-  - Labor and cost considerations
+def test_basic_optimization():
+    """Test basic fertilizer optimization"""
+    optimizer = EconomicOptimizer()
 
-- **US-008**: Fertilizer Timing Optimization
-  - Seasonal application calendars
-  - Weather-based timing adjustments
-  - Nutrient uptake modeling
+    fertilizers = [
+        FertilizerOption("Urea", 450.0, "ton", 46, 0, 0),
+        FertilizerOption("DAP", 650.0, "ton", 18, 46, 0),
+        FertilizerOption("Potash", 550.0, "ton", 0, 0, 60)
+    ]
 
-- **US-010**: Runoff Prevention
-  - Environmental impact assessment
-  - Buffer strip recommendations
-  - Regulatory compliance checking
+    result = optimizer.optimize_fertilizer_strategy(
+        field_acres=100,
+        nutrient_requirements={"N": 150, "P": 60, "K": 40},
+        available_fertilizers=fertilizers,
+        constraints=OptimizationConstraints(),
+        yield_goal_bu_acre=180
+    )
 
-#### Sprint 2.2: Advanced Analysis Stories (Weeks 11-14)
-**Primary Stories**:
-- **US-004**: Nutrient Deficiency Detection
-  - Image analysis for crop photos
-  - Symptom description processing
-  - Multi-source deficiency identification
+    assert result["success"] is True
+    assert "recommendations" in result
+    assert result["total_cost"] > 0
 
-- **US-011**: Cover Crop Selection
-  - Goal-based cover crop recommendations
-  - Species selection and timing
-  - Integration with main crop rotation
+def test_budget_constraint():
+    """Test optimization with budget constraint"""
+    optimizer = EconomicOptimizer()
 
-- **US-012**: Drought Management
-  - Moisture conservation practices
-  - Drought-resilient crop selection
-  - Water savings quantification
+    fertilizers = [
+        FertilizerOption("Urea", 450.0, "ton", 46, 0, 0),
+        FertilizerOption("DAP", 650.0, "ton", 18, 46, 0)
+    ]
 
-- **US-016**: Weather Impact Analysis (foundation)
-  - Weather data integration
-  - Basic impact assessment algorithms
+    result = optimizer.optimize_fertilizer_strategy(
+        field_acres=100,
+        nutrient_requirements={"N": 150, "P": 60, "K": 0},
+        available_fertilizers=fertilizers,
+        constraints=OptimizationConstraints(max_budget=50000),
+        yield_goal_bu_acre=180
+    )
 
-#### Sprint 3.1: Economic and Policy Stories (Weeks 15-18)
-**Primary Stories**:
-- **US-009**: Cost-Effective Fertilizer Strategy
-  - Multi-objective optimization
-  - Market price integration
-  - ROI and break-even analysis
+    assert result["success"] is True
+    assert result["total_cost"] <= 50000
+```
 
-- **US-013**: Precision Agriculture ROI Assessment
-  - Technology cost-benefit analysis
-  - Payback period calculations
-  - Implementation recommendations
+## Definition of Done
 
-- **US-016**: Weather Impact Analysis (complete)
-  - Advanced weather pattern analysis
-  - Climate adaptation strategies
-  - Risk assessment and mitigation
+### Functional Requirements
+- [ ] Price tracking service fetches and stores prices
+- [ ] Economic optimizer produces valid recommendations
+- [ ] ROI calculations are accurate
+- [ ] API endpoints return correct responses
+- [ ] Scheduled price updates working
 
-- **US-020**: Government Program Integration
-  - Policy database integration
-  - Compliance checking
-  - Incentive optimization
+### Testing Requirements
+- [ ] Unit test coverage >80%
+- [ ] Optimization algorithm validated
+- [ ] Price tracking tested with mock data
+- [ ] Agricultural validation: Test with real fertilizer prices
 
-**Supporting Stories**:
-- **US-002**: Crop Rotation Planning
-  - Multi-year rotation optimization
-  - Economic and sustainability integration
-  - Pest and disease management
+### Documentation
+- [ ] API documentation complete
+- [ ] Optimization algorithm documented
+- [ ] Setup instructions in README
 
-#### Sprint 3.2: User Experience Stories (Weeks 19-22)
-**Primary Stories**:
-- **US-022**: Recommendation History and Tracking
-  - Historical recommendation storage
-  - Outcome tracking and analysis
-  - Performance metrics dashboard
+### Integration Points
+- [ ] Mock soil test data for nutrient requirements
+- [ ] Document API contracts for integration
 
-- **US-023**: Mobile Field Access
-  - Mobile-responsive interface
-  - Offline capability
-  - GPS and camera integration
-  - Push notifications
+## Agricultural Expert Review Checkpoints
 
-**Completion Stories**:
-- **US-014**: Early Deficiency Detection (advanced)
-  - Enhanced ML models
-  - Real-time monitoring
-  - Predictive analytics
+**Flag for Human Review**:
+1. Nutrient requirement calculations
+2. ROI assumptions and commodity prices
+3. Environmental impact thresholds
+4. Application rate recommendations
 
-- **US-015**: Soil and Tissue Test Integration
-  - Laboratory API integrations
-  - Test result interpretation
-  - Recommendation adjustments
+## Common Pitfalls
 
-- **US-017**: Tillage Practice Recommendations
-  - No-till vs conventional analysis
-  - Transition planning
-  - Equipment and cost considerations
+1. **Optimization Convergence**: May fail with infeasible constraints
+2. **Price Data Staleness**: Handle missing/old price data
+3. **Unit Conversions**: Ensure consistent units (tons, lbs, etc.)
+4. **Nutrient Efficiency**: Account for application efficiency losses
 
-- **US-018**: Sustainable Intensification
-  - Integrated yield and sustainability optimization
-  - Long-term soil health modeling
-  - Profitability analysis
+## Next Steps for Integration
 
-- **US-019**: Micronutrient Management
-  - Micronutrient deficiency assessment
-  - Supplementation recommendations
-  - Cost-benefit analysis
+Integrates with:
+- **Soil Testing Service**: For nutrient requirements
+- **Weather Service** (Job 5): For application timing
+- **Recommendation Engine**: For complete farm plans
 
-### User Story Acceptance Criteria Tracking
-
-Each sprint includes specific acceptance criteria validation:
-
-**Sprint Completion Criteria**:
-- [ ] All user story acceptance criteria met
-- [ ] Agricultural expert validation completed
-- [ ] User testing with target farmers
-- [ ] Performance benchmarks achieved
-- [ ] Integration testing passed
-
-**Quality Gates**:
-- **Functional**: All acceptance criteria implemented and tested
-- **Agricultural**: Expert validation of recommendations
-- **Performance**: <3 second response times
-- **User Experience**: >4.5/5 user satisfaction rating
-- **Integration**: Seamless workflow across user stories
-
-This comprehensive user story mapping ensures that all 23 user stories are explicitly addressed in the implementation plan, with clear sprint assignments and acceptance criteria tracking. The phased approach allows for iterative development while maintaining focus on user value delivery.
