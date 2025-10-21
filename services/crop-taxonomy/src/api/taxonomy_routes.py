@@ -4,8 +4,8 @@ Taxonomy API Routes
 FastAPI routes for crop taxonomic classification and validation operations.
 """
 
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Optional
+from fastapi import APIRouter, HTTPException, Depends, Query
+from typing import List, Optional, Dict, Any
 from uuid import UUID
 
 try:
@@ -22,8 +22,8 @@ try:
         TagManagementResponse
     )
     from ..models.crop_taxonomy_models import (
-        BulkCropDataRequest,
-        BulkCropDataResponse,
+        BulkCropImportRequest,
+        BulkCropImportResponse,
         ComprehensiveCropData
     )
 except ImportError:
@@ -40,8 +40,8 @@ except ImportError:
         TagManagementResponse
     )
     from models.crop_taxonomy_models import (
-        BulkCropDataRequest,
-        BulkCropDataResponse,
+        BulkCropImportRequest,
+        BulkCropImportResponse,
         ComprehensiveCropData
     )
 
@@ -89,9 +89,9 @@ async def validate_crop_data(
         raise HTTPException(status_code=500, detail=f"Validation error: {str(e)}")
 
 
-@router.post("/bulk-process", response_model=BulkCropDataResponse)
+@router.post("/bulk-process", response_model=BulkCropImportResponse)
 async def process_bulk_crop_data(
-    request: BulkCropDataRequest
+    request: BulkCropImportRequest
 ):
     """
     Process multiple crop data entries with batch validation and processing.

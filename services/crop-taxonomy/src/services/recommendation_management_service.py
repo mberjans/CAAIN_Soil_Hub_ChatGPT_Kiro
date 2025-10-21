@@ -78,7 +78,7 @@ class RecommendationManagementService:
                 notes=request.notes,
                 tags=request.tags,
                 expires_at=request.expires_at,
-                metadata=request.metadata
+                recommendation_metadata=request.metadata
             )
             
             return SaveRecommendationResponse(
@@ -213,8 +213,8 @@ class RecommendationManagementService:
                 updated_fields.append("expires_at")
             
             if request.metadata is not None:
-                updates["metadata"] = request.metadata
-                updated_fields.append("metadata")
+                updates["recommendation_metadata"] = request.metadata
+                updated_fields.append("recommendation_metadata")
             
             if not updates:
                 raise ValueError("No updates provided")
@@ -353,7 +353,7 @@ class RecommendationManagementService:
                 implementation_notes=request.implementation_notes,
                 modification_details=request.modification_details,
                 confidence_level=request.confidence_level,
-                metadata=request.metadata
+                feedback_metadata=request.metadata
             )
             
             # In a real implementation, this would trigger preference learning

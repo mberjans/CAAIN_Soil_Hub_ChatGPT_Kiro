@@ -19,8 +19,22 @@ try:
         SearchResultItem
     )
     from ..services.filter_cache_service import filter_cache_service
-from ..services.performance_monitor import performance_monitor
-from ..services.result_processor import FilterResultProcessor
+    from ..services.performance_monitor import performance_monitor
+    from ..services.result_processor import FilterResultProcessor
+except ImportError:
+    # Fallback imports if the relative imports fail
+    from services.crop_search_service import crop_search_service
+    from models.crop_filtering_models import (
+        CropSearchRequest,
+        CropSearchResponse,
+        SmartRecommendationRequest,
+        SmartRecommendationResponse,
+        TaxonomyFilterCriteria,
+        SearchResultItem
+    )
+    from services.filter_cache_service import filter_cache_service
+    from services.performance_monitor import performance_monitor
+    from services.result_processor import FilterResultProcessor
 
 
 router = APIRouter(prefix="/search", tags=["search"])

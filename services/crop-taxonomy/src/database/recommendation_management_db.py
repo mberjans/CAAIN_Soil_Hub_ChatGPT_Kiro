@@ -45,7 +45,7 @@ class SavedVarietyRecommendationDB(Base):
     expires_at = Column(DateTime, nullable=True)
     notes = Column(Text, nullable=True)
     tags = Column(JSON, nullable=True, default=list)
-    metadata = Column(JSON, nullable=True, default=dict)
+    recommendation_metadata = Column(JSON, nullable=True, default=dict)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     updated_at = Column(DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
     
@@ -90,7 +90,7 @@ class RecommendationFeedbackDB(Base):
     modification_details = Column(JSON, nullable=True)
     confidence_level = Column(Integer, nullable=True)
     submitted_at = Column(DateTime, nullable=False, default=datetime.utcnow)
-    metadata = Column(JSON, nullable=True, default=dict)
+    feedback_metadata = Column(JSON, nullable=True, default=dict)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
     
     # Relationships
@@ -542,7 +542,7 @@ class RecommendationManagementDatabase:
             "expires_at": recommendation.expires_at,
             "notes": recommendation.notes,
             "tags": recommendation.tags,
-            "metadata": recommendation.metadata,
+            "metadata": recommendation.recommendation_metadata,
             "created_at": recommendation.created_at,
             "updated_at": recommendation.updated_at
         }
@@ -576,7 +576,7 @@ class RecommendationManagementDatabase:
             "modification_details": feedback.modification_details,
             "confidence_level": feedback.confidence_level,
             "submitted_at": feedback.submitted_at,
-            "metadata": feedback.metadata,
+            "metadata": feedback.feedback_metadata,
             "created_at": feedback.created_at
         }
 
