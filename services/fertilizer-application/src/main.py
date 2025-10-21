@@ -27,6 +27,7 @@ from src.api.priority_constraint_routes import router as priority_constraint_rou
 from src.api.goal_based_routes import router as goal_based_router
 from src.api.adaptive_learning_routes import router as adaptive_learning_router
 from src.api.advanced_labor_analysis_routes import router as advanced_labor_analysis_router
+from src.api.sophisticated_method_routes import router as sophisticated_method_router
 from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
