@@ -1,52 +1,81 @@
-from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Dict, Any
+from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List
 from uuid import UUID
+from datetime import date
 
-from ..models.micronutrient_models import MicronutrientPrice, ApplicationCost, MicronutrientBudgetAnalysisResult
-from ..services.micronutrient_cost_service import MicronutrientCostService
+from ..models.micronutrient_models import (
+    MicronutrientLevel,
+    DeficiencySymptom,
+    MicronutrientDeficiencyAssessment,
+    Recommendation
+)
+from ..services.micronutrient_assessment_service import MicronutrientAssessmentService
+from ..services.micronutrient_recommendation_service import MicronutrientRecommendationService
 
 router = APIRouter()
 
-async def get_micronutrient_cost_service() -> MicronutrientCostService:
-    return MicronutrientCostService()
+# Dependency injection for services
+async def get_assessment_service() -> MicronutrientAssessmentService:
+    return MicronutrientAssessmentService()
 
-@router.post("/analyze-budget", response_model=MicronutrientBudgetAnalysisResult)
-async def analyze_micronutrient_budget_endpoint(
+async def get_recommendation_service() -> MicronutrientRecommendationService:
+    return MicronutrientRecommendationService()
+
+@router.post(
+    "/assess",
+    response_model=MicronutrientDeficiencyAssessment,
+    status_code=status.HTTP_200_OK,
+    summary="Assess micronutrient deficiencies",
+    description="Performs a comprehensive assessment of micronutrient deficiencies based on soil/tissue tests and visual symptoms."
+)
+async def assess_micronutrient_deficiencies(
     farm_id: UUID,
     field_id: UUID,
-    micronutrient_recommendations: List[Dict[str, Any]],
-    micronutrient_prices: List[MicronutrientPrice],
-    application_costs: List[ApplicationCost],
-    field_area_hectares: float,
-    notes: Optional[str] = None,
-    service: MicronutrientCostService = Depends(get_micronutrient_cost_service)
+    crop_type: str,
+    growth_stage: str,
+    soil_type: str,
+    micronutrient_levels: List[MicronutrientLevel],
+    visual_symptoms: List[DeficiencySymptom] = [],
+    assessment_service: MicronutrientAssessmentService = Depends(get_assessment_service)
 ):
-    """
-    Analyzes the comprehensive budget and cost for micronutrient application.
-
-    Args:
-        farm_id: ID of the farm.
-        field_id: ID of the field.
-        micronutrient_recommendations: List of recommended micronutrients and their rates.
-                                       Each dict should contain 'name', 'rate', and 'unit'.
-        micronutrient_prices: List of available micronutrient product prices.
-        application_costs: List of costs associated with application (labor, equipment, etc.).
-        field_area_hectares: Area of the field in hectares.
-        notes: Optional notes for the analysis.
-
-    Returns:
-        A MicronutrientBudgetAnalysisResult object containing the detailed cost breakdown.
-    """
+    """Assess micronutrient deficiencies for a given farm and field."""
     try:
-        result = await service.analyze_micronutrient_budget(
+        assessment = await assessment_service.assess_deficiencies(
             farm_id=farm_id,
             field_id=field_id,
-            micronutrient_recommendations=micronutrient_recommendations,
-            micronutrient_prices=micronutrient_prices,
-            application_costs=application_costs,
-            field_area_hectares=field_area_hectares,
-            notes=notes
+            crop_type=crop_type,
+            growth_stage=growth_stage,
+            soil_type=soil_type,
+            micronutrient_levels=micronutrient_levels,
+            visual_symptoms=visual_symptoms
         )
-        return result
+        return assessment
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.post(
+    "/recommendations",
+    response_model=List[Recommendation],
+    status_code=status.HTTP_200_OK,
+    summary="Get micronutrient recommendations",
+    description="Generates recommendations for correcting identified micronutrient deficiencies."
+)
+async def get_micronutrient_recommendations(
+    assessment: MicronutrientDeficiencyAssessment,
+    recommendation_service: MicronutrientRecommendationService = Depends(get_recommendation_service)
+):
+    """Get recommendations for a given micronutrient deficiency assessment."""
+    try:
+        recommendations = await recommendation_service.get_recommendations(assessment)
+        return recommendations
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+
+@router.get(
+    "/health",
+    status_code=status.HTTP_200_OK,
+    summary="Health check",
+    description="Checks the health of the micronutrient management service."
+)
+async def health_check():
+    return {"status": "healthy", "service": "micronutrient-management"}

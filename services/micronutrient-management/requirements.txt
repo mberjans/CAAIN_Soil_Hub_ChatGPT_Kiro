@@ -1,5 +1,5 @@
 fastapi
 uvicorn
-python-multipart
+pydantic
 pytest
 pytest-asyncio

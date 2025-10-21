@@ -1,23 +1,15 @@
 from fastapi import FastAPI
-from .api.application_routes import router as application_router
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+from .api.micronutrient_routes import router as micronutrient_router
 
 app = FastAPI(
-    title="Micronutrient Application Service",
-    description="Service for recommending optimal micronutrient application methods and timing.",
+    title="Micronutrient Management Service",
+    description="Service for assessing micronutrient deficiencies and providing recommendations.",
     version="1.0.0",
 )
 
-app.include_router(application_router)
+app.include_router(micronutrient_router, prefix="/api/v1/micronutrients")
 
-@app.on_event("startup")
-async def startup_event():
-    logger.info("Micronutrient Application Service started up.")
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    logger.info("Micronutrient Application Service shutting down.")
+@app.get("/", include_in_schema=False)
+async def root():
+    return {"message": "Micronutrient Management Service is running. Visit /docs for API documentation."
+}
