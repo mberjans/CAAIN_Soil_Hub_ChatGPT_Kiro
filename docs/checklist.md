@@ -140,7 +140,7 @@
   - Create test file
   - Verify: `ls services/image-analysis/tests/test_main.py`
 
-- [ ] **JOB3-005.2.test** - Write test for health endpoint
+- [x] **JOB3-005.2.test** - Write test for health endpoint
   - Path: `services/image-analysis/tests/test_main.py`
   - Add `test_health_endpoint()` test
   - Verify: `pytest services/image-analysis/tests/test_main.py --collect-only`
