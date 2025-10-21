@@ -42,7 +42,7 @@
   - Content: fastapi, uvicorn, sqlalchemy, psycopg2-binary, pydantic, scipy, numpy, pytest, pytest-asyncio, pytest-cov, httpx
   - Verify: `cat services/fertilizer-optimization/requirements.txt`
 
-- [ ] **JOB2-002.2** - Install dependencies
+- [x] **JOB2-002.2** - Install dependencies
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pip install -r requirements.txt`
   - Verify: `pip list | grep scipy`
 
