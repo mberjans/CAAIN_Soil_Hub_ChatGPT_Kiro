@@ -111,7 +111,7 @@
   - Create test file
   - Verify: `ls services/image-analysis/tests/test_analysis_schemas.py`
 
-- [ ] **JOB3-004.2.test** - Write test for ImageAnalysisRequest schema
+- [x] **JOB3-004.2.test** - Write test for ImageAnalysisRequest schema
   - Path: `services/image-analysis/tests/test_analysis_schemas.py`
   - Add `test_image_analysis_request()` test
   - Verify: `pytest services/image-analysis/tests/test_analysis_schemas.py --collect-only`

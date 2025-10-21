@@ -393,24 +393,110 @@ class TestSymptomMatchSchemas:
 
 
 class TestImageAnalysisRequestSchema:
-    """Test ImageAnalysisRequest schema (when implemented)"""
+    """Test ImageAnalysisRequest schema validation"""
 
-    def test_placeholder_for_image_analysis_request(self):
-        """
-        Placeholder test for ImageAnalysisRequest schema.
+    def test_valid_image_analysis_request(self):
+        """Test creating valid ImageAnalysisRequest"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
 
-        This test will be updated when ImageAnalysisRequest schema
-        is implemented as part of the analysis_schemas.py file.
-        For now, it documents the expected behavior.
-        """
-        # TODO: Implement ImageAnalysisRequest schema and update this test
-        # Expected fields:
-        # - crop_type: str (required)
-        # - growth_stage: Optional[str]
-        # - image: UploadFile (handled by FastAPI)
-        # - additional_metadata: Optional[dict]
+        # Test with all fields
+        request = ImageAnalysisRequest(
+            crop_type="corn",
+            growth_stage="V6",
+            additional_metadata={"location": "field_1", "weather": "sunny"}
+        )
 
-        # This placeholder ensures test structure exists
-        # and will fail when schema is implemented,
-        # prompting implementation of actual tests
-        pass
+        assert request.crop_type == "corn"
+        assert request.growth_stage == "V6"
+        assert request.additional_metadata == {"location": "field_1", "weather": "sunny"}
+
+    def test_image_analysis_request_minimal(self):
+        """Test ImageAnalysisRequest with only required fields"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        # Test with only required crop_type
+        request = ImageAnalysisRequest(crop_type="soybean")
+
+        assert request.crop_type == "soybean"
+        assert request.growth_stage is None
+        assert request.additional_metadata == {}
+
+    def test_invalid_empty_crop_type(self):
+        """Test that empty crop_type raises validation error"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        with pytest.raises(ValidationError):
+            ImageAnalysisRequest(crop_type="")
+
+    def test_invalid_crop_type_too_long(self):
+        """Test that too long crop_type raises validation error"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        with pytest.raises(ValidationError):
+            ImageAnalysisRequest(crop_type="a" * 101)  # Assuming max length of 100
+
+    def test_valid_crop_types(self):
+        """Test validation of allowed crop types"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        valid_crops = ["corn", "soybean", "wheat", "cotton", "rice"]
+
+        for crop in valid_crops:
+            request = ImageAnalysisRequest(crop_type=crop)
+            assert request.crop_type == crop
+
+    def test_invalid_crop_type(self):
+        """Test that invalid crop type raises validation error"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        with pytest.raises(ValidationError):
+            ImageAnalysisRequest(crop_type="invalid_crop")
+
+    def test_valid_growth_stages(self):
+        """Test validation of allowed growth stages"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        valid_stages = ["V2", "V4", "V6", "V8", "V12", "R1", "R2", "R3", "R4", "R5", "R6"]
+
+        for stage in valid_stages:
+            request = ImageAnalysisRequest(
+                crop_type="corn",
+                growth_stage=stage
+            )
+            assert request.growth_stage == stage
+
+    def test_invalid_growth_stage(self):
+        """Test that invalid growth stage raises validation error"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        with pytest.raises(ValidationError):
+            ImageAnalysisRequest(
+                crop_type="corn",
+                growth_stage="invalid_stage"
+            )
+
+    def test_additional_metadata_optional(self):
+        """Test that additional_metadata is optional and defaults to empty dict"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        request = ImageAnalysisRequest(crop_type="wheat")
+        assert request.additional_metadata == {}
+
+    def test_additional_metadata_validation(self):
+        """Test additional_metadata validation"""
+        from src.schemas.analysis_schemas import ImageAnalysisRequest
+
+        # Test with valid metadata
+        valid_metadata = {
+            "field_id": "field_123",
+            "weather_conditions": "sunny",
+            "soil_type": "clay",
+            "irrigation": True,
+            "planting_date": "2023-04-15"
+        }
+
+        request = ImageAnalysisRequest(
+            crop_type="corn",
+            additional_metadata=valid_metadata
+        )
+        assert request.additional_metadata == valid_metadata
