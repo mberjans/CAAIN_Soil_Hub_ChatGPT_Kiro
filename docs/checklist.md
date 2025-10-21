@@ -298,7 +298,7 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB2-009.1.test** - Write test for optimization endpoint
+- [x] **JOB2-009.1.test** - Write test for optimization endpoint
   - Path: `services/fertilizer-optimization/tests/test_optimization_routes.py`
   - Add `test_optimize_strategy_endpoint()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_optimization_routes.py --collect-only`
