@@ -163,7 +163,7 @@
   - Create FastAPI app with health endpoint
   - Verify: `python -c "from src.main import app; print(app.title)"`
 
-- [ ] **JOB2-005.4.verify** - Start service on port 8008
+- [x] **JOB2-005.4.verify** - Start service on port 8008
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && uvicorn src.main:app --port 8008 &`
   - Verify: `curl http://localhost:8008/health`
 
