@@ -326,12 +326,12 @@
   - Add CORSMiddleware configuration
   - Verify: Check middleware in app
 
-- [ ] **JOB1-005.8.impl** - Add startup event handler
+- [x]! **JOB1-005.8.impl** - Add startup event handler
   - Path: `services/crop-taxonomy/src/main.py`
   - Add @app.on_event("startup") function
   - Verify: Check startup handler in file
 
-- [ ] **JOB1-005.9.impl** - Add shutdown event handler
+- [x] **JOB1-005.9.impl** - Add shutdown event handler
   - Path: `services/crop-taxonomy/src/main.py`
   - Add @app.on_event("shutdown") function
   - Verify: Check shutdown handler in file
