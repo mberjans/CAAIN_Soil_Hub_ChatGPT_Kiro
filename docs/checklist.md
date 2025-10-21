@@ -37,7 +37,7 @@
 
 ### Tasks
 
-- [!] **JOB3-002.1** - Create requirements.txt with ML/CV libraries
+- [x] **JOB3-002.1** - Create requirements.txt with ML/CV libraries
   - Path: `services/image-analysis/requirements.txt`
   - Content: fastapi, uvicorn, sqlalchemy, psycopg2-binary, pydantic, tensorflow==2.14.0, opencv-python, Pillow, numpy, pytest, pytest-asyncio, pytest-cov, httpx, python-multipart
   - Verify: `cat services/image-analysis/requirements.txt`
