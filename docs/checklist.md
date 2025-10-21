@@ -62,7 +62,7 @@
   - Command: `cd services/crop-taxonomy && source venv/bin/activate`
   - Verify: `which python | grep crop-taxonomy`
 
-- [ ] **JOB1-002.3** - Install dependencies
+- [x] **JOB1-002.3** - Install dependencies
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && pip install -r requirements.txt`
   - Verify: `pip list | grep fastapi`
 
