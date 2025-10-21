@@ -88,7 +88,7 @@
   - Write CREATE TABLE statements
   - Verify: `cat services/image-analysis/migrations/003_image_analysis_schema.sql`
 
-- [ ] **JOB3-003.5.impl** - Run migration
+- [x] **JOB3-003.5.impl** - Run migration
   - Command: `psql -U postgres -d caain_soil_hub -f services/image-analysis/migrations/003_image_analysis_schema.sql`
   - Verify: `psql -U postgres -d caain_soil_hub -c "\dt image_analyses"`
 
