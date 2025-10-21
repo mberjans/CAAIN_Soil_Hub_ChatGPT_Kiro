@@ -39,7 +39,7 @@
   - Command: `cd services/crop-taxonomy && source venv/bin/activate`
   - Verify: `which python | grep crop-taxonomy`
 
-- [ ] **JOB1-001.8** - Verify directory structure complete
+- [x] **JOB1-001.8** - Verify directory structure complete
   - Command: `tree services/crop-taxonomy -L 3` (or `find services/crop-taxonomy -type d`)
   - Verify: All directories present
 
