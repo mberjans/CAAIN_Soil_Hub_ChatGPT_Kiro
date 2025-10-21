@@ -50,7 +50,7 @@
   - Command: `python -c "import scipy; print(f'scipy: {scipy.__version__}')"`
   - Verify: scipy version displayed
 
-- [ ] **JOB2-002.4** - Verify numpy installation
+- [x] **JOB2-002.4** - Verify numpy installation
   - Command: `python -c "import numpy; print(f'numpy: {numpy.__version__}')"`
   - Verify: numpy version displayed
 
