@@ -191,7 +191,7 @@
   - Add `test_mock_price_provider()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_price_tracker.py --collect-only`
 
-- [ ] **JOB2-006.3.test** - Write test for FertilizerPriceTracker
+- [x] **JOB2-006.3.test** - Write test for FertilizerPriceTracker
   - Path: `services/fertilizer-optimization/tests/test_price_tracker.py`
   - Add `test_price_tracker_fetch()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_price_tracker.py --collect-only`
