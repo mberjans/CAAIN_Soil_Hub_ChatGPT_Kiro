@@ -153,7 +153,7 @@
   - Create test file
   - Verify: `ls services/fertilizer-optimization/tests/test_main.py`
 
-- [ ] **JOB2-005.2.test** - Write test for health endpoint
+- [x] **JOB2-005.2.test** - Write test for health endpoint
   - Path: `services/fertilizer-optimization/tests/test_main.py`
   - Add `test_health_endpoint()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_main.py --collect-only`
