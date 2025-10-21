@@ -1,6 +1,30 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from uuid import UUID
+from enum import Enum
+
+class EquipmentCategory(str, Enum):
+    """Categories of equipment."""
+    SPREADING = "spreading"
+    SPRAYING = "spraying"
+    INJECTION = "injection"
+    IRRIGATION = "irrigation"
+    HANDLING = "handling"
+    STORAGE = "storage"
+
+class EquipmentStatus(str, Enum):
+    """Status of equipment."""
+    OPERATIONAL = "operational"
+    MAINTENANCE = "maintenance"
+    REPLACEMENT = "replacement"
+    OUT_OF_SERVICE = "out_of_service"
+
+class MaintenanceLevel(str, Enum):
+    """Maintenance level categories."""
+    BASIC = "basic"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    PROFESSIONAL = "professional"
 
 class EquipmentItem(BaseModel):
     """Represents a piece of farm equipment."""
@@ -14,6 +38,93 @@ class EquipmentItem(BaseModel):
     cost_usd: Optional[float] = Field(None, description="Estimated cost of the equipment in USD.")
     maintenance_cost_annual_usd: Optional[float] = Field(None, description="Estimated annual maintenance cost in USD.")
     is_available: bool = Field(True, description="Whether the equipment is currently available for use.")
+
+class EquipmentInventory(BaseModel):
+    """Equipment inventory management."""
+    inventory_id: UUID = Field(..., description="Unique identifier for the inventory.")
+    equipment_items: List[EquipmentItem] = Field(default_factory=list, description="List of equipment items.")
+    last_updated: Optional[str] = Field(None, description="Last inventory update timestamp.")
+    total_value_usd: float = Field(0.0, description="Total value of equipment inventory in USD.")
+
+class EquipmentCompatibility(BaseModel):
+    """Equipment compatibility assessment."""
+    equipment_id: UUID = Field(..., description="Unique identifier for the equipment.")
+    compatible_methods: List[str] = Field(default_factory=list, description="Compatible application methods.")
+    compatibility_score: float = Field(..., ge=0, le=1, description="Compatibility score (0=not compatible, 1=fully compatible).")
+    compatibility_notes: List[str] = Field(default_factory=list, description="Notes about compatibility.")
+    limiting_factors: List[str] = Field(default_factory=list, description="Factors limiting compatibility.")
+
+class EquipmentEfficiency(BaseModel):
+    """Equipment efficiency metrics."""
+    equipment_id: UUID = Field(..., description="Unique identifier for the equipment.")
+    efficiency_metrics: Dict[str, float] = Field(default_factory=dict, description="Efficiency metrics (application_rate, accuracy, etc.).")
+    overall_efficiency_score: float = Field(..., ge=0, le=1, description="Overall efficiency score.")
+    benchmark_comparisons: Optional[Dict[str, float]] = Field(None, description="Comparisons to industry benchmarks.")
+    improvement_recommendations: List[str] = Field(default_factory=list, description="Recommendations for improving efficiency.")
+
+class EquipmentUpgrade(BaseModel):
+    """Equipment upgrade information."""
+    upgrade_id: UUID = Field(..., description="Unique identifier for the upgrade.")
+    current_equipment_id: Optional[UUID] = Field(None, description="ID of current equipment being upgraded.")
+    upgrade_type: str = Field(..., description="Type of upgrade (replacement, modification, etc.).")
+    recommended_equipment: Optional[EquipmentItem] = Field(None, description="Recommended new equipment.")
+    cost_benefit_analysis: Optional[Dict[str, Any]] = Field(None, description="Cost-benefit analysis of upgrade.")
+    implementation_timeline: Optional[str] = Field(None, description="Timeline for implementation.")
+
+class EquipmentAssessment(BaseModel):
+    """Equipment assessment result."""
+    assessment_id: UUID = Field(..., description="Unique identifier for the assessment.")
+    equipment_id: UUID = Field(..., description="Equipment being assessed.")
+    assessment_results: Dict[str, Any] = Field(default_factory=dict, description="Assessment results.")
+    risk_factors: List[str] = Field(default_factory=list, description="Identified risk factors.")
+    recommendations: List[str] = Field(default_factory=list, description="Recommendations based on assessment.")
+    next_assessment_date: Optional[str] = Field(None, description="Date for next assessment.")
+
+class EquipmentMaintenance(BaseModel):
+    """Equipment maintenance schedule and records."""
+    maintenance_id: UUID = Field(..., description="Unique identifier for the maintenance record.")
+    equipment_id: UUID = Field(..., description="Equipment ID for maintenance.")
+    maintenance_type: str = Field(..., description="Type of maintenance (preventive, corrective, etc.).")
+    scheduled_date: Optional[str] = Field(None, description="Scheduled date for maintenance.")
+    completed_date: Optional[str] = Field(None, description="Date when maintenance was completed.")
+    cost: Optional[float] = Field(None, description="Cost of maintenance.")
+    maintenance_notes: List[str] = Field(default_factory=list, description="Notes about maintenance.")
+
+class FertilizerFormulation(str, Enum):
+    """Types of fertilizer formulations."""
+    GRANULAR = "granular"
+    LIQUID = "liquid"
+    GASEOUS = "gaseous"
+    SLOW_RELEASE = "slow_release"
+    ORGANIC = "organic"
+
+class ApplicationMethodType(str, Enum):
+    """Types of fertilizer application methods."""
+    BROADCAST = "broadcast"
+    BAND = "band"
+    SIDEDRESS = "sidedress"
+    FOLIAR = "foliar"
+    INJECTION = "injection"
+    DRIP = "drip"
+    FERTIGATION = "fertigation"
+
+class CompatibilityMatrix(BaseModel):
+    """Compatibility matrix for equipment and application methods."""
+    matrix_id: UUID = Field(..., description="Unique identifier for the matrix.")
+    equipment_id: UUID = Field(..., description="Equipment ID in the matrix.")
+    method_compatibility: Dict[str, float] = Field(default_factory=dict, description="Compatibility scores for different methods.")
+    fertilizer_compatibility: Dict[str, float] = Field(default_factory=dict, description="Compatibility scores for different fertilizers.")
+    overall_compatibility_score: float = Field(..., ge=0, le=1, description="Overall compatibility score.")
+    usage_restrictions: List[str] = Field(default_factory=list, description="Usage restrictions and limitations.")
+
+class EquipmentRecommendation(BaseModel):
+    """Equipment recommendation."""
+    recommendation_id: UUID = Field(..., description="Unique identifier for the recommendation.")
+    equipment_id: UUID = Field(..., description="Recommended equipment ID.")
+    recommendation_reason: str = Field(..., description="Reason for the recommendation.")
+    confidence_score: float = Field(..., ge=0, le=1, description="Confidence score in the recommendation.")
+    expected_benefits: List[str] = Field(default_factory=list, description="Expected benefits from the recommendation.")
+    implementation_notes: List[str] = Field(default_factory=list, description="Implementation notes and requirements.")
 
 class FarmInfrastructure(BaseModel):
     """Represents the overall farm infrastructure relevant to fertilizer application."""

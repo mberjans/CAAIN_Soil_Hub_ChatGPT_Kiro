@@ -14,12 +14,43 @@ from src.models.application_models import (
     EquipmentType
 )
 from src.models.equipment_models import (
-    Equipment, EquipmentCategory, EquipmentStatus, MaintenanceLevel,
-    EquipmentInventory, EquipmentCompatibility, EquipmentEfficiency,
+    EquipmentItem as Equipment, EquipmentInventory, EquipmentCompatibility, EquipmentEfficiency,
     EquipmentUpgrade, EquipmentAssessment, EquipmentMaintenance,
-    FertilizerFormulation, ApplicationMethodType, CompatibilityMatrix,
-    EquipmentRecommendation
+    CompatibilityMatrix, EquipmentRecommendation
 )
+from src.models.application_models import (
+    ApplicationMethodType, EquipmentType
+)
+from enum import Enum
+
+# Define missing enums that should be in equipment_models but are referenced here
+class EquipmentCategory(str, Enum):
+    SPREADING = "spreading"
+    SPRAYING = "spraying"
+    INJECTION = "injection"
+    IRRIGATION = "irrigation"
+    HANDLING = "handling"
+    STORAGE = "storage"
+
+class EquipmentStatus(str, Enum):
+    OPERATIONAL = "operational"
+    MAINTENANCE = "maintenance"
+    REPLACEMENT = "replacement"
+    OUT_OF_SERVICE = "out_of_service"
+
+class MaintenanceLevel(str, Enum):
+    BASIC = "basic"
+    INTERMEDIATE = "intermediate"
+    ADVANCED = "advanced"
+    PROFESSIONAL = "professional"
+
+# Define other missing enums
+class FertilizerFormulation(str, Enum):
+    GRANULAR = "granular"
+    LIQUID = "liquid"
+    GASEOUS = "gaseous"
+    SLOW_RELEASE = "slow_release"
+    ORGANIC = "organic"
 from src.services.equipment_assessment_service import EquipmentAssessmentService
 from src.services.equipment_compatibility_service import EquipmentCompatibilityService
 from src.database.fertilizer_db import get_db_session, EquipmentAssessmentRecord
