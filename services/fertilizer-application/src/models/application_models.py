@@ -9,7 +9,11 @@ from pydantic import BaseModel, Field, validator
 from decimal import Decimal
 
 # Import equipment models for type hints
-from src.models.equipment_models import IndividualEquipmentAssessment
+try:
+    from src.models.equipment_models import IndividualEquipmentAssessment
+except ImportError:
+    # For relative import when running tests
+    from .equipment_models import IndividualEquipmentAssessment
 
 
 class ApplicationMethodType(str, Enum):
