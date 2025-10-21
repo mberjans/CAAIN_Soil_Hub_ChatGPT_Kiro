@@ -78,7 +78,7 @@
   - Add `test_image_analysis_creation()` test
   - Verify: `pytest services/image-analysis/tests/test_image_models.py --collect-only`
 
-- [ ] **JOB3-003.3.impl** - Create image_models.py
+- [x] **JOB3-003.3.impl** - Create image_models.py
   - Path: `services/image-analysis/src/models/image_models.py`
   - Implement ImageAnalysis and DeficiencyDetection models
   - Verify: `python -c "from src.models.image_models import ImageAnalysis; print('OK')"`
