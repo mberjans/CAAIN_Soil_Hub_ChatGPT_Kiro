@@ -2952,7 +2952,9 @@ This enhanced task breakdown provides AI coding agents with comprehensive, actio
   **Output**: Cost analysis reports, economic rankings, budget recommendations
 
 ### TICKET-016_micronutrient-management-5. Advanced Prioritized Micronutrient Recommendation Engine
-- [x] TICKET-016_micronutrient-management-5.1.1 Build comprehensive prioritized micronutrient recommendation engine
+- [ ] TICKET-016_micronutrient-management-5.1 Build comprehensive prioritized micronutrient recommendation engine
+  - [x] TICKET-016_micronutrient-management-5.1.1 Set up micronutrient recommendation service structure
+  - [x] TICKET-016_micronutrient-management-5.1.2 Define micronutrient data models (e.g., Micronutrient, DeficiencySymptom, CropMicronutrientRequirement)
   **Implementation**: Create `MicronutrientRecommendationService` in `src/services/recommendation_service.py`
   **Features**: Multi-criteria prioritization, deficiency severity ranking, economic optimization
   **Prioritization**: Deficiency severity, yield impact potential, cost-effectiveness, application timing
