@@ -129,7 +129,7 @@
   - Add `test_optimization_request_valid()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_optimization_schemas.py --collect-only`
 
-- [ ] **JOB2-004.3.impl** - Create optimization_schemas.py
+- [x] **JOB2-004.3.impl** - Create optimization_schemas.py
   - Path: `services/fertilizer-optimization/src/schemas/optimization_schemas.py`
   - Implement OptimizationRequest, OptimizationResponse, PriceData schemas
   - Verify: `python -c "from src.schemas.optimization_schemas import OptimizationRequest; print('OK')"`
