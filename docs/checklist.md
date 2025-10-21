@@ -160,7 +160,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -f services/crop-taxonomy/migrations/001_filtering_schema.sql`
   - Verify: `psql -U postgres -d caain_soil_hub -c "\dt crop_filtering_attributes"`
 
-- [ ] **JOB1-003.14.verify** - Verify crop_filtering_attributes table created
+- [x] **JOB1-003.14.verify** - Verify crop_filtering_attributes table created
   - Command: `psql -U postgres -d caain_soil_hub -c "\d crop_filtering_attributes"`
   - Verify: Table structure matches model
 
