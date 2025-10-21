@@ -37,7 +37,7 @@
 
 ### Tasks
 
-- [ ] **JOB2-002.1** - Create requirements.txt
+- [x] **JOB2-002.1** - Create requirements.txt
   - Path: `services/fertilizer-optimization/requirements.txt`
   - Content: fastapi, uvicorn, sqlalchemy, psycopg2-binary, pydantic, scipy, numpy, pytest, pytest-asyncio, pytest-cov, httpx
   - Verify: `cat services/fertilizer-optimization/requirements.txt`
