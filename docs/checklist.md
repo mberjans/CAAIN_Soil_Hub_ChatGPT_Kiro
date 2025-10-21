@@ -198,7 +198,7 @@
   - Add assess_quality method using OpenCV
   - Verify: Check method in file
 
-- [ ] **JOB3-006.7.impl** - Implement color correction
+- [x] **JOB3-006.7.impl** - Implement color correction
   - Path: `services/image-analysis/src/services/preprocessor.py`
   - Add color_correct method
   - Verify: Check method in file
