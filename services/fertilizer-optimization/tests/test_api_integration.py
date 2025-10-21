@@ -44,7 +44,7 @@ def test_end_to_end_optimization():
         assert "fertilizer_name" in rec
         assert "application_rate" in rec
         assert "cost" in rec
-        assert "nutrients_provided" in rec
+        assert "nutrients_applied" in rec
 
         # Verify application rates are reasonable (0-500 lbs/acre)
         assert 0 <= rec["application_rate"] <= 500
@@ -53,7 +53,7 @@ def test_end_to_end_optimization():
         assert rec["cost"] >= 0
 
         # Accumulate nutrients for verification
-        for nutrient, amount in rec["nutrients_provided"].items():
+        for nutrient, amount in rec["nutrients_applied"].items():
             total_nutrients[nutrient] += amount
 
     # Verify nutrient requirements are met (with tolerance)

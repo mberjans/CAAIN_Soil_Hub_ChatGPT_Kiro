@@ -332,7 +332,7 @@
   - Add `test_optimization_workflow()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_api_integration.py --collect-only`
 
-- [ ] **JOB2-010.3** - Run integration tests
+- [x] **JOB2-010.3** - Run integration tests
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/test_api_integration.py -v`
   - Verify: All tests pass
 
