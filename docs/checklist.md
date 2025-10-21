@@ -180,11 +180,11 @@
   - Command: `psql -U postgres -d caain_soil_hub -c "SELECT COUNT(*) FROM crop_filtering_attributes;"`
   - Verify: Count > 0
 
-- [ ] **JOB1-003.19.verify** - Run unit tests for models
+- [x] **JOB1-003.19.verify** - Run unit tests for models
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && pytest tests/test_filtering_models.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB1-003.99** - Commit database schema
+- [x] **JOB1-003.99** - Commit database schema
   - Command: `git add services/crop-taxonomy/src/models/filtering_models.py services/crop-taxonomy/migrations/001_filtering_schema.sql services/crop-taxonomy/tests/test_filtering_models.py && git commit -m "JOB1-003: Create database schema for crop filtering attributes"`
   - Verify: `git log -1 --oneline`
 
