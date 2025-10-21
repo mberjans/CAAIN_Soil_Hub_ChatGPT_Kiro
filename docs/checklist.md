@@ -74,7 +74,7 @@
   - Command: `python -c "import sqlalchemy; print(f'SQLAlchemy: {sqlalchemy.__version__}')"`
   - Verify: Output shows version 2.0.23
 
-- [ ] **JOB1-002.6** - Verify Pydantic installation
+- [x] **JOB1-002.6** - Verify Pydantic installation
   - Command: `python -c "import pydantic; print(f'Pydantic: {pydantic.__version__}')"`
   - Verify: Output shows version 2.5.0
 
