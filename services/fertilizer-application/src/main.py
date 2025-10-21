@@ -26,6 +26,8 @@ from src.api.analytics_routes import router as analytics_router
 from src.api.priority_constraint_routes import router as priority_constraint_router
 from src.api.goal_based_routes import router as goal_based_router
 from src.api.adaptive_learning_routes import router as adaptive_learning_router
+from src.api.advanced_labor_analysis_routes import router as advanced_labor_analysis_router
+from src.api.sophisticated_method_routes import router as sophisticated_method_router
 from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -98,6 +100,7 @@ app.include_router(analytics_router, tags=["analytics"])
 app.include_router(priority_constraint_router, prefix="/api/v1", tags=["priority-constraints"])
 app.include_router(goal_based_router, prefix="/api/v1", tags=["goal-based-recommendations"])
 app.include_router(adaptive_learning_router, prefix="/api/v1", tags=["adaptive-learning"])
+app.include_router(advanced_labor_analysis_router, prefix="/api/v1", tags=["advanced-labor-analysis"])
 
 @app.get("/health")
 async def health_check():
@@ -192,7 +195,12 @@ async def health_check():
             "regional_adaptation",
             "farm_specific_learning",
             "seasonal_adjustment",
-            "continuous_improvement"
+            "continuous_improvement",
+            "advanced_labor_analysis",
+            "labor_efficiency_analysis",
+            "labor_productivity_optimization",
+            "labor_roi_analysis",
+            "labor_sensitivity_analysis"
         ]
     }
 
