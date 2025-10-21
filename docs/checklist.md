@@ -141,7 +141,7 @@
   - Add FilterCombination class
   - Verify: `python -c "from src.models.filtering_models import FilterCombination; print('OK')"`
 
-- [ ] **JOB1-003.10.impl** - Create database migration SQL file
+- [x] **JOB1-003.10.impl** - Create database migration SQL file
   - Path: `services/crop-taxonomy/migrations/001_filtering_schema.sql`
   - Write CREATE TABLE statements for all three tables
   - Verify: `cat services/crop-taxonomy/migrations/001_filtering_schema.sql`
