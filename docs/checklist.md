@@ -385,9 +385,9 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB1-006.1.test** - Create test file for crop search service
+- [x] **JOB1-006.1.test** - Create test file for crop search service
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
-  - Create empty test file with imports
+  - Create test file with imports and basic tests
   - Verify: `ls services/crop-taxonomy/tests/test_crop_search.py`
 
 - [ ] **JOB1-006.2.test** - Write test for CropSearchService initialization
