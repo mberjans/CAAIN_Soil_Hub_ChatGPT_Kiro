@@ -138,7 +138,7 @@
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/test_optimization_schemas.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB2-004.99** - Commit schemas
+- [x] **JOB2-004.99** - Commit schemas
   - Command: `git add services/fertilizer-optimization/src/schemas/ services/fertilizer-optimization/tests/test_optimization_schemas.py && git commit -m "JOB2-004: Create Pydantic schemas"`
   - Verify: `git log -1 --oneline`
 
