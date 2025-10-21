@@ -58,7 +58,7 @@
   - Content: fastapi==0.104.1, uvicorn[standard]==0.24.0, sqlalchemy==2.0.23, psycopg2-binary==2.9.9, pydantic==2.5.0, alembic==1.12.1, pytest==7.4.3, pytest-asyncio==0.21.1, pytest-cov==4.1.0, httpx==0.25.1, python-multipart==0.0.6
   - Verify: `cat services/crop-taxonomy/requirements.txt`
 
-- [ ] **JOB1-002.2** - Activate virtual environment
+- [x] **JOB1-002.2** - Activate virtual environment
   - Command: `cd services/crop-taxonomy && source venv/bin/activate`
   - Verify: `which python | grep crop-taxonomy`
 
