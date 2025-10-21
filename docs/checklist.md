@@ -173,7 +173,7 @@
   - Create test file
   - Verify: `ls services/image-analysis/tests/test_preprocessor.py`
 
-- [ ] **JOB3-006.2.test** - Write test for image quality assessment
+- [x] **JOB3-006.2.test** - Write test for image quality assessment
   - Path: `services/image-analysis/tests/test_preprocessor.py`
   - Add `test_quality_assessment()` test
   - Verify: `pytest services/image-analysis/tests/test_preprocessor.py --collect-only`
