@@ -150,7 +150,7 @@
   - Create FastAPI app with multipart form support
   - Verify: `python -c "from src.main import app; print(app.title)"`
 
-- [ ] **JOB3-005.4.verify** - Start service on port 8004
+- [x] **JOB3-005.4.verify** - Start service on port 8004
   - Command: `cd services/image-analysis && source venv/bin/activate && uvicorn src.main:app --port 8004 &`
   - Verify: `curl http://localhost:8004/health`
 
