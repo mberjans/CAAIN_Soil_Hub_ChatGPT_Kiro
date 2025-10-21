@@ -106,8 +106,7 @@ async def test_get_optimal_timing_weather_considerations_foliar(
     service = TimingService(mock_db_session)
     recommendation = await service.get_optimal_timing(request)
     
-    assert TimingRecommendationType.RAIN in [item.lower() for item in recommendation.weather_considerations] or \
-           "foliar spray will be washed off" in " ".join(recommendation.weather_considerations).lower()
+    assert "foliar spray will be washed off" in " ".join(recommendation.weather_considerations).lower()
 
 
 @pytest.mark.asyncio

@@ -79,7 +79,7 @@ async def test_get_optimal_application_method_foliar_for_critical_deficiency(
     
     assert recommendation.method == ApplicationMethod.FOLIAR_APPLICATION
     assert recommendation.confidence_score > 0.5
-    assert ApplicationMethod.FOLIAR_APPLICATION in recommendation.equipment_required
+    assert "sprayer" in recommendation.equipment_required
     assert recommendation.field_conditions_suitable is True
 
 
@@ -109,7 +109,7 @@ async def test_get_optimal_application_method_fertigation_when_available(
     recommendation = await service.get_optimal_application_method(request)
     
     assert recommendation.method == ApplicationMethod.FERTIGATION
-    assert ApplicationMethod.FERTIGATION in recommendation.equipment_required
+    assert "irrigation_system" in recommendation.equipment_required
 
 
 @pytest.mark.asyncio
@@ -138,7 +138,7 @@ async def test_get_optimal_application_method_seed_treatment_early_growth(
     recommendation = await service.get_optimal_application_method(request)
     
     assert recommendation.method == ApplicationMethod.SEED_TREATMENT
-    assert ApplicationMethod.SEED_TREATMENT in recommendation.equipment_required
+    assert "seeding_equipment" in recommendation.equipment_required
 
 
 @pytest.mark.asyncio
@@ -167,7 +167,7 @@ async def test_get_optimal_application_method_soil_application_default(
     recommendation = await service.get_optimal_application_method(request)
     
     assert recommendation.method == ApplicationMethod.SOIL_APPLICATION
-    assert ApplicationMethod.SOIL_APPLICATION in recommendation.equipment_required
+    assert "fertilizer_applicator" in recommendation.equipment_required
 
 
 @pytest.mark.asyncio

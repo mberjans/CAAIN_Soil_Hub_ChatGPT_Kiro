@@ -126,13 +126,17 @@ class ApplicationMethodService:
              growth_stage in ["vegetative", "vegetative growth"])):
             return ApplicationMethod.FOLIAR_APPLICATION
             
-        # For banded application during planting/early growth
+        # For banded application only during planting/early growth
         if growth_stage in ["seedling", "germination", "early"] and "fertilizer_applicator" in available_equipment:
             return ApplicationMethod.BANDED
             
-        # For broadcast applications when other methods not suitable
-        if "fertilizer_applicator" in available_equipment:
+        # For broadcast applications when specifically needed (e.g. pre-plant, top-dress)
+        elif growth_stage in ["pre-plant", "top-dress"] and "fertilizer_applicator" in available_equipment:
             return ApplicationMethod.BROADCAST
+            
+        # If fertilizer applicator is available, prefer soil application as the general method
+        elif "fertilizer_applicator" in available_equipment:
+            return ApplicationMethod.SOIL_APPLICATION
             
         # Fallback to soil application if no specific equipment constraints
         return ApplicationMethod.SOIL_APPLICATION

@@ -86,7 +86,14 @@ class TimingService:
         """
         Determine the optimal timing type based on input factors.
         """
-        # Primary factor: growth stage and nutrient uptake pattern
+        # Highest priority: critical nutrient deficiency - immediate action needed
+        critical_nutrients = ["Iron", "Zinc", "Manganese", "Boron"]  # Using actual enum values
+        # Only trigger immediate timing for clear deficiency language, not general "critical uptake"
+        if (request.nutrient_type.value in critical_nutrients and 
+            any(phrase in request.nutrient_uptake_pattern.lower() for phrase in ["deficiency", "deficient", "lacking", "critical deficiency"])):
+            return TimingRecommendationType.IMMEDIATE
+            
+        # Next priority: growth stage and nutrient uptake pattern
         growth_stage = request.growth_stage.lower() if request.growth_stage else ""
         
         # Critical growth stages need immediate or short-term timing
@@ -109,11 +116,6 @@ class TimingService:
         late_stages = ["maturity", "harvest", "post harvest"]
         if any(stage in growth_stage for stage in late_stages):
             return TimingRecommendationType.SEASONAL
-            
-        # If nutrient deficiency is critical
-        critical_nutrients = ["IRON", "ZINC", "MANGANESE", "BORON"]
-        if request.nutrient_type in critical_nutrients and "critical" in request.nutrient_uptake_pattern.lower():
-            return TimingRecommendationType.IMMEDIATE
             
         # Default based on application method
         if request.application_method in [ApplicationMethod.FOLIAR_APPLICATION, ApplicationMethod.FERTIGATION]:
