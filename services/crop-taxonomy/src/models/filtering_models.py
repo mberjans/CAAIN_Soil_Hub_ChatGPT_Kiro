@@ -57,6 +57,7 @@ class CropFilteringAttributes(Base):
         Index('idx_disease_resistance_gin', 'disease_resistance_traits', postgresql_using='gin'),
         Index('idx_market_class_gin', 'market_class_filters', postgresql_using='gin'),
         Index('idx_certification_gin', 'certification_filters', postgresql_using='gin'),
+        Index('idx_seed_availability_gin', 'seed_availability_filters', postgresql_using='gin'),
     )
 
 
@@ -105,6 +106,12 @@ class FilterCombination(Base):
     created_at = Column(DateTime, default=func.now())
     last_used_at = Column(DateTime, default=func.now(), onupdate=func.now())
     
+    __table_args__ = (
+        Index('idx_filter_combo_hash', 'combination_hash'),
+        Index('idx_filter_combo_usage', 'usage_count'),
+        Index('idx_filters_gin', 'filters', postgresql_using='gin'),
+    )
+
     def __repr__(self):
         return f"<FilterCombination(hash='{self.combination_hash}', usage_count={self.usage_count})>"
         
