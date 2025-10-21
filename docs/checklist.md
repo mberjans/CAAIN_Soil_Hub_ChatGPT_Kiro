@@ -420,7 +420,7 @@
   - Add `test_search_with_performance_filters()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
 
-- [ ] **JOB1-006.8.test** - Write test for pagination
+- [x] **JOB1-006.8.test** - Write test for pagination
   - Path: `services/crop-taxonomy/tests/test_crop_search.py`
   - Add `test_search_pagination()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_crop_search.py --collect-only`
