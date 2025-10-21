@@ -73,7 +73,7 @@
   - Create test file
   - Verify: `ls services/image-analysis/tests/test_image_models.py`
 
-- [ ] **JOB3-003.2.test** - Write test for ImageAnalysis model
+- [x] **JOB3-003.2.test** - Write test for ImageAnalysis model
   - Path: `services/image-analysis/tests/test_image_models.py`
   - Add `test_image_analysis_creation()` test
   - Verify: `pytest services/image-analysis/tests/test_image_models.py --collect-only`
