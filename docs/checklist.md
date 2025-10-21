@@ -23,7 +23,7 @@
   - Command: `mkdir -p services/crop-taxonomy/tests`
   - Verify: `ls -ld services/crop-taxonomy/tests`
 
-- [ ] **JOB1-001.4** - Create migrations directory
+- [x] **JOB1-001.4** - Create migrations directory
   - Command: `mkdir -p services/crop-taxonomy/migrations`
   - Verify: `ls -ld services/crop-taxonomy/migrations`
 
