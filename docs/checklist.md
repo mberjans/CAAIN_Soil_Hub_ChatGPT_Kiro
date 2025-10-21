@@ -54,7 +54,7 @@
   - Command: `python -c "import numpy; print(f'numpy: {numpy.__version__}')"`
   - Verify: numpy version displayed
 
-- [ ] **JOB2-002.99** - Commit requirements
+- [x] **JOB2-002.99** - Commit requirements
   - Command: `git add services/fertilizer-optimization/requirements.txt && git commit -m "JOB2-002: Add requirements with scipy and numpy"`
   - Verify: `git log -1 --oneline`
 
