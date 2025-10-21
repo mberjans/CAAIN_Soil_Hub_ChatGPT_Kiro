@@ -377,3 +377,167 @@ class TestImagePreprocessor:
         assert np.all(result >= 0.0)
         assert np.all(result <= 1.0)
         assert result.dtype == np.float32
+
+    def test_image_resizing_aspect_ratio_changes(self):
+        """
+        Test image resizing with different aspect ratios
+
+        JOB3-006.4.test - Write test for image resizing
+        """
+        # Test cases with different aspect ratios
+        test_cases = [
+            (100, 50),   # Wide image (2:1)
+            (50, 100),   # Tall image (1:2)
+            (200, 200),  # Square image (1:1)
+            (400, 300),  # Landscape (4:3)
+            (300, 400),  # Portrait (3:4)
+        ]
+
+        for width, height in test_cases:
+            # Create test image with specific aspect ratio
+            test_image = Image.new('RGB', (width, height), color='blue')
+            img_buffer = BytesIO()
+            test_image.save(img_buffer, format='PNG')
+            img_bytes = img_buffer.getvalue()
+
+            # Process the image
+            result = self.preprocessor.preprocess_image(img_bytes)
+
+            # All should resize to target dimensions regardless of input aspect ratio
+            assert result.shape == (1, 224, 224, 3)
+            assert result.dtype == np.float32
+            assert np.all(result >= 0.0) and np.all(result <= 1.0)
+
+    def test_image_resizing_edge_cases(self):
+        """
+        Test image resizing with edge cases (very small and very large images)
+
+        JOB3-006.4.test - Write test for image resizing
+        """
+        # Test very small image
+        tiny_image = Image.new('RGB', (10, 10), color='red')
+        img_buffer = BytesIO()
+        tiny_image.save(img_buffer, format='PNG')
+        tiny_bytes = img_buffer.getvalue()
+
+        result = self.preprocessor.preprocess_image(tiny_bytes)
+        assert result.shape == (1, 224, 224, 3)
+
+        # Test very large image (but not too large to avoid memory issues)
+        large_image = Image.new('RGB', (1000, 1000), color='green')
+        img_buffer = BytesIO()
+        large_image.save(img_buffer, format='PNG')
+        large_bytes = img_buffer.getvalue()
+
+        result = self.preprocessor.preprocess_image(large_bytes)
+        assert result.shape == (1, 224, 224, 3)
+
+    def test_image_resizing_maintains_color_channels(self):
+        """
+        Test that image resizing maintains RGB color channels properly
+
+        JOB3-006.4.test - Write test for image resizing
+        """
+        # Create image with distinct colors in each channel (all non-zero)
+        test_image = Image.new('RGB', (100, 100), color=(200, 100, 50))  # Brown-orange
+        img_buffer = BytesIO()
+        test_image.save(img_buffer, format='PNG')
+        img_bytes = img_buffer.getvalue()
+
+        # Process the image
+        result = self.preprocessor.preprocess_image(img_bytes)
+
+        # Check that we have 3 color channels
+        assert result.shape[3] == 3  # RGB channels
+
+        # Check that all channels have some data (not empty or zero)
+        red_channel = result[0, :, :, 0]
+        green_channel = result[0, :, :, 1]
+        blue_channel = result[0, :, :, 2]
+
+        assert np.mean(red_channel) > 0.0
+        assert np.mean(green_channel) > 0.0
+        assert np.mean(blue_channel) > 0.0
+
+        # For brown-orange image, red channel should be strongest on average
+        assert np.mean(red_channel) > np.mean(green_channel)
+        assert np.mean(red_channel) > np.mean(blue_channel)
+
+    def test_image_resizing_quality_preservation(self):
+        """
+        Test that image resizing preserves reasonable image quality
+
+        JOB3-006.4.test - Write test for image resizing
+        """
+        # Create an image with a pattern that should be preserved
+        test_image = Image.new('RGB', (100, 100), color='white')
+        # Add some distinct features
+        for i in range(0, 100, 10):
+            for j in range(0, 100, 10):
+                test_image.putpixel((i, j), (0, 0, 0))  # Black dots
+
+        img_buffer = BytesIO()
+        test_image.save(img_buffer, format='PNG')
+        img_bytes = img_buffer.getvalue()
+
+        # Process the image
+        result = self.preprocessor.preprocess_image(img_bytes)
+
+        # Check that the result maintains some variation (not completely uniform)
+        # The pattern will be blurred but should still create variation
+        std_deviation = np.std(result)
+        assert std_deviation > 0.01  # Should have some variation
+
+        # Check that we still have a mix of colors (not all same value)
+        assert np.max(result) > np.min(result)
+
+    def test_image_resizing_different_interpolation(self):
+        """
+        Test that OpenCV's default interpolation works for different image types
+
+        JOB3-006.4.test - Write test for image resizing
+        """
+        # Test with different types of images that might benefit from different interpolation
+        image_types = [
+            ('gradient', self._create_gradient_image),
+            ('solid', lambda: Image.new('RGB', (100, 100), color='blue')),
+            ('pattern', self._create_pattern_image),
+        ]
+
+        for img_type, img_func in image_types:
+            test_image = img_func()
+            img_buffer = BytesIO()
+            test_image.save(img_buffer, format='PNG')
+            img_bytes = img_buffer.getvalue()
+
+            # Process the image
+            result = self.preprocessor.preprocess_image(img_bytes)
+
+            # Basic checks
+            assert result.shape == (1, 224, 224, 3)
+            assert result.dtype == np.float32
+            assert np.all(result >= 0.0) and np.all(result <= 1.0)
+
+    def _create_gradient_image(self):
+        """Create a simple gradient image for testing"""
+        image = Image.new('RGB', (100, 100))
+        pixels = []
+        for y in range(100):
+            for x in range(100):
+                value = int(255 * (x + y) / 200)  # Diagonal gradient
+                pixels.append((value, value, value))
+        image.putdata(pixels)
+        return image
+
+    def _create_pattern_image(self):
+        """Create a patterned image for testing"""
+        image = Image.new('RGB', (100, 100), color='white')
+        for i in range(0, 100, 20):
+            for j in range(0, 100, 20):
+                # Create a checkerboard pattern
+                if (i // 20 + j // 20) % 2 == 0:
+                    for di in range(20):
+                        for dj in range(20):
+                            if i + di < 100 and j + dj < 100:
+                                image.putpixel((i + di, j + dj), (50, 100, 150))
+        return image

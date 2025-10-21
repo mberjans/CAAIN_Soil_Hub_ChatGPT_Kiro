@@ -183,7 +183,7 @@
   - Add `test_color_correction()` test
   - Verify: `pytest services/image-analysis/tests/test_preprocessor.py --collect-only`
 
-- [ ] **JOB3-006.4.test** - Write test for image resizing
+- [x] **JOB3-006.4.test** - Write test for image resizing
   - Path: `services/image-analysis/tests/test_preprocessor.py`
   - Add `test_image_resize()` test
   - Verify: `pytest services/image-analysis/tests/test_preprocessor.py --collect-only`
