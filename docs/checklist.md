@@ -131,7 +131,7 @@
   - Add __table_args__ with GIN indexes for JSONB columns
   - Verify: Check __table_args__ in model definition
 
-- [ ] **JOB1-003.8.impl** - Implement FarmerPreference model
+- [x] **JOB1-003.8.impl** - Implement FarmerPreference model
   - Path: `services/crop-taxonomy/src/models/filtering_models.py`
   - Add FarmerPreference class with JSONB columns
   - Verify: `python -c "from src.models.filtering_models import FarmerPreference; print('OK')"`
