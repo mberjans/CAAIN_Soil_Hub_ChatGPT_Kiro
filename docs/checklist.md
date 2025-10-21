@@ -269,7 +269,7 @@
   - Add `test_calculate_roi()` test
   - Verify: `pytest services/fertilizer-optimization/tests/test_economic_optimizer.py --collect-only`
 
-- [ ] **JOB2-008.4.impl** - Create EconomicOptimizer class
+- [x] **JOB2-008.4.impl** - Create EconomicOptimizer class
   - Path: `services/fertilizer-optimization/src/services/economic_optimizer.py`
   - Implement optimizer with scipy.optimize
   - Verify: `python -c "from src.services.economic_optimizer import EconomicOptimizer; print('OK')"`
