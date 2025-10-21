@@ -1,999 +1,509 @@
-# CAAIN Soil Hub - Detailed Implementation Plan
+# Parallel Job 4: Farm Location Services
+
+**TICKET-008: Location Management API Endpoints**  
+**Estimated Timeline**: 2-3 weeks  
+**Priority**: Critical  
+**Can Start**: Immediately (No blocking dependencies)
 
 ## Executive Summary
 
-The Autonomous Farm Advisory System (AFAS) is a comprehensive agricultural decision support platform designed to answer 20 critical farmer questions through intelligent data integration, rule-based processing, and AI-powered explanations. This plan outlines the systematic implementation approach for building a production-ready system that serves farmers, agricultural consultants, and extension services.
+This job implements comprehensive farm location management including GPS coordinate validation, address geocoding, field boundary management, and geospatial queries using PostGIS. This work is **completely independent** of other parallel jobs.
 
-## Project Overview
+## Related Tickets from Checklist
 
-**Duration**: 12 months
-**Team Size**: 8-12 developers (including AI coding agents)
-**Budget**: $800K - $1.2M
-**Architecture**: Python microservices with FastAPI
-**Target Users**: 10,000+ farmers in first year
-**AI Integration**: AI coding agents supported with comprehensive documentation
+- **TICKET-008_farm-location-input-4.1**: Create location management API endpoints
+- **TICKET-008_farm-location-input-4.2**: Implement GPS coordinate validation
+- **TICKET-008_farm-location-input-4.3**: Add address geocoding with fallback providers
+- **TICKET-008_farm-location-input-4.4**: Create geospatial query capabilities
+- **TICKET-008_farm-location-input-5.1**: Implement field boundary management
+- **TICKET-008_farm-location-input-5.2**: Add location validation against agricultural zones
 
-## Current Status Assessment
+## Technical Stack
 
-Based on the implementation plan and checklist analysis:
-
-### ✅ **Completed Components** (Phase 1 - Foundation)
-- [x] Native development environment setup
-- [x] CI/CD pipeline configuration  
-- [x] Basic microservices skeleton (Python/FastAPI)
-- [x] Database schema design (PostgreSQL, MongoDB, Redis)
-- [x] Weather API integration (NOAA, local services)
-- [x] Soil database connections (USDA Web Soil Survey + SoilGrids)
-- [x] Data ingestion service framework
-- [x] Question intent classification service
-- [x] Basic recommendation engine architecture
-- [x] Questions 1-5 implementation (Crop Selection, Soil Fertility, Crop Rotation, Nutrient Deficiency, Fertilizer Type)
-- [x] OpenRouter LLM integration (GPT-4, Claude, Llama)
-
-### 🔄 **In Progress Components**
-- [-] Context management system (partially implemented)
-- [ ] Questions 6-20 implementation
-- [ ] Advanced AI capabilities
-- [ ] User interface development
-
-### ⏳ **Pending Components**
-- [ ] Image analysis capabilities
-- [ ] Mobile interface
-- [ ] Performance optimization
-- [ ] Production deployment
-
-## Implementation Strategy
-
-### Phase 1: Foundation Consolidation (Months 1-3) - 75% Complete
-
-**Objective**: Solidify core infrastructure and complete remaining foundation components
-
-#### Sprint 1.1: Infrastructure Completion (Weeks 1-2)
-**Focus**: Complete remaining infrastructure gaps
-
-**Priority Tickets**:
-- **TICKET-011**: Comprehensive Testing Framework (Critical)
-  - Implement pytest framework with >80% coverage
-  - Set up agricultural validation tests
-  - Configure CI/CD test automation
-  - **Deliverable**: Full test suite for existing components
-
-**Team Allocation**:
-- QA Engineer (2 weeks)
-- DevOps Engineer (1 week)
-
-#### Sprint 1.2: Core Services Enhancement (Weeks 3-4)
-**Focus**: Enhance existing services with missing capabilities
-
-**Priority Tickets**:
-- **TICKET-001**: Climate Zone Data Service Implementation (Critical)
-  - Complete USDA Plant Hardiness Zone integration
-  - Add Köppen climate classification
-  - Implement caching and validation
-  - **Deliverable**: Production-ready climate zone service
-
-- **TICKET-002**: Coordinate-Based Climate Zone Detection (Critical)
-  - GPS coordinate validation and processing
-  - Confidence scoring for zone detection
-  - Edge case handling (ocean, polar regions)
-  - **Deliverable**: Robust coordinate-based detection
-
-**Team Allocation**:
-- Senior Python Developer (2 weeks)
-- Data Engineer (2 weeks)
-
-#### Sprint 1.3: Location and Farm Management (Weeks 5-6)
-**Focus**: Complete farm location input capabilities
-
-**Priority Tickets**:
-- **TICKET-008**: Location Management API Endpoints (Critical)
-  - CRUD operations for farm locations
-  - PostGIS integration for geospatial data
-  - Geocoding with multiple providers
-  - **Deliverable**: Complete location management system
-
-**Team Allocation**:
-- Python Backend Developer (2 weeks)
-- GIS Specialist (1 week)
-
-### Phase 2: Service Expansion (Months 4-6)
-
-**Objective**: Implement Questions 6-15 with enhanced AI capabilities
-
-#### Sprint 2.1: Fertilizer Management Suite (Weeks 7-10)
-**Focus**: Complete fertilizer-related questions (6-9)
-
-**User Stories Addressed**:
-- **US-005**: Soil pH Management - pH optimization for nutrient availability
-- **US-006**: Fertilizer Type Selection - Organic vs synthetic vs slow-release
-- **US-007**: Fertilizer Application Method - Liquid vs granular decisions
-- **US-008**: Fertilizer Timing Optimization - Optimal application timing
-- **US-010**: Runoff Prevention - Environmental impact reduction
-
-**Priority Tickets**:
-- **TICKET-006**: Market Price Integration System (High)
-  - Real-time fertilizer price tracking
-  - Multiple data source integration
-  - Price trend analysis
-  - **Deliverable**: Dynamic pricing system
-
-- **TICKET-003**: pH Management Service Structure (Critical)
-- **TICKET-004**: pH adjustment calculation engine (Critical)
-  - Lime and sulfur requirement calculations
-  - Soil buffer capacity modeling
-  - Application timing recommendations
-  - **Deliverable**: Complete pH management system
-
-**Questions Implemented**:
-- Q6: Fertilizer Application Method (liquid vs granular)
-- Q7: Fertilizer Timing Optimization
-- Q8: Environmental Impact/Runoff Prevention
-- Q9: Cover Crop Selection
-- Q10: Soil pH Management
-
-**Acceptance Criteria Validation**:
-- [ ] US-005: pH adjustment recommendations with timing and cost estimates
-- [ ] US-006: Fertilizer type comparison with pros/cons and cost analysis
-- [ ] US-007: Application method recommendations based on equipment and goals
-- [ ] US-008: Seasonal fertilizer calendar with weather integration
-- [ ] US-010: Environmental impact assessment with mitigation strategies
-
-**Team Allocation**:
-- Python Backend Developers (2 × 4 weeks)
-- Agricultural Expert (2 weeks)
-- Data Engineer (4 weeks)
-
-#### Sprint 2.2: Advanced Analysis Capabilities (Weeks 11-14)
-**Focus**: Implement Questions 11-15 with ML/AI features
-
-**User Stories Addressed**:
-- **US-004**: Nutrient Deficiency Detection - Multi-source deficiency identification
-- **US-011**: Cover Crop Selection - Goal-based cover crop recommendations
-- **US-012**: Drought Management - Moisture conservation and resilience practices
-- **US-016**: Weather Impact Analysis (foundation) - Weather data integration
-
-**Priority Tickets**:
-- **TICKET-007**: Visual Symptom Analysis System (High)
-  - CNN models for deficiency detection
-  - Image preprocessing pipeline
-  - Confidence scoring system
-  - **Deliverable**: Crop photo analysis capability
-
-- **TICKET-009**: Weather Data Integration System (High)
-  - Multi-source weather data integration
-  - Agricultural weather metrics
-  - Impact assessment algorithms
-  - **Deliverable**: Weather-aware recommendations
-
-**Questions Implemented**:
-- Q11: Micronutrient Management
-- Q12: Precision Agriculture ROI Assessment
-- Q13: Drought Management
-- Q14: Early Deficiency Detection (with image analysis)
-- Q15: Tillage Practice Recommendations
-
-**Acceptance Criteria Validation**:
-- [ ] US-004: Image analysis with >85% accuracy, symptom description processing
-- [ ] US-011: Cover crop species recommendations with timing and benefits
-- [ ] US-012: Moisture conservation practices with water savings estimates
-- [ ] US-016: Weather impact assessment with adaptation recommendations
-
-**Team Allocation**:
-- Python ML Engineer (4 weeks)
-- Computer Vision Specialist (4 weeks)
-- Python Backend Developer (4 weeks)
-
-### Phase 3: Advanced Features & UI (Months 7-9)
-
-**Objective**: Complete all 20 questions and develop user interface
-
-#### Sprint 3.1: Final Questions Implementation (Weeks 15-18)
-**Focus**: Implement Questions 16-20
-
-**User Stories Addressed**:
-- **US-002**: Crop Rotation Planning - Multi-year rotation optimization
-- **US-009**: Cost-Effective Fertilizer Strategy - Economic optimization and ROI
-- **US-013**: Precision Agriculture ROI Assessment - Technology investment analysis
-- **US-016**: Weather Impact Analysis (complete) - Advanced weather adaptation
-- **US-020**: Government Program Integration - Policy and incentive programs
-
-**Priority Tickets**:
-- Economic optimization algorithms (Q16: Cost-effective fertilizer strategy)
-- Weather pattern analysis (Q17: Weather impact analysis)
-- Testing integration (Q18: Soil/tissue test integration)
-- Sustainable practices (Q19: Yield optimization without soil harm)
-- Policy integration (Q20: Government programs and regulations)
-
-**Acceptance Criteria Validation**:
-- [ ] US-002: Multi-year rotation plans with economic and sustainability analysis
-- [ ] US-009: Cost-optimized fertilizer strategies with ROI and break-even analysis
-- [ ] US-013: Technology ROI assessment with payback period calculations
-- [ ] US-016: Weather pattern analysis with climate adaptation strategies
-- [ ] US-020: Government program integration with compliance and incentive guidance
-
-**Team Allocation**:
-- Python Backend Developers (2 × 4 weeks)
-- Policy Research Specialist (2 weeks)
-- Agricultural Expert (3 weeks)
-
-#### Sprint 3.2: User Interface Development (Weeks 19-22)
-**Focus**: Complete web dashboard and mobile interface
-
-**User Stories Addressed**:
-- **US-014**: Early Deficiency Detection (advanced) - Enhanced ML models and UI
-- **US-015**: Soil and Tissue Test Integration - Laboratory data integration
-- **US-017**: Tillage Practice Recommendations - No-till vs conventional analysis
-- **US-018**: Sustainable Intensification - Integrated optimization interface
-- **US-019**: Micronutrient Management - Micronutrient assessment tools
-- **US-022**: Recommendation History and Tracking - Historical tracking dashboard
-- **US-023**: Mobile Field Access - Mobile-responsive interface and offline capability
-
-**Priority Tickets**:
-- **TICKET-010**: Farm Profile Management Interface (High)
-  - Interactive maps with Leaflet.js
-  - Responsive design with Bootstrap 5
-  - Real-time validation and feedback
-  - **Deliverable**: Complete farm management UI
-
-**UI Components**:
-- Farm profile and field management
-- Interactive recommendation dashboard
-- Mobile-responsive design
-- Data visualization and charts
-
-**Acceptance Criteria Validation**:
-- [ ] US-014: Advanced deficiency detection with real-time monitoring interface
-- [ ] US-015: Laboratory test result integration with recommendation adjustments
-- [ ] US-017: Tillage practice comparison with transition planning tools
-- [ ] US-018: Integrated sustainability and yield optimization dashboard
-- [ ] US-019: Micronutrient assessment with supplementation recommendations
-- [ ] US-022: Historical recommendation tracking with outcome analysis
-- [ ] US-023: Mobile interface with offline capability and GPS integration
-
-**Team Allocation**:
-- Python Frontend Developers (2 × 4 weeks)
-- UI/UX Designer (4 weeks)
-
-### Phase 4: Optimization & Launch (Months 10-12)
-
-**Objective**: Production readiness and user validation
-
-#### Sprint 4.1: Performance Optimization (Weeks 23-26)
-**Focus**: System performance and scalability
-
-**Optimization Areas**:
-- Database query optimization
-- Caching layer enhancements
-- Load balancing configuration
-- Response time improvements (<3 seconds)
-
-#### Sprint 4.2: User Acceptance Testing (Weeks 27-30)
-**Focus**: Real-world validation with farmers
-
-**Testing Approach**:
-- 50+ farmer beta testing program
-- Agricultural expert validation
-- Performance benchmarking
-- Security audit and hardening
-
-## AI Coding Agent Integration
-
-### Agent-Ready Documentation
-The project includes comprehensive documentation specifically designed for AI coding agents:
-
-- **docs/ai-agent-integration-guide.md**: Complete workflow guide for AI agents
-- **docs/tickets.md**: Detailed technical specifications with acceptance criteria
-- **docs/checklist.md**: Granular task breakdown with ticket mapping (TICKET-XXX_task-id format)
-- **services/ai-agent/**: Reference implementation showing established patterns
-
-### AI Agent Workflow
-1. **Task Selection**: AI agents select tickets from current sprint priorities
-2. **Context Analysis**: Review ticket specifications and existing codebase patterns
-3. **Implementation**: Follow established service patterns and API conventions
-4. **Integration**: Connect with existing services (AI Agent, Context Management)
-5. **Testing**: Implement comprehensive tests including agricultural validation
-6. **Human Handoff**: Flag complex agricultural logic for expert review
-
-### Existing Codebase Foundation
-AI agents can leverage the existing implementation:
-- ✅ **AI Agent Service**: OpenRouter LLM integration with agricultural context
-- ✅ **Context Management**: Conversation and agricultural context handling
-- ✅ **Service Patterns**: Established FastAPI microservice architecture
-- ✅ **Testing Framework**: pytest with agricultural validation patterns
-
-### Quality Assurance for AI Agents
-- **Code Standards**: >80% test coverage, full type hints, comprehensive documentation
-- **Agricultural Validation**: Expert review required for domain-specific logic
-- **Integration Testing**: Validation against existing services and APIs
-- **Performance Requirements**: <3 second response time for all endpoints
-
-## Technical Implementation Details
-
-### Architecture Stack
-```
-Frontend Layer:
-├── FastAPI + Jinja2 Templates (Primary)
-├── Streamlit (Alternative/Prototyping)
-├── Bootstrap 5 (Responsive Design)
-├── Leaflet.js (Interactive Maps)
-└── Chart.js (Data Visualization)
-
-Backend Services:
-├── Python 3.11+ (All Services)
-├── FastAPI (API Framework)
-├── SQLAlchemy (ORM)
-├── Pydantic (Data Validation)
-└── AsyncIO (Async Operations)
-
-Data Layer:
-├── PostgreSQL (Structured Data)
-├── PostGIS (Geospatial Extension)
-├── TimescaleDB (Time Series)
-├── MongoDB (Document Storage)
-├── Redis (Caching)
-└── Vector DB (AI Embeddings)
-
-AI/ML Stack:
-├── OpenRouter (LLM Integration)
-├── TensorFlow/PyTorch (Deep Learning)
-├── OpenCV (Image Processing)
-├── scikit-learn (ML Algorithms)
-└── spaCy/NLTK (NLP)
-
-External Integrations:
-├── NOAA Weather API
-├── USDA Soil Survey
-├── Plant Hardiness Zones
-├── Market Price APIs
-└── Government Program DBs
-```
-
-### Service Architecture
-```
-services/
-├── question-router/        # Port 8000 - Route questions to processors
-├── recommendation-engine/  # Port 8001 - Core agricultural logic
-├── ai-agent/              # Port 8002 - LLM integration & explanations
-├── data-integration/      # Port 8003 - External data sources
-├── image-analysis/        # Port 8004 - Computer vision for crops
-├── user-management/       # Port 8005 - User profiles & auth
-└── frontend/              # Port 3000 - Web interface
-```
-
-### Database Design Strategy
-
-**PostgreSQL (Primary)**:
-- User profiles and farm data
-- Crop varieties and characteristics
-- Soil test results and recommendations
-- Weather data (with TimescaleDB)
-- Geospatial data (with PostGIS)
-
-**MongoDB (Secondary)**:
-- Flexible recommendation responses
-- External API cache data
-- User interaction logs
-- ML model predictions
-
-**Redis (Caching)**:
-- Session management
-- Frequently accessed recommendations
-- API response caching
-- Real-time data temporary storage
-
-## Quality Assurance Strategy
-
-### Testing Framework
-```
-tests/
-├── unit/                  # >80% code coverage
-├── integration/           # API endpoint testing
-├── e2e/                   # User workflow testing
-├── performance/           # Load and response time testing
-├── agricultural/          # Expert validation testing
-└── security/              # Security and penetration testing
-```
-
-### Agricultural Validation Process
-1. **Expert Review**: Agricultural consultants validate recommendations
-2. **Field Testing**: Real-world validation with partner farms
-3. **Accuracy Metrics**: >85% farmer satisfaction with recommendations
-4. **Continuous Learning**: Feedback integration and model improvement
-
-## Risk Management
-
-### Technical Risks
-- **Data Quality**: Multiple source validation and expert review
-- **API Dependencies**: Fallback providers and graceful degradation
-- **Performance**: Regular load testing and optimization
-- **Security**: Comprehensive security audits and monitoring
-
-### Business Risks
-- **User Adoption**: Early farmer engagement and feedback integration
-- **Competition**: Focus on unique agricultural expertise and validation
-- **Regulatory**: Stay current with agricultural regulations and policies
-
-## Success Metrics
-
-### Development KPIs
-- **Code Quality**: >80% test coverage, <5% bug rate
-- **Performance**: <3s response time, 99.5% uptime
-- **Feature Completion**: 100% of 20 questions on schedule
-
-### User KPIs
-- **Adoption**: 1,000+ users within 6 months
-- **Engagement**: >70% monthly active users
-- **Satisfaction**: >4.5/5 rating, >80% recommendation rate
-
-### Business KPIs
-- **Revenue**: $100K+ ARR within first year
-- **Market**: 5% target market engagement
-- **Validation**: 3+ university endorsements
-
-## Resource Requirements
-
-### Team Structure (Human + AI Agents)
-- **Technical Lead**: Python/FastAPI architecture oversight and AI agent coordination
-- **Backend Developers**: 2-3 senior Python developers (working with AI agents)
-- **ML Engineers**: 2 specialists for AI/ML features
-- **Frontend Developer**: Python web development
-- **Data Engineer**: Integration and data pipeline specialist
-- **QA Engineer**: Testing and quality assurance (including AI-generated code validation)
-- **DevOps Engineer**: Infrastructure and deployment
-- **Agricultural Expert**: Domain knowledge and validation (0.5 FTE, critical for AI agent output review)
-- **AI Agent Coordinators**: 2-3 AI coding agents following docs/ai-agent-integration-guide.md
-
-### Infrastructure Costs (Monthly)
-- **Development Environment**: $2,000
-- **External APIs**: $2,000-3,000
-- **AI/ML Services**: $3,000-5,000
-- **Monitoring & Tools**: $1,000
-- **Total**: $8,000-11,000/month
-
-## Next Steps (Immediate Actions)
-
-### Week 1-2 Priorities
-1. **Complete Testing Framework** (TICKET-011)
-   - Set up pytest with coverage reporting
-   - Implement agricultural validation tests
-   - Configure CI/CD automation
-
-2. **Finalize Climate Zone Service** (TICKET-001, TICKET-002)
-   - Complete USDA API integration
-   - Add coordinate validation
-   - Implement caching layer
-
-3. **Team Onboarding** (Human + AI Agents)
-   - Review existing codebase and service patterns
-   - Set up development environments
-   - Assign ticket ownership to human developers and AI agents
-   - **AI Agent Setup**: Review docs/ai-agent-integration-guide.md
-   - **Context Familiarization**: Study existing services/ai-agent/ implementation
-
-### Success Criteria for Phase 1 Completion
-- [ ] All foundation services have >80% test coverage
-- [ ] Climate zone detection works for all US coordinates
-- [ ] Location management supports farm and field creation
-- [ ] Performance benchmarks met (<3s response time)
-- [ ] Agricultural expert validation completed
-
-## Detailed Sprint Planning
-
-### Phase 1 Detailed Breakdown
-
-#### Sprint 1.1: Testing Framework Implementation (Weeks 1-2)
-**Sprint Goal**: Establish comprehensive testing foundation
-
-**Daily Breakdown**:
-- **Day 1-2**: Set up pytest framework and coverage reporting
-- **Day 3-4**: Implement unit tests for existing services
-- **Day 5-6**: Create integration test suite
-- **Day 7-8**: Set up agricultural validation framework
-- **Day 9-10**: Configure CI/CD test automation
-
-**Definition of Done**:
-- [ ] >80% test coverage for all existing services
-- [ ] Automated test execution in CI/CD pipeline
-- [ ] Agricultural validation tests with expert review process
-- [ ] Performance benchmarking tests configured
-
-#### Sprint 1.2: Climate Zone Service Completion (Weeks 3-4)
-**Sprint Goal**: Production-ready climate zone detection
-
-**User Stories Addressed**:
-- US-001: Crop Variety Recommendation (climate zone auto-detection)
-
-**Daily Breakdown**:
-- **Day 1-3**: Complete USDA Plant Hardiness Zone API integration
-- **Day 4-5**: Implement Köppen climate classification
-- **Day 6-7**: Add coordinate validation and edge case handling
-- **Day 8-9**: Implement caching layer with Redis
-- **Day 10**: Performance testing and optimization
-
-**Acceptance Criteria**:
-- [ ] Handles all US coordinates with <2s response time
-- [ ] 99.5% uptime with graceful API failure handling
-- [ ] Confidence scoring for all zone detections
-- [ ] 24-hour cache TTL for zone data
-
-#### Sprint 1.3: Location Management System (Weeks 5-6)
-**Sprint Goal**: Complete farm and field management capabilities
-
-**User Stories Addressed**:
-- US-021: User Profile Management
-- Farm location input and field boundary management
-
-**Technical Implementation**:
-```python
-# Key components to implement
-class LocationService:
-    async def create_farm_location(self, user_id: UUID, location_data: LocationCreate)
-    async def add_field_to_farm(self, farm_id: UUID, field_data: FieldCreate)
-    async def geocode_address(self, address: str) -> GeocodeResult
-    async def validate_agricultural_location(self, coordinates: Coordinates)
-
-class GeospatialService:
-    def calculate_field_area(self, boundary: Polygon) -> float
-    def validate_field_boundary(self, boundary: Polygon) -> ValidationResult
-    def find_nearby_farms(self, coordinates: Coordinates, radius_km: float)
-```
-
-### Phase 2 Detailed Breakdown
-
-#### Sprint 2.1: Fertilizer Management Implementation (Weeks 7-10)
-**Sprint Goal**: Complete Questions 6-10 with economic optimization
-
-**Questions Implementation Priority**:
-1. **Q10: Soil pH Management** (Week 7)
-   - pH adjustment calculations
-   - Lime and sulfur requirement algorithms
-   - Application timing recommendations
-
-2. **Q6: Fertilizer Application Method** (Week 8)
-   - Liquid vs granular decision logic
-   - Equipment compatibility assessment
-   - Cost-benefit analysis
-
-3. **Q7: Fertilizer Timing Optimization** (Week 9)
-   - Seasonal application calendars
-   - Weather-based timing adjustments
-   - Nutrient uptake modeling
-
-4. **Q8: Environmental Impact/Runoff Prevention** (Week 10)
-   - Runoff risk assessment
-   - Buffer strip recommendations
-   - Environmental compliance checking
-
-**Technical Deliverables**:
-```python
-# Core services to implement
-class FertilizerOptimizationService:
-    def calculate_application_rates(self, soil_data, crop_requirements)
-    def optimize_timing(self, weather_forecast, crop_stage)
-    def assess_environmental_impact(self, field_characteristics)
-    def calculate_cost_effectiveness(self, fertilizer_prices, application_methods)
-
-class PHManagementService:
-    def calculate_lime_requirement(self, current_ph, target_ph, soil_type)
-    def calculate_sulfur_requirement(self, current_ph, target_ph, soil_type)
-    def predict_ph_timeline(self, amendment_type, application_rate)
-```
-
-#### Sprint 2.2: Advanced Analysis with ML (Weeks 11-14)
-**Sprint Goal**: Implement Questions 11-15 with AI/ML capabilities
-
-**ML Model Development**:
-1. **Crop Deficiency Detection Model** (Weeks 11-12)
-   - CNN architecture for image analysis
-   - Training data preparation and augmentation
-   - Model validation with agricultural experts
-
-2. **Weather Impact Analysis** (Weeks 13-14)
-   - Weather pattern recognition
-   - Crop stress prediction models
-   - Recommendation adjustment algorithms
-
-**Model Architecture**:
-```python
-class DeficiencyDetectionModel:
-    def __init__(self):
-        self.model = self.load_pretrained_model()
-        self.preprocessor = ImagePreprocessor()
-
-    def predict_deficiency(self, image: np.ndarray, crop_type: str):
-        # Preprocess image
-        processed_image = self.preprocessor.prepare_image(image)
-
-        # Run inference
-        predictions = self.model.predict(processed_image)
-
-        # Post-process results
-        return self.interpret_predictions(predictions, crop_type)
-```
-
-### Phase 3 Detailed Breakdown
-
-#### Sprint 3.1: Final Questions & Economic Models (Weeks 15-18)
-**Sprint Goal**: Complete all 20 questions with economic optimization
-
-**Complex Questions Implementation**:
-- **Q16: Cost-Effective Fertilizer Strategy**
-  - Multi-objective optimization (cost, yield, environment)
-  - Market price integration and forecasting
-  - ROI calculation with uncertainty analysis
-
-- **Q17: Weather Impact Analysis**
-  - Historical weather pattern analysis
-  - Climate change adaptation strategies
-  - Risk assessment and mitigation planning
-
-- **Q20: Government Programs Integration**
-  - Policy database integration
-  - Compliance checking algorithms
-  - Incentive optimization recommendations
-
-**Economic Optimization Engine**:
-```python
-class EconomicOptimizer:
-    def optimize_fertilizer_strategy(
-        self,
-        field_data: FieldData,
-        market_prices: MarketPrices,
-        yield_goals: YieldGoals,
-        constraints: OptimizationConstraints
-    ) -> OptimizationResult:
-        """
-        Multi-objective optimization considering:
-        - Cost minimization
-        - Yield maximization
-        - Environmental impact minimization
-        - Risk management
-        """
-
-    def calculate_roi_scenarios(
-        self,
-        investment_options: List[InvestmentOption],
-        farm_characteristics: FarmData
-    ) -> ROIAnalysis:
-        """
-        Calculate ROI for different investment scenarios
-        with sensitivity analysis
-        """
-```
-
-#### Sprint 3.2: User Interface Development (Weeks 19-22)
-**Sprint Goal**: Complete web dashboard and mobile interface
-
-**UI Component Architecture**:
-```html
-<!-- Main Dashboard Layout -->
-<div class="dashboard-container">
-    <nav class="sidebar">
-        <!-- Navigation menu -->
-    </nav>
-
-    <main class="main-content">
-        <div class="farm-overview">
-            <!-- Farm summary cards -->
-        </div>
-
-        <div class="interactive-map">
-            <!-- Leaflet.js map with field overlays -->
-        </div>
-
-        <div class="recommendations-panel">
-            <!-- Active recommendations and alerts -->
-        </div>
-
-        <div class="data-visualization">
-            <!-- Charts and graphs -->
-        </div>
-    </main>
-</div>
-```
-
-**Mobile-First Design Principles**:
-- Touch-friendly interface elements
-- Offline capability for field use
-- GPS integration for location services
-- Camera integration for crop photos
-- Push notifications for time-sensitive alerts
-
-## Data Management Strategy
-
-### Data Sources Integration
-```python
-# External data source management
-class DataSourceManager:
-    def __init__(self):
-        self.sources = {
-            'weather': [NOAAProvider(), OpenWeatherProvider()],
-            'soil': [USDAProvider(), SoilGridsProvider()],
-            'market': [USDANASSProvider(), CMEProvider()],
-            'government': [NRCSProvider(), FSAProvider()]
-        }
-
-    async def fetch_with_fallback(self, source_type: str, query: dict):
-        """Fetch data with automatic fallback to secondary sources"""
-
-    def validate_data_quality(self, data: dict, source_type: str) -> QualityScore:
-        """Validate data quality and flag inconsistencies"""
-```
-
-### Data Quality Assurance
-- **Multi-source validation**: Cross-reference data from multiple providers
-- **Expert review**: Agricultural consultants validate recommendations
-- **Farmer feedback**: Continuous improvement based on user outcomes
-- **Automated monitoring**: Real-time data quality alerts
-
-### Privacy and Security
-- **Data encryption**: AES-256 encryption for sensitive farm data
-- **Access control**: Role-based permissions (farmer, consultant, admin)
-- **Audit logging**: Complete audit trail for all data access
-- **GDPR compliance**: User data rights and deletion capabilities
-
-## Deployment and Operations
-
-### Production Environment
 ```yaml
-# Docker Compose for production deployment
-version: '3.8'
-services:
-  question-router:
-    image: afas/question-router:latest
-    ports: ["8000:8000"]
-    environment:
-      - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=${REDIS_URL}
-
-  recommendation-engine:
-    image: afas/recommendation-engine:latest
-    ports: ["8001:8001"]
-    depends_on: [postgresql, redis]
-
-  ai-agent:
-    image: afas/ai-agent:latest
-    ports: ["8002:8002"]
-    environment:
-      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
-
-  postgresql:
-    image: postgis/postgis:15-3.3
-    environment:
-      - POSTGRES_DB=afas
-      - POSTGRES_USER=${DB_USER}
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-
-  redis:
-    image: redis:7-alpine
-    volumes:
-      - redis_data:/data
+Languages: Python 3.11+
+Framework: FastAPI
+Database: PostgreSQL with PostGIS extension
+ORM: SQLAlchemy 2.0+ with GeoAlchemy2
+Geocoding: geopy (Google Maps, OpenStreetMap)
+Validation: Pydantic v2 with custom validators
+Testing: pytest, pytest-asyncio
 ```
 
-### Monitoring and Alerting
-- **Application Performance**: Response times, error rates, throughput
-- **Infrastructure Health**: CPU, memory, disk usage
-- **Business Metrics**: User engagement, recommendation accuracy
-- **Agricultural Alerts**: Critical weather events, pest outbreaks
+## Service Architecture
 
-### Backup and Disaster Recovery
-- **Database Backups**: Daily automated backups with 30-day retention
-- **Code Repository**: Git-based version control with multiple remotes
-- **Configuration Management**: Infrastructure as code with Terraform
-- **Recovery Testing**: Monthly disaster recovery drills
+**Service Location**: `services/location-management/`  
+**Port**: 8009 (new service)  
+**Reference Pattern**: Follow `services/recommendation-engine/` structure
 
-## Success Measurement Framework
+```
+services/location-management/
+├── src/
+│   ├── __init__.py
+│   ├── main.py
+│   ├── models/
+│   │   ├── __init__.py
+│   │   ├── location_models.py
+│   │   └── field_models.py
+│   ├── services/
+│   │   ├── __init__.py
+│   │   ├── location_service.py
+│   │   ├── geocoding_service.py
+│   │   ├── validation_service.py
+│   │   └── geospatial_service.py
+│   ├── api/
+│   │   ├── __init__.py
+│   │   ├── location_routes.py
+│   │   └── field_routes.py
+│   └── schemas/
+│       ├── __init__.py
+│       ├── location_schemas.py
+│       └── field_schemas.py
+├── tests/
+│   ├── __init__.py
+│   ├── test_location_service.py
+│   ├── test_geocoding.py
+│   └── test_api.py
+├── requirements.txt
+└── README.md
+```
 
-### Technical Metrics
+## Week 1: Database & Core Services (Days 1-7)
+
+### Day 1: Setup and Dependencies
+
+**requirements.txt**:
+```txt
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+sqlalchemy==2.0.23
+geoalchemy2==0.14.2
+psycopg2-binary==2.9.9
+pydantic==2.5.0
+geopy==2.4.0
+shapely==2.0.2
+pytest==7.4.3
+pytest-asyncio==0.21.1
+httpx==0.25.1
+```
+
+**Setup Commands**:
+```bash
+mkdir -p services/location-management/src/{models,services,api,schemas}
+mkdir -p services/location-management/tests
+cd services/location-management
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+
+# Enable PostGIS extension in PostgreSQL
+psql -U postgres -d caain_soil_hub -c "CREATE EXTENSION IF NOT EXISTS postgis;"
+```
+
+### Day 2-3: Database Schema with PostGIS
+
+**File**: `services/location-management/src/models/location_models.py`
+
 ```python
-class MetricsCollector:
-    def track_response_time(self, endpoint: str, duration: float):
-        """Track API response times"""
+from sqlalchemy import Column, String, Integer, DECIMAL, Boolean, DateTime, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from geoalchemy2 import Geometry
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import relationship
+from datetime import datetime
+import uuid
 
-    def track_recommendation_accuracy(self, recommendation_id: str, farmer_feedback: float):
-        """Track farmer satisfaction with recommendations"""
+Base = declarative_base()
 
-    def track_system_usage(self, user_id: str, feature: str):
-        """Track feature usage patterns"""
+class FarmLocation(Base):
+    """Farm location with geospatial data"""
+    __tablename__ = 'farm_locations'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id = Column(UUID(as_uuid=True), nullable=False)
+    name = Column(String(200), nullable=False)
+    address = Column(String(500))
+    
+    # PostGIS geometry column (POINT with SRID 4326 = WGS84)
+    coordinates = Column(Geometry('POINT', srid=4326), nullable=False)
+    
+    elevation_meters = Column(Integer)
+    usda_zone = Column(String(10))
+    climate_zone = Column(String(50))
+    county = Column(String(100))
+    state = Column(String(50))
+    country = Column(String(50), default='USA')
+    total_acres = Column(DECIMAL(10, 2))
+    is_primary = Column(Boolean, default=False)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    fields = relationship("Field", back_populates="farm_location", cascade="all, delete-orphan")
+
+class Field(Base):
+    """Individual field within a farm"""
+    __tablename__ = 'fields'
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    farm_location_id = Column(UUID(as_uuid=True), ForeignKey('farm_locations.id', ondelete='CASCADE'), nullable=False)
+    name = Column(String(200), nullable=False)
+    
+    # PostGIS geometry column (POLYGON)
+    boundary = Column(Geometry('POLYGON', srid=4326))
+    
+    acres = Column(DECIMAL(8, 2), nullable=False)
+    soil_type = Column(String(100))
+    drainage_class = Column(String(50))
+    slope_percent = Column(DECIMAL(4, 1))
+    irrigation_available = Column(Boolean, default=False)
+    
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    farm_location = relationship("FarmLocation", back_populates="fields")
 ```
 
-### Agricultural Impact Metrics
-- **Yield Improvements**: Measured yield increases from recommendations
-- **Cost Savings**: Documented fertilizer and input cost reductions
-- **Sustainability**: Soil health improvements and environmental impact
-- **Knowledge Transfer**: Farmer learning and practice adoption
+**Database Migration SQL**:
+```sql
+-- Ensure PostGIS extension is enabled
+CREATE EXTENSION IF NOT EXISTS postgis;
 
-### User Experience Metrics
-- **Onboarding Success**: Time to first successful recommendation
-- **Feature Adoption**: Usage patterns across different features
-- **Support Requests**: Volume and resolution time for user issues
-- **Retention Rates**: Monthly and annual user retention
+-- Create farm_locations table
+CREATE TABLE IF NOT EXISTS farm_locations (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL,
+    name VARCHAR(200) NOT NULL,
+    address TEXT,
+    coordinates GEOMETRY(POINT, 4326) NOT NULL,
+    elevation_meters INTEGER,
+    usda_zone VARCHAR(10),
+    climate_zone VARCHAR(50),
+    county VARCHAR(100),
+    state VARCHAR(50),
+    country VARCHAR(50) DEFAULT 'USA',
+    total_acres DECIMAL(10,2),
+    is_primary BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
-## User Story Coverage Analysis
+-- Create spatial index on coordinates
+CREATE INDEX idx_farm_locations_coordinates ON farm_locations USING GIST(coordinates);
+CREATE INDEX idx_farm_locations_user_id ON farm_locations(user_id);
+CREATE INDEX idx_farm_locations_usda_zone ON farm_locations(usda_zone);
 
-### ✅ **Complete User Story Mapping (23/23 Stories Covered)**
+-- Create fields table
+CREATE TABLE IF NOT EXISTS fields (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    farm_location_id UUID REFERENCES farm_locations(id) ON DELETE CASCADE,
+    name VARCHAR(200) NOT NULL,
+    boundary GEOMETRY(POLYGON, 4326),
+    acres DECIMAL(8,2) NOT NULL,
+    soil_type VARCHAR(100),
+    drainage_class VARCHAR(50),
+    slope_percent DECIMAL(4,1),
+    irrigation_available BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW()
+);
 
-The plan addresses all 23 user stories across the 4 implementation phases:
+-- Create spatial index on field boundaries
+CREATE INDEX idx_fields_boundary ON fields USING GIST(boundary);
+CREATE INDEX idx_fields_farm_location_id ON fields(farm_location_id);
+```
 
-#### Phase 1: Foundation (Stories 1, 3, 21) - ✅ Covered
-- **US-001**: Crop Variety Recommendation - Climate zone detection and basic crop database
-- **US-003**: Soil Fertility Assessment - Soil data integration and basic fertility analysis
-- **US-021**: User Profile Management - Farm location and profile management system
+### Day 4-5: Geocoding Service
 
-#### Phase 2: Core Agricultural Features (Stories 2, 4-12) - ✅ Covered
-- **US-002**: Crop Rotation Planning - Multi-year rotation optimization algorithms
-- **US-004**: Nutrient Deficiency Detection - Image analysis and symptom identification
-- **US-005**: Soil pH Management - pH adjustment calculations and recommendations
-- **US-006**: Fertilizer Type Selection - Fertilizer comparison and selection logic
-- **US-007**: Fertilizer Application Method - Liquid vs granular decision algorithms
-- **US-008**: Fertilizer Timing Optimization - Seasonal timing and weather integration
-- **US-009**: Cost-Effective Fertilizer Strategy - Economic optimization and ROI analysis
-- **US-010**: Runoff Prevention - Environmental impact assessment and mitigation
-- **US-011**: Cover Crop Selection - Cover crop recommendation engine
-- **US-012**: Drought Management - Moisture conservation and drought resilience
+**File**: `services/location-management/src/services/geocoding_service.py`
 
-#### Phase 3: Advanced Features (Stories 13-20, 22-23) - ✅ Covered
-- **US-013**: Precision Agriculture ROI Assessment - Technology investment analysis
-- **US-014**: Early Deficiency Detection - Advanced ML-based deficiency detection
-- **US-015**: Soil and Tissue Test Integration - Laboratory data integration
-- **US-016**: Weather Impact Analysis - Weather pattern analysis and adaptation
-- **US-017**: Tillage Practice Recommendations - Tillage system optimization
-- **US-018**: Sustainable Intensification - Integrated sustainability and yield optimization
-- **US-019**: Micronutrient Management - Micronutrient assessment and recommendations
-- **US-020**: Government Program Integration - Policy and incentive program integration
-- **US-022**: Recommendation History and Tracking - User interaction tracking system
-- **US-023**: Mobile Field Access - Mobile-responsive interface and offline capabilities
+```python
+from geopy.geocoders import GoogleV3, Nominatim
+from geopy.exc import GeocoderTimedOut, GeocoderServiceError
+from typing import Dict, Any, Optional, List
+import logging
 
-### User Story Implementation Schedule
+logger = logging.getLogger(__name__)
 
-#### Sprint 1.1-1.3: Foundation Stories (Weeks 1-6)
-**Primary Stories**:
-- **US-021**: User Profile Management
-  - Farm and field profile creation
-  - User preference management
-  - Data privacy controls
+class GeocodingService:
+    """Address geocoding with fallback providers (TICKET-008_farm-location-input-4.3)"""
+    
+    def __init__(self):
+        self.geocoders = [
+            Nominatim(user_agent="caain_soil_hub"),  # Free, no API key needed
+            # GoogleV3(api_key="YOUR_API_KEY"),  # Enable for production
+        ]
+    
+    async def geocode_address(self, address: str) -> Optional[Dict[str, Any]]:
+        """
+        Convert address to coordinates with fallback
+        
+        Returns:
+            {
+                "latitude": float,
+                "longitude": float,
+                "formatted_address": str,
+                "county": str,
+                "state": str,
+                "country": str,
+                "source": str
+            }
+        """
+        for geocoder in self.geocoders:
+            try:
+                location = geocoder.geocode(address, timeout=10)
+                
+                if location:
+                    # Extract address components
+                    result = {
+                        "latitude": location.latitude,
+                        "longitude": location.longitude,
+                        "formatted_address": location.address,
+                        "source": geocoder.__class__.__name__
+                    }
+                    
+                    # Parse address components
+                    if hasattr(location, 'raw'):
+                        raw = location.raw
+                        if 'address' in raw:
+                            addr = raw['address']
+                            result["county"] = addr.get('county', '')
+                            result["state"] = addr.get('state', '')
+                            result["country"] = addr.get('country', 'USA')
+                    
+                    logger.info(f"Geocoded address using {geocoder.__class__.__name__}")
+                    return result
+                    
+            except (GeocoderTimedOut, GeocoderServiceError) as e:
+                logger.warning(f"Geocoder {geocoder.__class__.__name__} failed: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"Unexpected error in geocoding: {e}")
+                continue
+        
+        logger.error(f"All geocoders failed for address: {address}")
+        return None
+    
+    async def reverse_geocode(self, latitude: float, longitude: float) -> Optional[Dict[str, Any]]:
+        """Convert coordinates to address"""
+        for geocoder in self.geocoders:
+            try:
+                location = geocoder.reverse(f"{latitude}, {longitude}", timeout=10)
+                
+                if location:
+                    return {
+                        "address": location.address,
+                        "latitude": latitude,
+                        "longitude": longitude,
+                        "source": geocoder.__class__.__name__
+                    }
+                    
+            except Exception as e:
+                logger.warning(f"Reverse geocoding failed with {geocoder.__class__.__name__}: {e}")
+                continue
+        
+        return None
+```
 
-**Supporting Stories**:
-- **US-001**: Crop Variety Recommendation (foundation)
-  - Climate zone auto-detection
-  - Basic location-based filtering
-- **US-003**: Soil Fertility Assessment (foundation)
-  - Soil data input and validation
-  - Basic fertility analysis framework
+### Day 6-7: Location Service with Validation
 
-#### Sprint 2.1: Fertilizer Management Stories (Weeks 7-10)
-**Primary Stories**:
-- **US-005**: Soil pH Management
-  - pH adjustment calculations
-  - Lime and sulfur recommendations
-  - Application timing guidance
+**File**: `services/location-management/src/services/location_service.py`
 
-- **US-006**: Fertilizer Type Selection
-  - Organic vs synthetic vs slow-release comparison
-  - Cost-effectiveness analysis
-  - Equipment compatibility assessment
+```python
+from sqlalchemy.orm import Session
+from geoalchemy2.functions import ST_MakePoint, ST_Distance, ST_DWithin
+from geoalchemy2.elements import WKTElement
+from typing import List, Dict, Any, Optional
+from uuid import UUID
+from ..models.location_models import FarmLocation, Field
+from ..schemas.location_schemas import LocationCreate, LocationUpdate
+from .geocoding_service import GeocodingService
+from .validation_service import LocationValidationService
 
-- **US-007**: Fertilizer Application Method
-  - Liquid vs granular decision logic
-  - Application method optimization
-  - Labor and cost considerations
+class LocationService:
+    """Farm location management (TICKET-008_farm-location-input-4.1)"""
+    
+    def __init__(self, db: Session):
+        self.db = db
+        self.geocoding_service = GeocodingService()
+        self.validation_service = LocationValidationService()
+    
+    async def create_location(self, user_id: UUID, location_data: LocationCreate) -> FarmLocation:
+        """Create new farm location with validation"""
+        
+        # If address provided but no coordinates, geocode
+        if location_data.address and not location_data.coordinates:
+            geocode_result = await self.geocoding_service.geocode_address(location_data.address)
+            if geocode_result:
+                location_data.coordinates = {
+                    "latitude": geocode_result["latitude"],
+                    "longitude": geocode_result["longitude"]
+                }
+                location_data.county = geocode_result.get("county")
+                location_data.state = geocode_result.get("state")
+        
+        # Validate coordinates
+        if not location_data.coordinates:
+            raise ValueError("Either address or coordinates must be provided")
+        
+        lat = location_data.coordinates["latitude"]
+        lng = location_data.coordinates["longitude"]
+        
+        # Validate agricultural suitability
+        validation = await self.validation_service.validate_agricultural_location(lat, lng)
+        if not validation["valid"]:
+            raise ValueError(f"Location validation failed: {validation['issues']}")
+        
+        # Create PostGIS point
+        point = WKTElement(f'POINT({lng} {lat})', srid=4326)
+        
+        # Create database record
+        db_location = FarmLocation(
+            user_id=user_id,
+            name=location_data.name,
+            address=location_data.address,
+            coordinates=point,
+            total_acres=location_data.total_acres,
+            county=location_data.county,
+            state=location_data.state,
+            usda_zone=validation.get("usda_zone"),
+            climate_zone=validation.get("climate_zone")
+        )
+        
+        self.db.add(db_location)
+        self.db.commit()
+        self.db.refresh(db_location)
+        
+        return db_location
+    
+    async def get_user_locations(self, user_id: UUID, include_fields: bool = False) -> List[FarmLocation]:
+        """Get all locations for a user"""
+        query = self.db.query(FarmLocation).filter(FarmLocation.user_id == user_id)
+        
+        if include_fields:
+            query = query.options(joinedload(FarmLocation.fields))
+        
+        return query.all()
+    
+    async def find_nearby_locations(
+        self,
+        latitude: float,
+        longitude: float,
+        radius_km: float = 50
+    ) -> List[Dict[str, Any]]:
+        """Find farm locations within radius (geospatial query)"""
+        
+        # Create point for query
+        point = WKTElement(f'POINT({longitude} {latitude})', srid=4326)
+        
+        # Query using PostGIS ST_DWithin (distance in meters)
+        radius_meters = radius_km * 1000
+        
+        results = self.db.query(
+            FarmLocation,
+            ST_Distance(FarmLocation.coordinates, point).label('distance')
+        ).filter(
+            ST_DWithin(FarmLocation.coordinates, point, radius_meters)
+        ).order_by('distance').all()
+        
+        return [
+            {
+                "location": location,
+                "distance_km": distance / 1000
+            }
+            for location, distance in results
+        ]
+```
 
-- **US-008**: Fertilizer Timing Optimization
-  - Seasonal application calendars
-  - Weather-based timing adjustments
-  - Nutrient uptake modeling
+## Week 2: API & Testing (Days 8-14)
 
-- **US-010**: Runoff Prevention
-  - Environmental impact assessment
-  - Buffer strip recommendations
-  - Regulatory compliance checking
+### API Implementation
 
-#### Sprint 2.2: Advanced Analysis Stories (Weeks 11-14)
-**Primary Stories**:
-- **US-004**: Nutrient Deficiency Detection
-  - Image analysis for crop photos
-  - Symptom description processing
-  - Multi-source deficiency identification
+**File**: `services/location-management/src/api/location_routes.py`
 
-- **US-011**: Cover Crop Selection
-  - Goal-based cover crop recommendations
-  - Species selection and timing
-  - Integration with main crop rotation
+```python
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from uuid import UUID
+from ..schemas.location_schemas import LocationCreate, LocationResponse
+from ..services.location_service import LocationService
 
-- **US-012**: Drought Management
-  - Moisture conservation practices
-  - Drought-resilient crop selection
-  - Water savings quantification
+router = APIRouter(prefix="/api/v1/locations", tags=["farm-locations"])
 
-- **US-016**: Weather Impact Analysis (foundation)
-  - Weather data integration
-  - Basic impact assessment algorithms
+def get_db():
+    # TODO: Implement database session dependency
+    pass
 
-#### Sprint 3.1: Economic and Policy Stories (Weeks 15-18)
-**Primary Stories**:
-- **US-009**: Cost-Effective Fertilizer Strategy
-  - Multi-objective optimization
-  - Market price integration
-  - ROI and break-even analysis
+@router.post("/", response_model=LocationResponse)
+async def create_farm_location(
+    location: LocationCreate,
+    user_id: UUID = Query(..., description="User ID"),
+    db: Session = Depends(get_db)
+):
+    """
+    Create new farm location
+    
+    Supports:
+    - GPS coordinates
+    - Address geocoding
+    - Automatic climate zone detection
+    - Agricultural suitability validation
+    """
+    try:
+        service = LocationService(db)
+        result = await service.create_location(user_id, location)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-- **US-013**: Precision Agriculture ROI Assessment
-  - Technology cost-benefit analysis
-  - Payback period calculations
-  - Implementation recommendations
+@router.get("/nearby")
+async def find_nearby_farms(
+    latitude: float = Query(..., ge=-90, le=90),
+    longitude: float = Query(..., ge=-180, le=180),
+    radius_km: float = Query(50, ge=1, le=500),
+    db: Session = Depends(get_db)
+):
+    """Find farms within radius using geospatial query"""
+    service = LocationService(db)
+    results = await service.find_nearby_locations(latitude, longitude, radius_km)
+    return {"results": results, "count": len(results)}
+```
 
-- **US-016**: Weather Impact Analysis (complete)
-  - Advanced weather pattern analysis
-  - Climate adaptation strategies
-  - Risk assessment and mitigation
+## Definition of Done
 
-- **US-020**: Government Program Integration
-  - Policy database integration
-  - Compliance checking
-  - Incentive optimization
+### Functional Requirements
+- [ ] PostGIS extension enabled
+- [ ] Location CRUD operations working
+- [ ] Geocoding with fallback functional
+- [ ] Geospatial queries operational
+- [ ] Field boundary management complete
 
-**Supporting Stories**:
-- **US-002**: Crop Rotation Planning
-  - Multi-year rotation optimization
-  - Economic and sustainability integration
-  - Pest and disease management
+### Testing Requirements
+- [ ] Unit tests for geocoding
+- [ ] Geospatial query tests
+- [ ] API integration tests
+- [ ] Validation tests
 
-#### Sprint 3.2: User Experience Stories (Weeks 19-22)
-**Primary Stories**:
-- **US-022**: Recommendation History and Tracking
-  - Historical recommendation storage
-  - Outcome tracking and analysis
-  - Performance metrics dashboard
+### Integration Points
+- [ ] Mock climate zone service
+- [ ] Mock user management service
 
-- **US-023**: Mobile Field Access
-  - Mobile-responsive interface
-  - Offline capability
-  - GPS and camera integration
-  - Push notifications
+## Common Pitfalls
 
-**Completion Stories**:
-- **US-014**: Early Deficiency Detection (advanced)
-  - Enhanced ML models
-  - Real-time monitoring
-  - Predictive analytics
+1. **SRID Consistency**: Always use SRID 4326 (WGS84)
+2. **Longitude/Latitude Order**: PostGIS uses (lng, lat) not (lat, lng)
+3. **Distance Units**: ST_Distance returns meters
+4. **Index Usage**: Ensure GIST indexes for performance
 
-- **US-015**: Soil and Tissue Test Integration
-  - Laboratory API integrations
-  - Test result interpretation
-  - Recommendation adjustments
+## Next Steps
 
-- **US-017**: Tillage Practice Recommendations
-  - No-till vs conventional analysis
-  - Transition planning
-  - Equipment and cost considerations
+Integrates with:
+- **Climate Zone Service** (Job 5): For zone detection
+- **User Management**: For user associations
+- **All Services**: Provides location context
 
-- **US-018**: Sustainable Intensification
-  - Integrated yield and sustainability optimization
-  - Long-term soil health modeling
-  - Profitability analysis
-
-- **US-019**: Micronutrient Management
-  - Micronutrient deficiency assessment
-  - Supplementation recommendations
-  - Cost-benefit analysis
-
-### User Story Acceptance Criteria Tracking
-
-Each sprint includes specific acceptance criteria validation:
-
-**Sprint Completion Criteria**:
-- [ ] All user story acceptance criteria met
-- [ ] Agricultural expert validation completed
-- [ ] User testing with target farmers
-- [ ] Performance benchmarks achieved
-- [ ] Integration testing passed
-
-**Quality Gates**:
-- **Functional**: All acceptance criteria implemented and tested
-- **Agricultural**: Expert validation of recommendations
-- **Performance**: <3 second response times
-- **User Experience**: >4.5/5 user satisfaction rating
-- **Integration**: Seamless workflow across user stories
-
-This comprehensive user story mapping ensures that all 23 user stories are explicitly addressed in the implementation plan, with clear sprint assignments and acceptance criteria tracking. The phased approach allows for iterative development while maintaining focus on user value delivery.
