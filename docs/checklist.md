@@ -97,7 +97,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -f services/fertilizer-optimization/migrations/002_fertilizer_prices_schema.sql`
   - Verify: `psql -U postgres -d caain_soil_hub -c "\dt fertilizer_types"`
 
-- [ ] **JOB2-003.8.impl** - Create hypertable for fertilizer_prices
+- [x] **JOB2-003.8.impl** - Create hypertable for fertilizer_prices
   - Command: `psql -U postgres -d caain_soil_hub -c "SELECT create_hypertable('fertilizer_prices', 'price_date');"`
   - Verify: `psql -U postgres -d caain_soil_hub -c "SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name='fertilizer_prices';"`
 
