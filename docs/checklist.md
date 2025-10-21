@@ -31,7 +31,7 @@
   - Command: `touch services/crop-taxonomy/src/__init__.py services/crop-taxonomy/src/models/__init__.py services/crop-taxonomy/src/services/__init__.py services/crop-taxonomy/src/api/__init__.py services/crop-taxonomy/src/schemas/__init__.py services/crop-taxonomy/tests/__init__.py`
   - Verify: `find services/crop-taxonomy -name "__init__.py" | wc -l` (should be 6)
 
-- [ ] **JOB1-001.6** - Create virtual environment
+- [x] **JOB1-001.6** - Create virtual environment
   - Command: `cd services/crop-taxonomy && python3 -m venv venv`
   - Verify: `ls services/crop-taxonomy/venv/bin/python`
 
