@@ -70,7 +70,7 @@
   - Command: `python -c "import fastapi; print(f'FastAPI: {fastapi.__version__}')"`
   - Verify: Output shows version 0.104.1
 
-- [ ] **JOB1-002.5** - Verify SQLAlchemy installation
+- [x] **JOB1-002.5** - Verify SQLAlchemy installation
   - Command: `python -c "import sqlalchemy; print(f'SQLAlchemy: {sqlalchemy.__version__}')"`
   - Verify: Output shows version 2.0.23
 
