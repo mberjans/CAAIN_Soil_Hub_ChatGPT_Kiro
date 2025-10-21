@@ -176,7 +176,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -c "\di idx_pest_resistance_gin"`
   - Verify: Index exists with GIN method
 
-- [ ] **JOB1-003.18.verify** - Check sample data inserted
+- [x] **JOB1-003.18.verify** - Check sample data inserted
   - Command: `psql -U postgres -d caain_soil_hub -c "SELECT COUNT(*) FROM crop_filtering_attributes;"`
   - Verify: Count > 0
 
