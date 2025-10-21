@@ -1,0 +1,6 @@
+fastapi
+uvicorn
+pydantic
+python-multipart==0.0.6
+ Pillow
+numpy

@@ -13,6 +13,7 @@ import uuid
 from datetime import datetime
 
 from src.config import settings
+from src.models.priority_constraint_models import PriorityDB, ConstraintDB
 
 logger = logging.getLogger(__name__)
 

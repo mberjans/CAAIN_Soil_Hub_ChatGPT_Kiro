@@ -145,10 +145,10 @@
     }
   ],
   "fallback_state": {
-    "current_ai_coder": null,
-    "fallback_active": false,
+    "current_ai_coder": "qwen",
+    "fallback_active": true,
     "failed_ai_coders": [],
-    "last_fallback_time": null,
+    "last_fallback_time": "2025-10-21T00:53:46.670924",
     "fallback_count": 0,
     "primary_ai_coder": "gemini"
   }

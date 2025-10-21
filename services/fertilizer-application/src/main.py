@@ -25,6 +25,7 @@ from src.api.integration_routes import router as integration_router
 from src.api.analytics_routes import router as analytics_router
 from src.api.priority_constraint_routes import router as priority_constraint_router
 from src.api.goal_based_routes import router as goal_based_router
+from src.api.adaptive_learning_routes import router as adaptive_learning_router
 from src.database.fertilizer_db import initialize_database, shutdown_database
 
 load_dotenv()
@@ -96,6 +97,7 @@ app.include_router(integration_router, tags=["caain-integration"])
 app.include_router(analytics_router, tags=["analytics"])
 app.include_router(priority_constraint_router, prefix="/api/v1", tags=["priority-constraints"])
 app.include_router(goal_based_router, prefix="/api/v1", tags=["goal-based-recommendations"])
+app.include_router(adaptive_learning_router, prefix="/api/v1", tags=["adaptive-learning"])
 
 @app.get("/health")
 async def health_check():
@@ -182,7 +184,15 @@ async def health_check():
             "multi_objective_optimization",
             "pareto_optimization",
             "constraint_satisfaction",
-            "goal_prioritization"
+            "goal_prioritization",
+            "adaptive_learning",
+            "outcome_tracking",
+            "farmer_feedback_integration",
+            "ml_model_training",
+            "regional_adaptation",
+            "farm_specific_learning",
+            "seasonal_adjustment",
+            "continuous_improvement"
         ]
     }
 

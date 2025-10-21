@@ -50,3 +50,11 @@ class EquipmentAssessmentResult(BaseModel):
     upgrade_recommendations: List[EquipmentUpgradeRecommendation] = Field(default_factory=list, description="Recommendations for equipment upgrades.")
     identified_gaps: List[str] = Field(default_factory=list, description="Identified gaps in current equipment or infrastructure.")
     efficiency_opportunities: List[str] = Field(default_factory=list, description="Opportunities for efficiency improvements.")
+
+class IndividualEquipmentAssessment(BaseModel):
+    """Represents an assessment of a single piece of equipment."""
+    equipment_id: UUID = Field(..., description="Unique identifier for the equipment.")
+    efficiency_score: float = Field(..., ge=0, le=1, description="Efficiency score of the equipment (0=low, 1=high).")
+    maintenance_status: str = Field(..., description="Current maintenance status (e.g., 'good', 'needs_service').")
+    compatibility_score: float = Field(..., ge=0, le=1, description="Compatibility score with current application methods.")
+    notes: Optional[str] = Field(None, description="Additional notes on the equipment assessment.")
