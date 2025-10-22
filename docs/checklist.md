@@ -586,7 +586,7 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB1-008.1.test** - Create test file for crop routes
+- [x] **JOB1-008.1.test** - Create test file for crop routes
   - Path: `services/crop_taxonomy/tests/test_crop_routes.py`
   - Create test file with imports
   - Verify: `ls services/crop_taxonomy/tests/test_crop_routes.py`
