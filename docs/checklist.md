@@ -325,59 +325,61 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB4-008.1.test** - Create test file for location routes
+- [x] **JOB4-008.1.test** - Create test file for location routes
   - Path: `services/location-management/tests/test_location_routes.py`
   - Create test file
   - Verify: `ls services/location-management/tests/test_location_routes.py`
 
-- [ ] **JOB4-008.2.test** - Write test for POST /locations endpoint
+- [x] **JOB4-008.2.test** - Write test for POST /locations endpoint
   - Path: `services/location-management/tests/test_location_routes.py`
   - Add `test_create_location_endpoint()` test
   - Verify: `pytest services/location-management/tests/test_location_routes.py --collect-only`
 
-- [ ] **JOB4-008.3.test** - Write test for GET /locations/nearby endpoint
+- [x] **JOB4-008.3.test** - Write test for GET /locations/nearby endpoint
   - Path: `services/location-management/tests/test_location_routes.py`
   - Add `test_nearby_locations_endpoint()` test
   - Verify: `pytest services/location-management/tests/test_location_routes.py --collect-only`
 
-- [ ] **JOB4-008.4.impl** - Create location_routes.py
+- [x] **JOB4-008.4.impl** - Create location_routes.py
   - Path: `services/location-management/src/api/location_routes.py`
   - Create router with location endpoints
   - Verify: Check router in file
 
-- [ ] **JOB4-008.5.impl** - Implement POST /api/v1/locations/ endpoint
+- [x] **JOB4-008.5.impl** - Implement POST /api/v1/locations/ endpoint
   - Path: `services/location-management/src/api/location_routes.py`
   - Add create_location endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB4-008.6.impl** - Implement GET /api/v1/locations/nearby endpoint
+- [x] **JOB4-008.6.impl** - Implement GET /api/v1/locations/nearby endpoint
   - Path: `services/location-management/src/api/location_routes.py`
   - Add nearby_locations endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB4-008.7.impl** - Implement GET /api/v1/locations/{id} endpoint
+- [x] **JOB4-008.7.impl** - Implement GET /api/v1/locations/{id} endpoint
   - Path: `services/location-management/src/api/location_routes.py`
   - Add get_location endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB4-008.8.impl** - Include router in main app
+- [x] **JOB4-008.8.impl** - Include router in main app
   - Path: `services/location-management/src/main.py`
   - Add app.include_router(location_routes.router)
   - Verify: Check router inclusion
 
-- [ ] **JOB4-008.9.verify** - Test create location endpoint
+- [!] **JOB4-008.9.verify** - Test create location endpoint
   - Command: `curl -X POST http://localhost:8009/api/v1/locations/ -H "Content-Type: application/json" -d '{"name": "Test Farm", "address": "Ames, Iowa", "total_acres": 100}'`
   - Verify: Returns created location
+  - Note: Ready to test when service is running
 
-- [ ] **JOB4-008.10.verify** - Test nearby locations endpoint
+- [!] **JOB4-008.10.verify** - Test nearby locations endpoint
   - Command: `curl "http://localhost:8009/api/v1/locations/nearby?latitude=42.0&longitude=-93.0&radius_km=50"`
   - Verify: Returns nearby locations
+  - Note: Ready to test when service is running
 
-- [ ] **JOB4-008.11.verify** - Run API tests
+- [x] **JOB4-008.11.verify** - Run API tests
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/test_location_routes.py -v`
-  - Verify: All tests pass
+  - Verify: All tests pass (5/5 passing)
 
-- [ ] **JOB4-008.99** - Commit API routes
+- [x] **JOB4-008.99** - Commit API routes
   - Command: `git add services/location-management/src/api/location_routes.py services/location-management/tests/test_location_routes.py && git commit -m "JOB4-008: Create location API routes"`
   - Verify: `git log -1 --oneline`
 
