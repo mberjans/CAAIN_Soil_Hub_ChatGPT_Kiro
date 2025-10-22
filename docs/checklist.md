@@ -591,7 +591,7 @@
   - Create test file with imports
   - Verify: `ls services/crop_taxonomy/tests/test_crop_routes.py`
 
-- [ ] **JOB1-008.2.test** - Write test for POST /search endpoint
+- [x] **JOB1-008.2.test** - Write test for POST /search endpoint
   - Path: `services/crop_taxonomy/tests/test_crop_routes.py`
   - Add `test_search_endpoint()` test method
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_routes.py --collect-only`

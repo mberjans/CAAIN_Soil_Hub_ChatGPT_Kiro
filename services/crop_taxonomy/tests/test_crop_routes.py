@@ -4,18 +4,14 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from services.crop_taxonomy.src.main import app
-from services.crop_taxonomy.src.models.filtering_models import Base
-from services.crop_taxonomy.src.api.crop_routes import get_db
+from src.main import app
+from src.models.filtering_models import Base
+from src.api.crop_routes import get_db
 
 # Setup test database
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+TEST_DATABASE_URL = "postgresql://postgres:postgres@localhost/test_crop_taxonomy"
 
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+engine = create_engine(TEST_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 @pytest.fixture(name="session")
@@ -35,3 +31,33 @@ def client_fixture(session):
     with TestClient(app) as client:
         yield client
     app.dependency_overrides.clear()
+
+def test_search_endpoint(client):
+    """Test POST /search endpoint with a valid request."""
+    request_data = {
+        "crop_type": "corn",
+        "maturity_days_min": 90,
+        "maturity_days_max": 120,
+        "pest_resistance": [
+            {"pest_name": "corn_borer", "min_resistance_level": "resistant"}
+        ],
+        "min_yield_stability": 80,
+        "page": 1,
+        "page_size": 20
+    }
+    response = client.post("/api/v1/crop-taxonomy/search", json=request_data)
+
+    assert response.status_code == 200
+    response_data = response.json()
+    assert "varieties" in response_data
+    assert "total_count" in response_data
+    assert "page" in response_data
+    assert "page_size" in response_data
+    assert "total_pages" in response_data
+    assert "filters_applied" in response_data
+    assert "search_time_ms" in response_data
+    assert isinstance(response_data["varieties"], list)
+    assert isinstance(response_data["total_count"], int)
+    assert response_data["page"] == 1
+    assert response_data["page_size"] == 20
+
