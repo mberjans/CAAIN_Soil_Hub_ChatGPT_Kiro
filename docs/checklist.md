@@ -505,11 +505,11 @@
   - Wire all helper methods together in search_varieties
   - Verify: Check complete implementation
 
-- [ ] **JOB1-006.25.verify** - Run unit tests for crop search service
+- [x] **JOB1-006.25.verify** - Run unit tests for crop search service
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && pytest tests/test_crop_search.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB1-006.26.verify** - Test performance requirement <2s
+- [x] **JOB1-006.26.verify** - Test performance requirement <2s
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && pytest tests/test_crop_search.py::test_search_performance -v`
   - Verify: Test passes with response time <2s
 

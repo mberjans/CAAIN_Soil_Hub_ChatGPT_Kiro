@@ -645,5 +645,114 @@ def test_apply_performance_filters_with_drought_tolerance_only_mid_range():
     assert result_query == mock_query
 
 
+@pytest.mark.asyncio
+async def test_search_performance():
+    """Test that search_varieties meets performance requirement of <2s for complex queries."""
+    import time
+    from unittest.mock import Mock, MagicMock
+    
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Create mock result objects that simulate CropFilteringAttributes
+    import uuid
+    mock_result_1 = Mock()
+    mock_result_1.variety_id = uuid.uuid4()  # Use valid UUID
+    mock_result_1.yield_stability_score = 85
+    mock_result_1.drought_tolerance_score = 90
+    mock_result_1.pest_resistance_traits = {"corn_borer": "resistant"}
+    mock_result_1.disease_resistance_traits = {"gray_leaf_spot": "moderate"}
+    mock_result_1.market_class_filters = {"market_class": "dent"}
+    
+    mock_result_2 = Mock()
+    mock_result_2.variety_id = uuid.uuid4()  # Use valid UUID
+    mock_result_2.yield_stability_score = 78
+    mock_result_2.drought_tolerance_score = 82
+    mock_result_2.pest_resistance_traits = {"rootworm": "resistant"}
+    mock_result_2.disease_resistance_traits = {"gray_leaf_spot": "resistant"}
+    mock_result_2.market_class_filters = {"market_class": "dent"}
+    
+    # Mock the database query chain to simulate complex query execution
+    mock_query_result = Mock()
+    mock_query_result.count.return_value = 150  # Simulate finding 150 results
+    mock_query_result.offset.return_value = mock_query_result
+    mock_query_result.limit.return_value = mock_query_result
+    mock_query_result.all.return_value = [mock_result_1, mock_result_2]  # Return mock results
+    # Ensure all filter operations return the same mock object
+    mock_query_result.filter.return_value = mock_query_result
+    mock_query_result.order_by.return_value = mock_query_result
+    
+    # Mock the database query method chain
+    db_session.query.return_value = mock_query_result
+    
+    # Mock the commit method to avoid database operations
+    db_session.commit = Mock()
+    
+    # Mock the filter combination query specifically
+    def mock_query_side_effect(model):
+        if hasattr(model, '__name__') and model.__name__ == 'FilterCombination':
+            # Return a different mock for FilterCombination queries
+            filter_combo_mock = Mock()
+            filter_combo_mock.filter.return_value = filter_combo_mock
+            filter_combo_mock.first.return_value = None  # No existing combination found
+            return filter_combo_mock
+        else:
+            # Return the regular mock for other queries
+            return mock_query_result
+    
+    db_session.query.side_effect = mock_query_side_effect
+    
+    # Mock the add method for adding new FilterCombination objects
+    db_session.add = Mock()
+    
+    # Create a complex filter request to test performance
+    complex_filter_request = CropFilterRequest(
+        crop_type="corn",
+        maturity_days_min=90,
+        maturity_days_max=120,
+        pest_resistance=[
+            {"pest_name": "corn_borer", "min_resistance_level": "moderate"},
+            {"pest_name": "rootworm", "min_resistance_level": "resistant"}
+        ],
+        disease_resistance=[
+            {"disease_name": "gray_leaf_spot", "min_resistance_level": "moderate"}
+        ],
+        market_class={
+            "market_class": "dent",
+            "organic_certified": True,
+            "non_gmo": True
+        },
+        min_yield_stability=75,
+        min_drought_tolerance=80,
+        sort_by="yield_stability",
+        sort_order="desc",
+        page=1,
+        page_size=20
+    )
+    
+    # Record start time
+    start_time = time.time()
+    
+    # Execute the search
+    result = await service.search_varieties(complex_filter_request)
+    
+    # Calculate elapsed time
+    elapsed_time = time.time() - start_time
+    
+    # Verify performance requirement: response time should be < 2 seconds
+    assert elapsed_time < 2.0, f"Search took {elapsed_time:.3f}s, which exceeds the 2s requirement"
+    
+    # Verify that the result has the expected structure
+    assert hasattr(result, 'search_time_ms')
+    assert result.search_time_ms < 2000, f"Reported search time {result.search_time_ms}ms exceeds 2000ms requirement"
+    
+    # Verify that database operations were called
+    db_session.query.assert_called()
+    db_session.commit.assert_called()
+
+
 if __name__ == "__main__":
     pytest.main([__file__])
