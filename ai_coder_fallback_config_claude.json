@@ -18,19 +18,10 @@
       "monitor_stderr": false
     },
     {
-      "name": "claude",
-      "display_name": "Claude Code",
-      "command": "claude",
-      "description": "Secondary AI coder - Anthropic Claude",
-      "enabled": true,
-      "max_retries": 5,
-      "monitor_stderr": false
-    },
-    {
       "name": "rovodev",
       "display_name": "Rovodev",
       "command": "acli rovodev",
-      "description": "Tertiary AI coder - Rovodev",
+      "description": "Secondary AI coder - Rovodev",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -39,7 +30,7 @@
       "name": "gemini",
       "display_name": "Google Gemini",
       "command": "gemini",
-      "description": "Quaternary AI coder - Google Gemini",
+      "description": "Tertiary AI coder - Google Gemini",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -48,7 +39,16 @@
       "name": "qwen",
       "display_name": "Qwen Coder",
       "command": "qwen",
-      "description": "Senary AI coder - Qwen",
+      "description": "Quaternary AI coder - Qwen",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "claude",
+      "display_name": "Claude Code",
+      "command": "claude",
+      "description": "Quinary AI coder - Anthropic Claude",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -57,7 +57,7 @@
       "name": "ccr",
       "display_name": "Claude Code Router (CCR)",
       "command": "ccr",
-      "description": "Septenary AI coder - Claude Code Router",
+      "description": "Senary AI coder - Claude Code Router",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -66,7 +66,7 @@
       "name": "opencode",
       "display_name": "OpenCode",
       "command": "opencode",
-      "description": "Octonary AI coder - OpenCode",
+      "description": "Septenary AI coder - OpenCode",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -75,7 +75,7 @@
       "name": "cursor",
       "display_name": "Cursor AI",
       "command": "cursor-agent",
-      "description": "Nonary AI coder - Cursor",
+      "description": "Octonary AI coder - Cursor",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -84,7 +84,7 @@
       "name": "crush",
       "display_name": "Crush",
       "command": "crush",
-      "description": "Denary AI coder - Crush",
+      "description": "Nonary AI coder - Crush",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -93,7 +93,7 @@
       "name": "droid",
       "display_name": "Droid AI",
       "command": "droid",
-      "description": "Undenary AI coder - Droid AI",
+      "description": "Denary AI coder - Droid AI",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -102,7 +102,7 @@
       "name": "amp",
       "display_name": "Amp AI",
       "command": "amp",
-      "description": "Duodenary AI coder - Amp AI",
+      "description": "Undenary AI coder - Amp AI",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -111,7 +111,7 @@
       "name": "cline",
       "display_name": "Cline",
       "command": "cline",
-      "description": "Tredenary AI coder - Cline",
+      "description": "Duodenary AI coder - Cline",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -120,7 +120,7 @@
       "name": "copilot",
       "display_name": "Copilot",
       "command": "copilot",
-      "description": "Quattuordenary AI coder - Copilot",
+      "description": "Tredenary AI coder - Copilot",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -129,7 +129,7 @@
       "name": "iflow",
       "display_name": "iFlow AI",
       "command": "iflow",
-      "description": "Quindenary AI coder - iFlow AI",
+      "description": "Quattuordenary AI coder - iFlow AI",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -138,7 +138,7 @@
       "name": "auggie",
       "display_name": "Auggie",
       "command": "auggie",
-      "description": "Sexdenary AI coder - Auggie (Last Fallback)",
+      "description": "Quindenary AI coder - Auggie (Last Fallback)",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false

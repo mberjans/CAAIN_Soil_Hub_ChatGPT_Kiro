@@ -5,31 +5,31 @@ If task has already been completed previously or have existinal codeg functional
 For unchecked tasks on the checklists, write the program one task of one ticket at a time. Once task is finshed, check it on the docs/checklist.md, add all changed files to the git using a separate git add command, commit changes with commit message that you generate yourself using individual git commit command, push changes to the git repository with indvidual git push command, and switch to the next task. Once you complete tasks on one ticket, add all changed files to the git using a separate git add command, commit changes with commit message that you generate yourself using individual git commit command, push changes to the git repository with indvidual git push command, switch to the next ticket. After the push, update the momety bank if it exists. Never chain multiple shell command together with & sign. Never use list comprehension in python. Avoid using regular expression for pattern matching. Instead create special pattern matching function to pattern matching. Work until all bugs are fixed. Please do not ask me for conformation whether I want you to proceedto the next ticket. Just keep working until completing the last ticket.
 
 CURRENT TASK TO COMPLETE:
-**JOB3-002.1** - Create requirements.txt with ML/CV libraries
+**JOB3-010.6** - Generate coverage report
 
 PROJECT DIRECTORY: /Users/Mark/Research/CAAIN_Soil_Hub/CAAIN_Soil_Hub_ChatGPT_Kiro_worktrees/job-3-deficiency-detection
 
 STEP-BY-STEP INSTRUCTIONS:
 1. Read docs/checklist.md, docs/plan.md, and docs/tickets.md for context
-2. Complete the task: **JOB3-002.1** - Create requirements.txt with ML/CV libraries
+2. Complete the task: **JOB3-010.6** - Generate coverage report
 3. Create any necessary files and write the required code
 4. Test your implementation to ensure it works correctly
 5. CRITICAL: Update docs/checklist.md to mark this task as complete by changing [ ] to [x]
 6. Add all changed files to git: git add <files>
-7. Commit changes with a descriptive message: git commit -m "Completed: **JOB3-002.1** - Create requirements.txt with ML/CV libraries"
+7. Commit changes with a descriptive message: git commit -m "Completed: **JOB3-010.6** - Generate coverage report"
 8. Push changes to the repository: git push
 
-REMAINING UNCHECKED TASKS (79 total):
-→ CURRENT **JOB3-002.1** - Create requirements.txt with ML/CV libraries
-  2. **JOB3-002.2** - Install dependencies
-  3. **JOB3-002.3** - Verify TensorFlow installation
-  4. **JOB3-002.4** - Verify OpenCV installation
-  5. **JOB3-002.5** - Verify Pillow installation
-  ... and 74 more tasks
+REMAINING UNCHECKED TASKS (16 total):
+→ CURRENT **JOB3-010.6** - Generate coverage report
+  2. **JOB3-010.99** - Commit integration tests
+  3. **JOB3-011.1** - Test with nitrogen deficiency images
+  4. **JOB3-011.2** - Test with phosphorus deficiency images
+  5. **JOB3-011.3** - Validate symptom descriptions
+  ... and 11 more tasks
 
 IMPORTANT REMINDERS:
 - Execute these steps NOW - do not just plan, actually complete the task
 - You MUST update docs/checklist.md to change [ ] to [x] after completing the task
-- Focus ONLY on the current task: **JOB3-002.1** - Create requirements.txt with ML/CV libraries
+- Focus ONLY on the current task: **JOB3-010.6** - Generate coverage report
 - Provide a summary of what you accomplished when done
 - Avoid using regular expressions for pattern matching - create special pattern matching functions instead
