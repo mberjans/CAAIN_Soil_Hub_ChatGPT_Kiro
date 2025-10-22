@@ -480,7 +480,7 @@
   - Add _apply_sorting method
   - Verify: Check method in file
 
-- [ ] **JOB1-006.20.impl** - Implement _get_resistance_levels helper
+- [x] **JOB1-006.20.impl** - Implement _get_resistance_levels helper
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _get_resistance_levels method
   - Verify: Check method in file
