@@ -23,7 +23,7 @@
   - Command: `touch services/location-management/src/__init__.py services/location-management/src/{models,services,api,schemas}/__init__.py services/location-management/tests/__init__.py`
   - Verify: `find services/location-management/src -name "__init__.py" | wc -l`
 
-- [ ] **JOB4-001.4** - Create virtual environment
+- [x] **JOB4-001.4** - Create virtual environment
   - Command: `cd services/location-management && python3 -m venv venv`
   - Verify: `ls services/location-management/venv/bin/python`
 
