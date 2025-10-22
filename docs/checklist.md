@@ -256,7 +256,7 @@
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/test_geocoding.py -v`
   - Verify: All tests pass (27 passed, 2 skipped)
 
-- [ ] **JOB4-006.99** - Commit geocoding service
+- [x] **JOB4-006.99** - Commit geocoding service
   - Command: `git add services/location-management/src/services/geocoding_service.py services/location-management/tests/test_geocoding.py && git commit -m "JOB4-006: Implement geocoding service"`
   - Verify: `git log -1 --oneline`
 
