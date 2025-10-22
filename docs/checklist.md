@@ -262,7 +262,7 @@
   - Add detect_deficiency method with inference
   - Verify: Check method in file
 
-- [ ] **JOB3-007.8.impl** - Implement confidence scoring
+- [x] **JOB3-007.8.impl** - Implement confidence scoring
   - Path: `services/image-analysis/src/services/detector.py`
   - Add _calculate_confidence method
   - Verify: Check method in file

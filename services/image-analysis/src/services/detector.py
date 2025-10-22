@@ -344,3 +344,242 @@ class DeficiencyDetector:
             return "medium"
         else:
             return "low"
+
+    def _calculate_confidence(self, raw_confidence: float, prediction_distribution: np.ndarray, class_index: int) -> Dict[str, Any]:
+        """
+        Calculate enhanced confidence score with detailed analysis
+
+        This method provides a comprehensive confidence assessment that goes beyond
+        the raw model prediction confidence. It analyzes the prediction distribution,
+        considers competing predictions, and provides additional metrics for better
+        decision making.
+
+        Args:
+            raw_confidence: Raw confidence score from model prediction
+            prediction_distribution: Full prediction distribution across all classes
+            class_index: Index of the target class in the prediction array
+
+        Returns:
+            Dictionary containing:
+            - enhanced_confidence: Adjusted confidence score
+            - confidence_level: Categorical confidence level (high/medium/low)
+            - prediction_certainty: How certain the model is about this prediction
+            - competing_classes: Information about competing predictions
+            - distribution_analysis: Analysis of the prediction distribution
+            - confidence_factors: Factors that influenced the confidence calculation
+        """
+        # Enhanced confidence calculation based on multiple factors
+        enhanced_confidence = self._calculate_enhanced_confidence(raw_confidence, prediction_distribution, class_index)
+
+        # Determine confidence level category
+        confidence_level = self._categorize_confidence_level(enhanced_confidence)
+
+        # Calculate prediction certainty
+        prediction_certainty = self._calculate_prediction_certainty(prediction_distribution, class_index)
+
+        # Analyze competing predictions
+        competing_classes = self._analyze_competing_classes(prediction_distribution, class_index)
+
+        # Analyze overall distribution characteristics
+        distribution_analysis = self._analyze_prediction_distribution(prediction_distribution)
+
+        # Identify factors that influenced the confidence
+        confidence_factors = self._identify_confidence_factors(
+            raw_confidence,
+            enhanced_confidence,
+            prediction_distribution,
+            class_index
+        )
+
+        return {
+            "enhanced_confidence": enhanced_confidence,
+            "confidence_level": confidence_level,
+            "prediction_certainty": prediction_certainty,
+            "competing_classes": competing_classes,
+            "distribution_analysis": distribution_analysis,
+            "confidence_factors": confidence_factors,
+            "raw_confidence": float(raw_confidence)
+        }
+
+    def _calculate_enhanced_confidence(self, raw_confidence: float, prediction_distribution: np.ndarray, class_index: int) -> float:
+        """
+        Calculate enhanced confidence score using multiple factors
+
+        This method adjusts the raw confidence based on:
+        1. Margin over the second-best prediction
+        2. Overall distribution entropy
+        3. Confidence consistency across similar predictions
+        """
+        # Sort predictions to find top competing classes
+        sorted_indices = np.argsort(prediction_distribution)[::-1]
+        top_confidence = prediction_distribution[sorted_indices[0]]
+        second_confidence = prediction_distribution[sorted_indices[1]] if len(sorted_indices) > 1 else 0.0
+
+        # Calculate margin over second-best (confidence gap)
+        confidence_gap = top_confidence - second_confidence
+        gap_factor = min(confidence_gap * 2, 1.0)  # Scale and cap at 1.0
+
+        # Calculate distribution entropy (lower entropy = more certain)
+        entropy = -np.sum(prediction_distribution * np.log(prediction_distribution + 1e-8))
+        max_entropy = -np.log(1 / len(prediction_distribution))  # Max possible entropy
+        entropy_ratio = entropy / max_entropy if max_entropy > 0 else 0
+        entropy_factor = 1.0 - entropy_ratio  # Lower entropy = higher factor
+
+        # Calculate prediction concentration (how much probability is in top 2-3 classes)
+        top_2_sum = top_confidence + second_confidence
+        top_3_sum = top_2_sum + (prediction_distribution[sorted_indices[2]] if len(sorted_indices) > 2 else 0.0)
+        concentration_factor = min(top_3_sum, 1.0)
+
+        # Combine factors with weights
+        enhanced_confidence = (
+            raw_confidence * 0.4 +           # Base confidence
+            gap_factor * 0.3 +               # Confidence gap
+            entropy_factor * 0.2 +           # Distribution certainty
+            concentration_factor * 0.1        # Prediction concentration
+        )
+
+        return float(np.clip(enhanced_confidence, 0.0, 1.0))
+
+    def _categorize_confidence_level(self, confidence: float) -> str:
+        """Categorize confidence score into levels"""
+        if confidence >= 0.8:
+            return "high"
+        elif confidence >= 0.5:
+            return "medium"
+        else:
+            return "low"
+
+    def _calculate_prediction_certainty(self, prediction_distribution: np.ndarray, class_index: int) -> float:
+        """Calculate how certain the model is about the target class prediction"""
+        target_confidence = prediction_distribution[class_index]
+
+        # Calculate standard deviation of predictions (measure of uncertainty)
+        std_dev = np.std(prediction_distribution)
+        max_possible_std = np.sqrt(0.25)  # Maximum std for binary-like distribution
+        normalized_std = min(std_dev / max_possible_std, 1.0)
+
+        # Higher standard deviation indicates less certainty
+        certainty = target_confidence * (1.0 - normalized_std * 0.3)
+
+        return float(np.clip(certainty, 0.0, 1.0))
+
+    def _analyze_competing_classes(self, prediction_distribution: np.ndarray, class_index: int) -> Dict[str, Any]:
+        """Analyze competing predictions that might affect confidence"""
+        # Get sorted predictions
+        sorted_indices = np.argsort(prediction_distribution)[::-1]
+
+        competing_predictions = []
+        for i, idx in enumerate(sorted_indices):
+            if idx != class_index and prediction_distribution[idx] > 0.05:  # Only consider significant competitors
+                competing_predictions.append({
+                    "class_index": int(idx),
+                    "confidence": float(prediction_distribution[idx]),
+                    "rank": i + 1
+                })
+
+        # Find the strongest competitor
+        strongest_competitor = competing_predictions[0] if competing_predictions else None
+
+        # Calculate competitive pressure
+        competitive_pressure = sum(pred["confidence"] for pred in competing_predictions[:3])
+
+        return {
+            "competing_predictions": competing_predictions,
+            "strongest_competitor": strongest_competitor,
+            "competitive_pressure": float(competitive_pressure),
+            "num_competitors": len(competing_predictions)
+        }
+
+    def _analyze_prediction_distribution(self, prediction_distribution: np.ndarray) -> Dict[str, Any]:
+        """Analyze the characteristics of the prediction distribution"""
+        # Basic statistics
+        mean_confidence = float(np.mean(prediction_distribution))
+        max_confidence = float(np.max(prediction_distribution))
+        min_confidence = float(np.min(prediction_distribution))
+        std_confidence = float(np.std(prediction_distribution))
+
+        # Distribution shape characteristics
+        entropy = -np.sum(prediction_distribution * np.log(prediction_distribution + 1e-8))
+
+        # Count predictions above different thresholds
+        high_confidence_count = int(np.sum(prediction_distribution > 0.5))
+        medium_confidence_count = int(np.sum(prediction_distribution > 0.2))
+        low_confidence_count = len(prediction_distribution)
+
+        # Calculate distribution skewness (tendency toward high/low values)
+        median_confidence = float(np.median(prediction_distribution))
+        skewness_indicator = (mean_confidence - median_confidence) / (std_confidence + 1e-8)
+
+        return {
+            "mean_confidence": mean_confidence,
+            "max_confidence": max_confidence,
+            "min_confidence": min_confidence,
+            "std_confidence": std_confidence,
+            "entropy": float(entropy),
+            "median_confidence": median_confidence,
+            "skewness_indicator": float(skewness_indicator),
+            "high_confidence_count": high_confidence_count,
+            "medium_confidence_count": medium_confidence_count,
+            "total_classes": low_confidence_count
+        }
+
+    def _identify_confidence_factors(self, raw_confidence: float, enhanced_confidence: float,
+                                  prediction_distribution: np.ndarray, class_index: int) -> List[Dict[str, Any]]:
+        """Identify and explain factors that influenced the confidence calculation"""
+        factors = []
+
+        # Factor 1: Raw confidence base
+        factors.append({
+            "factor": "raw_confidence",
+            "description": "Base confidence from model prediction",
+            "impact": "primary",
+            "value": float(raw_confidence),
+            "weight": 0.4
+        })
+
+        # Factor 2: Confidence gap
+        sorted_indices = np.argsort(prediction_distribution)[::-1]
+        if len(sorted_indices) > 1:
+            confidence_gap = prediction_distribution[sorted_indices[0]] - prediction_distribution[sorted_indices[1]]
+            factors.append({
+                "factor": "confidence_gap",
+                "description": "Margin over second-best prediction",
+                "impact": "significant" if confidence_gap > 0.2 else "moderate",
+                "value": float(confidence_gap),
+                "weight": 0.3
+            })
+
+        # Factor 3: Distribution entropy
+        entropy = -np.sum(prediction_distribution * np.log(prediction_distribution + 1e-8))
+        max_entropy = -np.log(1 / len(prediction_distribution))
+        entropy_ratio = entropy / max_entropy if max_entropy > 0 else 0
+        factors.append({
+            "factor": "distribution_entropy",
+            "description": "Certainty of prediction distribution",
+            "impact": "high" if entropy_ratio < 0.5 else "moderate",
+            "value": float(entropy_ratio),
+            "weight": 0.2
+        })
+
+        # Factor 4: Concentration factor
+        top_3_sum = sum(prediction_distribution[sorted_indices[:3]] if len(sorted_indices) >= 3 else prediction_distribution)
+        factors.append({
+            "factor": "prediction_concentration",
+            "description": "Probability concentration in top predictions",
+            "impact": "moderate",
+            "value": float(top_3_sum),
+            "weight": 0.1
+        })
+
+        # Factor 5: Confidence adjustment
+        adjustment = enhanced_confidence - raw_confidence
+        if abs(adjustment) > 0.05:
+            factors.append({
+                "factor": "confidence_adjustment",
+                "description": "Net adjustment from raw confidence",
+                "impact": "positive" if adjustment > 0 else "negative",
+                "value": float(adjustment),
+                "weight": 0.0
+            })
+
+        return factors
