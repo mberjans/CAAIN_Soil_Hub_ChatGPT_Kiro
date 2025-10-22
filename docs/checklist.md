@@ -235,7 +235,7 @@
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_fetcher.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB5-006.99** - Commit weather fetcher
+- [x] **JOB5-006.99** - Commit weather fetcher
   - Command: `git add services/weather-service/src/services/weather_fetcher.py services/weather-service/src/providers/ services/weather-service/tests/test_weather_fetcher.py && git commit -m "JOB5-006: Implement weather fetcher with multi-provider support"`
   - Verify: `git log -1 --oneline`
 
@@ -245,12 +245,12 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB5-007.1.test** - Create test file for weather routes
+- [x] **JOB5-007.1.test** - Create test file for weather routes
   - Path: `services/weather-service/tests/test_weather_routes.py`
   - Create test file
   - Verify: `ls services/weather-service/tests/test_weather_routes.py`
 
-- [ ] **JOB5-007.2.test** - Write test for GET /weather/current endpoint
+- [x] **JOB5-007.2.test** - Write test for GET /weather/current endpoint
   - Path: `services/weather-service/tests/test_weather_routes.py`
   - Add `test_get_current_weather()` test
   - Verify: `pytest services/weather-service/tests/test_weather_routes.py --collect-only`
@@ -260,7 +260,7 @@
   - Add `test_get_forecast()` test
   - Verify: `pytest services/weather-service/tests/test_weather_routes.py --collect-only`
 
-- [ ] **JOB5-007.4.impl** - Create weather_routes.py
+- [x] **JOB5-007.4.impl** - Create weather_routes.py
   - Path: `services/weather-service/src/api/weather_routes.py`
   - Create router with weather endpoints
   - Verify: Check router in file
@@ -275,20 +275,20 @@
   - Add get_forecast endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB5-007.7.impl** - Include router in main app
+- [x] **JOB5-007.7.impl** - Include router in main app
   - Path: `services/weather-service/src/main.py`
   - Add app.include_router(weather_routes.router)
   - Verify: Check router inclusion
 
-- [ ] **JOB5-007.8.verify** - Test current weather endpoint
+- [x] **JOB5-007.8.verify** - Test current weather endpoint
   - Command: `curl "http://localhost:8010/api/v1/weather/current?latitude=42.0&longitude=-93.0"`
   - Verify: Returns weather data
 
-- [ ] **JOB5-007.9.verify** - Test forecast endpoint
+- [x] **JOB5-007.9.verify** - Test forecast endpoint
   - Command: `curl "http://localhost:8010/api/v1/weather/forecast?latitude=42.0&longitude=-93.0&days=7"`
   - Verify: Returns forecast data
 
-- [ ] **JOB5-007.10.verify** - Run API tests
+- [x] **JOB5-007.10.verify** - Run API tests
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_routes.py -v`
   - Verify: All tests pass
 

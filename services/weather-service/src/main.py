@@ -8,7 +8,7 @@ Date: October 2025
 
 from fastapi import FastAPI
 from datetime import datetime
-
+from src.api import weather_routes
 
 # Create FastAPI app instance
 app = FastAPI(
@@ -17,12 +17,13 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Include weather routes
+app.include_router(weather_routes.router)
 
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
     return {"status": "healthy"}
-
 
 @app.get("/")
 async def root():
@@ -32,7 +33,6 @@ async def root():
         "version": "1.0.0",
         "timestamp": datetime.utcnow().isoformat()
     }
-
 
 if __name__ == "__main__":
     import uvicorn
