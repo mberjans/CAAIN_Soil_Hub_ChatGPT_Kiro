@@ -368,7 +368,7 @@
   - Add `test_full_analysis_workflow()` test
   - Verify: `pytest services/image-analysis/tests/test_api_integration.py --collect-only`
 
-- [ ] **JOB3-010.4** - Write performance test (<10s per image)
+- [x] **JOB3-010.4** - Write performance test (<10s per image)
   - Path: `services/image-analysis/tests/test_api_integration.py`
   - Add `test_analysis_performance()` test with timing
   - Verify: `pytest services/image-analysis/tests/test_api_integration.py --collect-only`
