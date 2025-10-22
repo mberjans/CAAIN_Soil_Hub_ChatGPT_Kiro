@@ -6,10 +6,12 @@ Version: 1.0
 Date: October 2025
 """
 
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Body
 from typing import Optional
+from pydantic import BaseModel
 from src.schemas.weather_schemas import WeatherRequest, WeatherResponse, ForecastResponse
 from src.providers.mock_weather_provider import MockWeatherProvider
+from src.services.impact_analyzer import WeatherImpactAnalyzer
 
 # Create router instance
 router = APIRouter(
@@ -17,6 +19,13 @@ router = APIRouter(
     tags=["weather"],
     responses={404: {"description": "Not found"}},
 )
+
+
+class PlantingAnalysisRequest(BaseModel):
+    """Request schema for planting analysis."""
+    latitude: float
+    longitude: float
+    crop_type: str
 
 
 @router.get("/current", response_model=WeatherResponse)
@@ -77,3 +86,33 @@ async def get_forecast(
         )
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching forecast data: {str(e)}")
+
+
+@router.post("/analyze-planting")
+async def analyze_planting(request: PlantingAnalysisRequest = Body(...)):
+    """Analyze planting conditions for a specific location and crop.
+    
+    Args:
+        request: PlantingAnalysisRequest with location and crop type
+        
+    Returns:
+        Planting conditions analysis
+    """
+    try:
+        # Create weather request
+        weather_request = WeatherRequest(
+            latitude=request.latitude,
+            longitude=request.longitude
+        )
+        
+        # Get current weather data
+        provider = MockWeatherProvider()
+        weather_data = provider.get_current_weather(weather_request)
+        
+        # Analyze planting conditions
+        analyzer = WeatherImpactAnalyzer()
+        analysis = analyzer.analyze_planting_conditions(weather_data, request.crop_type)
+        
+        return analysis
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error analyzing planting conditions: {str(e)}")

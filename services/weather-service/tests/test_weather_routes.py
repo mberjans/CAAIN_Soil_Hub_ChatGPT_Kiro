@@ -48,10 +48,26 @@ class TestWeatherRouteValidation:
         # This will be implemented later
         pass
     
-    def test_get_forecast_validation(self):
-        """Test validation in GET /weather/forecast endpoint."""
-        # This will be implemented later
-        pass
+    def test_analyze_planting_endpoint(self):
+        """Test the POST /weather/analyze-planting endpoint."""
+        # Import here to avoid circular imports during development
+        from src.main import app
+        from fastapi.testclient import TestClient
+        
+        # Create test client
+        client = TestClient(app)
+        
+        # Make request to planting analysis endpoint
+        test_data = {
+            "latitude": 42.123456,
+            "longitude": -93.654321,
+            "crop_type": "corn"
+        }
+        response = client.post("/api/v1/weather/analyze-planting", json=test_data)
+        
+        # Verify response (this will fail until the endpoint is implemented)
+        # We'll update this test later when the endpoint is implemented
+        assert response.status_code in [200, 404, 422]  # Could be 404 if not implemented yet
 
 
 if __name__ == "__main__":

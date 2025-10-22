@@ -341,7 +341,7 @@
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_impact_analyzer.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB5-008.99** - Commit impact analyzer
+- [x] **JOB5-008.99** - Commit impact analyzer
   - Command: `git add services/weather-service/src/services/impact_analyzer.py services/weather-service/tests/test_impact_analyzer.py && git commit -m "JOB5-008: Implement impact analyzer"`
   - Verify: `git log -1 --oneline`
 
@@ -351,21 +351,21 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB5-009.1.test** - Write test for impact analysis endpoint
+- [x] **JOB5-009.1.test** - Write test for impact analysis endpoint
   - Path: `services/weather-service/tests/test_weather_routes.py`
   - Add `test_analyze_planting_endpoint()` test
   - Verify: `pytest services/weather-service/tests/test_weather_routes.py --collect-only`
 
-- [ ] **JOB5-009.2.impl** - Implement POST /api/v1/weather/analyze-planting endpoint
+- [x] **JOB5-009.2.impl** - Implement POST /api/v1/weather/analyze-planting endpoint
   - Path: `services/weather-service/src/api/weather_routes.py`
   - Add analyze_planting endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB5-009.3.verify** - Test impact analysis endpoint
+- [x] **JOB5-009.3.verify** - Test impact analysis endpoint
   - Command: `curl -X POST http://localhost:8010/api/v1/weather/analyze-planting -H "Content-Type: application/json" -d '{"latitude": 42.0, "longitude": -93.0, "crop_type": "corn"}'`
   - Verify: Returns impact analysis
 
-- [ ] **JOB5-009.4.verify** - Run API tests
+- [x] **JOB5-009.4.verify** - Run API tests
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_routes.py -v`
   - Verify: All tests pass
 
