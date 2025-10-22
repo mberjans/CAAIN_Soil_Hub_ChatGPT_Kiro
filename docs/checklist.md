@@ -58,12 +58,12 @@
   - Command: `python -c "import shapely; print('shapely OK')"`
   - Verify: shapely working
 
-- [!] **JOB4-002.6** - Enable PostGIS extension
-  - Command: `psql -U postgres -d caain_soil_hub -c "CREATE EXTENSION IF NOT EXISTS postgis;"`
-  - Verify: `psql -U postgres -d caain_soil_hub -c "SELECT PostGIS_version();"`
-  - Note: PostGIS installed (v3.6.0), but requires PostgreSQL 17/18. Currently using PostgreSQL 14. Install PostgreSQL@17 and run: `PAGER=cat /opt/homebrew/opt/postgresql@17/bin/psql -U postgres -d caain_soil_hub -c "CREATE EXTENSION IF NOT EXISTS postgis;"`
+- [x] **JOB4-002.6** - Enable PostGIS extension
+  - Command: `psql -U Mark -d caain_soil_hub -c "CREATE EXTENSION IF NOT EXISTS postgis;"`
+  - Verify: `psql -U Mark -d caain_soil_hub -c "SELECT PostGIS_version();"`
+  - Result: PostGIS 3.6 successfully enabled. Upgraded from PostgreSQL 14 to PostgreSQL 17, restored database, and enabled PostGIS extension.
 
-- [ ] **JOB4-002.99** - Commit requirements
+- [x] **JOB4-002.99** - Commit requirements
   - Command: `git add services/location-management/requirements.txt && git commit -m "JOB4-002: Add geospatial dependencies"`
   - Verify: `git log -1 --oneline`
 
