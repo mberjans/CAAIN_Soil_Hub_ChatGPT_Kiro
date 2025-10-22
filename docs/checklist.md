@@ -316,7 +316,7 @@
   - Add logging configuration
   - Verify: Check logging setup in file
 
-- [x]! **JOB1-005.6.impl** - Create FastAPI app instance
+- [x] **JOB1-005.6.impl** - Create FastAPI app instance
   - Path: `services/crop_taxonomy/src/main.py`
   - Add FastAPI app with title, description, version
   - Verify: `python -c "from src.main import app; print(app.title)"`
@@ -326,7 +326,7 @@
   - Add CORSMiddleware configuration
   - Verify: Check middleware in app
 
-- [x]! **JOB1-005.8.impl** - Add startup event handler
+- [x] **JOB1-005.8.impl** - Add startup event handler
   - Path: `services/crop_taxonomy/src/main.py`
   - Add @app.on_event("startup") function
   - Verify: Check startup handler in file
@@ -336,17 +336,17 @@
   - Add @app.on_event("shutdown") function
   - Verify: Check shutdown handler in file
 
-- [x]! **JOB1-005.10.impl** - Implement health check endpoint
+- [x] **JOB1-005.10.impl** - Implement health check endpoint
   - Path: `services/crop_taxonomy/src/main.py`
   - Add @app.get("/health") endpoint
   - Verify: Check health endpoint in file
 
-- [x]! **JOB1-005.11.impl** - Implement root endpoint
+- [x] **JOB1-005.11.impl** - Implement root endpoint
   - Path: `services/crop_taxonomy/src/main.py`
   - Add @app.get("/") endpoint
   - Verify: Check root endpoint in file
 
-- [x]! **JOB1-005.12.impl** - Add main block for uvicorn
+- [x] **JOB1-005.12.impl** - Add main block for uvicorn
   - Path: `services/crop_taxonomy/src/main.py`
   - Add if __name__ == "__main__" block
   - Verify: Check main block in file
