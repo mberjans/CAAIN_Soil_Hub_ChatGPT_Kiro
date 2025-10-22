@@ -513,7 +513,7 @@
   - Command: `cd services/crop-taxonomy && source venv/bin/activate && pytest tests/test_crop_search.py::test_search_performance -v`
   - Verify: Test passes with response time <2s
 
-- [ ] **JOB1-006.27.verify** - Test JSONB query optimization
+- [x] **JOB1-006.27.verify** - Test JSONB query optimization
   - Command: `psql -U postgres -d caain_soil_hub -c "EXPLAIN ANALYZE SELECT * FROM crop_filtering_attributes WHERE pest_resistance_traits @> '{\"corn_borer\": \"resistant\"}';"`
   - Verify: Query uses GIN index
 
