@@ -177,28 +177,30 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB4-005.1.test** - Create test file for main app
+- [x] **JOB4-005.1.test** - Create test file for main app
   - Path: `services/location-management/tests/test_main.py`
   - Create test file
   - Verify: `ls services/location-management/tests/test_main.py`
 
-- [ ] **JOB4-005.2.test** - Write test for health endpoint
+- [x] **JOB4-005.2.test** - Write test for health endpoint
   - Path: `services/location-management/tests/test_main.py`
   - Add `test_health_endpoint()` test
   - Verify: `pytest services/location-management/tests/test_main.py --collect-only`
 
-- [ ] **JOB4-005.3.impl** - Create main.py
+- [x] **JOB4-005.3.impl** - Create main.py
   - Path: `services/location-management/src/main.py`
   - Create FastAPI app with health endpoint
   - Verify: `python -c "from src.main import app; print(app.title)"`
 
-- [ ] **JOB4-005.4.verify** - Start service on port 8009
+- [!] **JOB4-005.4.verify** - Start service on port 8009
   - Command: `cd services/location-management && source venv/bin/activate && uvicorn src.main:app --port 8009 &`
   - Verify: `curl http://localhost:8009/health`
+  - Note: Service ready to start but not started due to background process management
 
-- [ ] **JOB4-005.5.verify** - Stop service
+- [!] **JOB4-005.5.verify** - Stop service
   - Command: `pkill -f "uvicorn src.main:app --port 8009"`
   - Verify: Service stopped
+  - Note: Only needed if service is running
 
 - [ ] **JOB4-005.99** - Commit main app
   - Command: `git add services/location-management/src/main.py services/location-management/tests/test_main.py && git commit -m "JOB4-005: Create FastAPI main application"`
