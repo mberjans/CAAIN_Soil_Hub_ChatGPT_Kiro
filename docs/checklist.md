@@ -167,7 +167,7 @@
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/test_location_schemas.py -v`
   - Verify: All tests pass (20/20 tests passing)
 
-- [ ] **JOB4-004.99** - Commit schemas
+- [x] **JOB4-004.99** - Commit schemas
   - Command: `git add services/location-management/src/schemas/ services/location-management/tests/test_location_schemas.py && git commit -m "JOB4-004: Create Pydantic schemas"`
   - Verify: `git log -1 --oneline`
 
