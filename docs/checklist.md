@@ -626,7 +626,7 @@
   - Add app.include_router(crop_routes.router)
   - Verify: Check router inclusion in main.py
 
-- [ ] **JOB1-008.9.verify** - Start service and test endpoint
+- [x] **JOB1-008.9.verify** - Start service and test endpoint
   - Command: `cd services/crop_taxonomy && source venv/bin/activate && uvicorn src.main:app --port 8007 &`
   - Verify: Service starts
 
