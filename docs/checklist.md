@@ -451,7 +451,7 @@
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/ -v`
   - Verify: All tests pass
 
-- [ ] **JOB3-013.3** - Tag service as ready
+- [x] **JOB3-013.3** - Tag service as ready
   - Command: `git tag -a image-analysis-v1.0.0 -m "Image Analysis Service ready for integration"`
   - Verify: `git tag -l`
 
