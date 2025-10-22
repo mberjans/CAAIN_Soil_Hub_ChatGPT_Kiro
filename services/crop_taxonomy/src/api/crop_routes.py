@@ -44,6 +44,19 @@ async def search_crops(
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@router.get("/preferences/{user_id}", response_model=List[PreferenceResponse])
+async def get_preferences(
+    user_id: UUID,
+    db: Session = Depends(get_db)
+):
+    """Get farmer preferences by user ID."""
+    try:
+        manager = FarmerPreferenceManager(db)
+        preferences = await manager.get_user_preferences(user_id)
+        return preferences
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @router.post("/preferences", response_model=PreferenceResponse)
 async def save_preferences(
     preference_data: PreferenceCreate,

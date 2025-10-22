@@ -667,7 +667,7 @@
   - Add @router.post("/api/v1/preferences") endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB1-009.4.impl** - Implement GET /preferences/{user_id} endpoint
+- [x] **JOB1-009.4.impl** - Implement GET /preferences/{user_id} endpoint
   - Path: `services/crop_taxonomy/src/api/crop_routes.py`
   - Add @router.get("/api/v1/preferences/{user_id}") endpoint
   - Verify: Check endpoint in file
