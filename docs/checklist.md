@@ -642,7 +642,7 @@
   - Command: `cd services/crop_taxonomy && source venv/bin/activate && pytest tests/test_crop_routes.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB1-008.99** - Commit API routes
+- [x] **JOB1-008.99** - Commit API routes
   - Command: `git add services/crop_taxonomy/src/api/crop_routes.py services/crop_taxonomy/src/main.py services/crop_taxonomy/tests/test_crop_routes.py && git commit -m "JOB1-008: Create API routes for crop search"`
   - Verify: `git log -1 --oneline`
 
