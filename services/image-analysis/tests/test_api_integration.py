@@ -6,6 +6,13 @@ from unittest.mock import patch, Mock
 from PIL import Image
 import numpy as np
 
+# Try to import opencv for image enhancement
+try:
+    import cv2
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+
 # Try to import tensorflow, skip tests if not available
 try:
     import tensorflow as tf
@@ -26,10 +33,58 @@ client = TestClient(app)
 
 
 def create_test_image(width=224, height=224, format="JPEG", color_mode="RGB"):
-    """Create a test image for integration testing"""
-    image = Image.new(color_mode, (width, height), color="green")
+    """Create a high-quality test image for integration testing that passes quality checks"""
+    # Create a more realistic plant-like image with proper lighting and contrast
+    image = Image.new(color_mode, (width, height), color=(34, 139, 34))  # Forest green background
+
+    # Add some variation and texture to make it less uniform and more realistic
+    pixels = np.array(image)
+
+    # Add some random noise to simulate natural leaf texture
+    noise = np.random.normal(0, 15, pixels.shape)
+    pixels = pixels.astype(np.int16) + noise
+    pixels = np.clip(pixels, 0, 255).astype(np.uint8)
+
+    # Add some brighter spots to simulate lighting variation
+    for _ in range(width * height // 100):
+        x = np.random.randint(0, width)
+        y = np.random.randint(0, height)
+        # Create small bright patches
+        for dx in range(-2, 3):
+            for dy in range(-2, 3):
+                if 0 <= x+dx < width and 0 <= y+dy < height:
+                    pixels[y+dy, x+dx] = np.minimum(pixels[y+dy, x+dx] + 30, 255)
+
+    # Add some darker spots for contrast
+    for _ in range(width * height // 150):
+        x = np.random.randint(0, width)
+        y = np.random.randint(0, height)
+        for dx in range(-1, 2):
+            for dy in range(-1, 2):
+                if 0 <= x+dx < width and 0 <= y+dy < height:
+                    pixels[y+dy, x+dx] = np.maximum(pixels[y+dy, x+dx] - 20, 0)
+
+    textured_image = Image.fromarray(pixels)
+
+    # Apply slight sharpening to improve blur score if cv2 is available
+    if CV2_AVAILABLE:
+        img_array = np.array(textured_image)
+        kernel = np.array([[-1,-1,-1], [-1,9,-1], [-1,-1,-1]])
+        img_uint8 = img_array.astype(np.uint8)
+        sharpened = cv2.filter2D(img_uint8, -1, kernel)
+        sharpened = np.clip(sharpened, 0, 255).astype(np.uint8)
+        final_image = Image.fromarray(sharpened)
+    else:
+        # Fallback: use PIL's built-in enhancement if cv2 is not available
+        from PIL import ImageFilter
+        final_image = textured_image.filter(ImageFilter.SHARPEN)
+
     img_byte_arr = io.BytesIO()
-    image.save(img_byte_arr, format=format)
+    # Save with high quality for JPEG
+    if format.upper() == "JPEG":
+        final_image.save(img_byte_arr, format=format, quality=95)
+    else:
+        final_image.save(img_byte_arr, format=format)
     img_byte_arr.seek(0)
     return img_byte_arr
 
