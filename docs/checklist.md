@@ -37,7 +37,7 @@
 
 ### Tasks
 
-- [ ] **JOB4-002.1** - Create requirements.txt with geospatial libraries
+- [x] **JOB4-002.1** - Create requirements.txt with geospatial libraries
   - Path: `services/location-management/requirements.txt`
   - Content: fastapi, uvicorn, sqlalchemy, psycopg2-binary, pydantic, GeoAlchemy2, geopy, shapely, pytest, pytest-asyncio, pytest-cov, httpx
   - Verify: `cat services/location-management/requirements.txt`
