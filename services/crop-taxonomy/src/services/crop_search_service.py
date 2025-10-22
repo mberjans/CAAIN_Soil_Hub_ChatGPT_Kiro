@@ -178,17 +178,84 @@ class CropSearchService:
         return query
 
     def _apply_sorting(self, query, filter_request: CropFilterRequest):
-        """Apply sorting"""
-        if filter_request.sort_by == "yield_stability":
-            if filter_request.sort_order == "desc":
-                query = query.order_by(CropFilteringAttributes.yield_stability_score.desc())
-            else:
-                query = query.order_by(CropFilteringAttributes.yield_stability_score.asc())
-        elif filter_request.sort_by == "drought_tolerance":
-            if filter_request.sort_order == "desc":
-                query = query.order_by(CropFilteringAttributes.drought_tolerance_score.desc())
-            else:
-                query = query.order_by(CropFilteringAttributes.drought_tolerance_score.asc())
+        """
+        Apply sorting to the query based on the requested sort field and order.
+
+        Supported sort fields:
+        - "relevance" (default): Sort by relevance score. NOTE: Relevance scores are
+          calculated post-query in _calculate_relevance(), so SQL-level sorting is not
+          possible. When relevance sorting is requested, no SQL ordering is applied here.
+          Results will be sorted by relevance in-memory after query execution if needed.
+
+        - "yield_stability": Sort by yield_stability_score (0-100 scale)
+
+        - "drought_tolerance": Sort by drought_tolerance_score (0-100 scale)
+
+        - "maturity_days": Sort by maturity days. NOTE: In current implementation,
+          maturity_days is a placeholder in VarietyResult. This will be fully functional
+          when the crop varieties table with actual maturity_days field is integrated.
+          Currently no SQL ordering is applied for this field.
+
+        - "variety_name": Sort alphabetically by variety name. NOTE: Since variety_name
+          is currently generated from variety_id in _build_variety_result(), we sort by
+          variety_id which determines the variety_name ordering.
+
+        Invalid sort_by values default to "relevance" behavior (no SQL ordering).
+
+        Args:
+            query: SQLAlchemy query object
+            filter_request: CropFilterRequest containing sort_by and sort_order
+
+        Returns:
+            Modified query with appropriate ordering applied
+        """
+        sort_by = filter_request.sort_by or "relevance"
+        sort_order = filter_request.sort_order or "desc"
+
+        # Determine sort direction (True = descending, False = ascending)
+        is_desc = sort_order.lower() == "desc"
+
+        # Apply sorting based on the requested field
+        if sort_by == "yield_stability":
+            query = query.order_by(
+                CropFilteringAttributes.yield_stability_score.desc() if is_desc
+                else CropFilteringAttributes.yield_stability_score.asc()
+            )
+
+        elif sort_by == "drought_tolerance":
+            query = query.order_by(
+                CropFilteringAttributes.drought_tolerance_score.desc() if is_desc
+                else CropFilteringAttributes.drought_tolerance_score.asc()
+            )
+
+        elif sort_by == "variety_name":
+            # Sort by variety_id which determines the generated variety_name
+            query = query.order_by(
+                CropFilteringAttributes.variety_id.desc() if is_desc
+                else CropFilteringAttributes.variety_id.asc()
+            )
+
+        elif sort_by == "maturity_days":
+            # Placeholder for future implementation
+            # When crop varieties table is integrated, this will sort by actual maturity_days
+            # For now, no ordering is applied as maturity_days is a placeholder value
+            # Future implementation would be:
+            # query = query.order_by(
+            #     CropVariety.maturity_days.desc() if is_desc
+            #     else CropVariety.maturity_days.asc()
+            # )
+            pass
+
+        elif sort_by == "relevance":
+            # Relevance scores are calculated post-query, so no SQL ordering is applied
+            # If in-memory sorting by relevance is needed, it should be done after
+            # _calculate_relevance() is called on all results
+            pass
+
+        else:
+            # Invalid sort_by value - default to relevance behavior (no SQL ordering)
+            # This handles graceful degradation for unrecognized sort fields
+            pass
 
         return query
 
