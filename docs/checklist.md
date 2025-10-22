@@ -601,12 +601,12 @@
   - Add `test_search_invalid_request()` test method
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_routes.py --collect-only`
 
-- [ ] **JOB1-008.4.impl** - Create crop_routes.py file
+- [x] **JOB1-008.4.impl** - Create crop_routes.py file
   - Path: `services/crop_taxonomy/src/api/crop_routes.py`
   - Create file with FastAPI imports
   - Verify: `ls services/crop_taxonomy/src/api/crop_routes.py`
 
-- [ ] **JOB1-008.5.impl** - Create APIRouter instance
+- [x] **JOB1-008.5.impl** - Create APIRouter instance
   - Path: `services/crop_taxonomy/src/api/crop_routes.py`
   - Add router = APIRouter()
   - Verify: Check router in file
