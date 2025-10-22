@@ -475,7 +475,7 @@
   - Add _apply_performance_filters method
   - Verify: Check method in file
 
-- [ ] **JOB1-006.19.impl** - Implement _apply_sorting method
+- [x] **JOB1-006.19.impl** - Implement _apply_sorting method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _apply_sorting method
   - Verify: Check method in file
