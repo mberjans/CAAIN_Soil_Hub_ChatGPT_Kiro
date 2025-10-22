@@ -634,7 +634,7 @@
   - Command: `curl -X POST http://localhost:8007/api/v1/crop-taxonomy/search -H "Content-Type: application/json" -d '{"crop_type": "corn", "maturity_days_min": 90, "maturity_days_max": 120}'`
   - Verify: Returns valid response
 
-- [ ] **JOB1-008.11.verify** - Stop service
+- [x] **JOB1-008.11.verify** - Stop service
   - Command: `pkill -f "uvicorn src.main:app"`
   - Verify: Service stopped
 
