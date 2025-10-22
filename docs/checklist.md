@@ -281,12 +281,12 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB3-008.1.test** - Create test file for analysis routes
+- [x] **JOB3-008.1.test** - Create test file for analysis routes
   - Path: `services/image-analysis/tests/test_analysis_routes.py`
   - Create test file
   - Verify: `ls services/image-analysis/tests/test_analysis_routes.py`
 
-- [ ] **JOB3-008.2.test** - Write test for image upload endpoint
+- [x] **JOB3-008.2.test** - Write test for image upload endpoint
   - Path: `services/image-analysis/tests/test_analysis_routes.py`
   - Add `test_image_analysis_endpoint()` test
   - Verify: `pytest services/image-analysis/tests/test_analysis_routes.py --collect-only`
