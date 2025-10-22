@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
+from src.api import location_routes
 import logging
 
 logging.basicConfig(level=logging.INFO)
@@ -10,6 +11,8 @@ app = FastAPI(
     description="Farm location management API with geospatial capabilities",
     version="1.0.0",
 )
+
+app.include_router(location_routes.router)
 
 
 @app.get("/health")
