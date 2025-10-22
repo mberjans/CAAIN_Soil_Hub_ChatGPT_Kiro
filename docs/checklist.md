@@ -547,27 +547,27 @@
   - Add `test_learn_from_selection()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_preference_manager.py --collect-only`
 
-- [ ] **JOB1-007.5.impl** - Create preference_manager.py file
+- [x] **JOB1-007.5.impl** - Create preference_manager.py file
   - Path: `services/crop-taxonomy/src/services/preference_manager.py`
   - Create file with imports
   - Verify: `ls services/crop-taxonomy/src/services/preference_manager.py`
 
-- [ ] **JOB1-007.6.impl** - Implement FarmerPreferenceManager class
+- [!] **JOB1-007.6.impl** - Implement FarmerPreferenceManager class
   - Path: `services/crop-taxonomy/src/services/preference_manager.py`
   - Add class skeleton
   - Verify: `python -c "from src.services.preference_manager import FarmerPreferenceManager; print('OK')"`
 
-- [ ] **JOB1-007.7.impl** - Implement save_preferences method
+- [!] **JOB1-007.7.impl** - Implement save_preferences method
   - Path: `services/crop-taxonomy/src/services/preference_manager.py`
   - Add save_preferences implementation
   - Verify: Check method in file
 
-- [ ] **JOB1-007.8.impl** - Implement load_preferences method
+- [!] **JOB1-007.8.impl** - Implement load_preferences method
   - Path: `services/crop-taxonomy/src/services/preference_manager.py`
   - Add load_preferences implementation
   - Verify: Check method in file
 
-- [ ] **JOB1-007.9.impl** - Implement learn_from_selection method
+- [!] **JOB1-007.9.impl** - Implement learn_from_selection method
   - Path: `services/crop-taxonomy/src/services/preference_manager.py`
   - Add learning algorithm
   - Verify: Check method in file
