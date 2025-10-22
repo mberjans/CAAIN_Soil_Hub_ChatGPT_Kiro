@@ -182,3 +182,165 @@ class DeficiencyDetector:
             "manganese": ["Interveinal chlorosis", "Brown spots on leaves"]
         }
         return symptom_database.get(nutrient, ["Consult agricultural expert"])
+
+    def detect_deficiency(
+        self,
+        preprocessed_image: np.ndarray,
+        crop_type: str,
+        growth_stage: Optional[str] = None,
+        confidence_threshold: float = 0.1
+    ) -> Dict[str, Any]:
+        """
+        Detect nutrient deficiencies in a preprocessed image
+
+        This method provides the core deficiency detection functionality and is
+        specifically designed for the CNN models. It analyzes the image and
+        returns detailed results about detected deficiencies.
+
+        Args:
+            preprocessed_image: Preprocessed image array (224, 224, 3)
+            crop_type: Type of crop (corn, soybean, wheat)
+            growth_stage: Optional growth stage information
+            confidence_threshold: Minimum confidence threshold for reporting deficiencies
+
+        Returns:
+            Dictionary containing:
+            - crop_type: The analyzed crop type
+            - growth_stage: Growth stage if provided
+            - deficiencies: List of detected deficiencies with details
+            - healthy_probability: Probability that the plant is healthy
+            - model_version: Version of the detection model
+            - detection_metadata: Additional metadata about the detection
+
+        Raises:
+            ValueError: If crop_type is not supported
+            ValueError: If image dimensions are incorrect
+        """
+        # Validate crop type
+        if crop_type not in self.models:
+            available_crops = list(self.models.keys())
+            raise ValueError(f"Unsupported crop type: {crop_type}. Available crops: {available_crops}")
+
+        # Validate image dimensions
+        if len(preprocessed_image.shape) != 3:
+            raise ValueError(f"Expected 3D image array, got {len(preprocessed_image.shape)}D")
+
+        if preprocessed_image.shape != (224, 224, 3):
+            raise ValueError(f"Expected image shape (224, 224, 3), got {preprocessed_image.shape}")
+
+        # Validate image data type and range
+        if not np.issubdtype(preprocessed_image.dtype, np.floating):
+            raise ValueError(f"Expected float image array, got {preprocessed_image.dtype}")
+
+        if np.min(preprocessed_image) < 0 or np.max(preprocessed_image) > 1:
+            raise ValueError("Image pixel values should be in range [0, 1]")
+
+        logger.info(f"Detecting deficiencies for {crop_type} crop")
+
+        # Get the appropriate model
+        model = self.models[crop_type]
+
+        # Prepare image for inference
+        img_batch = np.expand_dims(preprocessed_image, axis=0)
+
+        # Run inference
+        try:
+            predictions = model.predict(img_batch, verbose=0)[0]
+            logger.debug(f"Raw predictions shape: {predictions.shape}")
+        except Exception as e:
+            logger.error(f"Model prediction failed: {str(e)}")
+            raise RuntimeError(f"Model inference failed: {str(e)}")
+
+        # Get deficiency classes for this crop
+        classes = self.deficiency_classes[crop_type]
+
+        if len(predictions) != len(classes):
+            raise ValueError(f"Model output size ({len(predictions)}) doesn't match number of classes ({len(classes)})")
+
+        # Build detailed results
+        deficiencies = []
+        total_deficiency_confidence = 0.0
+
+        for i, (class_name, confidence) in enumerate(zip(classes, predictions)):
+            # Skip healthy class for deficiencies list
+            if class_name != "healthy" and confidence > confidence_threshold:
+                severity = self._determine_severity(confidence)
+                affected_area = self._estimate_affected_area(confidence)
+                symptoms = self._get_symptoms(class_name, crop_type)
+
+                deficiency_info = {
+                    "nutrient": class_name,
+                    "confidence": float(confidence),
+                    "severity": severity,
+                    "affected_area_percent": affected_area,
+                    "symptoms_detected": symptoms,
+                    "detection_strength": self._calculate_detection_strength(confidence, severity),
+                    "recommendation_priority": self._determine_recommendation_priority(severity, confidence)
+                }
+
+                deficiencies.append(deficiency_info)
+                total_deficiency_confidence += confidence
+
+        # Sort deficiencies by confidence (highest first)
+        deficiencies.sort(key=lambda x: x['confidence'], reverse=True)
+
+        # Calculate overall health probability
+        healthy_probability = float(predictions[classes.index("healthy")]) if "healthy" in classes else 0.0
+
+        # Create detection metadata
+        detection_metadata = {
+            "total_deficiencies_found": len(deficiencies),
+            "total_deficiency_confidence": float(total_deficiency_confidence),
+            "confidence_threshold_used": confidence_threshold,
+            "model_confidence_range": {
+                "min": float(np.min(predictions)),
+                "max": float(np.max(predictions)),
+                "mean": float(np.mean(predictions))
+            },
+            "growth_stage_considered": growth_stage is not None
+        }
+
+        # Determine overall plant health status
+        if healthy_probability > 0.7:
+            health_status = "healthy"
+        elif len(deficiencies) == 0:
+            health_status = "likely_healthy"
+        elif healthy_probability > 0.3:
+            health_status = "mixed_condition"
+        else:
+            health_status = "deficient"
+
+        result = {
+            "crop_type": crop_type,
+            "growth_stage": growth_stage,
+            "deficiencies": deficiencies,
+            "healthy_probability": healthy_probability,
+            "overall_health_status": health_status,
+            "model_version": "v1.0",
+            "detection_metadata": detection_metadata
+        }
+
+        logger.info(f"Detection complete for {crop_type}: found {len(deficiencies)} deficiencies")
+        return result
+
+    def _calculate_detection_strength(self, confidence: float, severity: str) -> str:
+        """Calculate detection strength based on confidence and severity"""
+        if confidence > 0.8 and severity == "severe":
+            return "very_strong"
+        elif confidence > 0.6:
+            return "strong"
+        elif confidence > 0.3:
+            return "moderate"
+        else:
+            return "weak"
+
+    def _determine_recommendation_priority(self, severity: str, confidence: float) -> str:
+        """Determine recommendation priority based on severity and confidence"""
+        if severity == "severe" and confidence > 0.6:
+            return "critical"
+        elif severity == "severe" or (severity == "moderate" and confidence > 0.5):
+            return "high"
+        elif severity == "moderate" or (severity == "mild" and confidence > 0.4):
+            return "medium"
+        else:
+            return "low"

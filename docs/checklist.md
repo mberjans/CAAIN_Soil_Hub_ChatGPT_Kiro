@@ -257,7 +257,7 @@
   - Add load_models method
   - Verify: Check method in file
 
-- [ ] **JOB3-007.7.impl** - Implement detect_deficiency method
+- [x] **JOB3-007.7.impl** - Implement detect_deficiency method
   - Path: `services/image-analysis/src/services/detector.py`
   - Add detect_deficiency method with inference
   - Verify: Check method in file
