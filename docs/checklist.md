@@ -138,34 +138,34 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB4-004.1.test** - Create test file for schemas
+- [x] **JOB4-004.1.test** - Create test file for schemas
   - Path: `services/location-management/tests/test_location_schemas.py`
   - Create test file
   - Verify: `ls services/location-management/tests/test_location_schemas.py`
 
-- [ ] **JOB4-004.2.test** - Write test for LocationCreate schema
+- [x] **JOB4-004.2.test** - Write test for LocationCreate schema
   - Path: `services/location-management/tests/test_location_schemas.py`
   - Add `test_location_create_valid()` test
   - Verify: `pytest services/location-management/tests/test_location_schemas.py --collect-only`
 
-- [ ] **JOB4-004.3.test** - Write test for coordinate validation
+- [x] **JOB4-004.3.test** - Write test for coordinate validation
   - Path: `services/location-management/tests/test_location_schemas.py`
   - Add `test_coordinate_validation()` test
   - Verify: `pytest services/location-management/tests/test_location_schemas.py --collect-only`
 
-- [ ] **JOB4-004.4.impl** - Create location_schemas.py
+- [x] **JOB4-004.4.impl** - Create location_schemas.py
   - Path: `services/location-management/src/schemas/location_schemas.py`
   - Implement LocationCreate, LocationResponse, NearbySearchRequest schemas
   - Verify: `python -c "from src.schemas.location_schemas import LocationCreate; print('OK')"`
 
-- [ ] **JOB4-004.5.impl** - Add coordinate validators
+- [x] **JOB4-004.5.impl** - Add coordinate validators
   - Path: `services/location-management/src/schemas/location_schemas.py`
   - Add @field_validator for latitude/longitude ranges
   - Verify: Check validators in schema
 
-- [ ] **JOB4-004.6.verify** - Run schema tests
+- [x] **JOB4-004.6.verify** - Run schema tests
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/test_location_schemas.py -v`
-  - Verify: All tests pass
+  - Verify: All tests pass (20/20 tests passing)
 
 - [ ] **JOB4-004.99** - Commit schemas
   - Command: `git add services/location-management/src/schemas/ services/location-management/tests/test_location_schemas.py && git commit -m "JOB4-004: Create Pydantic schemas"`
