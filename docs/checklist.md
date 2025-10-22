@@ -418,7 +418,7 @@
 
 ### Tasks
 
-- [ ] **JOB3-012.1** - Create README
+- [x] **JOB3-012.1** - Create README
   - Path: `services/image-analysis/README.md`
   - Add service overview and API documentation
   - Verify: `cat services/image-analysis/README.md`
