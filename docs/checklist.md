@@ -465,12 +465,12 @@
   - Add _apply_disease_resistance_filters with JSONB queries
   - Verify: Check method in file
 
-- [ ] **JOB1-006.17.impl** - Implement _apply_market_class_filters method
+- [x]! **JOB1-006.17.impl** - Implement _apply_market_class_filters method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _apply_market_class_filters method
   - Verify: Check method in file
 
-- [ ] **JOB1-006.18.impl** - Implement _apply_performance_filters method
+- [x] **JOB1-006.18.impl** - Implement _apply_performance_filters method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _apply_performance_filters method
   - Verify: Check method in file
