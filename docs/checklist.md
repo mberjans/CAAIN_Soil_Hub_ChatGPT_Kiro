@@ -98,7 +98,7 @@
   - Add SELECT create_hypertable statements
   - Verify: `grep "create_hypertable" services/weather-service/migrations/005_weather_schema.sql`
 
-- [ ] **JOB5-003.7.impl** - Add continuous aggregates to migration
+- [x] **JOB5-003.7.impl** - Add continuous aggregates to migration
   - Path: `services/weather-service/migrations/005_weather_schema.sql`
   - Add CREATE MATERIALIZED VIEW for daily summaries
   - Verify: `grep "MATERIALIZED VIEW" services/weather-service/migrations/005_weather_schema.sql`
