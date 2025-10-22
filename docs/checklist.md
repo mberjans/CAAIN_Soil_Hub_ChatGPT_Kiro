@@ -42,7 +42,7 @@
   - Content: fastapi, uvicorn, sqlalchemy, psycopg2-binary, pydantic, GeoAlchemy2, geopy, shapely, pytest, pytest-asyncio, pytest-cov, httpx
   - Verify: `cat services/location-management/requirements.txt`
 
-- [ ] **JOB4-002.2** - Install dependencies
+- [x] **JOB4-002.2** - Install dependencies
   - Command: `cd services/location-management && source venv/bin/activate && pip install -r requirements.txt`
   - Verify: `pip list | grep GeoAlchemy2`
 
