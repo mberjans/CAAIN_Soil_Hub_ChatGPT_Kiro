@@ -55,9 +55,9 @@ async def root():
         "health": "/health"
     }
 
-# Import and include routers (will be added later)
-# from .api import crop_routes
-# app.include_router(crop_routes.router)
+# Import and include routers
+from .api import crop_routes
+app.include_router(crop_routes.router)
 
 if __name__ == "__main__":
     import uvicorn

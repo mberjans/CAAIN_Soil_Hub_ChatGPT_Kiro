@@ -611,17 +611,17 @@
   - Add router = APIRouter()
   - Verify: Check router in file
 
-- [ ] **JOB1-008.6.impl** - Implement POST /search endpoint
+- [x] **JOB1-008.6.impl** - Implement POST /search endpoint
   - Path: `services/crop_taxonomy/src/api/crop_routes.py`
   - Add @router.post("/api/v1/crop-taxonomy/search") endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB1-008.7.impl** - Add error handling to search endpoint
+- [x] **JOB1-008.7.impl** - Add error handling to search endpoint
   - Path: `services/crop_taxonomy/src/api/crop_routes.py`
   - Add try/except blocks
   - Verify: Check error handling in file
 
-- [ ] **JOB1-008.8.impl** - Include router in main app
+- [x] **JOB1-008.8.impl** - Include router in main app
   - Path: `services/crop_taxonomy/src/main.py`
   - Add app.include_router(crop_routes.router)
   - Verify: Check router inclusion in main.py
