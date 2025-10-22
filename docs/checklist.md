@@ -662,7 +662,7 @@
   - Add `test_get_preferences_endpoint()` test method
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_routes.py --collect-only`
 
-- [ ] **JOB1-009.3.impl** - Implement POST /preferences endpoint
+- [x] **JOB1-009.3.impl** - Implement POST /preferences endpoint
   - Path: `services/crop_taxonomy/src/api/crop_routes.py`
   - Add @router.post("/api/v1/preferences") endpoint
   - Verify: Check endpoint in file

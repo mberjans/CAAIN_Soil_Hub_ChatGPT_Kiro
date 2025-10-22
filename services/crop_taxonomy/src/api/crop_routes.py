@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from src.schemas.crop_schemas import CropFilterRequest, CropSearchResponse
+from src.schemas.crop_schemas import CropFilterRequest, CropSearchResponse, PreferenceCreate, PreferenceResponse
 from src.services.crop_search_service import CropSearchService
-from ..main import get_db # Import get_db from main.py
+from src.services.preference_manager import FarmerPreferenceManager
+from src.database import get_db
 
 router = APIRouter(prefix="/api/v1/crop-taxonomy", tags=["crop-search"])
 
@@ -40,5 +41,18 @@ async def search_crops(
         service = CropSearchService(db)
         results = await service.search_varieties(filter_request)
         return results
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/preferences", response_model=PreferenceResponse)
+async def save_preferences(
+    preference_data: PreferenceCreate,
+    db: Session = Depends(get_db)
+):
+    """Save farmer preferences."""
+    try:
+        manager = FarmerPreferenceManager(db)
+        response = await manager.create_preference(preference_data)
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
