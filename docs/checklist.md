@@ -343,7 +343,7 @@
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/test_detector.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB3-009.99** - Commit confidence scorer
+- [x] **JOB3-009.99** - Commit confidence scorer
   - Command: `git add services/image-analysis/src/services/detector.py services/image-analysis/tests/test_detector.py && git commit -m "JOB3-009: Implement confidence scorer"`
   - Verify: `git log -1 --oneline`
 
