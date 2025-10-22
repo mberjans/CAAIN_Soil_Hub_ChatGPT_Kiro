@@ -292,7 +292,7 @@
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_routes.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB5-007.99** - Commit weather routes
+- [x] **JOB5-007.99** - Commit weather routes
   - Command: `git add services/weather-service/src/api/weather_routes.py services/weather-service/tests/test_weather_routes.py && git commit -m "JOB5-007: Create weather API routes"`
   - Verify: `git log -1 --oneline`
 
@@ -302,12 +302,12 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB5-008.1.test** - Create test file for impact analyzer
+- [x] **JOB5-008.1.test** - Create test file for impact analyzer
   - Path: `services/weather-service/tests/test_impact_analyzer.py`
   - Create test file
   - Verify: `ls services/weather-service/tests/test_impact_analyzer.py`
 
-- [ ] **JOB5-008.2.test** - Write test for planting conditions analysis
+- [x] **JOB5-008.2.test** - Write test for planting conditions analysis
   - Path: `services/weather-service/tests/test_impact_analyzer.py`
   - Add `test_analyze_planting_conditions()` test
   - Verify: `pytest services/weather-service/tests/test_impact_analyzer.py --collect-only`
@@ -317,7 +317,7 @@
   - Add `test_estimate_soil_temperature()` test
   - Verify: `pytest services/weather-service/tests/test_impact_analyzer.py --collect-only`
 
-- [ ] **JOB5-008.4.impl** - Create impact_analyzer.py
+- [x] **JOB5-008.4.impl** - Create impact_analyzer.py
   - Path: `services/weather-service/src/services/impact_analyzer.py`
   - Create WeatherImpactAnalyzer class
   - Verify: `python -c "from src.services.impact_analyzer import WeatherImpactAnalyzer; print('OK')"`
@@ -337,7 +337,7 @@
   - Add threshold data for corn, soybean, wheat
   - Verify: Check thresholds in file
 
-- [ ] **JOB5-008.8.verify** - Run impact analyzer tests
+- [x] **JOB5-008.8.verify** - Run impact analyzer tests
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_impact_analyzer.py -v`
   - Verify: All tests pass
 
