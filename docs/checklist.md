@@ -638,7 +638,7 @@
   - Command: `pkill -f "uvicorn src.main:app"`
   - Verify: Service stopped
 
-- [ ] **JOB1-008.12.verify** - Run unit tests for crop routes
+- [x] **JOB1-008.12.verify** - Run unit tests for crop routes
   - Command: `cd services/crop_taxonomy && source venv/bin/activate && pytest tests/test_crop_routes.py -v`
   - Verify: All tests pass
 
