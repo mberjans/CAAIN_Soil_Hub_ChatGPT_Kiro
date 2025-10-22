@@ -50,17 +50,18 @@
   - Command: `python -c "import geoalchemy2; print('GeoAlchemy2 OK')"`
   - Verify: GeoAlchemy2 working
 
-- [ ] **JOB4-002.4** - Verify geopy installation
+- [x] **JOB4-002.4** - Verify geopy installation
   - Command: `python -c "import geopy; print('geopy OK')"`
   - Verify: geopy working
 
-- [ ] **JOB4-002.5** - Verify shapely installation
+- [x] **JOB4-002.5** - Verify shapely installation
   - Command: `python -c "import shapely; print('shapely OK')"`
   - Verify: shapely working
 
-- [ ] **JOB4-002.6** - Enable PostGIS extension
+- [!] **JOB4-002.6** - Enable PostGIS extension
   - Command: `psql -U postgres -d caain_soil_hub -c "CREATE EXTENSION IF NOT EXISTS postgis;"`
   - Verify: `psql -U postgres -d caain_soil_hub -c "SELECT PostGIS_version();"`
+  - Note: PostGIS installed (v3.6.0), but requires PostgreSQL 17/18. Currently using PostgreSQL 14. Install PostgreSQL@17 and run: `PAGER=cat /opt/homebrew/opt/postgresql@17/bin/psql -U postgres -d caain_soil_hub -c "CREATE EXTENSION IF NOT EXISTS postgis;"`
 
 - [ ] **JOB4-002.99** - Commit requirements
   - Command: `git add services/location-management/requirements.txt && git commit -m "JOB4-002: Add geospatial dependencies"`
