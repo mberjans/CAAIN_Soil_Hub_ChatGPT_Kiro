@@ -374,7 +374,7 @@
 
 ### Tasks
 
-- [ ] **JOB2-012.1** - Start service on port 8008
+- [x] **JOB2-012.1** - Start service on port 8008
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && uvicorn src.main:app --port 8008 &`
   - Verify: `curl http://localhost:8008/health`
 
