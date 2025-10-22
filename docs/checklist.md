@@ -291,7 +291,7 @@
   - Add `test_image_analysis_endpoint()` test
   - Verify: `pytest services/image-analysis/tests/test_analysis_routes.py --collect-only`
 
-- [ ] **JOB3-008.3.impl** - Create analysis_routes.py
+- [x] **JOB3-008.3.impl** - Create analysis_routes.py
   - Path: `services/image-analysis/src/api/analysis_routes.py`
   - Create router with POST /api/v1/deficiency/image-analysis endpoint
   - Verify: Check endpoint in file
