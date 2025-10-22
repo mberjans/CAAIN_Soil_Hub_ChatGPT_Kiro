@@ -485,17 +485,17 @@
   - Add _get_resistance_levels method
   - Verify: Check method in file
 
-- [ ] **JOB1-006.21.impl** - Implement _build_variety_result method
+- [x] **JOB1-006.21.impl** - Implement _build_variety_result method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _build_variety_result method
   - Verify: Check method in file
 
-- [ ] **JOB1-006.22.impl** - Implement _calculate_relevance method
+- [x] **JOB1-006.22.impl** - Implement _calculate_relevance method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _calculate_relevance scoring algorithm
   - Verify: Check method in file
 
-- [ ] **JOB1-006.23.impl** - Implement _log_filter_combination method
+- [x] **JOB1-006.23.impl** - Implement _log_filter_combination method
   - Path: `services/crop-taxonomy/src/services/crop_search_service.py`
   - Add _log_filter_combination for optimization tracking
   - Verify: Check method in file
