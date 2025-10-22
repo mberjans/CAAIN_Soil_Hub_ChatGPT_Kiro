@@ -218,6 +218,162 @@ def test_apply_disease_resistance_filters_with_various_resistance_levels():
     assert mock_query.filter.call_count == 1
 
 
+def test_apply_market_class_filters_with_market_class():
+    """Test _apply_market_class_filters method with market class filter."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Create market class filter
+    from src.schemas.crop_schemas import MarketClassFilter
+    market_filter = MarketClassFilter(market_class="yellow_dent")
+    
+    # Create crop filter request
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        market_class=market_filter,
+        page=1,
+        page_size=20
+    )
+    
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+    
+    # Call the method under test
+    result_query = service._apply_market_class_filters(mock_query, filter_request)
+    
+    # Verify that filter was called once for market_class
+    mock_query.filter.assert_called_once()
+
+
+def test_apply_market_class_filters_with_organic_certified():
+    """Test _apply_market_class_filters method with organic certification filter."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Create market class filter with organic certification
+    from src.schemas.crop_schemas import MarketClassFilter
+    market_filter = MarketClassFilter(organic_certified=True)
+    
+    # Create crop filter request
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        market_class=market_filter,
+        page=1,
+        page_size=20
+    )
+    
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+    
+    # Call the method under test
+    result_query = service._apply_market_class_filters(mock_query, filter_request)
+    
+    # Verify that filter was called once for organic_certified
+    mock_query.filter.assert_called_once()
+
+
+def test_apply_market_class_filters_with_non_gmo():
+    """Test _apply_market_class_filters method with non-GMO filter."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Create market class filter with non-GMO
+    from src.schemas.crop_schemas import MarketClassFilter
+    market_filter = MarketClassFilter(non_gmo=False)
+    
+    # Create crop filter request
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        market_class=market_filter,
+        page=1,
+        page_size=20
+    )
+    
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+    
+    # Call the method under test
+    result_query = service._apply_market_class_filters(mock_query, filter_request)
+    
+    # Verify that filter was called once for non_gmo
+    mock_query.filter.assert_called_once()
+
+
+def test_apply_market_class_filters_with_all_filters():
+    """Test _apply_market_class_filters method with all market class filters."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Create market class filter with all options
+    from src.schemas.crop_schemas import MarketClassFilter
+    market_filter = MarketClassFilter(
+        market_class="white_corn",
+        organic_certified=True,
+        non_gmo=True
+    )
+    
+    # Create crop filter request
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        market_class=market_filter,
+        page=1,
+        page_size=20
+    )
+    
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+    
+    # Call the method under test
+    result_query = service._apply_market_class_filters(mock_query, filter_request)
+    
+    # Verify that filter was called 3 times (once for each market class filter)
+    assert mock_query.filter.call_count == 3
+
+
+def test_apply_market_class_filters_with_no_filters():
+    """Test _apply_market_class_filters method when no market class filters are provided."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+    
+    # Create service instance
+    service = CropSearchService(db_session)
+    
+    # Create crop filter request with no market class filters
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        page=1,
+        page_size=20
+    )
+    
+    # Create a mock query object
+    mock_query = Mock()
+    
+    # Call the method under test
+    result_query = service._apply_market_class_filters(mock_query, filter_request)
+    
+    # Verify that filter was not called (no market class filters to apply)
+    mock_query.filter.assert_not_called()
+    
+    # Should return the same query object
+    assert result_query == mock_query
+
+
 def test_get_resistance_levels():
     """Test _get_resistance_levels helper method."""
     # Create a mock database session
@@ -247,8 +403,246 @@ def test_crop_search_service_init():
     """Test initialization of CropSearchService."""
     db_session = Mock(spec=Session)
     service = CropSearchService(db_session)
-    
+
     assert service.db == db_session
+
+
+def test_apply_performance_filters_with_min_yield_stability():
+    """Test _apply_performance_filters method with min yield stability filter."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+
+    # Create service instance
+    service = CropSearchService(db_session)
+
+    # Create crop filter request with min_yield_stability
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        min_yield_stability=80,
+        page=1,
+        page_size=20
+    )
+
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+
+    # Call the method under test
+    result_query = service._apply_performance_filters(mock_query, filter_request)
+
+    # Verify that filter was called once
+    mock_query.filter.assert_called_once()
+
+    # Verify the filter call was made with the correct parameter
+    call_args = mock_query.filter.call_args_list[0][0][0]
+    assert "yield_stability_score" in str(call_args)
+
+
+def test_apply_performance_filters_with_min_drought_tolerance():
+    """Test _apply_performance_filters method with min drought tolerance filter."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+
+    # Create service instance
+    service = CropSearchService(db_session)
+
+    # Create crop filter request with min_drought_tolerance
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        min_drought_tolerance=75,
+        page=1,
+        page_size=20
+    )
+
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+
+    # Call the method under test
+    result_query = service._apply_performance_filters(mock_query, filter_request)
+
+    # Verify that filter was called once
+    mock_query.filter.assert_called_once()
+
+    # Verify the filter call was made with the correct parameter
+    call_args = mock_query.filter.call_args_list[0][0][0]
+    assert "drought_tolerance_score" in str(call_args)
+
+
+def test_apply_performance_filters_with_both_filters():
+    """Test _apply_performance_filters method with both min yield stability and drought tolerance filters."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+
+    # Create service instance
+    service = CropSearchService(db_session)
+
+    # Create crop filter request with both performance filters
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        min_yield_stability=85,
+        min_drought_tolerance=70,
+        page=1,
+        page_size=20
+    )
+
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+
+    # Call the method under test
+    result_query = service._apply_performance_filters(mock_query, filter_request)
+
+    # Verify that filter was called twice (once for each performance filter)
+    assert mock_query.filter.call_count == 2
+
+    # Verify the filter calls were made with the correct parameters
+    calls = mock_query.filter.call_args_list
+
+    # First call should filter for yield_stability_score
+    first_call = calls[0][0][0]
+    assert "yield_stability_score" in str(first_call)
+
+    # Second call should filter for drought_tolerance_score
+    second_call = calls[1][0][0]
+    assert "drought_tolerance_score" in str(second_call)
+
+
+def test_apply_performance_filters_with_no_filters():
+    """Test _apply_performance_filters method when no performance filters are provided."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+
+    # Create service instance
+    service = CropSearchService(db_session)
+
+    # Create crop filter request with no performance filters
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        page=1,
+        page_size=20
+    )
+
+    # Create a mock query object
+    mock_query = Mock()
+
+    # Call the method under test
+    result_query = service._apply_performance_filters(mock_query, filter_request)
+
+    # Verify that filter was not called (no performance filters to apply)
+    mock_query.filter.assert_not_called()
+
+    # Should return the same query object
+    assert result_query == mock_query
+
+
+def test_apply_performance_filters_with_boundary_values():
+    """Test _apply_performance_filters method with boundary values (0 and 100)."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+
+    # Create service instance
+    service = CropSearchService(db_session)
+
+    # Test with minimum boundary values (0)
+    filter_request = CropFilterRequest(
+        crop_type="corn",
+        min_yield_stability=0,
+        min_drought_tolerance=0,
+        page=1,
+        page_size=20
+    )
+
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query  # Return the same mock for chaining
+
+    # Call the method under test
+    result_query = service._apply_performance_filters(mock_query, filter_request)
+
+    # Note: If min_yield_stability is 0 or min_drought_tolerance is 0,
+    # they are falsy and won't trigger the filter (based on the implementation)
+    # This is intentional behavior to skip zero values
+    mock_query.filter.assert_not_called()
+
+    # Now test with maximum boundary values (100)
+    filter_request_max = CropFilterRequest(
+        crop_type="corn",
+        min_yield_stability=100,
+        min_drought_tolerance=100,
+        page=1,
+        page_size=20
+    )
+
+    # Create a new mock query object
+    mock_query_max = Mock()
+    mock_query_max.filter.return_value = mock_query_max
+
+    # Call the method under test
+    result_query_max = service._apply_performance_filters(mock_query_max, filter_request_max)
+
+    # Verify that filter was called twice (once for each performance filter)
+    assert mock_query_max.filter.call_count == 2
+
+
+def test_apply_performance_filters_with_yield_stability_only_mid_range():
+    """Test _apply_performance_filters with mid-range yield stability value."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+
+    # Create service instance
+    service = CropSearchService(db_session)
+
+    # Create crop filter request with mid-range value
+    filter_request = CropFilterRequest(
+        crop_type="wheat",
+        min_yield_stability=50,
+        page=1,
+        page_size=20
+    )
+
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query
+
+    # Call the method under test
+    result_query = service._apply_performance_filters(mock_query, filter_request)
+
+    # Verify that filter was called once
+    mock_query.filter.assert_called_once()
+
+    # Verify the result query is the same as the mock (after chaining)
+    assert result_query == mock_query
+
+
+def test_apply_performance_filters_with_drought_tolerance_only_mid_range():
+    """Test _apply_performance_filters with mid-range drought tolerance value."""
+    # Create a mock database session
+    db_session = Mock(spec=Session)
+
+    # Create service instance
+    service = CropSearchService(db_session)
+
+    # Create crop filter request with mid-range value
+    filter_request = CropFilterRequest(
+        crop_type="wheat",
+        min_drought_tolerance=60,
+        page=1,
+        page_size=20
+    )
+
+    # Create a mock query object
+    mock_query = Mock()
+    mock_query.filter.return_value = mock_query
+
+    # Call the method under test
+    result_query = service._apply_performance_filters(mock_query, filter_request)
+
+    # Verify that filter was called once
+    mock_query.filter.assert_called_once()
+
+    # Verify the result query is the same as the mock (after chaining)
+    assert result_query == mock_query
 
 
 if __name__ == "__main__":
