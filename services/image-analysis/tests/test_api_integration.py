@@ -90,18 +90,24 @@ def create_test_image(width=224, height=224, format="JPEG", color_mode="RGB"):
 
 
 def create_low_quality_image():
-    """Create a low quality test image"""
-    # Create a very small blurry image
-    image = Image.new("RGB", (50, 50), color="darkgreen")
-    # Add some noise to make it low quality
-    img_array = np.array(image)
-    noise = np.random.randint(0, 50, (50, 50, 3))
-    img_array = img_array.astype(np.int16) + noise
-    img_array = np.clip(img_array, 0, 255).astype(np.uint8)
+    """Create a low quality test image that passes size requirements but fails quality assessment"""
+    # Create an image that meets size requirements but is intentionally low quality
+    # Use PNG to avoid JPEG compression artifacts that can increase blur score
+
+    # Create a very dark, nearly uniform image
+    img_array = np.full((300, 300, 3), 5, dtype=np.uint8)  # Very dark uniform array
+
+    # Apply extreme blur to minimize Laplacian variance
+    if CV2_AVAILABLE:
+        img_array = cv2.GaussianBlur(img_array, (101, 101), 0)
+        # Add another blur pass for good measure
+        img_array = cv2.GaussianBlur(img_array, (51, 51), 0)
+
     noisy_image = Image.fromarray(img_array)
 
     img_byte_arr = io.BytesIO()
-    noisy_image.save(img_byte_arr, format="JPEG", quality=10)
+    # Save as PNG to avoid compression artifacts that increase blur score
+    noisy_image.save(img_byte_arr, format="PNG")
     img_byte_arr.seek(0)
     return img_byte_arr
 
@@ -195,7 +201,7 @@ class TestAPIIntegration:
         # Make the API request
         response = client.post(
             "/api/v1/deficiency/image-analysis",
-            files={"image": ("blurry_corn.jpg", low_quality_image, "image/jpeg")},
+            files={"image": ("blurry_corn.png", low_quality_image, "image/png")},
             data={"crop_type": "corn", "growth_stage": "V6"}
         )
 

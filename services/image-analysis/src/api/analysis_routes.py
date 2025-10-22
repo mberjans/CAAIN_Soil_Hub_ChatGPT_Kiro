@@ -1,4 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form, HTTPException
+from fastapi.exceptions import HTTPException as FastAPIHTTPException
 from typing import Optional, Dict, Any
 import logging
 import uuid
@@ -40,6 +41,10 @@ async def analyze_crop_image(
         # Read image bytes
         image_bytes = await image.read()
 
+        # Additional file size validation (max 10MB) - check first before expensive operations
+        if len(image_bytes) > 10 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="Image file too large. Maximum size is 10MB")
+
         # Enhanced file validation
         if not image.content_type or not image.content_type.startswith('image/'):
             raise HTTPException(status_code=400, detail="File must be an image")
@@ -60,10 +65,6 @@ async def analyze_crop_image(
             img = Image.open(io.BytesIO(image_bytes))
         except Exception:
             raise HTTPException(status_code=400, detail="Invalid or corrupt image file")
-
-        # Additional file size validation (max 10MB)
-        if len(image_bytes) > 10 * 1024 * 1024:
-            raise HTTPException(status_code=400, detail="Image file too large. Maximum size is 10MB")
 
         # Validate image dimensions
         width, height = img.size
@@ -104,6 +105,9 @@ async def analyze_crop_image(
             "recommendations": recommendations
         }
 
+    except FastAPIHTTPException:
+        # Re-raise HTTPExceptions (like validation errors) without modification
+        raise
     except ValueError as e:
         logger.error(f"Validation error during image analysis: {e}")
         raise HTTPException(status_code=400, detail=str(e))
