@@ -377,7 +377,7 @@
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/test_api_integration.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB3-010.6** - Generate coverage report
+- [x] **JOB3-010.6** - Generate coverage report
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/ --cov=src --cov-report=html`
   - Verify: Coverage >80%
 
