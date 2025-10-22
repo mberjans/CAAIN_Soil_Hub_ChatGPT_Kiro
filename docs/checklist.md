@@ -378,7 +378,7 @@
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && uvicorn src.main:app --port 8008 &`
   - Verify: `curl http://localhost:8008/health`
 
-- [ ] **JOB2-012.2** - Run full test suite
+- [x] **JOB2-012.2** - Run full test suite
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/ -v`
   - Verify: All tests pass
 
