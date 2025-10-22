@@ -88,7 +88,7 @@
   - Implement WeatherStation, WeatherObservation, WeatherForecast models
   - Verify: `python -c "from src.models.weather_models import WeatherStation; print('OK')"`
 
-- [ ] **JOB5-003.5.impl** - Create migration SQL
+- [x] **JOB5-003.5.impl** - Create migration SQL
   - Path: `services/weather-service/migrations/005_weather_schema.sql`
   - Write CREATE TABLE statements
   - Verify: `cat services/weather-service/migrations/005_weather_schema.sql`
