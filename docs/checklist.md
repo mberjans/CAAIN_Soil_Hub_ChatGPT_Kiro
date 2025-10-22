@@ -232,29 +232,29 @@
   - Add `test_geocoding_fallback()` test
   - Verify: `pytest services/location-management/tests/test_geocoding.py --collect-only`
 
-- [ ] **JOB4-006.5.impl** - Create geocoding_service.py
+- [x] **JOB4-006.5.impl** - Create geocoding_service.py
   - Path: `services/location-management/src/services/geocoding_service.py`
   - Create GeocodingService class
   - Verify: `python -c "from src.services.geocoding_service import GeocodingService; print('OK')"`
 
-- [ ] **JOB4-006.6.impl** - Implement Nominatim provider
+- [x] **JOB4-006.6.impl** - Implement Nominatim provider
   - Path: `services/location-management/src/services/geocoding_service.py`
   - Add Nominatim geocoder initialization
   - Verify: Check geocoder in __init__
 
-- [ ] **JOB4-006.7.impl** - Implement geocode_address method
+- [x] **JOB4-006.7.impl** - Implement geocode_address method
   - Path: `services/location-management/src/services/geocoding_service.py`
   - Add geocode_address with fallback logic
   - Verify: Check method in file
 
-- [ ] **JOB4-006.8.impl** - Implement reverse_geocode method
+- [x] **JOB4-006.8.impl** - Implement reverse_geocode method
   - Path: `services/location-management/src/services/geocoding_service.py`
   - Add reverse_geocode method
   - Verify: Check method in file
 
-- [ ] **JOB4-006.9.verify** - Run geocoding tests
+- [x] **JOB4-006.9.verify** - Run geocoding tests
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/test_geocoding.py -v`
-  - Verify: All tests pass
+  - Verify: All tests pass (27 passed, 2 skipped)
 
 - [ ] **JOB4-006.99** - Commit geocoding service
   - Command: `git add services/location-management/src/services/geocoding_service.py services/location-management/tests/test_geocoding.py && git commit -m "JOB4-006: Implement geocoding service"`
