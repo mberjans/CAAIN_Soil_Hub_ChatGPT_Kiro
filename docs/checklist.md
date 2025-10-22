@@ -11,23 +11,23 @@
 
 ### Tasks
 
-- [ ] **JOB5-001.1** - Create service directory
+- [x] **JOB5-001.1** - Create service directory
   - Command: `mkdir -p services/weather-service/src/{models,services,providers,api,schemas}`
   - Verify: `ls -la services/weather-service/src/`
 
-- [ ] **JOB5-001.2** - Create tests and migrations directories
+- [x] **JOB5-001.2** - Create tests and migrations directories
   - Command: `mkdir -p services/weather-service/{tests,migrations}`
   - Verify: `ls -ld services/weather-service/tests`
 
-- [ ] **JOB5-001.3** - Create __init__.py files
+- [x] **JOB5-001.3** - Create __init__.py files
   - Command: `touch services/weather-service/src/__init__.py services/weather-service/src/{models,services,providers,api,schemas}/__init__.py services/weather-service/tests/__init__.py`
   - Verify: `find services/weather-service/src -name "__init__.py" | wc -l`
 
-- [ ] **JOB5-001.4** - Create virtual environment
+- [x] **JOB5-001.4** - Create virtual environment
   - Command: `cd services/weather-service && python3 -m venv venv`
   - Verify: `ls services/weather-service/venv/bin/python`
 
-- [ ] **JOB5-001.99** - Commit directory structure
+- [x] **JOB5-001.99** - Commit directory structure
   - Command: `git add services/weather-service && git commit -m "JOB5-001: Setup weather service structure"`
   - Verify: `git log -1 --oneline`
 
@@ -37,28 +37,28 @@
 
 ### Tasks
 
-- [ ] **JOB5-002.1** - Create requirements.txt
+- [x] **JOB5-002.1** - Create requirements.txt
   - Path: `services/weather-service/requirements.txt`
   - Content: fastapi, uvicorn, sqlalchemy, psycopg2-binary, pydantic, httpx, pandas, pytest, pytest-asyncio, pytest-cov, APScheduler
   - Verify: `cat services/weather-service/requirements.txt`
 
-- [ ] **JOB5-002.2** - Install dependencies
+- [x] **JOB5-002.2** - Install dependencies
   - Command: `cd services/weather-service && source venv/bin/activate && pip install -r requirements.txt`
   - Verify: `pip list | grep httpx`
 
-- [ ] **JOB5-002.3** - Verify httpx installation
+- [x] **JOB5-002.3** - Verify httpx installation
   - Command: `python -c "import httpx; print('httpx OK')"`
   - Verify: httpx working
 
-- [ ] **JOB5-002.4** - Verify pandas installation
+- [x] **JOB5-002.4** - Verify pandas installation
   - Command: `python -c "import pandas; print(f'pandas: {pandas.__version__}')"`
   - Verify: pandas version displayed
 
-- [ ] **JOB5-002.5** - Verify TimescaleDB extension enabled
+- [x] **JOB5-002.5** - Verify TimescaleDB extension enabled
   - Command: `psql -U postgres -d caain_soil_hub -c "SELECT * FROM pg_extension WHERE extname='timescaledb';"`
   - Verify: TimescaleDB extension present
 
-- [ ] **JOB5-002.99** - Commit requirements
+- [x] **JOB5-002.99** - Commit requirements
   - Command: `git add services/weather-service/requirements.txt && git commit -m "JOB5-002: Add dependencies with TimescaleDB support"`
   - Verify: `git log -1 --oneline`
 
@@ -68,22 +68,22 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB5-003.1.test** - Create test file for weather models
+- [x] **JOB5-003.1.test** - Create test file for weather models
   - Path: `services/weather-service/tests/test_weather_models.py`
   - Create test file
   - Verify: `ls services/weather-service/tests/test_weather_models.py`
 
-- [ ] **JOB5-003.2.test** - Write test for WeatherStation model
+- [x] **JOB5-003.2.test** - Write test for WeatherStation model
   - Path: `services/weather-service/tests/test_weather_models.py`
   - Add `test_weather_station_creation()` test
   - Verify: `pytest services/weather-service/tests/test_weather_models.py --collect-only`
 
-- [ ] **JOB5-003.3.test** - Write test for WeatherObservation model
+- [x] **JOB5-003.3.test** - Write test for WeatherObservation model
   - Path: `services/weather-service/tests/test_weather_models.py`
   - Add `test_weather_observation_creation()` test
   - Verify: `pytest services/weather-service/tests/test_weather_models.py --collect-only`
 
-- [ ] **JOB5-003.4.impl** - Create weather_models.py
+- [x] **JOB5-003.4.impl** - Create weather_models.py
   - Path: `services/weather-service/src/models/weather_models.py`
   - Implement WeatherStation, WeatherObservation, WeatherForecast models
   - Verify: `python -c "from src.models.weather_models import WeatherStation; print('OK')"`
