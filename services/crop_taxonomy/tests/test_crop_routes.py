@@ -95,3 +95,30 @@ def test_save_preferences_endpoint(client):
     response_data = response.json()
     assert response_data["preferences_saved"] is True
     assert response_data["message"] == "Preferences saved successfully"
+
+def test_get_preferences_endpoint(client):
+    """Test GET /preferences/{user_id} endpoint."""
+    user_id = "a1b2c3d4-e5f6-7890-1234-567890abcdef"
+    # First, save some preferences for the user
+    save_request_data = {
+        "user_id": user_id,
+        "preferred_filters": {
+            "organic_certified": True,
+            "soil_type": "loam"
+        },
+        "filter_weights": {
+            "organic_certified": 0.9,
+            "soil_type": 0.7
+        }
+    }
+    client.post("/api/v1/preferences", json=save_request_data)
+
+    response = client.get(f"/api/v1/preferences/{user_id}")
+
+    assert response.status_code == 200
+    response_data = response.json()
+    assert isinstance(response_data, list)
+    assert len(response_data) > 0
+    assert response_data[0]["user_id"] == user_id
+    assert response_data[0]["preference_category"] == "preferred_filters"
+    assert response_data[0]["preference_data"] == {"organic_certified": True, "soil_type": "loam"}

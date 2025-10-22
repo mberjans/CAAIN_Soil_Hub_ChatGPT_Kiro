@@ -657,7 +657,7 @@
   - Add `test_save_preferences_endpoint()` test method
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_routes.py --collect-only`
 
-- [ ] **JOB1-009.2.test** - Write test for GET /preferences/{user_id} endpoint
+- [x] **JOB1-009.2.test** - Write test for GET /preferences/{user_id} endpoint
   - Path: `services/crop_taxonomy/tests/test_crop_routes.py`
   - Add `test_get_preferences_endpoint()` test method
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_routes.py --collect-only`
