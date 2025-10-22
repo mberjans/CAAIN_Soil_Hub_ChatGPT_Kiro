@@ -296,8 +296,8 @@
   - Create router with POST /api/v1/deficiency/image-analysis endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB3-008.4.impl** - Implement file upload handling
-  - Path: `services/image-analysis/src/api/analysis_routes.py`
+- [x] **JOB3-008.4.impl** - Implement file upload handling
+  - Path: `services/image-analysis/src/api/image_analysis_routes.py`
   - Add file validation and processing
   - Verify: Check file handling in endpoint
 
