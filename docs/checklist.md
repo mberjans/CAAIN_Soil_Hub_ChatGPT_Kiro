@@ -78,17 +78,17 @@
   - Create test file
   - Verify: `ls services/location-management/tests/test_location_models.py`
 
-- [ ] **JOB4-003.2.test** - Write test for FarmLocation model
+- [x] **JOB4-003.2.test** - Write test for FarmLocation model
   - Path: `services/location-management/tests/test_location_models.py`
   - Add `test_farm_location_creation()` test
   - Verify: `pytest services/location-management/tests/test_location_models.py --collect-only`
 
-- [ ] **JOB4-003.3.test** - Write test for Field model with POLYGON
+- [x] **JOB4-003.3.test** - Write test for Field model with POLYGON
   - Path: `services/location-management/tests/test_location_models.py`
   - Add `test_field_creation()` test
   - Verify: `pytest services/location-management/tests/test_location_models.py --collect-only`
 
-- [ ] **JOB4-003.4.impl** - Create location_models.py
+- [x] **JOB4-003.4.impl** - Create location_models.py
   - Path: `services/location-management/src/models/location_models.py`
   - Implement FarmLocation and Field models with Geometry columns
   - Verify: `python -c "from src.models.location_models import FarmLocation, Field; print('OK')"`
