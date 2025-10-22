@@ -230,17 +230,104 @@ class DeficiencyDetector:
         return float(affected_area)
 
     def _get_symptoms(self, nutrient: str, crop_type: str) -> List[str]:
-        """Get typical symptoms for deficiency"""
+        """Get typical symptoms for deficiency
+
+        This method provides agriculturally accurate symptom descriptions for nutrient
+        deficiencies based on established plant pathology and crop science research.
+        Symptoms are organized by nutrient and may vary slightly by crop type.
+        """
+        # Comprehensive symptom database based on agricultural research
         symptom_database = {
-            "nitrogen": ["Yellowing of older leaves", "Stunted growth", "Pale green color"],
-            "phosphorus": ["Purple or reddish leaves", "Delayed maturity", "Poor root development"],
-            "potassium": ["Leaf edge burn", "Yellowing between veins", "Weak stalks"],
-            "sulfur": ["Yellowing of young leaves", "Stunted growth"],
-            "iron": ["Interveinal chlorosis", "Yellowing of young leaves"],
-            "zinc": ["White or yellow bands", "Shortened internodes"],
-            "manganese": ["Interveinal chlorosis", "Brown spots on leaves"]
+            "nitrogen": [
+                "Uniform yellowing (chlorosis) of older leaves, starting from leaf tips",
+                "Stunted growth and reduced vigor",
+                "Pale green to yellowish coloration throughout plant",
+                "Poor tillering in cereals and reduced leaf area",
+                "Lower leaf senescence progressing upward"
+            ],
+            "phosphorus": [
+                "Dark green to purplish discoloration of leaf margins and veins",
+                "Reddish or purple coloration on leaf undersides and stems",
+                "Stunted growth with delayed maturity and poor root development",
+                "Reduced flowering and poor seed/fruit set",
+                "Thin, weak stems with poor tillering in cereals"
+            ],
+            "potassium": [
+                "Chlorosis and necrosis along leaf margins (scorching) starting on older leaves",
+                "Yellowing between veins with brown, dead tissue at leaf edges",
+                "Weak, lodged stalks prone to breakage, especially in corn",
+                "Poor disease resistance and reduced stress tolerance",
+                "Irregular, patchy symptoms throughout the canopy"
+            ],
+            "sulfur": [
+                "Uniform yellowing (chlorosis) of young leaves and new growth",
+                "Stunted growth with shortened internodes",
+                "Pale green coloration throughout the entire plant",
+                "Similar appearance to nitrogen deficiency but affecting upper leaves first",
+                "Reduced nodulation in legumes and poor protein synthesis"
+            ],
+            "iron": [
+                "Distinct interveinal chlorosis on young leaves while veins remain green",
+                "Yellowing of newest growth while older leaves stay green",
+                "Severe chlorosis leading to nearly white leaves in advanced cases",
+                "Restricted growth and poor development in high pH soils",
+                "Rapid symptom progression in cool, wet conditions"
+            ],
+            "zinc": [
+                "White to yellow longitudinal bands between veins on older leaves",
+                "Shortened internodes creating rosette appearance in severe cases",
+                "Bronzing or reddening of leaf margins, especially in corn",
+                "Poor root development and delayed maturity",
+                "Reduced leaf size and malformed growing points"
+            ],
+            "manganese": [
+                "Interveinal chlorosis with dark brown or black spots on affected areas",
+                "Yellowing of young leaves while veins remain distinctly green",
+                "Necrotic spots that coalesce into larger dead patches",
+                "Similar appearance to iron deficiency but with spotting pattern",
+                "Most severe in alkaline, well-drained soils"
+            ]
         }
-        return symptom_database.get(nutrient, ["Consult agricultural expert"])
+
+        # Get base symptoms for the nutrient
+        base_symptoms = symptom_database.get(nutrient, ["Consult agricultural expert"])
+
+        # Add crop-specific variations if available
+        crop_specific_modifiers = self._get_crop_specific_symptom_modifiers(nutrient, crop_type)
+
+        if crop_specific_modifiers:
+            # Combine base symptoms with crop-specific modifications
+            # Keep the first 4 base symptoms and add crop-specific ones
+            enhanced_symptoms = base_symptoms[:4] + crop_specific_modifiers
+            return enhanced_symptoms[:5]  # Limit to 5 most relevant symptoms
+        else:
+            return base_symptoms[:5]  # Limit to 5 base symptoms
+
+    def _get_crop_specific_symptom_modifiers(self, nutrient: str, crop_type: str) -> List[str]:
+        """Get crop-specific symptom modifications
+
+        Some nutrients manifest differently in different crops.
+        This method provides those variations.
+        """
+        crop_modifiers = {
+            "corn": {
+                "nitrogen": ["Inverted V-shaped yellowing pattern on lower leaves"],
+                "phosphorus": ["Purple coloration most visible on leaf collars and sheaths"],
+                "potassium": ["Ear shoots may be poorly developed and prone to breakage"]
+            },
+            "soybean": {
+                "nitrogen": ["Reduced nodulation and poor nitrogen fixation"],
+                "iron": ["Symptoms most severe in early vegetative stages (V1-V3)"],
+                "manganese": ["Leaf cupping and crinkling along with chlorosis"]
+            },
+            "wheat": {
+                "nitrogen": ["Reduced tillering and poor head development"],
+                "sulfur": ["Yellow flag leaf with dark green base (chlorosis)"],
+                "potassium": ["Weak stems leading to lodging at maturity"]
+            }
+        }
+
+        return crop_modifiers.get(crop_type, {}).get(nutrient, [])
 
     def detect_deficiency(
         self,

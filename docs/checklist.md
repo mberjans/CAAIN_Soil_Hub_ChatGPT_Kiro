@@ -399,7 +399,7 @@
   - Use known phosphorus deficiency images
   - Verify: Correctly identifies phosphorus deficiency
 
-- [ ] **JOB3-011.3** - Validate symptom descriptions
+- [x] **JOB3-011.3** - Validate symptom descriptions
   - Review symptom descriptions for accuracy
   - Verify: Descriptions match agricultural knowledge
 
