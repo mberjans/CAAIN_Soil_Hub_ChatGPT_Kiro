@@ -542,7 +542,7 @@
   - Add `test_load_preferences()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_preference_manager.py --collect-only`
 
-- [ ] **JOB1-007.4.test** - Write test for learning from selections
+- [x] **JOB1-007.4.test** - Write test for learning from selections
   - Path: `services/crop-taxonomy/tests/test_preference_manager.py`
   - Add `test_learn_from_selection()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_preference_manager.py --collect-only`

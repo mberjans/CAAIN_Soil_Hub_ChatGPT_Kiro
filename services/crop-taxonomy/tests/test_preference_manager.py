@@ -1038,6 +1038,186 @@ class TestFarmerPreferenceManager:
             # Should return empty list on error
             assert result == []
 
+    @pytest.mark.asyncio
+    async def test_learn_from_selection(self, preference_manager, mock_connection, sample_user_id):
+        """Test learning from user crop selections."""
+        # Mock selected varieties with attributes
+        selected_varieties = [
+            {
+                'id': 1,
+                'crop_type': 'corn',
+                'drought_tolerance': 'high',
+                'organic_certified': True,
+                'maturity_days': 90,
+                'management_complexity': 'low'
+            },
+            {
+                'id': 2,
+                'crop_type': 'soybean',
+                'drought_tolerance': 'moderate',
+                'organic_certified': True,
+                'maturity_days': 95,
+                'management_complexity': 'low'
+            }
+        ]
+        
+        # Mock rejected varieties with different attributes
+        rejected_varieties = [
+            {
+                'id': 3,
+                'crop_type': 'wheat',
+                'drought_tolerance': 'low',
+                'organic_certified': False,
+                'maturity_days': 120,
+                'management_complexity': 'high'
+            }
+        ]
+        
+        # Mock context for the selection
+        selection_context = {
+            'search_filters': {
+                'drought_tolerance': ['moderate', 'high'],
+                'organic_certified': True
+            },
+            'location': 'Iowa',
+            'season': 'spring',
+            'timestamp': '2024-01-15T10:30:00Z'
+        }
+        
+        # Mock database queries
+        # Mock fetching variety details
+        variety_details = selected_varieties + rejected_varieties
+        mock_connection.fetch.return_value = [
+            {'id': v['id'], 'crop_type': v['crop_type'], 
+             'drought_tolerance': v['drought_tolerance'],
+             'organic_certified': v['organic_certified'],
+             'maturity_days': v['maturity_days'],
+             'management_complexity': v['management_complexity']}
+            for v in variety_details
+        ]
+        
+        # Mock existing preferences query
+        existing_preferences = []
+        mock_connection.fetchrow.return_value = None  # No existing preferences
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            # Call learn_from_selection method
+            result = await preference_manager.learn_from_selection(
+                user_id=sample_user_id,
+                selected_variety_ids=[1, 2],
+                rejected_variety_ids=[3],
+                context=selection_context
+            )
+            
+            # Verify the learning results
+            assert 'preferences_updated' in result
+            assert 'new_preferences_created' in result
+            assert 'confidence_improvements' in result
+            assert 'learned_patterns' in result
+            
+            # Check that preferences were learned correctly
+            assert result['new_preferences_created'] > 0
+            assert len(result['learned_patterns']) > 0
+            
+            # Verify patterns learned include preference for organic and drought tolerance
+            learned_patterns = result['learned_patterns']
+            assert any('organic' in pattern.lower() for pattern in learned_patterns)
+            assert any('drought' in pattern.lower() for pattern in learned_patterns)
+
+    @pytest.mark.asyncio
+    async def test_learn_from_selection_with_existing_preferences(self, preference_manager, mock_connection, sample_user_id):
+        """Test learning from selections when user already has preferences."""
+        # Mock existing preferences
+        existing_preference = {
+            'id': 'existing-pref-uuid',
+            'user_id': sample_user_id,
+            'preference_category': 'crop_types',
+            'preference_data': {'preferred_crops': ['corn'], 'organic_preference': True},
+            'weight': 0.8,
+            'created_at': datetime.now(),
+            'updated_at': datetime.now(),
+            'version': 1,
+            'active': True
+        }
+        
+        # Mock selected varieties
+        selected_varieties = [
+            {
+                'id': 4,
+                'crop_type': 'soybean',
+                'drought_tolerance': 'high',
+                'organic_certified': True,
+                'maturity_days': 100
+            }
+        ]
+        
+        # Mock database responses
+        mock_connection.fetch.side_effect = [
+            # First call: fetch variety details
+            [{'id': 4, 'crop_type': 'soybean', 'drought_tolerance': 'high', 
+              'organic_certified': True, 'maturity_days': 100}],
+            # Second call: fetch existing preferences
+            [existing_preference]
+        ]
+        
+        mock_connection.fetchrow.return_value = existing_preference
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            result = await preference_manager.learn_from_selection(
+                user_id=sample_user_id,
+                selected_variety_ids=[4],
+                rejected_variety_ids=[],
+                context={'season': 'spring'}
+            )
+            
+            # Should update existing preferences rather than create new ones
+            assert result['preferences_updated'] >= 0
+            assert 'learned_patterns' in result
+            
+            # Should have learned about soybean preference
+            learned_patterns = result['learned_patterns']
+            assert any('soybean' in pattern.lower() for pattern in learned_patterns)
+
+    @pytest.mark.asyncio
+    async def test_learn_from_selection_invalid_input(self, preference_manager, sample_user_id):
+        """Test learning from selections with invalid input."""
+        # Test with empty selection lists
+        with pytest.raises(ValueError, match="At least one selected variety is required"):
+            await preference_manager.learn_from_selection(
+                user_id=sample_user_id,
+                selected_variety_ids=[],
+                rejected_variety_ids=[],
+                context={}
+            )
+        
+        # Test with invalid user_id
+        with pytest.raises(ValueError, match="Invalid user_id"):
+            await preference_manager.learn_from_selection(
+                user_id=None,
+                selected_variety_ids=[1, 2],
+                rejected_variety_ids=[],
+                context={}
+            )
+
+    @pytest.mark.asyncio
+    async def test_learn_from_selection_database_error(self, preference_manager, mock_connection, sample_user_id):
+        """Test learning from selections with database error."""
+        # Mock database error
+        mock_connection.fetch.side_effect = Exception("Database connection error")
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            result = await preference_manager.learn_from_selection(
+                user_id=sample_user_id,
+                selected_variety_ids=[1, 2],
+                rejected_variety_ids=[],
+                context={}
+            )
+            
+            # Should return empty results on error but not raise exception
+            assert result['preferences_updated'] == 0
+            assert result['new_preferences_created'] == 0
+            assert len(result['learned_patterns']) == 0
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
