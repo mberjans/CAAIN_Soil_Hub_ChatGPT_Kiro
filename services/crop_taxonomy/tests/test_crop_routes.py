@@ -76,4 +76,22 @@ def test_search_invalid_request(client):
     assert any("crop_type" in error["loc"] for error in response_data["detail"])
     assert any("crop_type must be one of" in error["msg"] for error in response_data["detail"])
 
+def test_save_preferences_endpoint(client):
+    """Test POST /preferences endpoint with valid data."""
+    request_data = {
+        "user_id": "a1b2c3d4-e5f6-7890-1234-567890abcdef",
+        "preferred_filters": {
+            "organic_certified": True,
+            "soil_type": "loam"
+        },
+        "filter_weights": {
+            "organic_certified": 0.9,
+            "soil_type": 0.7
+        }
+    }
+    response = client.post("/api/v1/preferences", json=request_data)
 
+    assert response.status_code == 200
+    response_data = response.json()
+    assert response_data["preferences_saved"] is True
+    assert response_data["message"] == "Preferences saved successfully"

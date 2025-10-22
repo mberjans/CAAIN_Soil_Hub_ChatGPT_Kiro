@@ -652,7 +652,7 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB1-009.1.test** - Write test for POST /preferences endpoint
+- [x] **JOB1-009.1.test** - Write test for POST /preferences endpoint
   - Path: `services/crop_taxonomy/tests/test_crop_routes.py`
   - Add `test_save_preferences_endpoint()` test method
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_routes.py --collect-only`
