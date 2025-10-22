@@ -532,7 +532,7 @@
   - Create test file with imports
   - Verify: `ls services/crop-taxonomy/tests/test_preference_manager.py`
 
-- [ ] **JOB1-007.2.test** - Write test for saving preferences
+- [x] **JOB1-007.2.test** - Write test for saving preferences
   - Path: `services/crop-taxonomy/tests/test_preference_manager.py`
   - Add `test_save_preferences()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_preference_manager.py --collect-only`

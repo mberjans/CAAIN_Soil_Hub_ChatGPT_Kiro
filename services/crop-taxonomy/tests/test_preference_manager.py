@@ -715,6 +715,187 @@ class TestFarmerPreferenceManager:
         assert result.version == 2
         assert result.active is False
 
+    @pytest.mark.asyncio
+    async def test_save_preferences(self, preference_manager, mock_connection, sample_user_id):
+        """Test saving farmer preferences to the database."""
+        # Test data for multiple preference categories
+        preferences_to_save = [
+            {
+                "category": "crop_types",
+                "data": {
+                    "preferred_crops": ["corn", "soybeans", "wheat"],
+                    "avoided_crops": ["sunflower"],
+                    "new_crop_interest": True
+                },
+                "weight": 1.0
+            },
+            {
+                "category": "risk_tolerance", 
+                "data": {
+                    "level": "moderate",
+                    "diversification_preference": True,
+                    "experimental_willingness": 0.7
+                },
+                "weight": 0.9
+            },
+            {
+                "category": "sustainability",
+                "data": {
+                    "carbon_sequestration": True,
+                    "water_conservation": True,
+                    "biodiversity": False,
+                    "soil_health": True
+                },
+                "weight": 0.8
+            }
+        ]
+        
+        # Mock successful database saves
+        mock_saved_preferences = []
+        for i, pref in enumerate(preferences_to_save):
+            mock_row = {
+                'id': uuid4(),
+                'user_id': sample_user_id,
+                'preference_category': pref['category'],
+                'preference_data': json.dumps(pref['data']),
+                'weight': Decimal(str(pref['weight'])),
+                'created_at': datetime.now(),
+                'updated_at': datetime.now(),
+                'version': 1,
+                'active': True
+            }
+            mock_saved_preferences.append(mock_row)
+        
+        # Mock connection to return saved preferences one by one
+        mock_connection.fetchrow.side_effect = mock_saved_preferences
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            saved_preferences = []
+            
+            # Save each preference
+            for pref in preferences_to_save:
+                result = await preference_manager.create_preference(
+                    user_id=sample_user_id,
+                    preference_category=pref['category'],
+                    preference_data=pref['data'],
+                    weight=pref['weight']
+                )
+                saved_preferences.append(result)
+            
+            # Verify all preferences were saved correctly
+            assert len(saved_preferences) == 3
+            
+            # Verify crop_types preference
+            crop_pref = saved_preferences[0]
+            assert isinstance(crop_pref, FarmerPreference)
+            assert crop_pref.user_id == sample_user_id
+            assert crop_pref.preference_category == "crop_types"
+            assert crop_pref.preference_data["preferred_crops"] == ["corn", "soybeans", "wheat"]
+            assert crop_pref.preference_data["avoided_crops"] == ["sunflower"]
+            assert crop_pref.preference_data["new_crop_interest"] is True
+            assert crop_pref.weight == 1.0
+            
+            # Verify risk_tolerance preference
+            risk_pref = saved_preferences[1]
+            assert isinstance(risk_pref, FarmerPreference)
+            assert risk_pref.user_id == sample_user_id
+            assert risk_pref.preference_category == "risk_tolerance"
+            assert risk_pref.preference_data["level"] == "moderate"
+            assert risk_pref.preference_data["diversification_preference"] is True
+            assert risk_pref.preference_data["experimental_willingness"] == 0.7
+            assert risk_pref.weight == 0.9
+            
+            # Verify sustainability preference
+            sustain_pref = saved_preferences[2]
+            assert isinstance(sustain_pref, FarmerPreference)
+            assert sustain_pref.user_id == sample_user_id
+            assert sustain_pref.preference_category == "sustainability"
+            assert sustain_pref.preference_data["carbon_sequestration"] is True
+            assert sustain_pref.preference_data["water_conservation"] is True
+            assert sustain_pref.preference_data["biodiversity"] is False
+            assert sustain_pref.preference_data["soil_health"] is True
+            assert sustain_pref.weight == 0.8
+            
+            # Verify database calls were made for each preference
+            assert mock_connection.fetchrow.call_count == 3
+    
+    @pytest.mark.asyncio
+    async def test_save_preferences_validation_errors(self, preference_manager, sample_user_id):
+        """Test save preferences with validation errors."""
+        # Test invalid category
+        with pytest.raises(ValueError, match="Invalid preference category"):
+            await preference_manager.create_preference(
+                user_id=sample_user_id,
+                preference_category="invalid_category",
+                preference_data={"some": "data"},
+                weight=1.0
+            )
+        
+        # Test invalid data for crop_types (missing required field)
+        with pytest.raises(ValueError, match="Invalid preference data"):
+            await preference_manager.create_preference(
+                user_id=sample_user_id,
+                preference_category="crop_types",
+                preference_data={"avoided_crops": ["wheat"]},  # Missing required preferred_crops
+                weight=1.0
+            )
+        
+        # Test invalid data for risk_tolerance (missing required field)
+        with pytest.raises(ValueError, match="Invalid preference data"):
+            await preference_manager.create_preference(
+                user_id=sample_user_id,
+                preference_category="risk_tolerance",
+                preference_data={"diversification_preference": True},  # Missing required level
+                weight=1.0
+            )
+    
+    @pytest.mark.asyncio
+    async def test_save_preferences_weight_constraints(self, preference_manager, mock_connection, sample_user_id):
+        """Test save preferences with weight constraint validation."""
+        preference_data = {
+            "preferred_crops": ["corn"],
+            "avoided_crops": [],
+            "new_crop_interest": True
+        }
+        
+        # Mock successful database save
+        mock_row = {
+            'id': uuid4(),
+            'user_id': sample_user_id,
+            'preference_category': 'crop_types',
+            'preference_data': json.dumps(preference_data),
+            'weight': Decimal('1.0'),  # Weight will be constrained to 1.0
+            'created_at': datetime.now(),
+            'updated_at': datetime.now(),
+            'version': 1,
+            'active': True
+        }
+        mock_connection.fetchrow.return_value = mock_row
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            # Test weight above 1.0 gets constrained
+            result = await preference_manager.create_preference(
+                user_id=sample_user_id,
+                preference_category="crop_types",
+                preference_data=preference_data,
+                weight=1.5  # Should be constrained to 1.0
+            )
+            
+            assert result.weight == 1.0
+            
+            # Test weight below 0.0 gets constrained  
+            mock_row['weight'] = Decimal('0.0')
+            mock_connection.fetchrow.return_value = mock_row
+            
+            result = await preference_manager.create_preference(
+                user_id=sample_user_id,
+                preference_category="crop_types",
+                preference_data=preference_data,
+                weight=-0.5  # Should be constrained to 0.0
+            )
+            
+            assert result.weight == 0.0
+
 
 if __name__ == "__main__":
     pytest.main([__file__])
