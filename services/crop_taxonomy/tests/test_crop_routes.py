@@ -61,3 +61,19 @@ def test_search_endpoint(client):
     assert response_data["page"] == 1
     assert response_data["page_size"] == 20
 
+def test_search_invalid_request(client):
+    """Test POST /search endpoint with an invalid request."""
+    request_data = {
+        "crop_type": "invalid_crop_type",  # Invalid crop type
+        "maturity_days_min": 90,
+        "maturity_days_max": 120,
+    }
+    response = client.post("/api/v1/crop-taxonomy/search", json=request_data)
+
+    assert response.status_code == 422  # Expecting a validation error
+    response_data = response.json()
+    assert "detail" in response_data
+    assert any("crop_type" in error["loc"] for error in response_data["detail"])
+    assert any("value is not a valid enumeration member" in error["msg"] for error in response_data["detail"])
+
+

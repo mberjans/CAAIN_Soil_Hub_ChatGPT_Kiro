@@ -596,7 +596,7 @@
   - Add `test_search_endpoint()` test method
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_routes.py --collect-only`
 
-- [ ] **JOB1-008.3.test** - Write test for invalid request validation
+- [x] **JOB1-008.3.test** - Write test for invalid request validation
   - Path: `services/crop_taxonomy/tests/test_crop_routes.py`
   - Add `test_search_invalid_request()` test method
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_routes.py --collect-only`
