@@ -391,7 +391,7 @@
 
 ### Tasks
 
-- [ ] **JOB3-011.1** - Test with nitrogen deficiency images
+- [x] **JOB3-011.1** - Test with nitrogen deficiency images
   - Use known nitrogen deficiency images
   - Verify: Correctly identifies nitrogen deficiency
 
