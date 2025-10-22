@@ -517,7 +517,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -c "EXPLAIN ANALYZE SELECT * FROM crop_filtering_attributes WHERE pest_resistance_traits @> '{\"corn_borer\": \"resistant\"}';"`
   - Verify: Query uses GIN index
 
-- [ ] **JOB1-006.99** - Commit crop search service
+- [!] **JOB1-006.99** - Commit crop search service
   - Command: `git add services/crop-taxonomy/src/services/crop_search_service.py services/crop-taxonomy/tests/test_crop_search.py && git commit -m "JOB1-006: Implement crop search service core logic"`
   - Verify: `git log -1 --oneline`
 
