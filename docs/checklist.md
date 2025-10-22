@@ -567,7 +567,7 @@
   - Add load_preferences implementation
   - Verify: Check method in file
 
-- [!] **JOB1-007.9.impl** - Implement learn_from_selection method
+- [x] **JOB1-007.9.impl** - Implement learn_from_selection method
   - Path: `services/crop_taxonomy/src/services/preference_manager.py`
   - Add learning algorithm
   - Verify: Check method in file
