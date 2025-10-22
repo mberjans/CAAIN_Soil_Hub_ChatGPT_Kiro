@@ -212,22 +212,22 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB4-006.1.test** - Create test file for geocoding service
+- [x] **JOB4-006.1.test** - Create test file for geocoding service
   - Path: `services/location-management/tests/test_geocoding.py`
   - Create test file
   - Verify: `ls services/location-management/tests/test_geocoding.py`
 
-- [ ] **JOB4-006.2.test** - Write test for forward geocoding
+- [x] **JOB4-006.2.test** - Write test for forward geocoding
   - Path: `services/location-management/tests/test_geocoding.py`
   - Add `test_geocode_address()` test
   - Verify: `pytest services/location-management/tests/test_geocoding.py --collect-only`
 
-- [ ] **JOB4-006.3.test** - Write test for reverse geocoding
+- [x] **JOB4-006.3.test** - Write test for reverse geocoding
   - Path: `services/location-management/tests/test_geocoding.py`
   - Add `test_reverse_geocode()` test
   - Verify: `pytest services/location-management/tests/test_geocoding.py --collect-only`
 
-- [ ] **JOB4-006.4.test** - Write test for fallback mechanism
+- [x] **JOB4-006.4.test** - Write test for fallback mechanism
   - Path: `services/location-management/tests/test_geocoding.py`
   - Add `test_geocoding_fallback()` test
   - Verify: `pytest services/location-management/tests/test_geocoding.py --collect-only`
