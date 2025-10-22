@@ -201,7 +201,7 @@
   - Add `test_mock_weather_provider()` test
   - Verify: `pytest services/weather-service/tests/test_weather_fetcher.py --collect-only`
 
-- [ ] **JOB5-006.3.test** - Write test for WeatherFetcher
+- [x] **JOB5-006.3.test** - Write test for WeatherFetcher
   - Path: `services/weather-service/tests/test_weather_fetcher.py`
   - Add `test_weather_fetcher_fetch()` test
   - Verify: `pytest services/weather-service/tests/test_weather_fetcher.py --collect-only`
@@ -211,22 +211,22 @@
   - Implement mock provider
   - Verify: `python -c "from src.providers.mock_weather_provider import MockWeatherProvider; print('OK')"`
 
-- [ ] **JOB5-006.5.impl** - Create WeatherFetcher
+- [x] **JOB5-006.5.impl** - Create WeatherFetcher
   - Path: `services/weather-service/src/services/weather_fetcher.py`
   - Implement weather fetcher with multi-provider support
   - Verify: `python -c "from src.services.weather_fetcher import WeatherFetcher; print('OK')"`
 
-- [ ] **JOB5-006.6.impl** - Implement fetch_current_weather method
+- [x] **JOB5-006.6.impl** - Implement fetch_current_weather method
   - Path: `services/weather-service/src/services/weather_fetcher.py`
   - Add fetch_current_weather with fallback logic
   - Verify: Check method in file
 
-- [ ] **JOB5-006.7.impl** - Implement fetch_forecast method
+- [x] **JOB5-006.7.impl** - Implement fetch_forecast method
   - Path: `services/weather-service/src/services/weather_fetcher.py`
   - Add fetch_forecast method
   - Verify: Check method in file
 
-- [ ] **JOB5-006.8.impl** - Implement store_weather_data method
+- [x] **JOB5-006.8.impl** - Implement store_weather_data method
   - Path: `services/weather-service/src/services/weather_fetcher.py`
   - Add method to store data in TimescaleDB
   - Verify: Check method in file
@@ -255,7 +255,7 @@
   - Add `test_get_current_weather()` test
   - Verify: `pytest services/weather-service/tests/test_weather_routes.py --collect-only`
 
-- [ ] **JOB5-007.3.test** - Write test for GET /weather/forecast endpoint
+- [x] **JOB5-007.3.test** - Write test for GET /weather/forecast endpoint
   - Path: `services/weather-service/tests/test_weather_routes.py`
   - Add `test_get_forecast()` test
   - Verify: `pytest services/weather-service/tests/test_weather_routes.py --collect-only`
@@ -265,12 +265,12 @@
   - Create router with weather endpoints
   - Verify: Check router in file
 
-- [ ] **JOB5-007.5.impl** - Implement GET /api/v1/weather/current endpoint
+- [x] **JOB5-007.5.impl** - Implement GET /api/v1/weather/current endpoint
   - Path: `services/weather-service/src/api/weather_routes.py`
   - Add get_current_weather endpoint
   - Verify: Check endpoint in file
 
-- [ ] **JOB5-007.6.impl** - Implement GET /api/v1/weather/forecast endpoint
+- [x] **JOB5-007.6.impl** - Implement GET /api/v1/weather/forecast endpoint
   - Path: `services/weather-service/src/api/weather_routes.py`
   - Add get_forecast endpoint
   - Verify: Check endpoint in file
@@ -312,7 +312,7 @@
   - Add `test_analyze_planting_conditions()` test
   - Verify: `pytest services/weather-service/tests/test_impact_analyzer.py --collect-only`
 
-- [ ] **JOB5-008.3.test** - Write test for soil temperature estimation
+- [x] **JOB5-008.3.test** - Write test for soil temperature estimation
   - Path: `services/weather-service/tests/test_impact_analyzer.py`
   - Add `test_estimate_soil_temperature()` test
   - Verify: `pytest services/weather-service/tests/test_impact_analyzer.py --collect-only`
@@ -322,17 +322,17 @@
   - Create WeatherImpactAnalyzer class
   - Verify: `python -c "from src.services.impact_analyzer import WeatherImpactAnalyzer; print('OK')"`
 
-- [ ] **JOB5-008.5.impl** - Implement analyze_planting_conditions method
+- [x] **JOB5-008.5.impl** - Implement analyze_planting_conditions method
   - Path: `services/weather-service/src/services/impact_analyzer.py`
   - Add analyze_planting_conditions with crop-specific thresholds
   - Verify: Check method in file
 
-- [ ] **JOB5-008.6.impl** - Implement estimate_soil_temperature method
+- [x] **JOB5-008.6.impl** - Implement estimate_soil_temperature method
   - Path: `services/weather-service/src/services/impact_analyzer.py`
   - Add soil temperature estimation algorithm
   - Verify: Check method in file
 
-- [ ] **JOB5-008.7.impl** - Implement crop-specific thresholds
+- [x] **JOB5-008.7.impl** - Implement crop-specific thresholds
   - Path: `services/weather-service/src/services/impact_analyzer.py`
   - Add threshold data for corn, soybean, wheat
   - Verify: Check thresholds in file
@@ -369,7 +369,7 @@
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_routes.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB5-009.99** - Commit impact analysis routes
+- [x] **JOB5-009.99** - Commit impact analysis routes
   - Command: `git add services/weather-service/src/api/weather_routes.py services/weather-service/tests/test_weather_routes.py && git commit -m "JOB5-009: Create impact analysis API routes"`
   - Verify: `git log -1 --oneline`
 
@@ -379,22 +379,22 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB5-010.1.test** - Write test for historical pattern analysis
+- [x] **JOB5-010.1.test** - Write test for historical pattern analysis
   - Path: `services/weather-service/tests/test_historical_analyzer.py`
   - Add `test_analyze_historical_patterns()` test
   - Verify: `pytest services/weather-service/tests/test_historical_analyzer.py --collect-only`
 
-- [ ] **JOB5-010.2.impl** - Create historical_analyzer.py
+- [x] **JOB5-010.2.impl** - Create historical_analyzer.py
   - Path: `services/weather-service/src/services/historical_analyzer.py`
   - Create HistoricalAnalyzer class
   - Verify: `python -c "from src.services.historical_analyzer import HistoricalAnalyzer; print('OK')"`
 
-- [ ] **JOB5-010.3.impl** - Implement pattern detection using continuous aggregates
+- [x] **JOB5-010.3.impl** - Implement pattern detection using continuous aggregates
   - Path: `services/weather-service/src/services/historical_analyzer.py`
   - Add analyze_patterns method using TimescaleDB continuous aggregates
   - Verify: Check method in file
 
-- [ ] **JOB5-010.4.verify** - Run historical analyzer tests
+- [x] **JOB5-010.4.verify** - Run historical analyzer tests
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_historical_analyzer.py -v`
   - Verify: All tests pass
 
