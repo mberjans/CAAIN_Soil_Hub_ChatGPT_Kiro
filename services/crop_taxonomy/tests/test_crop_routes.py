@@ -74,6 +74,6 @@ def test_search_invalid_request(client):
     response_data = response.json()
     assert "detail" in response_data
     assert any("crop_type" in error["loc"] for error in response_data["detail"])
-    assert any("value is not a valid enumeration member" in error["msg"] for error in response_data["detail"])
+    assert any("crop_type must be one of" in error["msg"] for error in response_data["detail"])
 
 

@@ -1,10 +1,18 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from .models.filtering_models import Base # Assuming Base is defined here or in a common models file
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Database configuration
+DATABASE_URL = "postgresql://postgres:postgres@localhost/test_crop_taxonomy" # Use test DB for now
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Create FastAPI app
 app = FastAPI(
@@ -28,14 +36,16 @@ app.add_middleware(
 async def startup_event():
     """Initialize services on startup"""
     logger.info("Starting Crop Taxonomy Service on port 8007")
-    # TODO: Initialize database connection pool
-    # TODO: Load ML models if needed
+    # Create database tables if they don't exist
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables checked/created.")
 
 @app.on_event("shutdown")
 async def shutdown_event():
     """Cleanup on shutdown"""
     logger.info("Shutting down Crop Taxonomy Service")
-    # TODO: Close database connections
+    # No explicit engine shutdown needed for most applications,
+    # as connections are managed by the pool.
 
 @app.get("/health")
 async def health_check():
@@ -55,8 +65,16 @@ async def root():
         "health": "/health"
     }
 
+# Dependency to get database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
 # Import and include routers
-from .api import crop_routes
+from src.api import crop_routes
 app.include_router(crop_routes.router)
 
 if __name__ == "__main__":
