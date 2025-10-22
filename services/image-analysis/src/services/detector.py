@@ -123,11 +123,12 @@ class DeficiencyDetector:
 
         model = self.models[crop_type]
 
-        # Add batch dimension
-        img_batch = np.expand_dims(preprocessed_image, axis=0)
-
-        # Run inference
-        predictions = model.predict(img_batch, verbose=0)[0]
+        # Run inference (image already has batch dimension from preprocessor)
+        if len(preprocessed_image.shape) == 4:  # Already has batch dimension
+            predictions = model.predict(preprocessed_image, verbose=0)[0]
+        else:  # Add batch dimension if missing
+            img_batch = np.expand_dims(preprocessed_image, axis=0)
+            predictions = model.predict(img_batch, verbose=0)[0]
 
         # Get deficiency classes for this crop
         classes = self.deficiency_classes[crop_type]
@@ -240,12 +241,13 @@ class DeficiencyDetector:
         # Get the appropriate model
         model = self.models[crop_type]
 
-        # Prepare image for inference
-        img_batch = np.expand_dims(preprocessed_image, axis=0)
-
-        # Run inference
+        # Prepare image for inference (image already has batch dimension from preprocessor)
         try:
-            predictions = model.predict(img_batch, verbose=0)[0]
+            if len(preprocessed_image.shape) == 4:  # Already has batch dimension
+                predictions = model.predict(preprocessed_image, verbose=0)[0]
+            else:  # Add batch dimension if missing
+                img_batch = np.expand_dims(preprocessed_image, axis=0)
+                predictions = model.predict(img_batch, verbose=0)[0]
             logger.debug(f"Raw predictions shape: {predictions.shape}")
         except Exception as e:
             logger.error(f"Model prediction failed: {str(e)}")

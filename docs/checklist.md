@@ -306,7 +306,7 @@
   - Add app.include_router(analysis_routes.router)
   - Verify: Check router inclusion
 
-- [ ] **JOB3-008.6.verify** - Test image upload endpoint
+- [x] **JOB3-008.6.verify** - Test image upload endpoint
   - Command: `curl -X POST http://localhost:8004/api/v1/deficiency/image-analysis -F "image=@test_image.jpg" -F "crop_type=corn" -F "growth_stage=V6"`
   - Verify: Returns analysis results
 

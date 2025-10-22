@@ -119,12 +119,12 @@ class ImagePreprocessor:
             needs_color_correction = not brightness_ok
 
             return {
-                "score": quality_score,
-                "resolution_ok": resolution_ok,
-                "brightness_ok": brightness_ok,
-                "blur_ok": blur_ok,
+                "score": float(quality_score),
+                "resolution_ok": bool(resolution_ok),
+                "brightness_ok": bool(brightness_ok),
+                "blur_ok": bool(blur_ok),
                 "issues": issues,
-                "needs_color_correction": needs_color_correction
+                "needs_color_correction": bool(needs_color_correction)
             }
 
         except Exception as e:
@@ -132,12 +132,12 @@ class ImagePreprocessor:
             issues.append("Corrupt or unreadable image file")
             score -= 0.5
             return {
-                "score": max(0.0, score),
-                "resolution_ok": False,
-                "brightness_ok": False,
-                "blur_ok": False,
+                "score": float(max(0.0, score)),
+                "resolution_ok": bool(False),
+                "brightness_ok": bool(False),
+                "blur_ok": bool(False),
                 "issues": issues,
-                "needs_color_correction": False
+                "needs_color_correction": bool(False)
             }
 
     def _apply_color_correction(self, img_array: np.ndarray) -> np.ndarray:
