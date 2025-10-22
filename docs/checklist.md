@@ -101,7 +101,7 @@
   - Command: `psql -U postgres -d caain_soil_hub -c "SELECT create_hypertable('fertilizer_prices', 'price_date');"`
   - Verify: `psql -U postgres -d caain_soil_hub -c "SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name='fertilizer_prices';"`
 
-- [ ] **JOB2-003.9.verify** - Verify tables created
+- [x] **JOB2-003.9.verify** - Verify tables created
   - Command: `psql -U postgres -d caain_soil_hub -c "\d fertilizer_prices"`
   - Verify: Table structure correct
 
@@ -374,11 +374,11 @@
 
 ### Tasks
 
-- [x] **JOB2-012.1** - Start service on port 8008 - OPENCODE FAILED, RETURN LATER
+- [ ] **JOB2-012.1** - Start service on port 8008
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && uvicorn src.main:app --port 8008 &`
   - Verify: `curl http://localhost:8008/health`
 
-- [x] **JOB2-012.2** - Run full test suite - OPENCODE FAILED, RETURN LATER
+- [ ] **JOB2-012.2** - Run full test suite
   - Command: `cd services/fertilizer-optimization && source venv/bin/activate && pytest tests/ -v`
   - Verify: All tests pass
 
