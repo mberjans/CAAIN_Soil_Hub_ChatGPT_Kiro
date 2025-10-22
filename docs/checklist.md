@@ -324,7 +324,7 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB3-009.1.test** - Write test for confidence scoring
+- [x] **JOB3-009.1.test** - Write test for confidence scoring
   - Path: `services/image-analysis/tests/test_detector.py`
   - Add `test_confidence_scoring()` test
   - Verify: `pytest services/image-analysis/tests/test_detector.py --collect-only`
