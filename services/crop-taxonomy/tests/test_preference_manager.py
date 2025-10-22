@@ -896,6 +896,148 @@ class TestFarmerPreferenceManager:
             
             assert result.weight == 0.0
 
+    @pytest.mark.asyncio
+    async def test_load_preferences(self, preference_manager, mock_connection, sample_user_id):
+        """Test loading farmer preferences from the database."""
+        # Mock database rows for multiple preferences
+        mock_preference_rows = [
+            {
+                'id': uuid4(),
+                'user_id': sample_user_id,
+                'preference_category': 'crop_types',
+                'preference_data': json.dumps({
+                    "preferred_crops": ["corn", "soybeans"],
+                    "avoided_crops": ["wheat"],
+                    "new_crop_interest": True
+                }),
+                'weight': Decimal('1.0'),
+                'created_at': datetime.now(),
+                'updated_at': datetime.now(),
+                'version': 1,
+                'active': True
+            },
+            {
+                'id': uuid4(),
+                'user_id': sample_user_id,
+                'preference_category': 'risk_tolerance',
+                'preference_data': json.dumps({
+                    "level": "moderate",
+                    "diversification_preference": True,
+                    "experimental_willingness": 0.7
+                }),
+                'weight': Decimal('0.9'),
+                'created_at': datetime.now(),
+                'updated_at': datetime.now(),
+                'version': 1,
+                'active': True
+            }
+        ]
+        
+        # Mock connection to return the preference rows
+        mock_connection.fetch.return_value = mock_preference_rows
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            # Test loading all preferences for a user
+            result = await preference_manager.get_user_preferences(user_id=sample_user_id)
+            
+            assert len(result) == 2
+            assert all(isinstance(pref, FarmerPreference) for pref in result)
+            
+            # Verify first preference
+            crop_pref = next(pref for pref in result if pref.preference_category == 'crop_types')
+            assert crop_pref.user_id == sample_user_id
+            assert crop_pref.preference_category == "crop_types"
+            assert crop_pref.preference_data["preferred_crops"] == ["corn", "soybeans"]
+            assert crop_pref.weight == 1.0
+            assert crop_pref.active is True
+            
+            # Verify second preference
+            risk_pref = next(pref for pref in result if pref.preference_category == 'risk_tolerance')
+            assert risk_pref.user_id == sample_user_id
+            assert risk_pref.preference_category == "risk_tolerance"
+            assert risk_pref.preference_data["level"] == "moderate"
+            assert risk_pref.weight == 0.9
+            assert risk_pref.active is True
+            
+            # Verify database call was made
+            mock_connection.fetch.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_load_preferences_by_category(self, preference_manager, mock_connection, sample_user_id):
+        """Test loading farmer preferences filtered by category."""
+        # Mock database row for specific category
+        mock_preference_row = {
+            'id': uuid4(),
+            'user_id': sample_user_id,
+            'preference_category': 'crop_types',
+            'preference_data': json.dumps({
+                "preferred_crops": ["corn", "soybeans"],
+                "avoided_crops": ["wheat"],
+                "new_crop_interest": True
+            }),
+            'weight': Decimal('1.0'),
+            'created_at': datetime.now(),
+            'updated_at': datetime.now(),
+            'version': 1,
+            'active': True
+        }
+        
+        # Mock connection to return single preference row
+        mock_connection.fetch.return_value = [mock_preference_row]
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            # Test loading preferences for specific category
+            result = await preference_manager.get_user_preferences(
+                user_id=sample_user_id, 
+                category="crop_types"
+            )
+            
+            assert len(result) == 1
+            assert isinstance(result[0], FarmerPreference)
+            assert result[0].user_id == sample_user_id
+            assert result[0].preference_category == "crop_types"
+            assert result[0].preference_data["preferred_crops"] == ["corn", "soybeans"]
+            assert result[0].weight == 1.0
+            
+            # Verify database call was made with category filter
+            mock_connection.fetch.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_load_preferences_invalid_category(self, preference_manager, sample_user_id):
+        """Test loading preferences with invalid category."""
+        with pytest.raises(ValueError, match="Invalid preference category"):
+            await preference_manager.get_user_preferences(
+                user_id=sample_user_id,
+                category="invalid_category"
+            )
+
+    @pytest.mark.asyncio
+    async def test_load_preferences_empty_result(self, preference_manager, mock_connection, sample_user_id):
+        """Test loading preferences when no preferences exist."""
+        # Mock connection to return empty result
+        mock_connection.fetch.return_value = []
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            result = await preference_manager.get_user_preferences(user_id=sample_user_id)
+            
+            assert len(result) == 0
+            assert result == []
+            
+            # Verify database call was made
+            mock_connection.fetch.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_load_preferences_database_error(self, preference_manager, mock_connection, sample_user_id):
+        """Test loading preferences with database error."""
+        # Mock connection to raise an exception
+        mock_connection.fetch.side_effect = Exception("Database connection error")
+        
+        with patch.object(preference_manager, '_get_connection', return_value=mock_connection):
+            result = await preference_manager.get_user_preferences(user_id=sample_user_id)
+            
+            # Should return empty list on error
+            assert result == []
+
 
 if __name__ == "__main__":
     pytest.main([__file__])

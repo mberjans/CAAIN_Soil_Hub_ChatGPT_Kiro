@@ -537,7 +537,7 @@
   - Add `test_save_preferences()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_preference_manager.py --collect-only`
 
-- [ ] **JOB1-007.3.test** - Write test for loading preferences
+- [x] **JOB1-007.3.test** - Write test for loading preferences
   - Path: `services/crop-taxonomy/tests/test_preference_manager.py`
   - Add `test_load_preferences()` test method
   - Verify: `pytest services/crop-taxonomy/tests/test_preference_manager.py --collect-only`
