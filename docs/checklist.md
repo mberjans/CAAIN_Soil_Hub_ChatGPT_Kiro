@@ -181,7 +181,7 @@
   - Command: `pkill -f "uvicorn src.main:app --port 8010"`
   - Verify: Service stopped
 
-- [ ] **JOB5-005.99** - Commit main app
+- [x] **JOB5-005.99** - Commit main app
   - Command: `git add services/weather-service/src/main.py services/weather-service/tests/test_main.py && git commit -m "JOB5-005: Create FastAPI main application"`
   - Verify: `git log -1 --oneline`
 
@@ -191,12 +191,12 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB5-006.1.test** - Create test file for weather fetcher
+- [x] **JOB5-006.1.test** - Create test file for weather fetcher
   - Path: `services/weather-service/tests/test_weather_fetcher.py`
   - Create test file
   - Verify: `ls services/weather-service/tests/test_weather_fetcher.py`
 
-- [ ] **JOB5-006.2.test** - Write test for MockWeatherProvider
+- [x] **JOB5-006.2.test** - Write test for MockWeatherProvider
   - Path: `services/weather-service/tests/test_weather_fetcher.py`
   - Add `test_mock_weather_provider()` test
   - Verify: `pytest services/weather-service/tests/test_weather_fetcher.py --collect-only`
@@ -206,7 +206,7 @@
   - Add `test_weather_fetcher_fetch()` test
   - Verify: `pytest services/weather-service/tests/test_weather_fetcher.py --collect-only`
 
-- [ ] **JOB5-006.4.impl** - Create MockWeatherProvider
+- [x] **JOB5-006.4.impl** - Create MockWeatherProvider
   - Path: `services/weather-service/src/providers/mock_weather_provider.py`
   - Implement mock provider
   - Verify: `python -c "from src.providers.mock_weather_provider import MockWeatherProvider; print('OK')"`
@@ -231,7 +231,7 @@
   - Add method to store data in TimescaleDB
   - Verify: Check method in file
 
-- [ ] **JOB5-006.9.verify** - Run weather fetcher tests
+- [x] **JOB5-006.9.verify** - Run weather fetcher tests
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_fetcher.py -v`
   - Verify: All tests pass
 
