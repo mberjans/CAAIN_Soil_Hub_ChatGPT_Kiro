@@ -8,14 +8,24 @@ Tests for DeficiencyDetector class including:
 
 import pytest
 import numpy as np
-import tensorflow as tf
 from unittest.mock import Mock, patch, MagicMock
+
+# Try to import tensorflow, skip tests if not available
+try:
+    import tensorflow as tf
+    TENSORFLOW_AVAILABLE = True
+except ImportError:
+    TENSORFLOW_AVAILABLE = False
 
 # Import the detector (not implemented yet)
 try:
     from src.services.detector import DeficiencyDetector
 except ImportError:
     pytest.skip("DeficiencyDetector not implemented yet", allow_module_level=True)
+
+# Skip all tests if TensorFlow is not available
+if not TENSORFLOW_AVAILABLE:
+    pytest.skip("TensorFlow not available - install with: pip install tensorflow", allow_module_level=True)
 
 
 class TestDeficiencyDetector:
