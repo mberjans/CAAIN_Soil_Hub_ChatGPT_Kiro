@@ -119,7 +119,7 @@
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_models.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB5-003.99** - Commit database schema
+- [x] **JOB5-003.99** - Commit database schema
   - Command: `git add services/weather-service/src/models/ services/weather-service/migrations/ services/weather-service/tests/test_weather_models.py && git commit -m "JOB5-003: Create TimescaleDB schema for weather data"`
   - Verify: `git log -1 --oneline`
 
@@ -129,22 +129,22 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB5-004.1.test** - Create test file for schemas
+- [x] **JOB5-004.1.test** - Create test file for schemas
   - Path: `services/weather-service/tests/test_weather_schemas.py`
   - Create test file
   - Verify: `ls services/weather-service/tests/test_weather_schemas.py`
 
-- [ ] **JOB5-004.2.test** - Write test for WeatherRequest schema
+- [x] **JOB5-004.2.test** - Write test for WeatherRequest schema
   - Path: `services/weather-service/tests/test_weather_schemas.py`
   - Add `test_weather_request_valid()` test
   - Verify: `pytest services/weather-service/tests/test_weather_schemas.py --collect-only`
 
-- [ ] **JOB5-004.3.impl** - Create weather_schemas.py
+- [x] **JOB5-004.3.impl** - Create weather_schemas.py
   - Path: `services/weather-service/src/schemas/weather_schemas.py`
   - Implement WeatherRequest, WeatherResponse, ForecastResponse schemas
   - Verify: `python -c "from src.schemas.weather_schemas import WeatherRequest; print('OK')"`
 
-- [ ] **JOB5-004.4.verify** - Run schema tests
+- [x] **JOB5-004.4.verify** - Run schema tests
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_schemas.py -v`
   - Verify: All tests pass
 
