@@ -339,7 +339,7 @@
   - Add _estimate_affected_area method
   - Verify: Check method in file
 
-- [ ] **JOB3-009.4.verify** - Run confidence scorer tests
+- [x] **JOB3-009.4.verify** - Run confidence scorer tests
   - Command: `cd services/image-analysis && source venv/bin/activate && pytest tests/test_detector.py -v`
   - Verify: All tests pass
 
