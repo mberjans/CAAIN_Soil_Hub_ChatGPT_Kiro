@@ -334,7 +334,7 @@
   - Add _determine_severity method
   - Verify: Check method in file
 
-- [ ] **JOB3-009.3.impl** - Implement affected area estimation
+- [x] **JOB3-009.3.impl** - Implement affected area estimation
   - Path: `services/image-analysis/src/services/detector.py`
   - Add _estimate_affected_area method
   - Verify: Check method in file
