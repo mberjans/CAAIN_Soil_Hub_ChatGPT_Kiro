@@ -389,26 +389,26 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB4-009.1.test** - Write test for agricultural zone validation
+- [x] **JOB4-009.1.test** - Write test for agricultural zone validation
   - Path: `services/location-management/tests/test_validation_service.py`
   - Add `test_validate_agricultural_zone()` test
   - Verify: `pytest services/location-management/tests/test_validation_service.py --collect-only`
 
-- [ ] **JOB4-009.2.impl** - Create validation_service.py
+- [x] **JOB4-009.2.impl** - Create validation_service.py
   - Path: `services/location-management/src/services/validation_service.py`
   - Create LocationValidationService class
   - Verify: `python -c "from src.services.validation_service import LocationValidationService; print('OK')"`
 
-- [ ] **JOB4-009.3.impl** - Implement agricultural zone validation
+- [x] **JOB4-009.3.impl** - Implement agricultural zone validation
   - Path: `services/location-management/src/services/validation_service.py`
   - Add validate_agricultural_zone method
   - Verify: Check method in file
 
-- [ ] **JOB4-009.4.verify** - Run validation tests
+- [x] **JOB4-009.4.verify** - Run validation tests
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/test_validation_service.py -v`
-  - Verify: All tests pass
+  - Verify: All tests pass (11/11 passing)
 
-- [ ] **JOB4-009.99** - Commit validation service
+- [x] **JOB4-009.99** - Commit validation service
   - Command: `git add services/location-management/src/services/validation_service.py services/location-management/tests/test_validation_service.py && git commit -m "JOB4-009: Implement validation service"`
   - Verify: `git log -1 --oneline`
 
