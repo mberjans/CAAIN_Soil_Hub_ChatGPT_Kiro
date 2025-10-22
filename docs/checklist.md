@@ -630,7 +630,7 @@
   - Command: `cd services/crop_taxonomy && source venv/bin/activate && uvicorn src.main:app --port 8007 &`
   - Verify: Service starts
 
-- [ ] **JOB1-008.10.verify** - Test search endpoint with curl
+- [x] **JOB1-008.10.verify** - Test search endpoint with curl
   - Command: `curl -X POST http://localhost:8007/api/v1/crop-taxonomy/search -H "Content-Type: application/json" -d '{"crop_type": "corn", "maturity_days_min": 90, "maturity_days_max": 120}'`
   - Verify: Returns valid response
 

@@ -3,13 +3,13 @@ from sqlalchemy.orm import Session
 from typing import List, Optional
 from src.schemas.crop_schemas import CropFilterRequest, CropSearchResponse
 from src.services.crop_search_service import CropSearchService
-
-# Dependency to get database session
-def get_db():
-    # TODO: Implement database session dependency
-    pass
+from ..main import get_db # Import get_db from main.py
 
 router = APIRouter(prefix="/api/v1/crop-taxonomy", tags=["crop-search"])
+
+@router.get("/test-route")
+async def test_route():
+    return {"message": "Test route successful!"}
 
 @router.post("/search", response_model=CropSearchResponse)
 async def search_crops(
