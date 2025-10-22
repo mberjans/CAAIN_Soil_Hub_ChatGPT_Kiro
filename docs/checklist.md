@@ -395,7 +395,7 @@
   - Use known nitrogen deficiency images
   - Verify: Correctly identifies nitrogen deficiency
 
-- [ ] **JOB3-011.2** - Test with phosphorus deficiency images
+- [x] **JOB3-011.2** - Test with phosphorus deficiency images
   - Use known phosphorus deficiency images
   - Verify: Correctly identifies phosphorus deficiency
 
