@@ -426,7 +426,7 @@
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/ --cov=src --cov-report=html`
   - Verify: Coverage >80%
 
-- [ ] **JOB5-011.99** - Commit integration tests
+- [x] **JOB5-011.99** - Commit integration tests
   - Command: `git add services/weather-service/tests/test_api_integration.py && git commit -m "JOB5-011: Implement integration tests"`
   - Verify: `git log -1 --oneline`
 
@@ -436,20 +436,20 @@
 
 ### Tasks
 
-- [ ] **JOB5-012.1** - Start service on port 8010
+- [x] **JOB5-012.1** - Start service on port 8010
   - Command: `cd services/weather-service && source venv/bin/activate && uvicorn src.main:app --port 8010 &`
   - Verify: `curl http://localhost:8010/health`
 
-- [ ] **JOB5-012.2** - Run full test suite
+- [x] **JOB5-012.2** - Run full test suite
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/ -v`
   - Verify: All tests pass
 
-- [ ] **JOB5-012.3** - Create README
+- [x] **JOB5-012.3** - Create README
   - Path: `services/weather-service/README.md`
   - Add service documentation
   - Verify: `cat services/weather-service/README.md`
 
-- [ ] **JOB5-012.4** - Tag service as ready
+- [x] **JOB5-012.4** - Tag service as ready
   - Command: `git tag -a weather-service-v1.0.0 -m "Weather Service ready for integration"`
   - Verify: `git tag -l`
 
