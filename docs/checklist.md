@@ -329,7 +329,7 @@
   - Add `test_confidence_scoring()` test
   - Verify: `pytest services/image-analysis/tests/test_detector.py --collect-only`
 
-- [!] **JOB3-009.2.impl** - Implement severity determination
+- [x] **JOB3-009.2.impl** - Implement severity determination
   - Path: `services/image-analysis/src/services/detector.py`
   - Add _determine_severity method
   - Verify: Check method in file
