@@ -301,7 +301,7 @@
   - Add file validation and processing
   - Verify: Check file handling in endpoint
 
-- [ ] **JOB3-008.5.impl** - Include router in main app
+- [x] **JOB3-008.5.impl** - Include router in main app
   - Path: `services/image-analysis/src/main.py`
   - Add app.include_router(analysis_routes.router)
   - Verify: Check router inclusion
