@@ -148,7 +148,7 @@
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_schemas.py -v`
   - Verify: All tests pass
 
-- [ ] **JOB5-004.99** - Commit schemas
+- [x] **JOB5-004.99** - Commit schemas
   - Command: `git add services/weather-service/src/schemas/ services/weather-service/tests/test_weather_schemas.py && git commit -m "JOB5-004: Create Pydantic schemas"`
   - Verify: `git log -1 --oneline`
 
@@ -158,26 +158,26 @@
 
 ### Tasks (TDD Workflow)
 
-- [ ] **JOB5-005.1.test** - Create test file for main app
+- [x] **JOB5-005.1.test** - Create test file for main app
   - Path: `services/weather-service/tests/test_main.py`
   - Create test file
   - Verify: `ls services/weather-service/tests/test_main.py`
 
-- [ ] **JOB5-005.2.test** - Write test for health endpoint
+- [x] **JOB5-005.2.test** - Write test for health endpoint
   - Path: `services/weather-service/tests/test_main.py`
   - Add `test_health_endpoint()` test
   - Verify: `pytest services/weather-service/tests/test_main.py --collect-only`
 
-- [ ] **JOB5-005.3.impl** - Create main.py
+- [x] **JOB5-005.3.impl** - Create main.py
   - Path: `services/weather-service/src/main.py`
   - Create FastAPI app with health endpoint
   - Verify: `python -c "from src.main import app; print(app.title)"`
 
-- [ ] **JOB5-005.4.verify** - Start service on port 8010
+- [x] **JOB5-005.4.verify** - Start service on port 8010
   - Command: `cd services/weather-service && source venv/bin/activate && uvicorn src.main:app --port 8010 &`
   - Verify: `curl http://localhost:8010/health`
 
-- [ ] **JOB5-005.5.verify** - Stop service
+- [x] **JOB5-005.5.verify** - Stop service
   - Command: `pkill -f "uvicorn src.main:app --port 8010"`
   - Verify: Service stopped
 
