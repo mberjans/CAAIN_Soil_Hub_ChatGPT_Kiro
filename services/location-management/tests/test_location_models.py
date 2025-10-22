@@ -5,7 +5,6 @@ from decimal import Decimal
 from geoalchemy2.elements import WKTElement
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import StaticPool
 
 
 pytest_plugins = ('pytest_asyncio',)
@@ -13,26 +12,19 @@ pytest_plugins = ('pytest_asyncio',)
 
 @pytest.fixture(scope='function')
 def db_engine():
-    engine = create_engine(
-        'sqlite:///:memory:',
-        connect_args={'check_same_thread': False},
-        poolclass=StaticPool,
-    )
+    db_url = 'postgresql://Mark@localhost:5432/caain_soil_hub'
+    engine = create_engine(db_url, echo=False)
     return engine
 
 
 @pytest.fixture(scope='function')
 def db_session(db_engine):
-    from src.models.location_models import Base
-    
-    Base.metadata.create_all(db_engine)
     Session = sessionmaker(bind=db_engine)
     session = Session()
     
     yield session
     
     session.close()
-    Base.metadata.drop_all(db_engine)
 
 
 class TestFarmLocationModel:
@@ -85,19 +77,23 @@ class TestFarmLocationModel:
         assert farm.name == 'Test Farm'
         assert farm.coordinates is not None
     
-    def test_farm_location_default_values(self):
-        """Test default values for FarmLocation"""
+    def test_farm_location_default_values(self, db_session):
+        """Test default values for FarmLocation after database insertion"""
         from src.models.location_models import FarmLocation
         
+        user_id = uuid4()
         farm = FarmLocation(
-            user_id=uuid4(),
+            user_id=user_id,
             name='Test Farm',
             coordinates=WKTElement('POINT(-93.6 42.0)', srid=4326),
         )
         
-        assert farm.country == 'USA'
-        assert farm.is_primary is False
-        assert farm.created_at is not None or farm.created_at is None
+        db_session.add(farm)
+        db_session.commit()
+        
+        retrieved = db_session.query(FarmLocation).filter_by(user_id=user_id).first()
+        assert retrieved.country == 'USA'
+        assert retrieved.is_primary is False
     
     def test_farm_location_timestamps(self, db_session):
         """Test that created_at and updated_at timestamps are set"""
@@ -177,17 +173,34 @@ class TestFieldModel:
         assert field.name == 'Test Field'
         assert field.acres == Decimal('10.0')
     
-    def test_field_default_values(self):
-        """Test default values for Field"""
-        from src.models.location_models import Field
+    def test_field_default_values(self, db_session):
+        """Test default values for Field after database insertion"""
+        from src.models.location_models import FarmLocation, Field
+        
+        user_id = uuid4()
+        farm_id = uuid4()
+        
+        farm = FarmLocation(
+            id=farm_id,
+            user_id=user_id,
+            name='Test Farm',
+            coordinates=WKTElement('POINT(-93.6 42.0)', srid=4326),
+        )
+        
+        db_session.add(farm)
+        db_session.commit()
         
         field = Field(
-            farm_location_id=uuid4(),
+            farm_location_id=farm_id,
             name='Test Field',
             acres=Decimal('10.0'),
         )
         
-        assert field.irrigation_available is False
+        db_session.add(field)
+        db_session.commit()
+        
+        retrieved = db_session.query(Field).filter_by(farm_location_id=farm_id).first()
+        assert retrieved.irrigation_available is False
     
     def test_field_polygon_geometry(self):
         """Test that Field can store POLYGON geometry"""

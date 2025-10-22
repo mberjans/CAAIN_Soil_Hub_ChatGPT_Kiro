@@ -93,42 +93,42 @@
   - Implement FarmLocation and Field models with Geometry columns
   - Verify: `python -c "from src.models.location_models import FarmLocation, Field; print('OK')"`
 
-- [ ] **JOB4-003.5.impl** - Create migration SQL
+- [x] **JOB4-003.5.impl** - Create migration SQL
   - Path: `services/location-management/migrations/004_location_schema.sql`
   - Write CREATE TABLE statements with PostGIS geometry columns
   - Verify: `cat services/location-management/migrations/004_location_schema.sql`
 
-- [ ] **JOB4-003.6.impl** - Add GIST spatial indexes to migration
+- [x] **JOB4-003.6.impl** - Add GIST spatial indexes to migration
   - Path: `services/location-management/migrations/004_location_schema.sql`
   - Add CREATE INDEX statements using GIST
   - Verify: `grep "USING GIST" services/location-management/migrations/004_location_schema.sql`
 
-- [ ] **JOB4-003.7.impl** - Add sample data to migration
+- [x] **JOB4-003.7.impl** - Add sample data to migration
   - Path: `services/location-management/migrations/004_location_schema.sql`
   - Add INSERT statements with ST_GeomFromText
   - Verify: `grep "ST_GeomFromText" services/location-management/migrations/004_location_schema.sql`
 
-- [ ] **JOB4-003.8.impl** - Run migration
-  - Command: `psql -U postgres -d caain_soil_hub -f services/location-management/migrations/004_location_schema.sql`
-  - Verify: `psql -U postgres -d caain_soil_hub -c "\d farm_locations"`
+- [x] **JOB4-003.8.impl** - Run migration
+  - Command: `psql -U Mark -d caain_soil_hub -f services/location-management/migrations/004_location_schema.sql`
+  - Verify: `psql -U Mark -d caain_soil_hub -c "\d farm_locations"`
 
-- [ ] **JOB4-003.9.verify** - Verify POINT geometry column
-  - Command: `psql -U postgres -d caain_soil_hub -c "SELECT column_name, udt_name FROM information_schema.columns WHERE table_name='farm_locations' AND column_name='coordinates';"`
+- [x] **JOB4-003.9.verify** - Verify POINT geometry column
+  - Command: `psql -U Mark -d caain_soil_hub -c "SELECT column_name, udt_name FROM information_schema.columns WHERE table_name='farm_locations' AND column_name='coordinates';"`
   - Verify: Column type is geometry
 
-- [ ] **JOB4-003.10.verify** - Verify GIST indexes created
-  - Command: `psql -U postgres -d caain_soil_hub -c "\di idx_farm_locations_coordinates"`
+- [x] **JOB4-003.10.verify** - Verify GIST indexes created
+  - Command: `psql -U Mark -d caain_soil_hub -c "\di idx_farm_locations_coordinates"`
   - Verify: Index exists with GIST method
 
-- [ ] **JOB4-003.11.verify** - Test spatial query
-  - Command: `psql -U postgres -d caain_soil_hub -c "SELECT id, name, ST_AsText(coordinates) FROM farm_locations LIMIT 5;"`
+- [x] **JOB4-003.11.verify** - Test spatial query
+  - Command: `psql -U Mark -d caain_soil_hub -c "SELECT id, name, ST_AsText(coordinates) FROM farm_locations LIMIT 5;"`
   - Verify: Returns location data
 
-- [ ] **JOB4-003.12.verify** - Run model tests
+- [x] **JOB4-003.12.verify** - Run model tests
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/test_location_models.py -v`
-  - Verify: All tests pass
+  - Verify: All tests pass (11/11 tests passing)
 
-- [ ] **JOB4-003.99** - Commit database schema
+- [x] **JOB4-003.99** - Commit database schema
   - Command: `git add services/location-management/src/models/ services/location-management/migrations/ services/location-management/tests/test_location_models.py && git commit -m "JOB4-003: Create PostGIS database schema"`
   - Verify: `git log -1 --oneline`
 
