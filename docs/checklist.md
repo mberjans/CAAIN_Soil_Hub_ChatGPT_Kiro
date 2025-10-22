@@ -435,12 +435,12 @@
   - Add `test_search_performance()` test method with timing
   - Verify: `pytest services/crop_taxonomy/tests/test_crop_search.py --collect-only`
 
-- [x]! **JOB1-006.11.impl** - Create crop_search_service.py file
+- [x] **JOB1-006.11.impl** - Create crop_search_service.py file
   - Path: `services/crop_taxonomy/src/services/crop_search_service.py`
   - Create empty file with imports
   - Verify: `ls services/crop_taxonomy/src/services/crop_search_service.py`
 
-- [x]! **JOB1-006.12.impl** - Implement CropSearchService class skeleton
+- [x] **JOB1-006.12.impl** - Implement CropSearchService class skeleton
   - Path: `services/crop_taxonomy/src/services/crop_search_service.py`
   - Add class with __init__ method
   - Verify: `python -c "from src.services.crop_search_service import CropSearchService; print('OK')"`
@@ -465,7 +465,7 @@
   - Add _apply_disease_resistance_filters with JSONB queries
   - Verify: Check method in file
 
-- [x]! **JOB1-006.17.impl** - Implement _apply_market_class_filters method
+- [x] **JOB1-006.17.impl** - Implement _apply_market_class_filters method
   - Path: `services/crop_taxonomy/src/services/crop_search_service.py`
   - Add _apply_market_class_filters method
   - Verify: Check method in file
