@@ -78,14 +78,15 @@ GROUP BY station_id, day;
 
 -- Add a continuous aggregate for forecast accuracy (comparing forecasts with actual observations)
 -- This continuous aggregate tracks the accuracy of forecasts by comparing predicted values with actual observations
-CREATE MATERIALIZED VIEW IF NOT EXISTS forecast_accuracy_summary
-WITH (timescaledb.continuous) AS
-SELECT
-    f.station_id,
-    time_bucket('1 day', f.forecast_time) AS day,
-    AVG(ABS(f.temperature_c - o.temperature_c)) as avg_temp_error,
-    AVG(ABS(f.precipitation_mm - o.precipitation_mm)) as avg_precip_error
-FROM weather_forecasts f
-JOIN weather_observations o ON f.station_id = o.station_id 
-    AND f.forecast_for = o.observation_time
-GROUP BY f.station_id, day;
+-- COMMENTED OUT DUE TO TIMESCALEDB LIMITATION: Cannot join multiple hypertables in continuous aggregates
+-- CREATE MATERIALIZED VIEW IF NOT EXISTS forecast_accuracy_summary
+-- WITH (timescaledb.continuous) AS
+-- SELECT
+--     f.station_id,
+--     time_bucket('1 day', f.forecast_time) AS day,
+--     AVG(ABS(f.temperature_c - o.temperature_c)) as avg_temp_error,
+--     AVG(ABS(f.precipitation_mm - o.precipitation_mm)) as avg_precip_error
+-- FROM weather_forecasts f
+-- JOIN weather_observations o ON f.station_id = o.station_id 
+--     AND f.forecast_for = o.observation_time
+-- GROUP BY f.station_id, day;

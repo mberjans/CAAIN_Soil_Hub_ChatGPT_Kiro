@@ -93,7 +93,7 @@
   - Write CREATE TABLE statements
   - Verify: `cat services/weather-service/migrations/005_weather_schema.sql`
 
-- [ ] **JOB5-003.6.impl** - Add hypertable creation to migration
+- [x] **JOB5-003.6.impl** - Add hypertable creation to migration
   - Path: `services/weather-service/migrations/005_weather_schema.sql`
   - Add SELECT create_hypertable statements
   - Verify: `grep "create_hypertable" services/weather-service/migrations/005_weather_schema.sql`
@@ -103,19 +103,19 @@
   - Add CREATE MATERIALIZED VIEW for daily summaries
   - Verify: `grep "MATERIALIZED VIEW" services/weather-service/migrations/005_weather_schema.sql`
 
-- [ ] **JOB5-003.8.impl** - Run migration
+- [x] **JOB5-003.8.impl** - Run migration
   - Command: `psql -U postgres -d caain_soil_hub -f services/weather-service/migrations/005_weather_schema.sql`
   - Verify: `psql -U postgres -d caain_soil_hub -c "\d weather_stations"`
 
-- [ ] **JOB5-003.9.verify** - Verify hypertables created
+- [x] **JOB5-003.9.verify** - Verify hypertables created
   - Command: `psql -U postgres -d caain_soil_hub -c "SELECT * FROM timescaledb_information.hypertables WHERE hypertable_name IN ('weather_observations', 'weather_forecasts');"`
   - Verify: Both hypertables present
 
-- [ ] **JOB5-003.10.verify** - Verify continuous aggregates created
+- [x] **JOB5-003.10.verify** - Verify continuous aggregates created
   - Command: `psql -U postgres -d caain_soil_hub -c "SELECT view_name FROM timescaledb_information.continuous_aggregates;"`
   - Verify: Continuous aggregate present
 
-- [ ] **JOB5-003.11.verify** - Run model tests
+- [x] **JOB5-003.11.verify** - Run model tests
   - Command: `cd services/weather-service && source venv/bin/activate && pytest tests/test_weather_models.py -v`
   - Verify: All tests pass
 
