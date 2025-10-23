@@ -365,10 +365,10 @@
   - Add app.include_router(location_routes.router)
   - Verify: Check router inclusion
 
-- [ ] **JOB4-008.9.verify** - Test create location endpoint
-  - Command: `curl -X POST http://localhost:8009/api/v1/locations/ -H "Content-Type: application/json" -d '{"name": "Test Farm", "address": "Ames, Iowa", "total_acres": 100}'`
-  - Verify: Returns created location
-  - Note: Ready to test when service is running
+- [x] **JOB4-008.9.verify** - Test create location endpoint
+    - Command: `curl -X POST http://localhost:8009/api/v1/locations/ -H "Content-Type: application/json" -d '{"name": "Test Farm", "latitude": 42.0347, "longitude": -93.6200, "address": "Ames, Iowa", "total_acres": 100}'`
+    - Verify: Returns created location
+    - Note: Successfully created location with ID 26dbdf56-5b1f-447a-8602-d213939bfc73. Response contains id, user_id, name, latitude, longitude, and address.
 
 - [ ] **JOB4-008.10.verify** - Test nearby locations endpoint
   - Command: `curl "http://localhost:8009/api/v1/locations/nearby?latitude=42.0&longitude=-93.0&radius_km=50"`
