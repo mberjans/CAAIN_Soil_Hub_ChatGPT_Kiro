@@ -192,12 +192,12 @@
   - Create FastAPI app with health endpoint
   - Verify: `python -c "from src.main import app; print(app.title)"`
 
-- [!] **JOB4-005.4.verify** - Start service on port 8009
+- [ ] **JOB4-005.4.verify** - Start service on port 8009
   - Command: `cd services/location-management && source venv/bin/activate && uvicorn src.main:app --port 8009 &`
   - Verify: `curl http://localhost:8009/health`
   - Note: Service ready to start but not started due to background process management
 
-- [!] **JOB4-005.5.verify** - Stop service
+- [ ] **JOB4-005.5.verify** - Stop service
   - Command: `pkill -f "uvicorn src.main:app --port 8009"`
   - Verify: Service stopped
   - Note: Only needed if service is running
@@ -365,12 +365,12 @@
   - Add app.include_router(location_routes.router)
   - Verify: Check router inclusion
 
-- [!] **JOB4-008.9.verify** - Test create location endpoint
+- [ ] **JOB4-008.9.verify** - Test create location endpoint
   - Command: `curl -X POST http://localhost:8009/api/v1/locations/ -H "Content-Type: application/json" -d '{"name": "Test Farm", "address": "Ames, Iowa", "total_acres": 100}'`
   - Verify: Returns created location
   - Note: Ready to test when service is running
 
-- [!] **JOB4-008.10.verify** - Test nearby locations endpoint
+- [ ] **JOB4-008.10.verify** - Test nearby locations endpoint
   - Command: `curl "http://localhost:8009/api/v1/locations/nearby?latitude=42.0&longitude=-93.0&radius_km=50"`
   - Verify: Returns nearby locations
   - Note: Ready to test when service is running
@@ -437,10 +437,10 @@
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/test_api_integration.py -v`
   - Verify: All tests pass (8/8 passing)
 
-- [!] **JOB4-010.5** - Generate coverage report
+- [x!] **JOB4-010.5** - Generate coverage report
   - Command: `cd services/location-management && source venv/bin/activate && pytest tests/ --cov=src --cov-report=html`
   - Verify: Coverage >80%
-  - Note: Ready to run when needed
+  - Note: Coverage report generated successfully with 75% coverage (303/403 lines covered)
 
 - [x] **JOB4-010.99** - Commit integration tests
   - Command: `git add services/location-management/tests/test_api_integration.py && git commit -m "JOB4-010: Implement integration tests"`
