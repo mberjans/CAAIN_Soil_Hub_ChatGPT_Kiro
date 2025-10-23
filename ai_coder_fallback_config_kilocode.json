@@ -7,12 +7,30 @@
     "max_fallback_attempts": 3,
     "reset_to_primary_after_hours": 24
   },
+  "fallback_state": {
+    "current_ai_coder": "kilocode",
+    "current_ai_coder_index": 0,
+    "fallback_attempts": 0,
+    "last_fallback_time": null,
+    "last_reset_time": null,
+    "rate_limit_detected": false,
+    "api_test_results": {}
+  },
   "ai_coder_priority_order": [
+    {
+      "name": "kilocode",
+      "display_name": "Kilocode",
+      "command": "kilocode",
+      "description": "Primary AI coder - Kilocode with cat construct and auto-confirm",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
     {
       "name": "codex",
       "display_name": "Codex",
       "command": "codex",
-      "description": "Primary AI coder - OpenAI Codex",
+      "description": "Secondary AI coder - OpenAI Codex",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -21,7 +39,7 @@
       "name": "claude",
       "display_name": "Claude Code",
       "command": "claude",
-      "description": "Secondary AI coder - Anthropic Claude",
+      "description": "Tertiary AI coder - Anthropic Claude",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -30,7 +48,7 @@
       "name": "gemini",
       "display_name": "Google Gemini",
       "command": "gemini",
-      "description": "Tertiary AI coder - Google Gemini",
+      "description": "Quaternary AI coder - Google Gemini",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -39,7 +57,7 @@
       "name": "qwen",
       "display_name": "Qwen Coder",
       "command": "qwen",
-      "description": "Quaternary AI coder - Qwen",
+      "description": "Quinary AI coder - Qwen",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -48,16 +66,16 @@
       "name": "qodercli",
       "display_name": "QoderCLI",
       "command": "qodercli",
-      "description": "Quinary AI coder - QoderCLI with continue algorithm and YOLO mode",
+      "description": "Senary AI coder - QoderCLI with continue algorithm and YOLO mode",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
     },
     {
       "name": "ccr",
-      "display_name": "Claude Code Router (CCR)",
+      "display_name": "Claude Code Router",
       "command": "ccr",
-      "description": "Senary AI coder - Claude Code Router",
+      "description": "Septenary AI coder - Claude Code Router",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -66,16 +84,16 @@
       "name": "opencode",
       "display_name": "OpenCode",
       "command": "opencode",
-      "description": "Septenary AI coder - OpenCode",
+      "description": "Octonary AI coder - OpenCode with continue algorithm",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
     },
     {
       "name": "cursor",
-      "display_name": "Cursor AI",
-      "command": "cursor-agent",
-      "description": "Octonary AI coder - Cursor",
+      "display_name": "Cursor Agent",
+      "command": "cursor",
+      "description": "Nonary AI coder - Cursor Agent",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -84,7 +102,7 @@
       "name": "crush",
       "display_name": "Crush",
       "command": "crush",
-      "description": "Nonary AI coder - Crush",
+      "description": "Denary AI coder - Crush",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -93,7 +111,7 @@
       "name": "droid",
       "display_name": "Droid AI",
       "command": "droid",
-      "description": "Denary AI coder - Droid AI",
+      "description": "Undenary AI coder - Droid AI",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -102,7 +120,7 @@
       "name": "copilot",
       "display_name": "Copilot",
       "command": "copilot",
-      "description": "Undenary AI coder - Copilot",
+      "description": "Duodenary AI coder - Copilot AI agent",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -111,18 +129,10 @@
       "name": "auggie",
       "display_name": "Auggie",
       "command": "auggie",
-      "description": "Duodenary AI coder - Auggie (Last Fallback)",
+      "description": "Tredenary AI coder - Auggie (Last Fallback)",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
     }
-  ],
-  "fallback_state": {
-    "current_ai_coder": null,
-    "fallback_active": false,
-    "failed_ai_coders": [],
-    "last_fallback_time": null,
-    "fallback_count": 0,
-    "primary_ai_coder": "copilot"
-  }
+  ]
 }

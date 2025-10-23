@@ -1,0 +1,262 @@
+caain_soil_hub	pg_catalog	pg_statistic	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_type	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_foreign_table	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_authid	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_shadow	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statistic_ext_data	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_roles	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_settings	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_file_settings	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_hba_file_rules	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_config	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_shmem_allocations	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_backend_memory_contexts	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_available_extension_versions	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_user_mapping	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_xact_user_functions	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_replication_origin_status	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_subscription	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_attribute	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_proc	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_class	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_attrdef	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_constraint	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_inherits	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_index	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_operator	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_opfamily	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_opclass	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_am	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_amop	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_amproc	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_language	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_archiver	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_bgwriter	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_wal	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_progress_analyze	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_progress_vacuum	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_progress_cluster	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_progress_create_index	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_progress_basebackup	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_progress_copy	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_largeobject_metadata	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_aggregate	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_statistic_ext	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_rewrite	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_trigger	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_event_trigger	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_description	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_cast	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_enum	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_namespace	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_conversion	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_depend	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_database	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_db_role_setting	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_tablespace	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_auth_members	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_shdepend	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_shdescription	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_ts_config	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_ts_config_map	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_ts_dict	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_ts_parser	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_ts_template	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_extension	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_foreign_data_wrapper	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_foreign_server	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_policy	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_replication_origin	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_default_acl	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_init_privs	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_seclabel	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_shseclabel	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_collation	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_partitioned_table	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_range	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_transform	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_sequence	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_publication	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_publication_rel	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_subscription_rel	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_matviews	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_group	VIEW	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_user	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_policies	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_rules	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_views	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_indexes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_sequences	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stats	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stats_ext	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stats_ext_exprs	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_publication_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_locks	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_cursors	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_available_extensions	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_prepared_xacts	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_prepared_statements	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_seclabels	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_xact_user_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_timezone_abbrevs	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_timezone_names	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_all_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_sys_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_all_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_xact_all_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_sys_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_xact_sys_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_user_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_user_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_all_indexes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_sys_indexes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_user_indexes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_all_indexes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_sys_indexes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_user_indexes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_all_sequences	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_sys_sequences	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_statio_user_sequences	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_activity	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_replication	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_slru	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_wal_receiver	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_subscription	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_ssl	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_gssapi	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_replication_slots	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_replication_slots	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_database	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_database_conflicts	VIEW	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	pg_catalog	pg_stat_user_functions	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_user_mappings	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	pg_catalog	pg_largeobject	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	information_schema	information_schema_catalog_name	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	attributes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	applicable_roles	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	administrable_role_authorizations	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	check_constraint_routine_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	character_sets	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	check_constraints	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	collations	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	collation_character_set_applicability	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	column_column_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	column_domain_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	routines	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	column_privileges	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	role_column_grants	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	column_udt_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	columns	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	constraint_column_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	routine_column_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	constraint_table_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	domain_constraints	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	domain_udt_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	routine_privileges	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	domains	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	enabled_roles	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	schemata	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	key_column_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	role_routine_grants	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	parameters	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	referential_constraints	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	routine_routine_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	routine_sequence_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	sequences	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	routine_table_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	sql_parts	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	information_schema	sql_implementation_info	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	information_schema	sql_features	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	information_schema	sql_sizing	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	information_schema	table_constraints	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	table_privileges	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	view_table_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	role_table_grants	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	transforms	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	user_mappings	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	triggered_update_columns	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	views	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	triggers	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	udt_privileges	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	foreign_data_wrappers	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	role_udt_grants	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	data_type_privileges	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	usage_privileges	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	role_usage_grants	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	user_defined_types	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	element_types	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	view_column_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	view_routine_usage	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	_pg_foreign_servers	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	_pg_foreign_table_columns	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	column_options	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	_pg_foreign_data_wrappers	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	foreign_table_options	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	foreign_data_wrapper_options	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	foreign_server_options	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	foreign_servers	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	_pg_foreign_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	user_mapping_options	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	foreign_tables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	information_schema	_pg_user_mappings	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	_timescaledb_catalog	hypertable	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	hypertable_data_node	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	tablespace	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	dimension	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	dimension_partition	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	dimension_slice	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	chunk	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	chunk_constraint	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	chunk_index	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	chunk_data_node	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	metadata	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	continuous_agg	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	continuous_aggs_bucket_function	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	continuous_aggs_invalidation_threshold	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	continuous_aggs_watermark	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	continuous_aggs_hypertable_invalidation_log	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	continuous_aggs_materialization_invalidation_log	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	compression_algorithm	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	hypertable_compression	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	compression_chunk_size	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	remote_txn	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	chunk_copy_operation	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	continuous_agg_migrate_plan	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	continuous_agg_migrate_plan_step	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_config	bgw_job	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_internal	bgw_job_stat	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_internal	bgw_policy_chunk_stats	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_internal	job_errors	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_cache	cache_inval_hypertable	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_cache	cache_inval_bgw_job	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_cache	cache_inval_extension	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_internal	hypertable_chunk_local_size	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	_timescaledb_internal	compressed_chunk_stats	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	hypertables	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	job_stats	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	jobs	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	continuous_aggregates	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	data_nodes	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	chunks	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	dimensions	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	compression_settings	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_information	job_errors	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_experimental	chunk_replication_status	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	timescaledb_experimental	policies	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	public	fertilizer_types	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	fertilizer_prices	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	crop_filtering_attributes	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	farmer_preferences	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	filter_combinations	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_catalog	telemetry_event	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	image_analyses	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	deficiency_detections	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	weather_stations	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	weather_observations	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	weather_forecasts	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	_timescaledb_internal	_materialized_hypertable_6	BASE TABLE	\N	\N	\N	\N	\N	YES	NO	\N
+caain_soil_hub	public	weather_daily_summary	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	_timescaledb_internal	_partial_view_6	VIEW	\N	\N	\N	\N	\N	NO	NO	\N
+caain_soil_hub	_timescaledb_internal	_direct_view_6	VIEW	\N	\N	\N	\N	\N	NO	NO	\N

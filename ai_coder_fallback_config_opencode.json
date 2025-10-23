@@ -27,10 +27,19 @@
       "monitor_stderr": false
     },
     {
+      "name": "rovodev",
+      "display_name": "Rovodev",
+      "command": "acli rovodev",
+      "description": "Tertiary AI coder - Rovodev",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
       "name": "gemini",
       "display_name": "Google Gemini",
       "command": "gemini",
-      "description": "Tertiary AI coder - Google Gemini",
+      "description": "Quaternary AI coder - Google Gemini",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -39,25 +48,7 @@
       "name": "qwen",
       "display_name": "Qwen Coder",
       "command": "qwen",
-      "description": "Quaternary AI coder - Qwen",
-      "enabled": true,
-      "max_retries": 5,
-      "monitor_stderr": false
-    },
-    {
-      "name": "qodercli",
-      "display_name": "QoderCLI",
-      "command": "qodercli",
-      "description": "Quinary AI coder - QoderCLI with continue algorithm and YOLO mode",
-      "enabled": true,
-      "max_retries": 5,
-      "monitor_stderr": false
-    },
-    {
-      "name": "ccr",
-      "display_name": "Claude Code Router (CCR)",
-      "command": "ccr",
-      "description": "Senary AI coder - Claude Code Router",
+      "description": "Quinary AI coder - Qwen",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -66,7 +57,16 @@
       "name": "opencode",
       "display_name": "OpenCode",
       "command": "opencode",
-      "description": "Septenary AI coder - OpenCode",
+      "description": "Senary AI coder - OpenCode",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "ccr",
+      "display_name": "Claude Code Router (CCR)",
+      "command": "ccr",
+      "description": "Septenary AI coder - Claude Code Router",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -99,10 +99,37 @@
       "monitor_stderr": false
     },
     {
+      "name": "amp",
+      "display_name": "Amp AI",
+      "command": "amp",
+      "description": "Undenary AI coder - Amp AI",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "cline",
+      "display_name": "Cline",
+      "command": "cline",
+      "description": "Duodenary AI coder - Cline",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
       "name": "copilot",
       "display_name": "Copilot",
       "command": "copilot",
-      "description": "Undenary AI coder - Copilot",
+      "description": "Tredenary AI coder - Copilot",
+      "enabled": true,
+      "max_retries": 5,
+      "monitor_stderr": false
+    },
+    {
+      "name": "iflow",
+      "display_name": "iFlow AI",
+      "command": "iflow",
+      "description": "Quattuordenary AI coder - iFlow AI",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -111,7 +138,7 @@
       "name": "auggie",
       "display_name": "Auggie",
       "command": "auggie",
-      "description": "Duodenary AI coder - Auggie (Last Fallback)",
+      "description": "Quindenary AI coder - Auggie (Last Fallback)",
       "enabled": true,
       "max_retries": 5,
       "monitor_stderr": false
@@ -123,6 +150,6 @@
     "failed_ai_coders": [],
     "last_fallback_time": null,
     "fallback_count": 0,
-    "primary_ai_coder": "copilot"
+    "primary_ai_coder": "opencode"
   }
 }
