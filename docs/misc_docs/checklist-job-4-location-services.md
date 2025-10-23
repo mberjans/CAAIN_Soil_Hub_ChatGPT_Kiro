@@ -195,7 +195,7 @@
   - Command: `cd services/location-management && source venv/bin/activate && uvicorn src.main:app --port 8009 &`
   - Verify: `curl http://localhost:8009/health`
 
-- [ ] **JOB4-005.5.verify** - Stop service
+- [x] **JOB4-005.5.verify** - Stop service
   - Command: `pkill -f "uvicorn src.main:app --port 8009"`
   - Verify: Service stopped
 
