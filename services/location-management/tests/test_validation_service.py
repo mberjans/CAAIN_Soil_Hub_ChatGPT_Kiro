@@ -131,3 +131,345 @@ class TestValidationServiceIntegration:
         
         result = service.validate_location_data(location_data)
         assert result is not None
+class TestZoneInfoRetrieval:
+    """Test cases for zone information retrieval"""
+
+    def test_get_zone_info_valid_zone(self):
+        """Test getting zone info for valid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('5a')
+
+        assert result is not None
+        assert result['zone'] == '5a'
+        assert result['number'] == '5'
+        assert result['letter'] == 'a'
+        assert result['valid'] is True
+
+    def test_get_zone_info_invalid_zone(self):
+        """Test getting zone info for invalid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('99z')
+
+        assert result is None
+
+    def test_get_zone_info_case_insensitive(self):
+        """Test zone info retrieval is case insensitive"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('7B')
+
+        assert result is not None
+        assert result['zone'] == '7b'
+        assert result['number'] == '7'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_with_whitespace(self):
+        """Test zone info retrieval handles whitespace"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('  9b  ')
+
+        assert result is not None
+        assert result['zone'] == '9b'
+        assert result['number'] == '9'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_none_input(self):
+        """Test zone info retrieval with None input"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info(None)
+
+        assert result is None
+class TestZoneInfoRetrieval:
+    """Test cases for zone information retrieval"""
+
+    def test_get_zone_info_valid_zone(self):
+        """Test getting zone info for valid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('5a')
+
+        assert result is not None
+        assert result['zone'] == '5a'
+        assert result['number'] == '5'
+        assert result['letter'] == 'a'
+        assert result['valid'] is True
+
+    def test_get_zone_info_invalid_zone(self):
+        """Test getting zone info for invalid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('99z')
+
+        assert result is None
+
+    def test_get_zone_info_case_insensitive(self):
+        """Test zone info retrieval is case insensitive"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('7B')
+
+        assert result is not None
+        assert result['zone'] == '7b'
+        assert result['number'] == '7'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_with_whitespace(self):
+        """Test zone info retrieval handles whitespace"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('  9b  ')
+
+        assert result is not None
+        assert result['zone'] == '9b'
+        assert result['number'] == '9'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_none_input(self):
+        """Test zone info retrieval with None input"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info(None)
+
+        assert result is None
+    """Test cases for zone information retrieval"""
+
+    def test_get_zone_info_valid_zone(self):
+        """Test getting zone info for valid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('5a')
+
+        assert result is not None
+        assert result['zone'] == '5a'
+        assert result['number'] == '5'
+        assert result['letter'] == 'a'
+        assert result['valid'] is True
+
+    def test_get_zone_info_invalid_zone(self):
+        """Test getting zone info for invalid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('99z')
+
+        assert result is None
+
+    def test_get_zone_info_case_insensitive(self):
+        """Test zone info retrieval is case insensitive"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('7B')
+
+        assert result is not None
+        assert result['zone'] == '7b'
+        assert result['number'] == '7'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_with_whitespace(self):
+        """Test zone info retrieval handles whitespace"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('  9b  ')
+
+        assert result is not None
+        assert result['zone'] == '9b'
+        assert result['number'] == '9'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_none_input(self):
+        """Test zone info retrieval with None input"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info(None)
+
+        assert result is None
+
+    """Test cases for zone information retrieval"""
+
+    def test_get_zone_info_valid_zone(self):
+        """Test getting zone info for valid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('5a')
+
+        assert result is not None
+        assert result['zone'] == '5a'
+        assert result['number'] == '5'
+        assert result['letter'] == 'a'
+        assert result['valid'] is True
+
+    def test_get_zone_info_invalid_zone(self):
+        """Test getting zone info for invalid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('99z')
+
+        assert result is None
+
+    def test_get_zone_info_case_insensitive(self):
+        """Test zone info retrieval is case insensitive"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('7B')
+
+        assert result is not None
+        assert result['zone'] == '7b'
+        assert result['number'] == '7'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_with_whitespace(self):
+        """Test zone info retrieval handles whitespace"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('  9b  ')
+
+        assert result is not None
+        assert result['zone'] == '9b'
+        assert result['number'] == '9'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_none_input(self):
+        """Test zone info retrieval with None input"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info(None)
+
+        assert result is None
+class TestZoneInfoRetrieval:
+    """Test cases for zone information retrieval"""
+
+    def test_get_zone_info_valid_zone(self):
+        """Test getting zone info for valid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('5a')
+
+        assert result is not None
+        assert result['zone'] == '5a'
+        assert result['number'] == '5'
+        assert result['letter'] == 'a'
+        assert result['valid'] is True
+
+    def test_get_zone_info_invalid_zone(self):
+        """Test getting zone info for invalid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('99z')
+
+        assert result is None
+
+    def test_get_zone_info_case_insensitive(self):
+        """Test zone info retrieval is case insensitive"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('7B')
+
+        assert result is not None
+        assert result['zone'] == '7b'
+        assert result['number'] == '7'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_with_whitespace(self):
+        """Test zone info retrieval handles whitespace"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('  9b  ')
+
+        assert result is not None
+        assert result['zone'] == '9b'
+        assert result['number'] == '9'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_none_input(self):
+        """Test zone info retrieval with None input"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info(None)
+
+        assert result is None
+    """Test cases for zone information retrieval"""
+
+    def test_get_zone_info_valid_zone(self):
+        """Test getting zone info for valid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('5a')
+
+        assert result is not None
+        assert result['zone'] == '5a'
+        assert result['number'] == '5'
+        assert result['letter'] == 'a'
+        assert result['valid'] is True
+
+    def test_get_zone_info_invalid_zone(self):
+        """Test getting zone info for invalid zone"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('99z')
+
+        assert result is None
+
+    def test_get_zone_info_case_insensitive(self):
+        """Test zone info retrieval is case insensitive"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('7B')
+
+        assert result is not None
+        assert result['zone'] == '7b'
+        assert result['number'] == '7'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_with_whitespace(self):
+        """Test zone info retrieval handles whitespace"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info('  9b  ')
+
+        assert result is not None
+        assert result['zone'] == '9b'
+        assert result['number'] == '9'
+        assert result['letter'] == 'b'
+
+    def test_get_zone_info_none_input(self):
+        """Test zone info retrieval with None input"""
+        from src.services.validation_service import LocationValidationService
+
+        service = LocationValidationService()
+        result = service.get_zone_info(None)
+
+        assert result is None
+
+

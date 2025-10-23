@@ -59,3 +59,291 @@ class TestLocationRoutes:
         
         response = client.post('/api/v1/locations/', json=payload)
         assert response.status_code in [400, 422]
+class TestLocationRoutesErrorHandling:
+    """Test cases for error handling in location routes"""
+
+    def test_create_location_with_invalid_data(self, client):
+        """Test POST endpoint with invalid data types"""
+        payload = {
+            'name': 123,  # Should be string
+            'latitude': 'invalid',
+            'longitude': 'invalid'
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_invalid_params(self, client):
+        """Test nearby endpoint with invalid parameters"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 'abc', 'longitude': 'def', 'radius_km': -10}
+        )
+
+        assert response.status_code in [400, 422]
+
+    def test_get_location_with_invalid_uuid(self, client):
+        """Test GET endpoint with invalid UUID"""
+        response = client.get('/api/v1/locations/invalid-uuid')
+
+        assert response.status_code in [400, 422]
+
+    def test_create_location_with_extreme_coordinates(self, client):
+        """Test endpoint with extreme coordinate values"""
+        payload = {
+            'name': 'Extreme Location',
+            'latitude': 91.0,  # Invalid latitude
+            'longitude': -93.6
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_large_radius(self, client):
+        """Test nearby endpoint with very large radius"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 42.0, 'longitude': -93.6, 'radius_km': 10000}
+        )
+
+        assert response.status_code in [200, 422]
+class TestLocationRoutesErrorHandling:
+    """Test cases for error handling in location routes"""
+
+    def test_create_location_with_invalid_data(self, client):
+        """Test POST endpoint with invalid data types"""
+        payload = {
+            'name': 123,  # Should be string
+            'latitude': 'invalid',
+            'longitude': 'invalid'
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_invalid_params(self, client):
+        """Test nearby endpoint with invalid parameters"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 'abc', 'longitude': 'def', 'radius_km': -10}
+        )
+
+        assert response.status_code in [400, 422]
+
+    def test_get_location_with_invalid_uuid(self, client):
+        """Test GET endpoint with invalid UUID"""
+        response = client.get('/api/v1/locations/invalid-uuid')
+
+        assert response.status_code in [400, 422]
+
+    def test_create_location_with_extreme_coordinates(self, client):
+        """Test endpoint with extreme coordinate values"""
+        payload = {
+            'name': 'Extreme Location',
+            'latitude': 91.0,  # Invalid latitude
+            'longitude': -93.6
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_large_radius(self, client):
+        """Test nearby endpoint with very large radius"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 42.0, 'longitude': -93.6, 'radius_km': 10000}
+        )
+
+        assert response.status_code in [200, 422]
+    """Test cases for error handling in location routes"""
+
+    def test_create_location_with_invalid_data(self, client):
+        """Test POST endpoint with invalid data types"""
+        payload = {
+            'name': 123,  # Should be string
+            'latitude': 'invalid',
+            'longitude': 'invalid'
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_invalid_params(self, client):
+        """Test nearby endpoint with invalid parameters"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 'abc', 'longitude': 'def', 'radius_km': -10}
+        )
+
+        assert response.status_code in [400, 422]
+
+    def test_get_location_with_invalid_uuid(self, client):
+        """Test GET endpoint with invalid UUID"""
+        response = client.get('/api/v1/locations/invalid-uuid')
+
+        assert response.status_code in [400, 422]
+
+    def test_create_location_with_extreme_coordinates(self, client):
+        """Test endpoint with extreme coordinate values"""
+        payload = {
+            'name': 'Extreme Location',
+            'latitude': 91.0,  # Invalid latitude
+            'longitude': -93.6
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_large_radius(self, client):
+        """Test nearby endpoint with very large radius"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 42.0, 'longitude': -93.6, 'radius_km': 10000}
+        )
+
+        assert response.status_code in [200, 422]
+
+    """Test cases for error handling in location routes"""
+
+    def test_create_location_with_invalid_data(self, client):
+        """Test POST endpoint with invalid data types"""
+        payload = {
+            'name': 123,  # Should be string
+            'latitude': 'invalid',
+            'longitude': 'invalid'
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_invalid_params(self, client):
+        """Test nearby endpoint with invalid parameters"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 'abc', 'longitude': 'def', 'radius_km': -10}
+        )
+
+        assert response.status_code in [400, 422]
+
+    def test_get_location_with_invalid_uuid(self, client):
+        """Test GET endpoint with invalid UUID"""
+        response = client.get('/api/v1/locations/invalid-uuid')
+
+        assert response.status_code in [400, 422]
+
+    def test_create_location_with_extreme_coordinates(self, client):
+        """Test endpoint with extreme coordinate values"""
+        payload = {
+            'name': 'Extreme Location',
+            'latitude': 91.0,  # Invalid latitude
+            'longitude': -93.6
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_large_radius(self, client):
+        """Test nearby endpoint with very large radius"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 42.0, 'longitude': -93.6, 'radius_km': 10000}
+        )
+
+        assert response.status_code in [200, 422]
+class TestLocationRoutesErrorHandling:
+    """Test cases for error handling in location routes"""
+
+    def test_create_location_with_invalid_data(self, client):
+        """Test POST endpoint with invalid data types"""
+        payload = {
+            'name': 123,  # Should be string
+            'latitude': 'invalid',
+            'longitude': 'invalid'
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_invalid_params(self, client):
+        """Test nearby endpoint with invalid parameters"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 'abc', 'longitude': 'def', 'radius_km': -10}
+        )
+
+        assert response.status_code in [400, 422]
+
+    def test_get_location_with_invalid_uuid(self, client):
+        """Test GET endpoint with invalid UUID"""
+        response = client.get('/api/v1/locations/invalid-uuid')
+
+        assert response.status_code in [400, 422]
+
+    def test_create_location_with_extreme_coordinates(self, client):
+        """Test endpoint with extreme coordinate values"""
+        payload = {
+            'name': 'Extreme Location',
+            'latitude': 91.0,  # Invalid latitude
+            'longitude': -93.6
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_large_radius(self, client):
+        """Test nearby endpoint with very large radius"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 42.0, 'longitude': -93.6, 'radius_km': 10000}
+        )
+
+        assert response.status_code in [200, 422]
+    """Test cases for error handling in location routes"""
+
+    def test_create_location_with_invalid_data(self, client):
+        """Test POST endpoint with invalid data types"""
+        payload = {
+            'name': 123,  # Should be string
+            'latitude': 'invalid',
+            'longitude': 'invalid'
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_invalid_params(self, client):
+        """Test nearby endpoint with invalid parameters"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 'abc', 'longitude': 'def', 'radius_km': -10}
+        )
+
+        assert response.status_code in [400, 422]
+
+    def test_get_location_with_invalid_uuid(self, client):
+        """Test GET endpoint with invalid UUID"""
+        response = client.get('/api/v1/locations/invalid-uuid')
+
+        assert response.status_code in [400, 422]
+
+    def test_create_location_with_extreme_coordinates(self, client):
+        """Test endpoint with extreme coordinate values"""
+        payload = {
+            'name': 'Extreme Location',
+            'latitude': 91.0,  # Invalid latitude
+            'longitude': -93.6
+        }
+
+        response = client.post('/api/v1/locations/', json=payload)
+        assert response.status_code in [400, 422]
+
+    def test_nearby_locations_with_large_radius(self, client):
+        """Test nearby endpoint with very large radius"""
+        response = client.get(
+            '/api/v1/locations/nearby',
+            params={'latitude': 42.0, 'longitude': -93.6, 'radius_km': 10000}
+        )
+
+        assert response.status_code in [200, 422]
+
+

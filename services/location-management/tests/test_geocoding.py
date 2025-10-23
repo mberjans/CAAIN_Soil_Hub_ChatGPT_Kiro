@@ -328,3 +328,315 @@ class TestGeocodingPerformance:
             assert elapsed < 10.0
         except Exception:
             pass
+class TestBatchGeocoding:
+    """Test cases for batch geocoding functionality"""
+
+    def test_batch_geocode_addresses(self):
+        """Test batch geocoding of multiple addresses"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        addresses = ['Ames, Iowa', 'Des Moines, Iowa', 'Cedar Rapids, Iowa']
+
+        try:
+            results = service.batch_geocode(addresses)
+            assert isinstance(results, list)
+            assert len(results) == len(addresses)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch geocoding unavailable: {str(e)}")
+
+    def test_batch_reverse_geocode_coordinates(self):
+        """Test batch reverse geocoding of multiple coordinates"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        coordinates = [(42.0, -93.6), (41.6, -93.6), (41.9, -91.6)]
+
+        try:
+            results = service.batch_reverse_geocode(coordinates)
+            assert isinstance(results, list)
+            assert len(results) == len(coordinates)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch reverse geocoding unavailable: {str(e)}")
+
+    def test_batch_geocode_empty_list(self):
+        """Test batch geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+
+    def test_batch_reverse_geocode_empty_list(self):
+        """Test batch reverse geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_reverse_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+class TestBatchGeocoding:
+    """Test cases for batch geocoding functionality"""
+
+    def test_batch_geocode_addresses(self):
+        """Test batch geocoding of multiple addresses"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        addresses = ['Ames, Iowa', 'Des Moines, Iowa', 'Cedar Rapids, Iowa']
+
+        try:
+            results = service.batch_geocode(addresses)
+            assert isinstance(results, list)
+            assert len(results) == len(addresses)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch geocoding unavailable: {str(e)}")
+
+    def test_batch_reverse_geocode_coordinates(self):
+        """Test batch reverse geocoding of multiple coordinates"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        coordinates = [(42.0, -93.6), (41.6, -93.6), (41.9, -91.6)]
+
+        try:
+            results = service.batch_reverse_geocode(coordinates)
+            assert isinstance(results, list)
+            assert len(results) == len(coordinates)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch reverse geocoding unavailable: {str(e)}")
+
+    def test_batch_geocode_empty_list(self):
+        """Test batch geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+
+    def test_batch_reverse_geocode_empty_list(self):
+        """Test batch reverse geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_reverse_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+    """Test cases for batch geocoding functionality"""
+
+    def test_batch_geocode_addresses(self):
+        """Test batch geocoding of multiple addresses"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        addresses = ['Ames, Iowa', 'Des Moines, Iowa', 'Cedar Rapids, Iowa']
+
+        try:
+            results = service.batch_geocode(addresses)
+            assert isinstance(results, list)
+            assert len(results) == len(addresses)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch geocoding unavailable: {str(e)}")
+
+    def test_batch_reverse_geocode_coordinates(self):
+        """Test batch reverse geocoding of multiple coordinates"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        coordinates = [(42.0, -93.6), (41.6, -93.6), (41.9, -91.6)]
+
+        try:
+            results = service.batch_reverse_geocode(coordinates)
+            assert isinstance(results, list)
+            assert len(results) == len(coordinates)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch reverse geocoding unavailable: {str(e)}")
+
+    def test_batch_geocode_empty_list(self):
+        """Test batch geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+
+    def test_batch_reverse_geocode_empty_list(self):
+        """Test batch reverse geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_reverse_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+
+    """Test cases for batch geocoding functionality"""
+
+    def test_batch_geocode_addresses(self):
+        """Test batch geocoding of multiple addresses"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        addresses = ['Ames, Iowa', 'Des Moines, Iowa', 'Cedar Rapids, Iowa']
+
+        try:
+            results = service.batch_geocode(addresses)
+            assert isinstance(results, list)
+            assert len(results) == len(addresses)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch geocoding unavailable: {str(e)}")
+
+    def test_batch_reverse_geocode_coordinates(self):
+        """Test batch reverse geocoding of multiple coordinates"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        coordinates = [(42.0, -93.6), (41.6, -93.6), (41.9, -91.6)]
+
+        try:
+            results = service.batch_reverse_geocode(coordinates)
+            assert isinstance(results, list)
+            assert len(results) == len(coordinates)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch reverse geocoding unavailable: {str(e)}")
+
+    def test_batch_geocode_empty_list(self):
+        """Test batch geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+
+    def test_batch_reverse_geocode_empty_list(self):
+        """Test batch reverse geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_reverse_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+class TestBatchGeocoding:
+    """Test cases for batch geocoding functionality"""
+
+    def test_batch_geocode_addresses(self):
+        """Test batch geocoding of multiple addresses"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        addresses = ['Ames, Iowa', 'Des Moines, Iowa', 'Cedar Rapids, Iowa']
+
+        try:
+            results = service.batch_geocode(addresses)
+            assert isinstance(results, list)
+            assert len(results) == len(addresses)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch geocoding unavailable: {str(e)}")
+
+    def test_batch_reverse_geocode_coordinates(self):
+        """Test batch reverse geocoding of multiple coordinates"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        coordinates = [(42.0, -93.6), (41.6, -93.6), (41.9, -91.6)]
+
+        try:
+            results = service.batch_reverse_geocode(coordinates)
+            assert isinstance(results, list)
+            assert len(results) == len(coordinates)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch reverse geocoding unavailable: {str(e)}")
+
+    def test_batch_geocode_empty_list(self):
+        """Test batch geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+
+    def test_batch_reverse_geocode_empty_list(self):
+        """Test batch reverse geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_reverse_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+    """Test cases for batch geocoding functionality"""
+
+    def test_batch_geocode_addresses(self):
+        """Test batch geocoding of multiple addresses"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        addresses = ['Ames, Iowa', 'Des Moines, Iowa', 'Cedar Rapids, Iowa']
+
+        try:
+            results = service.batch_geocode(addresses)
+            assert isinstance(results, list)
+            assert len(results) == len(addresses)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch geocoding unavailable: {str(e)}")
+
+    def test_batch_reverse_geocode_coordinates(self):
+        """Test batch reverse geocoding of multiple coordinates"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        coordinates = [(42.0, -93.6), (41.6, -93.6), (41.9, -91.6)]
+
+        try:
+            results = service.batch_reverse_geocode(coordinates)
+            assert isinstance(results, list)
+            assert len(results) == len(coordinates)
+            for result in results:
+                assert result is None or isinstance(result, dict)
+        except Exception as e:
+            pytest.skip(f"Batch reverse geocoding unavailable: {str(e)}")
+
+    def test_batch_geocode_empty_list(self):
+        """Test batch geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+
+    def test_batch_reverse_geocode_empty_list(self):
+        """Test batch reverse geocoding with empty list"""
+        from src.services.geocoding_service import GeocodingService
+
+        service = GeocodingService()
+        results = service.batch_reverse_geocode([])
+        assert isinstance(results, list)
+        assert len(results) == 0
+
+

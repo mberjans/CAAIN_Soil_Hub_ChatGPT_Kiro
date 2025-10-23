@@ -202,3 +202,171 @@ class TestIntegration:
         assert app is not None
         assert app.title is not None
         assert len(app.routes) > 0
+class TestMainAppErrorHandling:
+    """Test cases for error handling in main app"""
+
+    def test_health_endpoint_with_invalid_method(self, client):
+        """Test health endpoint with POST method"""
+        response = client.post("/health")
+        assert response.status_code == 405
+
+    def test_root_endpoint_with_post(self, client):
+        """Test root endpoint with POST method"""
+        response = client.post("/")
+        assert response.status_code == 405
+
+    def test_invalid_json_payload(self, client):
+        """Test handling of invalid JSON payloads"""
+        response = client.post("/api/v1/locations/", data="invalid json")
+        assert response.status_code in [400, 422]
+
+    def test_missing_content_type(self, client):
+        """Test handling of requests without content-type"""
+        response = client.post("/api/v1/locations/", data='{"name": "test"}')
+        assert response.status_code in [400, 422]
+
+    def test_large_payload(self, client):
+        """Test handling of very large payloads"""
+        large_data = {"name": "x" * 10000, "latitude": 42.0, "longitude": -93.6}
+        response = client.post("/api/v1/locations/", json=large_data)
+        assert response.status_code in [200, 400, 413, 422]
+class TestMainAppErrorHandling:
+    """Test cases for error handling in main app"""
+
+    def test_health_endpoint_with_invalid_method(self, client):
+        """Test health endpoint with POST method"""
+        response = client.post("/health")
+        assert response.status_code == 405
+
+    def test_root_endpoint_with_post(self, client):
+        """Test root endpoint with POST method"""
+        response = client.post("/")
+        assert response.status_code == 405
+
+    def test_invalid_json_payload(self, client):
+        """Test handling of invalid JSON payloads"""
+        response = client.post("/api/v1/locations/", data="invalid json")
+        assert response.status_code in [400, 422]
+
+    def test_missing_content_type(self, client):
+        """Test handling of requests without content-type"""
+        response = client.post("/api/v1/locations/", data='{"name": "test"}')
+        assert response.status_code in [400, 422]
+
+    def test_large_payload(self, client):
+        """Test handling of very large payloads"""
+        large_data = {"name": "x" * 10000, "latitude": 42.0, "longitude": -93.6}
+        response = client.post("/api/v1/locations/", json=large_data)
+        assert response.status_code in [200, 400, 413, 422]
+    """Test cases for error handling in main app"""
+
+    def test_health_endpoint_with_invalid_method(self, client):
+        """Test health endpoint with POST method"""
+        response = client.post("/health")
+        assert response.status_code == 405
+
+    def test_root_endpoint_with_post(self, client):
+        """Test root endpoint with POST method"""
+        response = client.post("/")
+        assert response.status_code == 405
+
+    def test_invalid_json_payload(self, client):
+        """Test handling of invalid JSON payloads"""
+        response = client.post("/api/v1/locations/", data="invalid json")
+        assert response.status_code in [400, 422]
+
+    def test_missing_content_type(self, client):
+        """Test handling of requests without content-type"""
+        response = client.post("/api/v1/locations/", data='{"name": "test"}')
+        assert response.status_code in [400, 422]
+
+    def test_large_payload(self, client):
+        """Test handling of very large payloads"""
+        large_data = {"name": "x" * 10000, "latitude": 42.0, "longitude": -93.6}
+        response = client.post("/api/v1/locations/", json=large_data)
+        assert response.status_code in [200, 400, 413, 422]
+
+    """Test cases for error handling in main app"""
+
+    def test_health_endpoint_with_invalid_method(self, client):
+        """Test health endpoint with POST method"""
+        response = client.post("/health")
+        assert response.status_code == 405
+
+    def test_root_endpoint_with_post(self, client):
+        """Test root endpoint with POST method"""
+        response = client.post("/")
+        assert response.status_code == 405
+
+    def test_invalid_json_payload(self, client):
+        """Test handling of invalid JSON payloads"""
+        response = client.post("/api/v1/locations/", data="invalid json")
+        assert response.status_code in [400, 422]
+
+    def test_missing_content_type(self, client):
+        """Test handling of requests without content-type"""
+        response = client.post("/api/v1/locations/", data='{"name": "test"}')
+        assert response.status_code in [400, 422]
+
+    def test_large_payload(self, client):
+        """Test handling of very large payloads"""
+        large_data = {"name": "x" * 10000, "latitude": 42.0, "longitude": -93.6}
+        response = client.post("/api/v1/locations/", json=large_data)
+        assert response.status_code in [200, 400, 413, 422]
+class TestMainAppErrorHandling:
+    """Test cases for error handling in main app"""
+
+    def test_health_endpoint_with_invalid_method(self, client):
+        """Test health endpoint with POST method"""
+        response = client.post("/health")
+        assert response.status_code == 405
+
+    def test_root_endpoint_with_post(self, client):
+        """Test root endpoint with POST method"""
+        response = client.post("/")
+        assert response.status_code == 405
+
+    def test_invalid_json_payload(self, client):
+        """Test handling of invalid JSON payloads"""
+        response = client.post("/api/v1/locations/", data="invalid json")
+        assert response.status_code in [400, 422]
+
+    def test_missing_content_type(self, client):
+        """Test handling of requests without content-type"""
+        response = client.post("/api/v1/locations/", data='{"name": "test"}')
+        assert response.status_code in [400, 422]
+
+    def test_large_payload(self, client):
+        """Test handling of very large payloads"""
+        large_data = {"name": "x" * 10000, "latitude": 42.0, "longitude": -93.6}
+        response = client.post("/api/v1/locations/", json=large_data)
+        assert response.status_code in [200, 400, 413, 422]
+    """Test cases for error handling in main app"""
+
+    def test_health_endpoint_with_invalid_method(self, client):
+        """Test health endpoint with POST method"""
+        response = client.post("/health")
+        assert response.status_code == 405
+
+    def test_root_endpoint_with_post(self, client):
+        """Test root endpoint with POST method"""
+        response = client.post("/")
+        assert response.status_code == 405
+
+    def test_invalid_json_payload(self, client):
+        """Test handling of invalid JSON payloads"""
+        response = client.post("/api/v1/locations/", data="invalid json")
+        assert response.status_code in [400, 422]
+
+    def test_missing_content_type(self, client):
+        """Test handling of requests without content-type"""
+        response = client.post("/api/v1/locations/", data='{"name": "test"}')
+        assert response.status_code in [400, 422]
+
+    def test_large_payload(self, client):
+        """Test handling of very large payloads"""
+        large_data = {"name": "x" * 10000, "latitude": 42.0, "longitude": -93.6}
+        response = client.post("/api/v1/locations/", json=large_data)
+        assert response.status_code in [200, 400, 413, 422]
+
+
